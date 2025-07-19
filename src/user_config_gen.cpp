@@ -1,196 +1,133 @@
 // A user-oriented configuration generator.
 // It generates a YAML configuration file based on the required packages and their dependencies.
 
-// template:
-// cheese:
-//   app1:
-//     compiler: string, default is "system"
-//     mpi: string, entry exists only if mpi in dependencies, default is null
-//     configurations: [same structure as the database package configurations, only the user-configurable variables are stored]
-//   app2: ...
-
-// Note: It is necessary to explore the `configurations` of each package as they may have different structures.
-
-// Some configurations are modified for the ease of use:
-// 1. features/packages/miscellaneous:
-//   name: string
-//   description: string, append `default` and `value.default` if applicable
-//   use: bool
-//   value: string, optional, only if `value.required` is true in the database
-// 2. variables/environment:
-//   name: string
-//   description: string, append `default` if applicable
-//   value: string or null
-
+#include <yaml-cpp/yaml.h>
 #include <iostream>
 #include <filesystem>
-#include <yaml-cpp/yaml.h>
-
 #include <string>
 #include <vector>
 
+#include "colors/colored_io.h"
 #include "deps_resolve.h"
 
-YAML::Node config;
+YAML::Node config = YAML::Node(YAML::NodeType::Map);
 
-YAML::Node config_opts(const YAML::Node& db_node) {
-    YAML::Node options = YAML::Node(YAML::NodeType::Sequence);
-    for (const auto& opt : db_node) {
-        if (!opt["user_configurable"].as<bool>()) {
-            continue; // Skip non-user-configurable options
+
+YAML::Node filtered_environment(const YAML::Node& env_node) {
+    YAML::Node env = YAML::Node(YAML::NodeType::Sequence);
+    for (const auto& var : env_node) {
+        if (var["user_configurable"] && var["user_configurable"].as<bool>()) {
+            YAML::Node tmp_var = YAML::Node(YAML::NodeType::Map);
+            for (const auto& key : var) {
+                if (key.first.as<std::string>() != "user_configurable") {
+                    tmp_var[key.first] = key.second;
+                }
+            }
+            env.push_back(tmp_var);
         }
-        YAML::Node opt_node;
-        opt_node["name"] = opt["name"].as<std::string>();
-        opt_node["description"] = opt["description"].as<std::string>();
-        opt_node["use"] = opt["default"].as<bool>();
-        if (opt["value"]["required"].as<bool>()) {
-            opt_node["value"] = opt["value"]["default"];
-        }
-        options.push_back(opt_node);
     }
-    return options;
+    return env;
 }
 
-YAML::Node config_vars(const YAML::Node& db_node) {
-    YAML::Node variables = YAML::Node(YAML::NodeType::Sequence);
-    for (const auto& var : db_node) {
-        if (!var["user_configurable"].as<bool>()) {
-            continue; // Skip non-user-configurable variables
+YAML::Node filtered_options(const YAML::Node& opts_node) {
+    YAML::Node opts = YAML::Node(YAML::NodeType::Sequence);
+    for (const auto& opt : opts_node) {
+        if (opt["user_configurable"] && opt["user_configurable"].as<bool>()) {
+            YAML::Node tmp_opt = YAML::Node(YAML::NodeType::Map);
+            for (const auto& key : opt) {
+                if (key.first.as<std::string>() != "user_configurable") {
+                    tmp_opt[key.first] = key.second;
+                }
+            }
+            opts.push_back(tmp_opt);
         }
-        YAML::Node var_node;
-        var_node["name"] = var["name"].as<std::string>();
-        var_node["description"] = var["description"].as<std::string>();
-        var_node["value"] = var["default"];
-        variables.push_back(var_node);
     }
-    return variables;
+    return opts;
 }
 
-void config_per_pkg(const std::string& pkg_name, const YAML::Node& db_pkg_node) {
-    config[pkg_name]["compiler"] = "system";
-    config[pkg_name]["version"] = db_pkg_node["cheese"]["source"]["releases"][0]["version"].as<std::string>();
-
-    // Add MPI entry if the package has MPI in its dependencies
-    std::vector<std::string> dependencies = db_pkg_node["cheese"]["dependencies"].as<std::vector<std::string>>();
-    if (std::find(dependencies.begin(), dependencies.end(), "mpi") != dependencies.end()) {
-        config[pkg_name]["mpi"] = YAML::Node(YAML::NodeType::Null);
+YAML::Node filtered_configurations(const YAML::Node& config_node) {
+    YAML::Node configs = YAML::Node(YAML::NodeType::Map);
+    if (config_node["environment"]) {
+        YAML::Node env = filtered_environment(config_node["environment"]);
+        if (!env.IsNull() && !(env.size() == 0)) {
+            configs["environment"] = env;
+        }
     }
-
-    config[pkg_name]["configurations"] = YAML::Node(YAML::NodeType::Map);
-
-    if (db_pkg_node["cheese"]["toolchain"].as<std::string>() == "autotools") {
-        config[pkg_name]["configurations"]["optional_features"] =
-            config_opts(db_pkg_node["cheese"]["build"]["configurations"]["optional_features"]);
-        config[pkg_name]["configurations"]["optional_packages"] =
-            config_opts(db_pkg_node["cheese"]["build"]["configurations"]["optional_packages"]);
-        config[pkg_name]["configurations"]["variables"] =
-            config_vars(db_pkg_node["cheese"]["build"]["configurations"]["variables"]);
-        config[pkg_name]["configurations"]["environment"] =
-            config_vars(db_pkg_node["cheese"]["build"]["configurations"]["environment"]);
-        config[pkg_name]["configurations"]["miscellaneous"] =
-            config_opts(db_pkg_node["cheese"]["build"]["configurations"]["miscellaneous"]);
-
-        // Clean up the empty entries
-        if (config[pkg_name]["configurations"]["optional_features"].size() == 0) {
-            config[pkg_name]["configurations"].remove("optional_features");
+    if (config_node["options"]) {
+        YAML::Node opts = filtered_options(config_node["options"]);
+        if (!opts.IsNull() && !(opts.size() == 0)) {
+            configs["options"] = opts;
         }
-        if (config[pkg_name]["configurations"]["optional_packages"].size() == 0) {
-            config[pkg_name]["configurations"].remove("optional_packages");
-        }
-        if (config[pkg_name]["configurations"]["variables"].size() == 0) {
-            config[pkg_name]["configurations"].remove("variables");
-        }
-        if (config[pkg_name]["configurations"]["environment"].size() == 0) {
-            config[pkg_name]["configurations"].remove("environment");
-        }
-        if (config[pkg_name]["configurations"]["miscellaneous"].size() == 0) {
-            config[pkg_name]["configurations"].remove("miscellaneous");
-        }
-
-    } else if (db_pkg_node["cheese"]["toolchain"].as<std::string>() == "makefile") {
-        config[pkg_name]["configurations"]["compile_time"] = YAML::Node(YAML::NodeType::Map);
-        config[pkg_name]["configurations"]["compile_time"]["variables"] =
-            config_vars(db_pkg_node["cheese"]["build"]["configurations"]["compile_time"]["variables"]);
-        config[pkg_name]["configurations"]["compile_time"]["environment"] =
-            config_vars(db_pkg_node["cheese"]["build"]["configurations"]["compile_time"]["environment"]);
-        config[pkg_name]["configurations"]["compile_time"]["miscellaneous"] =
-            config_opts(db_pkg_node["cheese"]["build"]["configurations"]["compile_time"]["miscellaneous"]);
-
-        config[pkg_name]["configurations"]["install_time"] = YAML::Node(YAML::NodeType::Map);
-        config[pkg_name]["configurations"]["install_time"]["variables"] =
-            config_vars(db_pkg_node["cheese"]["build"]["configurations"]["install_time"]["variables"]);
-        config[pkg_name]["configurations"]["install_time"]["environment"] =
-            config_vars(db_pkg_node["cheese"]["build"]["configurations"]["install_time"]["environment"]);
-        config[pkg_name]["configurations"]["install_time"]["miscellaneous"] =
-            config_opts(db_pkg_node["cheese"]["build"]["configurations"]["install_time"]["miscellaneous"]);
-        
-        // Clean up the empty entries
-        if (config[pkg_name]["configurations"]["compile_time"]["variables"].size() == 0) {
-            config[pkg_name]["configurations"]["compile_time"].remove("variables");
-        }
-        if (config[pkg_name]["configurations"]["compile_time"]["environment"].size() == 0) {
-            config[pkg_name]["configurations"]["compile_time"].remove("environment");
-        }
-        if (config[pkg_name]["configurations"]["compile_time"]["miscellaneous"].size() == 0) {
-            config[pkg_name]["configurations"]["compile_time"].remove("miscellaneous");
-        }
-        if (config[pkg_name]["configurations"]["install_time"]["variables"].size() == 0) {
-            config[pkg_name]["configurations"]["install_time"].remove("variables");
-        }
-        if (config[pkg_name]["configurations"]["install_time"]["environment"].size() == 0) {
-            config[pkg_name]["configurations"]["install_time"].remove("environment");
-        }
-        if (config[pkg_name]["configurations"]["install_time"]["miscellaneous"].size() == 0) {
-            config[pkg_name]["configurations"]["install_time"].remove("miscellaneous");
-        }
-
-        if (config[pkg_name]["configurations"]["compile_time"].size() == 0) {
-            config[pkg_name]["configurations"].remove("compile_time");
-        }
-        if (config[pkg_name]["configurations"]["install_time"].size() == 0) {
-            config[pkg_name]["configurations"].remove("install_time");
-        }
-
-    } else {
-        std::cerr << "Unsupported toolchain: " << db_pkg_node["cheese"]["toolchain"].as<std::string>() << std::endl;
-        return;
     }
+    return configs;
+}
 
-    // Clean up the empty configurations
-    if (config[pkg_name]["configurations"].size() == 0) {
-        config[pkg_name].remove("configurations");
+YAML::Node filtered_stages(const YAML::Node& stages_node) {
+    YAML::Node stages = YAML::Node(YAML::NodeType::Sequence);
+    for (const auto& stage : stages_node) {
+        if (stage["configurations"]) {
+            YAML::Node filtered_config = filtered_configurations(stage["configurations"]);
+            if (!filtered_config.IsNull() && !(filtered_config.size() == 0)) {
+                YAML::Node tmp_stage = YAML::Node(YAML::NodeType::Map);
+                tmp_stage["target"] = stage["target"];
+                tmp_stage["configurations"] = filtered_config;
+                stages.push_back(tmp_stage);
+            }
+        }
+    }
+    return stages;
+}
+
+void config_per_pkg(const YAML::Node& db_pkg_node) {
+    std::string pkg_name = db_pkg_node["cheese"]["name"].as<std::string>();
+
+    config["cheese"][pkg_name] = YAML::Node(YAML::NodeType::Map);
+    config["cheese"][pkg_name]["description"] = db_pkg_node["cheese"]["description"];
+    config["cheese"][pkg_name]["version"] = db_pkg_node["cheese"]["source"]["releases"][0]["version"]; // Default is the latest release
+    config["cheese"][pkg_name]["build"] = YAML::Node(YAML::NodeType::Map);
+    if (db_pkg_node["cheese"]["build"]["configurations"]) {
+        if (db_pkg_node["cheese"]["build"]["configurations"]) {
+            YAML::Node filtered_config = filtered_configurations(db_pkg_node["cheese"]["build"]["configurations"]);
+            if (!filtered_config.IsNull() && !(filtered_config.size() == 0)) {
+                config["cheese"][pkg_name]["build"]["configurations"] = filtered_config;
+            }
+        }
+    }
+    if (db_pkg_node["cheese"]["build"]["stages"]) {
+        YAML::Node filtered_stages_node = filtered_stages(db_pkg_node["cheese"]["build"]["stages"]);
+        if (!filtered_stages_node.IsNull() && !(filtered_stages_node.size() == 0)) {
+            config["cheese"][pkg_name]["build"]["stages"] = filtered_stages_node;
+        }
     }
 }
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <database_path>" << std::endl;
+        ERROR("Usage: " + std::string(argv[0]) + " <package_name>");
         return 1;
     }
 
     std::string pkg_name = argv[1];
 
-    // std::vector<std::string> dependencies = resolve_dependencies(pkg_name); // For testing only
-    std::vector<std::string> dependencies = resolve_filtered_dependencies(pkg_name);
+    std::vector<std::string> dependencies = resolve_dependencies(pkg_name); // For testing only
+    // std::vector<std::string> dependencies = resolve_filtered_dependencies(pkg_name);
     if (dependencies.empty()) {
-        std::cerr << "No dependencies found for package: " << pkg_name << std::endl;
+        ERROR("No dependencies found for package: " + pkg_name);
         return 1;
     }
+
+    config["cheese"] = YAML::Node(YAML::NodeType::Map);
 
     std::filesystem::path db_path(getenv("CHEESE_DB"));
     for (const auto& dep : dependencies) {
         std::filesystem::path config_file(dep + ".yaml");
         std::filesystem::path config_path = db_path / config_file;
         if (!std::filesystem::exists(config_path)) {
-            std::cerr << "Configuration file does not exist: " << config_path << std::endl;
+            ERROR("Configuration file does not exist: " + config_path.string());
             continue;
         }
         YAML::Node db_pkg_node = YAML::LoadFile(config_path.string());
-        if (!db_pkg_node["cheese"]) {
-            std::cerr << "Invalid package format: " << dep << std::endl;
-            continue;
-        }
-        config_per_pkg(dep, db_pkg_node);
+        config_per_pkg(db_pkg_node);
     }
 
     // Output the generated configuration

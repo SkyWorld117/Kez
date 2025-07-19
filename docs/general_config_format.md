@@ -41,6 +41,7 @@ cheese:
         multithreaded: <boolean_value> # true or false, default is true
         configurations: <configurations_list>
       - target: <target_name>
+        multithreaded: <boolean_value> # true or false, default is true
         configurations: <configurations_list>
       - ...
   properties:

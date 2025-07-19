@@ -6,9 +6,6 @@ CXXFLAGS += -lyaml-cpp
 CXXFLAGS += -Wl,-rpath=$(CHEESE_ENV)/system/lib
 CXXFLAGS += -Wl,-rpath=$(CHEESE_ENV)/system/lib64
 
-# cheese_config_verifier: src/config_verifier.cpp
-# 	g++ src/config_verifier.cpp -o bin/cheese_config_verifier $(CXXFLAGS)
-
 cheese_config_verifier: src/package_format_verifier/*.cpp src/package_format_verifier/*.h
 	g++ src/package_format_verifier/*.cpp -o bin/cheese_config_verifier $(CXXFLAGS)
 
