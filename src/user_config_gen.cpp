@@ -82,7 +82,9 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
     std::string pkg_name = db_pkg_node["cheese"]["name"].as<std::string>();
 
     config["cheese"][pkg_name] = YAML::Node(YAML::NodeType::Map);
-    config["cheese"][pkg_name]["description"] = db_pkg_node["cheese"]["description"];
+    if (db_pkg_node["cheese"]["description"]) {
+        config["cheese"][pkg_name]["description"] = db_pkg_node["cheese"]["description"].as<std::string>();
+    }
     if (db_pkg_node["cheese"]["source"]) {
         // Default to the latest release
         config["cheese"][pkg_name]["version"] = db_pkg_node["cheese"]["source"]["releases"][0]["version"];
