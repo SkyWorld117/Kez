@@ -1,0 +1,66 @@
+cheese:
+  name: gmp
+  description: GNU Multiple Precision Arithmetic Library
+  type: system
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 6.3.0
+        url: https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.gz
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${gmp.prefix}
+
+        - name: --enable-cxx
+          description: Enable C++ support
+
+        - name: --enable-shared
+          description: Build shared libraries
+
+        - name: --enable-static
+          description: Build static libraries
+
+        - name: --enable-assembly
+          description: Enable assembly optimizations
+          user_configurable: true
+          disabled_format: --disable-assembly
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CXX
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CXXFLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${gmp.prefix}/lib -Wl,-rpath,${gmp.prefix}/lib
+    libs:
+      default: -lgmp
+    includes:
+      default: -I${gmp.prefix}/include

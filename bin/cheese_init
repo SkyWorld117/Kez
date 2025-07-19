@@ -1,0 +1,360 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+# This script creates a nearly distribution-independent Cheese environment.
+# This environment offers the essential system utilities. 
+
+if [ -d "${CHEESE_WORKDIR}/env/system" ]; then
+    rm -rf "${CHEESE_WORKDIR}/env/system"/*
+fi
+mkdir -p "${CHEESE_WORKDIR}/env/system"
+
+mkdir -p "${CHEESE_WORKDIR}/.tmp"
+rm -rf "${CHEESE_WORKDIR}"/.tmp/*
+cd "${CHEESE_WORKDIR}/.tmp"
+
+SYSTEM_PREFIX="${CHEESE_ENV}/system" # System prefix of Cheese
+
+# Helper function: GNU latest release detection
+fetch_latest_gnu() {
+    local pkg="$1"
+    local ext="${2:-tar.xz}"
+    # GNU official
+    # local url="https://ftp.gnu.org/gnu/${pkg}/"
+    # GNU mirror (usually much faster)
+    local url="https://ftpmirror.gnu.org/gnu/${pkg}/"
+
+    # Get listing and extract filenames
+    local latest
+    latest=$(curl -sSL "$url" \
+        | grep -oE "${pkg}-[0-9]+\.[0-9]+(\.[0-9]+)?\.${ext}" \
+        | sort -Vu \
+        | tail -n1)
+
+    if [[ -z "$latest" ]]; then
+        echo >&2 "No files found for ${pkg} with extension .${ext} at $url"
+        return 1
+    fi
+
+    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/${latest}" "${url}${latest}"
+    if [ ${ext} = "tar.xz" ]; then
+        tar -xf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+    elif [ ${ext} = "tar.gz" ]; then
+        tar -xzf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+    elif [ ${ext} = "tar.bz2" ]; then
+        tar -xjf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+    else
+        echo >&2 "Unsupported file extension: ${ext}"
+        return 1
+    fi
+}
+
+fetch_latest_github() {
+    local repo="$1"
+    local tag
+    tag=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null)
+    
+    if [[ -z "$tag" || "$tag" == "null" ]]; then
+        warn "Could not fetch latest version for ${repo}, using fallback"
+        return 1
+    fi
+    
+    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
+    tar -xzf "${CHEESE_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" && cd "${CHEESE_WORKDIR}/.tmp/${repo##*/}-${tag#v}"
+}
+
+fetch_latest_isl() {
+    local url="https://libisl.sourceforge.io/"
+    local ext="${1:-tar.xz}"
+
+    local latest
+    latest=$(curl -sSL "$url" \
+        | grep -oE "isl-[0-9]+\.[0-9]+(\.[0-9]+)?\.${ext}" \
+        | sort -Vu \
+        | tail -n1)
+
+    if [[ -z "$latest" ]]; then
+        echo >&2 "No files found for isl with extension .${ext} at $url"
+        return 1
+    fi
+
+    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/${latest}" "${url}${latest}"
+    if [ ${ext} = "tar.xz" ]; then
+        tar -xf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+    elif [ ${ext} = "tar.gz" ]; then
+        tar -xzf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+    elif [ ${ext} = "tar.bz2" ]; then
+        tar -xjf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+    else
+        echo >&2 "Unsupported file extension: ${ext}"
+        return 1
+    fi
+}
+
+fetch_latest_elfutils() {
+    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
+    bzip2 -d "${CHEESE_WORKDIR}/.tmp/elfutils.bz2"
+    tar -xf "${CHEESE_WORKDIR}/.tmp/elfutils" && cd "${CHEESE_WORKDIR}/.tmp"/elfutils-*
+}
+
+
+# PHASE 1: Mathematical Libraries
+# ----------------------------------------------------
+
+# gmp
+fetch_latest_gnu "gmp"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --enable-cxx \
+    --enable-shared \
+    --enable-static
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# mpfr
+fetch_latest_gnu "mpfr"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --with-gmp="${SYSTEM_PREFIX}" \
+    --enable-shared \
+    --enable-static \
+    --enable-float128 \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# mpc
+fetch_latest_gnu "mpc" "tar.gz"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --with-gmp="${SYSTEM_PREFIX}" \
+    --with-mpfr="${SYSTEM_PREFIX}" \
+    --enable-shared \
+    --enable-static \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# isl
+fetch_latest_isl
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --enable-shared \
+    --enable-static \
+    --with-gmp-prefix="${SYSTEM_PREFIX}" \
+    --with-int=gmp \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+
+# PHASE 2: Compression Libraries
+# ----------------------------------------------------
+
+# zlib
+wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/zlib.tar.gz" "https://zlib.net/current/zlib.tar.gz"
+tar -xzf "${CHEESE_WORKDIR}/.tmp/zlib.tar.gz" && cd "${CHEESE_WORKDIR}/.tmp"/zlib-*
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --64
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# xz
+fetch_latest_github "tukaani-project/xz"
+./autogen.sh --no-po4a
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# lz4
+fetch_latest_github "lz4/lz4"
+make -j"${CHEESE_NPROC}" install PREFIX="${SYSTEM_PREFIX}" LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# zstd
+fetch_latest_github "facebook/zstd"
+CFLAGS="-I${SYSTEM_PREFIX}/include" \
+CXXFLAGS="-I${SYSTEM_PREFIX}/include" \
+LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
+    make -j"${CHEESE_NPROC}" install PREFIX="${SYSTEM_PREFIX}" HAVE_ZLIB=1 HAVE_LZ4=1 HAVE_LZMA=1
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+
+# PHASE 3: Essential System Tools
+# ----------------------------------------------------
+
+# binutils (without headers)
+fetch_latest_gnu "binutils"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --includedir="${CHEESE_WORKDIR}/.tmp/include" \
+    --disable-multilib \
+    --disable-nls \
+    --enable-gold \
+    --enable-ld \
+    --enable-compressed-debug-sections=all \
+    --enable-default-compressed-debug-sections-algorithm=zstd \
+    --with-gmp="${SYSTEM_PREFIX}" \
+    --with-mpfr="${SYSTEM_PREFIX}" \
+    --with-mpc="${SYSTEM_PREFIX}" \
+    --with-isl="${SYSTEM_PREFIX}" \
+    --with-zstd="${SYSTEM_PREFIX}" \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# gcc 11.5.0 (for compatibility)
+wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" "https://ftpmirror.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
+tar -xf "${CHEESE_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" && cd "${CHEESE_WORKDIR}/.tmp/gcc-11.5.0"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --enable-languages=c,c++,fortran \
+    --disable-multilib \
+    --disable-nls \
+    --with-gmp="${SYSTEM_PREFIX}" \
+    --with-mpfr="${SYSTEM_PREFIX}" \
+    --with-mpc="${SYSTEM_PREFIX}" \
+    --with-isl="${SYSTEM_PREFIX}" \
+    --with-zstd-include="${SYSTEM_PREFIX}/include" \
+    --with-zstd-lib="${SYSTEM_PREFIX}/lib" \
+    --with-stage1-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
+    --with-boot-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# elfutils
+fetch_latest_elfutils
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --enable-install-elfh \
+    --disable-nls \
+    LDFLAGS="-Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+
+# PHASE 4: Build Tools
+# ----------------------------------------------------
+
+# m4
+fetch_latest_gnu "m4"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --enable-c++ \
+    --enable-threads=isoc+posix \
+    --disable-nls \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# autoconf
+fetch_latest_gnu "autoconf"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    M4="${SYSTEM_PREFIX}/bin/m4" \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# automake
+fetch_latest_gnu "automake"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# libtool
+fetch_latest_gnu "libtool"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --enable-shared \
+    --enable-static \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# make
+fetch_latest_gnu "make" "tar.gz"
+./configure \
+    --prefix="${SYSTEM_PREFIX}" \
+    --disable-nls \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# cmake
+cmake_tag="$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" | jq -r '.tag_name')"
+if [ "$( uname -m )" = "x86_64" ]; then
+    cmake_tag="${cmake_tag#v}-linux-x86_64"
+elif [ "$( uname -m )" = "aarch64" ] || [ "$( uname -m )" = "arm64" ]; then
+    cmake_tag="${cmake_tag#v}-linux-aarch64"
+else
+    echo >&2 "Unsupported architecture: $( uname -m )"
+    exit 1
+fi
+wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag}.sh"
+bash "${CHEESE_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+
+# PHASE 5: Essential Tools for Cheese
+# ----------------------------------------------------
+
+# yq (should be installed by setup-env.sh, here in case we are performing an update)
+if [ "$(uname -m)" = "x86_64" ]; then
+    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
+else
+    echo >&2 "Unsupported architecture: $(uname -m)"
+    exit 1
+fi
+chmod +x "${SYSTEM_PREFIX}/bin/yq"
+
+# yaml-cpp
+fetch_latest_github "jbeder/yaml-cpp"
+mkdir build && cd build
+cmake .. \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_INSTALL_PREFIX="${SYSTEM_PREFIX}" \
+    -DYAML_BUILD_SHARED_LIBS=ON
+make -j"${CHEESE_NPROC}" && make install
+cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+
+# Cheese (WIP)
+make -C "${CHEESE_HOME}" -j"${CHEESE_NPROC}" release
+
+
+## PHASE 6: Other Tools
+# ----------------------------------------------------
+
+# CUDA
+# Test nvidia-smi to check if NVIDIA GPU is available
+if command -v nvidia-smi &> /dev/null; then
+    echo "NVIDIA GPU detected, installing CUDA..."
+    # Get CUDA version
+    # Format `CUDA Version        : 12.4`
+    cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
+    if [ uname -m = "x86_64" ]; then
+        cuda_version="${cuda_version}-x86_64"
+    elif [ uname -m = "aarch64" ] || [ uname -m = "arm64" ]; then
+        cuda_version="${cuda_version}-aarch64"
+    else
+        echo >&2 "Unsupported architecture: $(uname -m)"
+        exit 1
+    fi
+    cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${CHEESE_DB}/cuda.yaml")
+    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
+    bash "${CHEESE_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${CHEESE_WORKDIR}/.tmp"
+    rm -f "${CHEESE_WORKDIR}/.tmp/cuda.run"
+else
+    echo "No NVIDIA GPU detected, skipping CUDA installation."
+fi
+
+
+set +Eeuo pipefail

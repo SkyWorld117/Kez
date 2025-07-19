@@ -1,0 +1,72 @@
+cheese:
+  name: mpfr
+  description: GNU MPFR Library for multiple precision floating-point computations
+  type: system
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 4.2.2
+        url: https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.2.tar.gz
+
+  dependencies:
+    - gmp
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${mpfr.prefix}
+
+        - name: --enable-shared
+          description: Build shared libraries
+
+        - name: --enable-static
+          description: Build static libraries
+
+        - name: --enable-float128
+          description: Enable support for 128-bit floating-point numbers
+
+        - name: --with-gmp
+          description: Specify GMP installation prefix
+          enabled_value:
+            default: ${gmp.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CXX
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: "-O3"
+
+        - name: CXXFLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: "-O3"
+
+        - name: LDFLAGS
+          description: Linker flags
+          user_configurable: true
+          enabled_value:
+            default: ${gmp.ldflags}
+
+  properties:
+    ldflags:
+      default: -L${mpfr.prefix}/lib
+    libs:
+      default: -lmpfr
+    includes:
+      default: -I${mpfr.prefix}/include

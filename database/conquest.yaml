@@ -1,0 +1,52 @@
+cheese:
+  name: conquest
+  description: CONQUEST linear scaling DFT code
+  type: package
+  toolchain: makefile
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.4
+        url: https://github.com/OrderN/CONQUEST-release/archive/refs/tags/v1.4.tar.gz
+
+  dependencies:
+    - blas
+    - lapack
+    - fft
+    - scalapack
+    - mpi
+    - libxc
+
+  build:
+    preprocessing: cd ${source}/src
+    postprocessing: mkdir -p ${conquest.prefix}/bin && cp ${source}/bin/Conquest ${conquest.prefix}/bin/
+    stages:
+      - target: ~
+        configurations:
+          environment:
+            - name: FC
+              description: Fortran compiler
+              default: ${mpi.fort}
+            
+            - name: F77
+              description: Fortran 77 compiler
+              default: ${mpi.fort}
+            
+            - name: LINKFLAGS
+              description: Linker flags for Fortran
+              default: ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fft.ldflags} ${libxc.ldflags}
+
+            - name: COMPFLAGS
+              description: Fortran compiler flags
+              user_configurable: true
+              default: -O3 -fallow-argument-mismatch ${blas.cmpflags} ${lapack.cmpflags} ${scalapack.cmpflags} ${fft.cmpflags} ${libxc.cmpflags}
+
+            - name: LIBS
+              description: Libraries to link against
+              default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fft.libs} ${libxc.libs}
+
+            - name: MULT_KERN
+              description: Matrix multiplication kernel
+              user_configurable: true
+              default: default

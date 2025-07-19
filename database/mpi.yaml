@@ -1,0 +1,16 @@
+cheese:
+
+  name: mpi
+  type: abstract
+
+  implementations:
+    - openmpi
+    - mpich
+    - intel-oneapi-mpi
+
+  build:
+    configurations:
+      options:
+        - name: cuda
+          description: Enable CUDA support
+          user_configurable: true
