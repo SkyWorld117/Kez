@@ -11,6 +11,6 @@ cheese:
   build:
     configurations:
       options:
-        - name: cuda
+        - name: mpi_use_cuda
           description: Enable CUDA support
           user_configurable: true
