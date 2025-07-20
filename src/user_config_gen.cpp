@@ -19,7 +19,9 @@ YAML::Node filtered_environment(const YAML::Node& env_node) {
         if (var["user_configurable"] && var["user_configurable"].as<bool>()) {
             YAML::Node tmp_var = YAML::Node(YAML::NodeType::Map);
             for (const auto& key : var) {
-                if (key.first.as<std::string>() != "user_configurable") {
+                if (key.first.as<std::string>() == "default") {
+                    tmp_var["value"] = key.second;
+                } else if (key.first.as<std::string>() != "user_configurable") {
                     tmp_var[key.first] = key.second;
                 }
             }
@@ -35,7 +37,15 @@ YAML::Node filtered_options(const YAML::Node& opts_node) {
         if (opt["user_configurable"] && opt["user_configurable"].as<bool>()) {
             YAML::Node tmp_opt = YAML::Node(YAML::NodeType::Map);
             for (const auto& key : opt) {
-                if (key.first.as<std::string>() != "user_configurable") {
+                if (key.first.as<std::string>() == "enabled_value" || key.first.as<std::string>() == "disabled_value") {
+                    for (const auto& nested_key : key.second) {
+                        if (nested_key.first.as<std::string>() == "default") {
+                            tmp_opt[key.first]["value"] = nested_key.second;
+                        } else {
+                            tmp_opt[key.first][nested_key.first] = nested_key.second;
+                        }
+                    }
+                } else if (key.first.as<std::string>() != "user_configurable") {
                     tmp_opt[key.first] = key.second;
                 }
             }
