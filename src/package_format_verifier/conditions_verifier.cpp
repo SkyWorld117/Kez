@@ -20,15 +20,26 @@ bool verify_condition_format(std::string condition) {
     // Split the condition into tokens
     std::vector<std::string> tokens;
     std::string token;
+    char last_char = ' ';
     for (char c : condition) {
-        if (isspace(c)) {
+        if (isspace(c) || c == '(' || c == ')' || c == '&' || c == '|') {
+            if ((c == '&' || c == '|') && last_char == c) {
+                token += c;
+            }
             if (!token.empty()) {
                 tokens.push_back(token);
                 token.clear();
             }
+            if (c == '(' || c == ')') {
+                tokens.push_back(std::string(1, c));
+            }
+            if ((c == '&' || c == '|') && last_char != c) {
+                token += c;
+            }
         } else {
             token += c;
         }
+        last_char = c;
     }
     // Add the last token if it exists
     if (!token.empty()) {
