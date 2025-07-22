@@ -1,0 +1,55 @@
+cheese:
+  name: pmix
+  description: Process Management Interface for Exascale
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 6.0.0
+        url: https://github.com/openpmix/openpmix/releases/download/v6.0.0/pmix-6.0.0.tar.gz
+
+  dependencies:
+    - hwloc
+    - libevent
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${pmix.prefix}
+
+        - name: --with-hwloc
+          description: Specify hwloc installation path
+          enabled_value:
+            default: ${hwloc.prefix}
+
+        - name: --with-libevent
+          description: Specify libevent installation path
+          enabled_value:
+            default: ${libevent.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${pmix.prefix}/lib -Wl,-rpath,${pmix.prefix}/lib
+    libs:
+      default: -lpmix
+    includes:
+      default: -I${pmix.prefix}/include

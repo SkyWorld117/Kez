@@ -1,0 +1,8 @@
+cheese:
+  name: scalapack
+  description: ScaLAPACK for parallel linear algebra
+  type: abstract
+
+  implementations:
+    - netlib-scalapack
+    - intel-oneapi-mkl

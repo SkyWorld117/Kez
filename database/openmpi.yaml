@@ -1,0 +1,132 @@
+cheese:
+  name: openmpi
+  description: Open Source Implementation of the Message Passing Interface
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 5.0.8
+        url: https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz
+      - version: 4.1.8
+        url: https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.8.tar.gz
+  
+  dependencies:
+    - hwloc
+    - libevent
+    - pmix
+    - prrte
+    - ucx
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${openmpi.prefix}
+
+        - name: --enable-branch-probabilities
+          description: Enable profile arcs and branch probability optimization
+        
+        - name: --enable-mpi-fortran
+          description: Enable Fortran bindings
+        
+        - name: --enable-oshmem
+          description: Enable OpenSHMEM support
+
+        - name: --enable-oshmem-compat
+          description: Enable OpenSHMEM compatibility
+
+        - name: --enable-wrapper-rpath
+          description: Enable wrapper RPATH
+        
+        - name: --enable-memchecker
+          description: Enable memory and buffer checks
+          user_configurable: true
+          enabled:
+            default: false
+          disabled_format: --disable-memchecker
+
+        - name: --with-mpi-param-check
+          description: Enable MPI parameter checking [always | runtime | never]
+          user_configurable: true
+          enabled_value:
+            default: never
+
+        - name: --with-oshmem-param-check
+          description: Enable OpenSHMEM parameter checking [always | never]
+          user_configurable: true
+          enabled_value:
+            default: never
+
+        - name: --with-libevent
+          description: Build with libevent support
+          enabled_value:
+            default: ${libevent.prefix}
+
+        - name: --with-hwloc
+          description: Build with hwloc support
+          enabled_value:
+            default: ${hwloc.prefix}
+
+        - name: --with-pmix
+          description: Build with PMIx support
+          enabled_value:
+            default: ${pmix.prefix}
+
+        - name: --with-prrte
+          description: Build with PRRTE support
+          enabled_value:
+            default: ${prrte.prefix}
+
+        - name: --with-slurm
+          description: Build with SLURM support
+
+        - name: --with-ucx
+          description: Build with UCX support
+          enabled_value:
+            default: ${ucx.prefix}
+            
+        - name: --with-cuda
+          description: Build with CUDA support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ${cuda.prefix}
+          requires: [cuda]
+
+        - name: --with-rocm
+          description: Build with ROCm support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ${rocm.prefix}
+          requires: [rocm]
+
+        - name: --with-cma
+          description: Enable Cross Memory Attach (CMA)
+
+        - name: --with-hcoll
+          description: Build with HCOLL support
+          enabled_value:
+            default: ${hcoll.prefix}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    c: ${openmpi.prefix}/bin/mpicc
+    cxx: ${openmpi.prefix}/bin/mpicxx
+    fort: ${openmpi.prefix}/bin/mpifort
+    fortflags:
+      default: -I${openmpi.prefix}/lib -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh
+    ldflags:
+      default: -L${openmpi.prefix}/lib -Wl,-rpath,${openmpi.prefix}/lib
+    libs:
+      default: -lmpi
+    includes:
+      default: -I${openmpi.prefix}/include

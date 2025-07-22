@@ -1,0 +1,114 @@
+cheese:
+  name: ucx
+  description: Unified Communication X
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.18.1
+        url: https://github.com/openucx/ucx/releases/download/v1.18.1/ucx-1.18.1.tar.gz
+
+  dependencies:
+    - rdma-core
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${ucx.prefix}
+
+        - name: --enable-compiler-opt
+          description: Enable compiler optimizations
+          enabled_value:
+            default: 3
+
+        - name: --enable-optimizations
+          description: Enable optimizations
+
+        - name: --disable-assertions
+          description: Disable assertions
+
+        - name: --enable-builtin-memcpy
+          description: Enable built-in memcpy routine
+
+        - name: --enable-cma
+          description: Enable Cross Memory Attach (CMA)
+
+        - name: --disable-params-check
+          description: Disable checking user parameters passed to API
+
+        - name: --with-mcpu
+          description: Use CPU Model compiler option
+
+        - name: --with-march
+          description: Use architecture tuning compiler option
+
+        - name: use_cuda
+          description: Enable CUDA support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: --with-cuda
+          enabled_value:
+            default: ${cuda.prefix}
+          requires: [cuda]
+
+        - name: use_rocm
+          description: Enable ROCm support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: --with-rocm
+          enabled_value:
+            default: ${rocm.prefix}
+          requires: [rocm]
+
+        - name: --with-gdrcopy
+          description: Specify gdrcopy installation path
+          enabled:
+            default: false
+          enabled_value:
+            default: ${gdrcopy.prefix}
+
+        - name: --with-verbs
+          description: Specify RDMA verbs installation path
+          enabled_value:
+            default: ${rdma-core.prefix}
+
+        - name: --with-rdmacm
+          description: Specify RDMA core installation path
+          enabled_value:
+            default: ${rdma-core.prefix}
+
+        - name: --with-mlx5
+          description: Compile with mlx5 Direct Verbs support
+
+        - name: --with-rc
+          description: Compile Reliable Connection support
+
+        - name: --with-ud
+          description: Compile Unreliable Datagram support
+
+        - name: --with-dc
+          description: Compile Dynamic Connection support
+
+        - name: --with-ib-hw-tm
+          description: Compile Tag Matching support
+
+        - name: --with-dm
+          description: Compile Device Memory support
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${ucx.prefix}/lib -Wl,-rpath,${ucx.prefix}/lib
+    libs:
+      default: -lucm -lucp -lucs -luct
+    includes:
+      default: -I${ucx.prefix}/include

@@ -1,0 +1,8 @@
+cheese:
+  name: lapack
+  description: Linear Algebra PACKage
+  type: abstract
+
+  implementations:
+    - openblas
+    - intel-oneapi-mkl

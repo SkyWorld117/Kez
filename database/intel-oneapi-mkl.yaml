@@ -1,0 +1,73 @@
+cheese:
+  name: intel-oneapi-mkl
+  description: Intel oneAPI Math Kernel Library for high-performance math routines
+  type: vendor
+
+  dependencies:
+    - intel-oneapi
+
+  build:
+    configurations:
+      options:
+        - name: use_intel_fortran
+          description: Use Intel Fortran compiler
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: intel
+          disabled_value:
+            default: gf
+        - name: use_ilp64
+          description: Use ilp64 interface
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ilp64
+          disabled_value:
+            default: lp64
+        - name: multithreaded
+          description: Use multithreading
+          user_configurable: true
+          enabled:
+            default: false
+        - name: use_tbb
+          description: Use Intel TBB for threading
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: tbb
+          disabled_value:
+            default: gnu
+        - name: mpi-family
+          description: Use MPI implementation (OpenMPI or MPICH)
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_value:
+            default: openmpi
+          disabled_value:
+            default: intelmpi
+
+  properties:
+    ldflags:
+      default: -L${intel-oneapi.prefix}/mkl/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/mkl/latest/lib -Wl,--no-as-needed -m64
+    libs:
+      default: -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+      conditions:
+        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true
+          action: prepend
+          value: -lmkl_${intel-oneapi-mkl.config.use_intel_fortran}_${intel-oneapi-mkl.config.use_ilp64}
+        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true && ${intel-oneapi-mkl.multithreaded} true
+          action: prepend
+          value: -lmkl_${intel-oneapi-mkl.config.use_tbb}_thread
+        - condition: ${scalapack.use-intel-oneapi-mkl} true
+          action: prepend
+          value: -lmkl_scalapack_${intel-oneapi-mkl.config.use_ilp64} -lmkl_blacs_${intel-oneapi-mkl.config.mpi-family}_${intel-oneapi-mkl.config.use_ilp64}
+        - condition: ${fftw3-api.use-intel-oneapi-mkl} true
+          action: prepend
+          value: -lmkl_rt
+    includes:
+      default: -I${intel-oneapi.prefix}/mkl/latest/include -m64

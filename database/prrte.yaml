@@ -1,0 +1,63 @@
+cheese:
+  name: prrte
+  description: PMIx Reference RunTime Environment
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 4.0.0
+        url: https://github.com/openpmix/prrte/releases/download/v4.0.0/prrte-4.0.0.tar.gz
+
+  dependencies:
+    - hwloc
+    - libevent
+    - pmix
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${prrte.prefix}
+
+        - name: --with-libevent
+          description: Specify libevent installation path
+          enabled_value:
+            default: ${libevent.prefix}
+
+        - name: --with-pmix
+          description: Specify PMIx installation path
+          enabled_value:
+            default: ${pmix.prefix}
+
+        - name: --with-hwloc
+          description: Specify hwloc installation path
+          enabled_value:
+            default: ${hwloc.prefix}
+        
+        - name: --with-slurm
+          description: Enable Slurm support
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          enabled_value:
+            default: ${compiler.cflags}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${prrte.prefix}/lib -Wl,-rpath,${prrte.prefix}/lib
+    libs:
+      default: -lprrte
+    includes:
+      default: -I${prrte.prefix}/include
