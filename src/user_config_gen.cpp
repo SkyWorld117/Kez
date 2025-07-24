@@ -21,7 +21,8 @@ YAML::Node filtered_environment(const YAML::Node& env_node) {
             for (const auto& key : var) {
                 if (key.first.as<std::string>() == "default") {
                     tmp_var["value"] = key.second;
-                } else if (key.first.as<std::string>() != "user_configurable") {
+                } else if (key.first.as<std::string>() != "user_configurable" && 
+                           key.first.as<std::string>() != "condition") {
                     tmp_var[key.first] = key.second;
                 }
             }
@@ -36,18 +37,35 @@ YAML::Node filtered_options(const YAML::Node& opts_node) {
     for (const auto& opt : opts_node) {
         if (opt["user_configurable"] && opt["user_configurable"].as<bool>()) {
             YAML::Node tmp_opt = YAML::Node(YAML::NodeType::Map);
-            for (const auto& key : opt) {
-                if (key.first.as<std::string>() == "enabled_value" || key.first.as<std::string>() == "disabled_value") {
-                    for (const auto& nested_key : key.second) {
-                        if (nested_key.first.as<std::string>() == "default") {
-                            tmp_opt[key.first]["value"] = nested_key.second;
-                        } else {
-                            tmp_opt[key.first][nested_key.first] = nested_key.second;
-                        }
-                    }
-                } else if (key.first.as<std::string>() != "user_configurable") {
-                    tmp_opt[key.first] = key.second;
+            tmp_opt["name"] = opt["name"];
+
+            if (opt["description"]) {
+                tmp_opt["description"] = opt["description"].as<std::string>();
+            }
+
+            if (opt["enabled"]) {
+                if (opt["enabled"]["default"]) {
+                    tmp_opt["enabled"] = opt["enabled"]["default"];
                 }
+                // Otherwise probably determined via condition, do not touch it then.
+            } else {
+                tmp_opt["enabled"] = true; // Default to enabled if not specified
+            }
+
+            if (opt["enabled_value"]) {
+                if (opt["enabled_value"]["default"]) {
+                    tmp_opt["enabled_value"] = opt["enabled_value"]["default"];
+                }
+            } else {
+                tmp_opt["enabled_value"] = YAML::Node(YAML::NodeType::Null); // Default to null if not specified
+            }
+
+            if (opt["disabled_value"]) {
+                if (opt["disabled_value"]["default"]) {
+                    tmp_opt["disabled_value"] = opt["disabled_value"]["default"];
+                }
+            } else {
+                tmp_opt["disabled_value"] = YAML::Node(YAML::NodeType::Null); // Default to null if not specified
             }
             opts.push_back(tmp_opt);
         }
