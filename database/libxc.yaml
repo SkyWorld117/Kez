@@ -21,7 +21,6 @@ cheese:
           user_configurable: true
           enabled:
             default: false
-          enabled_format: --enable-cuda
           disabled_format: --disable-cuda
           requires: [cuda]
 
