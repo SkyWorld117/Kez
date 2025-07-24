@@ -7,20 +7,16 @@
 
 // We assume the database is healthy.
 
-#ifndef deps_resolve
+#pragma once
 
-#define deps_resolve
-
+#include <yaml-cpp/yaml.h>
 #include <iostream>
 #include <filesystem>
-#include <yaml-cpp/yaml.h>
-
 #include <vector>
+#include <unordered_map>
 #include <string>
 
-#include <unordered_map>
+#include "colors/colored_io.h"
 
 std::vector<std::string> resolve_dependencies(const std::string& pkg_name);
 std::vector<std::string> resolve_filtered_dependencies(const std::string& pkg_name);
-
-#endif
