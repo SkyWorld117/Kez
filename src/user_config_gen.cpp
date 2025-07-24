@@ -67,6 +67,7 @@ YAML::Node filtered_options(const YAML::Node& opts_node) {
             } else {
                 tmp_opt["disabled_value"] = YAML::Node(YAML::NodeType::Null); // Default to null if not specified
             }
+
             opts.push_back(tmp_opt);
         }
     }
