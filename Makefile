@@ -12,9 +12,8 @@ cheese_config_verifier: src/package_format_verifier/*.cpp src/package_format_ver
 cheese_deps_resolve: src/deps_resolve.h src/deps_resolve.cpp
 	g++ -c src/deps_resolve.cpp -o src/deps_resolve.o $(CXXFLAGS)
 
-test_deps_resolve: src/test_deps_resolve.cpp cheese_deps_resolve
-	g++ -c src/test_deps_resolve.cpp -o src/test_deps_resolve.o $(CXXFLAGS)
-	g++ src/test_deps_resolve.o	src/deps_resolve.o -o bin/test_deps_resolve $(CXXFLAGS)
+test_deps_resolve: src/test_deps_resolve.cpp src/dependency_resolver/*.cpp
+	g++ src/test_deps_resolve.cpp src/dependency_resolver/*.cpp -o bin/test_deps_resolve $(CXXFLAGS)
 
 cheese_user_config_gen: src/user_config_gen.cpp
 	g++ src/user_config_gen.cpp src/deps_resolve.o -o bin/cheese_user_config_gen $(CXXFLAGS)

@@ -1,4 +1,4 @@
-#include "deps_resolve.h"
+#include "dependency_resolver/resolve_dependencies.h"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -18,15 +18,15 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::vector<std::string> filtered_dependencies = resolve_filtered_dependencies(pkg_name);
-    if (filtered_dependencies.empty()) {
-        std::cout << "No filtered dependencies found for package: " << pkg_name << std::endl;
-    } else {
-        std::cout << "Filtered dependencies for package '" << pkg_name << "':" << std::endl;
-        for (const auto& dep : filtered_dependencies) {
-            std::cout << "- " << dep << std::endl;
-        }
-    }
+    // std::vector<std::string> filtered_dependencies = resolve_filtered_dependencies(pkg_name);
+    // if (filtered_dependencies.empty()) {
+    //     std::cout << "No filtered dependencies found for package: " << pkg_name << std::endl;
+    // } else {
+    //     std::cout << "Filtered dependencies for package '" << pkg_name << "':" << std::endl;
+    //     for (const auto& dep : filtered_dependencies) {
+    //         std::cout << "- " << dep << std::endl;
+    //     }
+    // }
 
     return 0;
 }
