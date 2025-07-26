@@ -62,6 +62,9 @@ cheese:
           user_configurable: true
           enabled_value:
             default: ${gmp.ldflags}
+    stages:
+      - target: ~
+      - target: install
 
   properties:
     ldflags:
