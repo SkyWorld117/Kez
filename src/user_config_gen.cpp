@@ -128,11 +128,13 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
         config["cheese"][pkg_name]["implementation"] = db_pkg_node["cheese"]["implementations"][0].as<std::string>();
     }
     if (db_pkg_node["cheese"]["build"]) {
-        config["cheese"][pkg_name]["build"] = YAML::Node(YAML::NodeType::Map);
         if (db_pkg_node["cheese"]["build"]["configurations"]) {
             if (db_pkg_node["cheese"]["build"]["configurations"]) {
                 YAML::Node filtered_config = filtered_configurations(db_pkg_node["cheese"]["build"]["configurations"]);
                 if (!filtered_config.IsNull() && !(filtered_config.size() == 0)) {
+                    if (!config["cheese"][pkg_name]["build"]) {
+                        config["cheese"][pkg_name]["build"] = YAML::Node(YAML::NodeType::Map);
+                    }
                     config["cheese"][pkg_name]["build"]["configurations"] = filtered_config;
                 }
             }
@@ -140,6 +142,9 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
         if (db_pkg_node["cheese"]["build"]["stages"]) {
             YAML::Node filtered_stages_node = filtered_stages(db_pkg_node["cheese"]["build"]["stages"]);
             if (!filtered_stages_node.IsNull() && !(filtered_stages_node.size() == 0)) {
+                if (!config["cheese"][pkg_name]["build"]) {
+                    config["cheese"][pkg_name]["build"] = YAML::Node(YAML::NodeType::Map);
+                }
                 config["cheese"][pkg_name]["build"]["stages"] = filtered_stages_node;
             }
         }
