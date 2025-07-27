@@ -65,9 +65,13 @@ void build_adjacency_list(const std::string& pkg_name) {
 
     // Ask for user selection for optional dependencies
     if (!optional_deps.empty()) {
-        INFO("Optional dependencies for '" + concrete_pkg_name + "':");
+        bool has_optional = false;
         for (const auto& dep : optional_deps) {
             if (use_optional_packages.find(dep) == use_optional_packages.end()) {
+                if (!has_optional) {
+                    INFO("Optional dependencies for '" + concrete_pkg_name + "':");
+                    has_optional = true;
+                }
                 INFO("- Include optional dependency: " + dep + "? (y/n)");
                 std::string choice;
                 std::getline(std::cin, choice);
