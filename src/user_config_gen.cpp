@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "colors/colored_io.h"
-#include "deps_resolve.h"
+#include "dependency_resolver/resolve_dependencies.h"
 
 YAML::Node config = YAML::Node(YAML::NodeType::Map);
 
@@ -60,12 +60,14 @@ YAML::Node filtered_options(const YAML::Node& opts_node) {
                 tmp_opt["enabled_value"] = YAML::Node(YAML::NodeType::Null); // Default to null if not specified
             }
 
-            if (opt["disabled_value"]) {
-                if (opt["disabled_value"]["default"]) {
-                    tmp_opt["disabled_value"] = opt["disabled_value"]["default"];
+            if (opt["disabled_format"]) {
+                if (opt["disabled_value"]) {
+                    if (opt["disabled_value"]["default"]) {
+                        tmp_opt["disabled_value"] = opt["disabled_value"]["default"];
+                    }
+                } else {
+                    tmp_opt["disabled_value"] = YAML::Node(YAML::NodeType::Null); // Default to null if not specified
                 }
-            } else {
-                tmp_opt["disabled_value"] = YAML::Node(YAML::NodeType::Null); // Default to null if not specified
             }
 
             opts.push_back(tmp_opt);

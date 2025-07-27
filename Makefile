@@ -15,8 +15,8 @@ cheese_deps_resolve: src/deps_resolve.h src/deps_resolve.cpp
 test_deps_resolve: src/test_deps_resolve.cpp src/dependency_resolver/*.cpp
 	g++ src/test_deps_resolve.cpp src/dependency_resolver/*.cpp -o bin/test_deps_resolve $(CXXFLAGS)
 
-cheese_user_config_gen: src/user_config_gen.cpp
-	g++ src/user_config_gen.cpp src/deps_resolve.o -o bin/cheese_user_config_gen $(CXXFLAGS)
+cheese_user_config_gen: src/user_config_gen.cpp src/dependency_resolver/*.cpp
+	g++ src/user_config_gen.cpp src/dependency_resolver/*.cpp -o bin/cheese_user_config_gen $(CXXFLAGS)
 
 .PHONY: all
 all: cheese_config_verifier cheese_deps_resolve test_deps_resolve cheese_user_config_gen
