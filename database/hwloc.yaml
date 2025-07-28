@@ -78,7 +78,7 @@ cheese:
         - name: CXX
           description: C++ compiler
           enabled_value:
-            default: ${compiler.cpp}
+            default: ${compiler.cxx}
 
         - name: CXXFLAGS
           description: C++ compiler flags
