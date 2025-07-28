@@ -25,8 +25,14 @@ cheese:
         description: <another_dependency_description>
         version: <another_dependency_version> # default is latest
         build:
-        configurations: <configurations_list> # If exists in the original package
-        stages: <stages_list> # If exists in the original package AND the stages are configurable
+            configurations: <configurations_list> # If exists in the original package
+            stages: <stages_list> # If exists in the original package AND the stages are configurable
 
     ...
+
+recipe:
+    abstract_packages: # Optional, if the user has selected abstract packages
+        <abstract_package_name>: <selected_abstract_package_name>
+        <another_abstract_package_name>: <selected_abstract_package_name>
+        ...
 ```

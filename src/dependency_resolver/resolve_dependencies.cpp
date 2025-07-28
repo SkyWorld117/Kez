@@ -122,3 +122,16 @@ std::vector<std::string> resolve_dependencies(const std::string& pkg_name) {
 
     return ordered_dependencies;
 }
+
+std::pair<std::vector<std::string>, std::unordered_map<std::string, std::string>> resolve_dependencies(const std::string& pkg_name, bool filter_system_pkg) {
+    std::vector<std::string> ordered_dependencies = resolve_dependencies(pkg_name);
+
+    std::vector<std::string> filtered_dependencies;
+    for (const auto& dep : ordered_dependencies) {
+        if (!filter_system_pkg || !system_packages[dep]) {
+            filtered_dependencies.push_back(dep);
+        }
+    }
+
+    return { filtered_dependencies, abstract_packages };
+}

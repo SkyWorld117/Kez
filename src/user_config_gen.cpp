@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <algorithm>
 
 #include "colors/colored_io.h"
 #include "dependency_resolver/resolve_dependencies.h"
@@ -159,8 +161,10 @@ int main(int argc, char* argv[]) {
 
     std::string pkg_name = argv[1];
 
-    std::vector<std::string> dependencies = resolve_dependencies(pkg_name); // For testing only
-    // std::vector<std::string> dependencies = resolve_filtered_dependencies(pkg_name);
+    // std::vector<std::string> dependencies = resolve_dependencies(pkg_name); // For testing only
+    std::pair<std::vector<std::string>, std::unordered_map<std::string, std::string>> result = resolve_dependencies(pkg_name, true);
+    std::vector<std::string> dependencies = result.first;
+    std::unordered_map<std::string, std::string> abstract_packages = result.second;
     if (dependencies.empty()) {
         ERROR("No dependencies found for package: " + pkg_name);
         return 1;
@@ -178,6 +182,13 @@ int main(int argc, char* argv[]) {
         }
         YAML::Node db_pkg_node = YAML::LoadFile(config_path.string());
         config_per_pkg(db_pkg_node);
+    }
+
+    // Additional section to store abstract package selections
+    config["recipe"] = YAML::Node(YAML::NodeType::Map);
+    config["recipe"]["abstract_packages"] = YAML::Node(YAML::NodeType::Map);
+    for (const auto& pair : abstract_packages) {
+        config["recipe"]["abstract_packages"][pair.first] = pair.second;
     }
 
     // Output the generated configuration

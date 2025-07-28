@@ -7,3 +7,6 @@ bin/test*
 
 # Ignore object files
 *.o
+
+# Ignore example configuration files
+example.yaml
