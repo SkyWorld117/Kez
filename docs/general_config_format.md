@@ -193,7 +193,6 @@ At last, we define the format of a `condition` using EBNF:
 
 ```ebnf
 condition = 
-    "required" <dependency> | 
     "environment" <variable> | 
     <option> <enabled> [<enabled_value>] | 
     <option> <disabled> [<disabled_value>] | 
