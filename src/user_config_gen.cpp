@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
 
     std::string pkg_name = argv[1];
 
-    // std::vector<std::string> dependencies = resolve_dependencies(pkg_name); // For testing only
+    std::vector<std::string> all_dependencies = resolve_dependencies(pkg_name);
     std::pair<std::vector<std::string>, std::unordered_map<std::string, std::string>> result = resolve_dependencies(pkg_name, true);
     std::vector<std::string> dependencies = result.first;
     std::unordered_map<std::string, std::string> abstract_packages = result.second;
@@ -189,6 +189,11 @@ int main(int argc, char* argv[]) {
     config["recipe"]["abstract_packages"] = YAML::Node(YAML::NodeType::Map);
     for (const auto& pair : abstract_packages) {
         config["recipe"]["abstract_packages"][pair.first] = pair.second;
+    }
+    // Add a list of all dependencies
+    config["recipe"]["dependencies"] = YAML::Node(YAML::NodeType::Sequence);
+    for (const auto& dep : all_dependencies) {
+        config["recipe"]["dependencies"].push_back(dep);
     }
 
     // Output the generated configuration
