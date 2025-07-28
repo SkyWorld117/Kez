@@ -17,10 +17,11 @@ cheese:
           enabled_value:
             default: ${libxc.prefix}
 
-        - name: --enable-cuda
+        - name: use_cuda
           user_configurable: true
           enabled:
             default: false
+          enabled_format: --enable-cuda
           disabled_format: --disable-cuda
           requires: [cuda]
 
@@ -46,10 +47,14 @@ cheese:
           user_configurable: true
           enabled:
             default: false
+            conditions:
+              - condition: ${libxc.config.use_cuda} true
+                value: true
           enabled_value:
             default: ~
             conditions:
-              - condition: --enable-cuda true
+              - condition: ${libxc.config.use_cuda} true
+                action: append
                 value: ${cuda.ldflags}
     stages:
       - target: ~
