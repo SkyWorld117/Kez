@@ -73,6 +73,7 @@ cheese:
             default: false
           enabled_value:
             default: ${gdrcopy.prefix}
+          requires: [gdrcopy]
 
         - name: --with-verbs
           description: Specify RDMA verbs installation path
