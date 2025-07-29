@@ -124,7 +124,9 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
     } else {
         config["cheese"][pkg_name]["version"] = YAML::Node(YAML::NodeType::Null);
     }
-    config["cheese"][pkg_name]["compiler"] = "system"; // default to system compiler
+    if (db_pkg_node["cheese"]["type"].as<std::string>() != "vendor") {
+        config["cheese"][pkg_name]["compiler"] = "system"; // default to system compiler
+    }
     if (db_pkg_node["cheese"]["implementations"]) {
         // Choose the first implementation as default
         config["cheese"][pkg_name]["implementation"] = db_pkg_node["cheese"]["implementations"][0].as<std::string>();
