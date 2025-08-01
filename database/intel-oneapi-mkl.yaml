@@ -9,47 +9,31 @@ cheese:
   build:
     configurations:
       options:
-        - name: use_intel_fortran
-          description: Use Intel Fortran compiler
+        - name: fortran_format
+          description: Fortran Format [ gf | intel ]
           user_configurable: true
-          enabled:
-            default: false
           enabled_value:
-            default: intel
-          disabled_value:
             default: gf
-        - name: use_ilp64
-          description: Use ilp64 interface
+        - name: integer_size
+          description: Use ilp64 interface [ lp64 | ilp64 ]
           user_configurable: true
-          enabled:
-            default: false
           enabled_value:
-            default: ilp64
-          disabled_value:
             default: lp64
         - name: multithreaded
           description: Use multithreading
           user_configurable: true
           enabled:
             default: false
-        - name: use_tbb
-          description: Use Intel TBB for threading
+        - name: multithreading_library
+          description: Multithreading library [ gnu | tbb ]
           user_configurable: true
-          enabled:
-            default: false
           enabled_value:
-            default: tbb
-          disabled_value:
             default: gnu
         - name: mpi-family
-          description: Use MPI implementation (OpenMPI or MPICH)
+          description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
           user_configurable: true
-          enabled:
-            default: true
           enabled_value:
             default: openmpi
-          disabled_value:
-            default: intelmpi
 
   properties:
     ldflags:
@@ -59,13 +43,13 @@ cheese:
       conditions:
         - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true
           action: prepend
-          value: -lmkl_${intel-oneapi-mkl.config.use_intel_fortran}_${intel-oneapi-mkl.config.use_ilp64}
-        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true && ${intel-oneapi-mkl.multithreaded} true
+          value: -lmkl_${intel-oneapi-mkl.config.fortran_format}_${intel-oneapi-mkl.config.integer_size}
+        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true && ${intel-oneapi-mkl.multithreading_library} true
           action: prepend
-          value: -lmkl_${intel-oneapi-mkl.config.use_tbb}_thread
+          value: -lmkl_${intel-oneapi-mkl.config.multithreading_library}_thread
         - condition: ${scalapack.use-intel-oneapi-mkl} true
           action: prepend
-          value: -lmkl_scalapack_${intel-oneapi-mkl.config.use_ilp64} -lmkl_blacs_${intel-oneapi-mkl.config.mpi-family}_${intel-oneapi-mkl.config.use_ilp64}
+          value: -lmkl_scalapack_${intel-oneapi-mkl.config.integer_size} -lmkl_blacs_${intel-oneapi-mkl.config.mpi-family}_${intel-oneapi-mkl.config.integer_size}
         - condition: ${fftw3-api.use-intel-oneapi-mkl} true
           action: prepend
           value: -lmkl_rt
