@@ -53,6 +53,7 @@ std::string parse_options(
         }
 
         std::string final_enabled, final_enabled_value, final_disabled_value;
+
         if (opt["enabled"]["conditions"]) {
             final_enabled = parse_conditions(
                 base_enabled,
@@ -66,6 +67,7 @@ std::string parse_options(
         } else {
             final_enabled = base_enabled;
         }
+
         if (opt["enabled_value"]["conditions"]) {
             final_enabled_value = parse_conditions(
                 base_enabled_value,
@@ -79,6 +81,18 @@ std::string parse_options(
         } else {
             final_enabled_value = base_enabled_value;
         }
+        if (!final_enabled_value.empty()) {
+            final_enabled_value = parse_scalar(
+                final_enabled_value,
+                template_map,
+                user_config,
+                user_config_context,
+                pkg_config,
+                build_mode,
+                env_path
+            );
+        }
+
         if (opt["disabled_value"]["conditions"]) {
             final_disabled_value = parse_conditions(
                 base_disabled_value,
@@ -91,6 +105,17 @@ std::string parse_options(
             );
         } else {
             final_disabled_value = base_disabled_value;
+        }
+        if (!final_disabled_value.empty()) {
+            final_disabled_value = parse_scalar(
+                final_disabled_value,
+                template_map,
+                user_config,
+                user_config_context,
+                pkg_config,
+                build_mode,
+                env_path
+            );
         }
 
         if (final_enabled == "true") {
