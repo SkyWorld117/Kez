@@ -73,7 +73,7 @@ std::string parse_template(
     if (std::find(abstract_packages.begin(), abstract_packages.end(), package_name) != abstract_packages.end()) {
         // If the package is an abstract package, we need to resolve it
         std::string concrete_pkg_name = user_config["recipe"]["abstract_packages"][package_name].as<std::string>();
-        return parse_property(
+        std::string result = parse_property(
             concrete_pkg_name + "." + template_str.substr(package_name.length() + 1),
             template_map,
             user_config,
@@ -83,9 +83,12 @@ std::string parse_template(
             build_mode,
             env_path
         );
+        template_map[template_str] = result; // Cache the resolved template
+        template_map[concrete_pkg_name + "." + template_str.substr(package_name.length() + 1)] = result; // Cache the concrete package template
+        return result;
     } else {
         // If the package is not abstract, we can resolve it directly
-        return parse_property(
+        std::string result = parse_property(
             template_str,
             template_map,
             user_config,
@@ -95,5 +98,7 @@ std::string parse_template(
             build_mode,
             env_path
         );
+        template_map[template_str] = result; // Cache the resolved template
+        return result;
     }
 }
