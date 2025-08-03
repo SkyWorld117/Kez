@@ -18,6 +18,9 @@ test_deps_resolve: src/test_deps_resolve.cpp src/dependency_resolver/*.cpp
 cheese_user_config_gen: src/user_config_gen.cpp src/dependency_resolver/*.cpp
 	g++ src/user_config_gen.cpp src/dependency_resolver/*.cpp -o bin/cheese_user_config_gen $(CXXFLAGS)
 
+cheese_parser: src/parser/*.cpp src/parser/*.h
+	g++ src/parser/*.cpp -o bin/cheese_parser $(CXXFLAGS)
+
 test_parser: src/test_parser.cpp src/parser/*.cpp
 	g++ src/test_parser.cpp src/parser/*.cpp -o bin/test_parser $(CXXFLAGS)
 

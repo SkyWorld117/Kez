@@ -192,8 +192,12 @@ bool evaluate_condition(
     }
 
     // If we reach here, the condition is not recognized
-    ERROR("Unrecognized condition: " + std::string(tokens.begin(), tokens.end()));
-    exit(EXIT_FAILURE);        
+    std::string error_tokens;
+    for (const auto& token : tokens) {
+        error_tokens += token + " ";
+    }
+    ERROR("Unrecognized condition: " + error_tokens);
+    exit(EXIT_FAILURE);
 }
 
 std::string parse_conditions(

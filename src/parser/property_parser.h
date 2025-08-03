@@ -8,6 +8,7 @@
 #include <string>
 
 #include "../colors/colored_io.h"
+#include "conditions_parser.h"
 #include "package_parser.h"
 
 std::string parse_property(

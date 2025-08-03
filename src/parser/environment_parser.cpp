@@ -13,12 +13,12 @@ std::vector<std::string> parse_environment(
     std::string pkg_name = pkg_config["cheese"]["name"].as<std::string>();
     std::vector<std::string> env_vars;
 
-    for (const auto& var : env_node) {
+    for (YAML::Node var : env_node) {
         std::string var_name = var["name"].as<std::string>();
         std::string base_value;
         if (var["user_configurable"] && var["user_configurable"].as<bool>()) {
             YAML::Node user_config_var;
-            for (const auto& user_var : user_config_context) {
+            for (YAML::Node user_var : user_config_context) {
                 if (user_var["name"].as<std::string>() == var_name) {
                     user_config_var = user_var;
                     break;
@@ -41,7 +41,7 @@ std::vector<std::string> parse_environment(
         if (var["conditions"]) {
             value = parse_conditions(
                 base_value,
-                var,
+                var["conditions"],
                 template_map,
                 user_config,
                 pkg_config,

@@ -35,7 +35,7 @@ cheese:
             
             - name: LINKFLAGS
               description: Linker flags for Fortran
-              default: ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fft.ldflags} ${libxc.ldflags}
+              default: ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} ${libxc.ldflags}
 
             - name: COMPFLAGS
               description: Fortran compiler flags
@@ -44,7 +44,7 @@ cheese:
 
             - name: LIBS
               description: Libraries to link against
-              default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fft.libs} ${libxc.libs}
+              default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fftw3-api.libs} ${libxc.libs}
 
             - name: MULT_KERN
               description: Matrix multiplication kernel

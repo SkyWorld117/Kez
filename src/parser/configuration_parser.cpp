@@ -10,6 +10,7 @@ std::pair<std::vector<std::string>, std::string> parse_configuration(
     const std::string& build_mode,
     const std::string& env_path
 ) {
+    INFO("Parsing environment configuration");
     std::vector<std::string> env_config;
     if (config["environment"]) {
         YAML::Node user_config_context_env;
@@ -30,6 +31,7 @@ std::pair<std::vector<std::string>, std::string> parse_configuration(
         env_config = {};
     }
 
+    INFO("Parsing options configuration");
     std::string opts_config;
     if (config["options"]) {
         YAML::Node user_config_context_opts;

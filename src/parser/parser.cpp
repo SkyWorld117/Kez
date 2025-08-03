@@ -58,6 +58,7 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, std::vector<std::string>> package_instructions;
 
     for (const auto& item : user_config["cheese"]) {
+        INFO("Processing package: " + item.first.as<std::string>());
         std::string pkg_name = item.first.as<std::string>();
 
         // Skip if already processed
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
+        INFO("Loading configuration for package: " + pkg_name);
         std::filesystem::path config_path = db_path / (pkg_name + ".yaml");
         if (!std::filesystem::exists(config_path)) {
             ERROR("Configuration file does not exist: " + config_path.string());
@@ -73,6 +75,7 @@ int main(int argc, char* argv[]) {
         YAML::Node pkg_config = YAML::LoadFile(config_path.string());
 
         // Parse the package configuration
+        INFO("Parsing package: " + pkg_name);
         std::vector<std::string> instructions = parse_package(
             pkg_name,
             template_map,

@@ -12,9 +12,14 @@ std::vector<std::string> parse_package(
 ) {
     std::vector<std::string> instructions;
 
+    if (!pkg_config["cheese"]["build"]) {
+        return instructions; // No build instructions available
+    }
+
     // TODO: Implement downloading etc.
 
     // Preprocessing
+    INFO("Preprocessing package: " + package_name);
     if (pkg_config["cheese"]["build"]["preprocessing"]) {
         std::string preprocessing = parse_scalar(
             pkg_config["cheese"]["build"]["preprocessing"].as<std::string>(),
@@ -30,8 +35,9 @@ std::vector<std::string> parse_package(
     }
 
     // Compiling
-
+    INFO("Compiling package: " + package_name);
     // Global configurations
+    INFO("Global configurations for package: " + package_name);
     if (pkg_config["cheese"]["build"]["configurations"]) {
         YAML::Node configurations = pkg_config["cheese"]["build"]["configurations"];
         YAML::Node user_config_context_config;
@@ -65,6 +71,8 @@ std::vector<std::string> parse_package(
                 }
             }
             // Ignore the others for now
+        } else {
+            opts_config = "";
         }
         if (opts_config.empty()) {
             for (const auto& env : env_config) {
@@ -80,7 +88,8 @@ std::vector<std::string> parse_package(
     }
 
     // Stages
-    std::string threads = getenv("CHEESE_THREADS");
+    INFO("Stages for package: " + package_name);
+    std::string threads = getenv("CHEESE_NPROC");
     if (pkg_config["cheese"]["build"]["stages"]) {
         YAML::Node stages = pkg_config["cheese"]["build"]["stages"];
 
@@ -150,6 +159,7 @@ std::vector<std::string> parse_package(
     }
 
     // Postprocessing
+    INFO("Postprocessing package: " + package_name);
     if (pkg_config["cheese"]["build"]["postprocessing"]) {
         std::string postprocessing = parse_scalar(
             pkg_config["cheese"]["build"]["postprocessing"].as<std::string>(),

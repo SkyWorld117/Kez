@@ -29,6 +29,12 @@ cheese:
 
         - name: --with-cuda
           description: Specify CUDA installation path
+          enabled:
+            conditions:
+              - condition: ${hwloc.config.use_cuda} true
+                value: true
+              - condition: ${hwloc.config.use_cuda} false
+                value: false
           enabled_value:
             conditions:
               - condition: ${hwloc.config.use_cuda} true
@@ -36,6 +42,12 @@ cheese:
 
         - name: --with-cuda-version
           description: Specify CUDA version
+          enabled:
+            conditions:
+              - condition: ${hwloc.config.use_cuda} true
+                value: true
+              - condition: ${hwloc.config.use_cuda} false
+                value: false
           enabled_value:
             conditions:
               - condition: ${hwloc.config.use_cuda} true
@@ -52,6 +64,12 @@ cheese:
         
         - name: --with-rocm
           description: Specify ROCm installation path
+          enabled:
+            conditions:
+              - condition: ${hwloc.config.use_rocm} true
+                value: true
+              - condition: ${hwloc.config.use_rocm} false
+                value: false
           enabled_value:
             conditions:
               - condition: ${hwloc.config.use_rocm} true
@@ -59,6 +77,12 @@ cheese:
 
         - name: --with-rocm-version
           description: Specify ROCm version
+          enabled:
+            conditions:
+              - condition: ${hwloc.config.use_rocm} true
+                value: true
+              - condition: ${hwloc.config.use_rocm} false
+                value: false
           enabled_value:
             conditions:
               - condition: ${hwloc.config.use_rocm} true

@@ -47,6 +47,10 @@ std::string parse_template(
             } else {
                 compiler_name = compiler_spec.substr(0, compiler_spec.find('@')); // Extract compiler name before '@'
             }
+            if (compiler_property.find("config.") == 0 || compiler_property.find("env.") == 0) {
+                ERROR("Compiler properties cannot be used in templates: " + template_str);
+                exit(EXIT_FAILURE);
+            }
             return parse_property(
                 compiler_name + "." + compiler_property,
                 template_map,

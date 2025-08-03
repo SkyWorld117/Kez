@@ -13,24 +13,25 @@ std::string parse_options(
     std::string pkg_name = pkg_config["cheese"]["name"].as<std::string>();
     std::string options;
 
-    for (const auto& opt : opts_node) {
+    for (YAML::Node opt : opts_node) {
         std::string opt_name = opt["name"].as<std::string>();
+        INFO("Parsing option: " + opt_name);
         std::string base_enabled, base_enabled_value, base_disabled_value;
         if (opt["user_configurable"] && opt["user_configurable"].as<bool>()) {
             YAML::Node user_config_opt;
-            for (const auto& user_opt : user_config_context) {
+            for (YAML::Node user_opt : user_config_context) {
                 if (user_opt["name"].as<std::string>() == opt_name) {
                     user_config_opt = user_opt;
                     break;
                 }
             }
             base_enabled = user_config_opt["enabled"].as<std::string>(); // Base enabled must exist in user_config
-            if (user_config_opt["enabled_value"].IsNull()) {
+            if (user_config_opt.IsNull() || !user_config_opt["enabled_value"] || user_config_opt["enabled_value"].IsNull()) {
                 base_enabled_value = "";
             } else {
                 base_enabled_value = user_config_opt["enabled_value"].as<std::string>();
             }
-            if (user_config_opt["disabled_value"].IsNull()) {
+            if (user_config_opt.IsNull() || !user_config_opt["disabled_value"] || user_config_opt["disabled_value"].IsNull()) {
                 base_disabled_value = "";
             } else {
                 base_disabled_value = user_config_opt["disabled_value"].as<std::string>();
@@ -41,24 +42,25 @@ std::string parse_options(
             } else {
                 base_enabled = opt["enabled"]["default"].as<std::string>();
             }
-            if (!opt["enabled_value"] || opt["enabled_value"].IsNull()) {
+            if (!opt["enabled_value"] || !opt["enabled_value"]["default"]) {
                 base_enabled_value = "";
             } else {
-                base_enabled_value = opt["enabled_value"].as<std::string>();
+                base_enabled_value = opt["enabled_value"]["default"].as<std::string>();
             }
-            if (!opt["disabled_value"] || opt["disabled_value"].IsNull()) {
+            if (!opt["disabled_value"] || !opt["disabled_value"]["default"]) {
                 base_disabled_value = "";
             } else {
-                base_disabled_value = opt["disabled_value"].as<std::string>();
+                base_disabled_value = opt["disabled_value"]["default"].as<std::string>();
             }
         }
 
         std::string final_enabled, final_enabled_value, final_disabled_value;
 
+        INFO("Getting enabled state for option: " + opt_name);
         if (opt["enabled"]["conditions"]) {
             final_enabled = parse_conditions(
                 base_enabled,
-                opt["enabled"],
+                opt["enabled"]["conditions"],
                 template_map,
                 user_config,
                 pkg_config,
@@ -69,10 +71,11 @@ std::string parse_options(
             final_enabled = base_enabled;
         }
 
-        if (opt["enabled_value"]["conditions"]) {
+        INFO("Getting enabled value for option: " + opt_name);
+        if (final_enabled == "true" && opt["enabled_value"]["conditions"]) {
             final_enabled_value = parse_conditions(
                 base_enabled_value,
-                opt["enabled_value"],
+                opt["enabled_value"]["conditions"],
                 template_map,
                 user_config,
                 pkg_config,
@@ -82,7 +85,7 @@ std::string parse_options(
         } else {
             final_enabled_value = base_enabled_value;
         }
-        if (!final_enabled_value.empty()) {
+        if (final_enabled == "true" && !final_enabled_value.empty()) {
             final_enabled_value = parse_scalar(
                 final_enabled_value,
                 template_map,
@@ -95,10 +98,11 @@ std::string parse_options(
             );
         }
 
-        if (opt["disabled_value"]["conditions"]) {
+        INFO("Getting disabled value for option: " + opt_name);
+        if (final_enabled == "false" && opt["disabled_value"]["conditions"]) {
             final_disabled_value = parse_conditions(
                 base_disabled_value,
-                opt["disabled_value"],
+                opt["disabled_value"]["conditions"],
                 template_map,
                 user_config,
                 pkg_config,
@@ -108,7 +112,7 @@ std::string parse_options(
         } else {
             final_disabled_value = base_disabled_value;
         }
-        if (!final_disabled_value.empty()) {
+        if (final_enabled == "false" && !final_disabled_value.empty()) {
             final_disabled_value = parse_scalar(
                 final_disabled_value,
                 template_map,
@@ -121,6 +125,7 @@ std::string parse_options(
             );
         }
 
+        INFO("Final enabled state for option: " + opt_name + " is " + final_enabled);
         if (final_enabled == "true") {
             std::string enabled_format = opt["enabled_format"] ? opt["enabled_format"].as<std::string>() : opt_name;
             options += enabled_format + (final_enabled_value.empty() ? "" : "=\"" + final_enabled_value + "\"");
