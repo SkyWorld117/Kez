@@ -80,6 +80,7 @@ std::vector<std::string> parse_package(
             }
         } else {
             std::string command = opts_config;
+            std::reverse(env_config.begin(), env_config.end());
             for (const auto& env : env_config) {
                 command = env + " " + command;
             }
@@ -146,7 +147,9 @@ std::vector<std::string> parse_package(
                     build_mode,
                     env_path
                 );
-                for (const auto& env : parsed_stage_configurations.first) {
+                std::vector<std::string> stage_env_config = parsed_stage_configurations.first;
+                std::reverse(stage_env_config.begin(), stage_env_config.end());
+                for (const auto& env : stage_env_config) {
                     stage_target = env + " " + stage_target;
                 }
                 if (!parsed_stage_configurations.second.empty()) {
