@@ -146,7 +146,8 @@ bool evaluate_condition(
             exit(EXIT_FAILURE);
         }
         if (template_map.find(tokens[1]) != template_map.end()) {
-            return !template_map.at(tokens[1]).empty();
+            std::string env_var = template_map.at(tokens[1]).substr(2, template_map.at(tokens[1]).size() - 3); // Remove ${ and }
+            return !template_map.at(env_var).empty();
         } else {
             return false;
         }
