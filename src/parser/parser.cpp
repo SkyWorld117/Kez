@@ -59,6 +59,12 @@ int main(int argc, char* argv[]) {
 
     for (const auto& item : user_config["cheese"]) {
         std::string pkg_name = item.first.as<std::string>();
+
+        // Skip if already processed
+        if (package_instructions.find(pkg_name) != package_instructions.end()) {
+            continue;
+        }
+
         std::filesystem::path config_path = db_path / (pkg_name + ".yaml");
         if (!std::filesystem::exists(config_path)) {
             ERROR("Configuration file does not exist: " + config_path.string());
@@ -71,6 +77,7 @@ int main(int argc, char* argv[]) {
             pkg_name,
             template_map,
             user_config,
+            user_config["cheese"][pkg_name],
             user_config["cheese"][pkg_name],
             pkg_config,
             build_mode,
