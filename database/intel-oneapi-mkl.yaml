@@ -44,7 +44,7 @@ cheese:
         - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true
           action: prepend
           value: -lmkl_${intel-oneapi-mkl.config.fortran_format}_${intel-oneapi-mkl.config.integer_size}
-        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true && ${intel-oneapi-mkl.multithreading_library} true
+        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true && ${intel-oneapi-mkl.config.multithreading_library} true
           action: prepend
           value: -lmkl_${intel-oneapi-mkl.config.multithreading_library}_thread
         - condition: ${scalapack.use-intel-oneapi-mkl} true

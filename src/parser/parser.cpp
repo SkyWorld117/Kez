@@ -8,6 +8,7 @@
 #include "../colors/colored_io.h"
 
 #include "package_parser.h"
+#include "property_parser.h"
 
 int main(int argc, char* argv[]) {
     // Expected arguments:
@@ -89,6 +90,26 @@ int main(int argc, char* argv[]) {
 
         package_instructions[pkg_name] = instructions;
     }
+
+    for (const auto& pkg : user_config["cheese"]) {
+        INFO("Second pass for property parsing in package: " + pkg.first.as<std::string>());
+        std::string pkg_name = pkg.first.as<std::string>();
+        if (package_instructions.find(pkg_name) == package_instructions.end()) {
+            continue; // Skip if no instructions found
+        }
+        for (auto& instruction : package_instructions[pkg_name]) {
+            // Parse properties in the instruction
+            instruction = parse_properties_in_scalar(
+                instruction,
+                template_map,
+                user_config,
+                user_config["cheese"][pkg_name],
+                build_mode,
+                env_path
+            );
+        }
+    }
+
 
     // Output the instructions for each package
     for (const auto& pkg : user_config["cheese"]) {
