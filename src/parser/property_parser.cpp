@@ -50,8 +50,18 @@ std::string parse_property(
                property == "fort" or
                property == "omp_flags") {
         std::string result = pkg_config_node["cheese"]["properties"][property].as<std::string>();
-        template_map[property_name] = result;
-        return result;
+        std::string resolved_value = parse_scalar(
+            result,
+            template_map,
+            user_config,
+            user_config_pkg,
+            user_config_context,
+            pkg_config_node,
+            build_mode,
+            env_path
+        );
+        template_map[property_name] = resolved_value;
+        return resolved_value;
     } else {
         // For other properties, we need to parse the conditions
         // std::string base_value = pkg_config_node["cheese"]["properties"][property]["default"] ? 

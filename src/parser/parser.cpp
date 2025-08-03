@@ -91,9 +91,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Output the instructions for each package
-    for (const auto& pkg : package_instructions) {
-        INFO("Instructions for package: " + pkg.first);
-        for (const auto& instruction : pkg.second) {
+    for (const auto& pkg : user_config["cheese"]) {
+        INFO("Instructions for package: " + pkg.first.as<std::string>());
+        for (const auto& instruction : package_instructions[pkg.first.as<std::string>()]) {
             std::cout << "- " << instruction << std::endl;
         }
     }

@@ -45,12 +45,27 @@ std::string parse_template(
             if (compiler_spec == "system") {
                 compiler_name = "gcc"; // Default to gcc for system compiler
             } else {
-                compiler_name = compiler_spec.substr(0, compiler_spec.find('@')); // Extract compiler name before '@'
+                compiler_name = compiler_spec.substr(0, compiler_spec.find('@')); // Extract compiler name before '@', format is "compiler@version"
             }
             if (compiler_property.find("config.") == 0 || compiler_property.find("env.") == 0) {
                 ERROR("Compiler properties cannot be used in templates: " + template_str);
                 exit(EXIT_FAILURE);
             }
+            // Handle the special case of "prefix"
+            // The reason for this is that a building environment may require multiple compilers, and the prefix is not always the same.
+            // So the same name is mapped to different prefixes, thus we cannot use `template_map` to resolve it.
+            // This requires using `${compiler.prefix}` in the template of the compiler configuration files.
+            if (compiler_property == "prefix") {
+                std::filesystem::path cheese_env(getenv("CHEESE_ENV"));
+                if (compiler_spec == "system") {
+                    std::filesystem::path prefix_path = cheese_env / "system";
+                    return prefix_path.string();
+                } else {
+                    std::filesystem::path prefix_path = cheese_env / "compilers" / (compiler_name + "-" + compiler_spec.substr(compiler_spec.find('@') + 1));
+                    return prefix_path.string();
+                }
+            }
+            // For other compiler properties, we can resolve them using the parse_property function
             return parse_property(
                 compiler_name + "." + compiler_property,
                 template_map,

@@ -100,11 +100,11 @@ cheese:
       - target: install
 
   properties:
-    c: ${gcc.prefix}/bin/gcc
-    cxx: ${gcc.prefix}/bin/g++
-    fort: ${gcc.prefix}/bin/gfortran
+    c: ${compiler.prefix}/bin/gcc
+    cxx: ${compiler.prefix}/bin/g++
+    fort: ${compiler.prefix}/bin/gfortran
     omp_flags: -fopenmp
     ldflags:
-      default: -L${gcc.prefix}/lib64 -Wl,-rpath,${gcc.prefix}/lib64
+      default: -L${compiler.prefix}/lib64 -Wl,-rpath,${compiler.prefix}/lib64
     includes:
-      default: -I${gcc.prefix}/include
+      default: -I${compiler.prefix}/include
