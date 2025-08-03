@@ -9,6 +9,7 @@
 
 #include "package_parser.h"
 #include "property_parser.h"
+#include "filter.h"
 
 int main(int argc, char* argv[]) {
     // Expected arguments:
@@ -107,6 +108,7 @@ int main(int argc, char* argv[]) {
                 build_mode,
                 env_path
             );
+            filter(instruction); // Filter the instruction
         }
     }
 
