@@ -64,7 +64,7 @@ std::vector<std::string> parse_environment(
                 build_mode,
                 env_path
             );
-            env_vars.push_back(var_name + "=" + value);
+            env_vars.push_back(var_name + "=\"" + value + "\"");
         }
 
         template_map[pkg_name + ".env." + var_name] = value;
