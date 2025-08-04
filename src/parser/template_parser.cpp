@@ -56,12 +56,12 @@ std::string parse_template(
             // So the same name is mapped to different prefixes, thus we cannot use `template_map` to resolve it.
             // This requires using `${compiler.prefix}` in the template of the compiler configuration files.
             if (compiler_property == "prefix") {
-                std::filesystem::path cheese_env(getenv("FROMAGER_ENV"));
+                std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
                 if (compiler_spec == "system") {
-                    std::filesystem::path prefix_path = cheese_env / "system";
+                    std::filesystem::path prefix_path = fromager_env / "system";
                     return prefix_path.string();
                 } else {
-                    std::filesystem::path prefix_path = cheese_env / "compilers" / (compiler_name + "-" + compiler_spec.substr(compiler_spec.find('@') + 1));
+                    std::filesystem::path prefix_path = fromager_env / "compilers" / (compiler_name + "-" + compiler_spec.substr(compiler_spec.find('@') + 1));
                     return prefix_path.string();
                 }
             }
