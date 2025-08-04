@@ -5,16 +5,16 @@ set -Eeuo pipefail
 # This script creates a nearly distribution-independent Fromager environment.
 # This environment offers the essential system utilities. 
 
-if [ -d "${FROMAGER_WORKDIR}/env/system" ]; then
-    rm -rf "${FROMAGER_WORKDIR}/env/system"/*
+SYSTEM_PREFIX="${FROMAGER_ENV}/system" # System prefix of Fromager
+
+if [ -d "${SYSTEM_PREFIX}" ]; then
+    rm -rf "${SYSTEM_PREFIX}"/*
 fi
-mkdir -p "${FROMAGER_WORKDIR}/env/system"
+mkdir -p "${SYSTEM_PREFIX}"
 
 mkdir -p "${FROMAGER_WORKDIR}/.tmp"
 rm -rf "${FROMAGER_WORKDIR}"/.tmp/*
 cd "${FROMAGER_WORKDIR}/.tmp"
-
-SYSTEM_PREFIX="${FROMAGER_ENV}/system" # System prefix of Fromager
 
 # Helper function: GNU latest release detection
 fetch_latest_gnu() {
@@ -326,8 +326,8 @@ cmake .. \
 make -j"${FROMAGER_NPROC}" && make install
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
-# Fromager (WIP)
-make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}" release
+# # Fromager (WIP)
+# make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}" release
 
 
 ## PHASE 6: Other Tools
@@ -340,9 +340,9 @@ if command -v nvidia-smi &> /dev/null; then
     # Get CUDA version
     # Format `CUDA Version        : 12.4`
     cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
-    if [ uname -m = "x86_64" ]; then
+    if [ "$(uname -m)" = "x86_64" ]; then
         cuda_version="${cuda_version}-x86_64"
-    elif [ uname -m = "aarch64" ] || [ uname -m = "arm64" ]; then
+    elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
         cuda_version="${cuda_version}-aarch64"
     else
         echo >&2 "Unsupported architecture: $(uname -m)"
