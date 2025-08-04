@@ -1,6 +1,6 @@
 #include "resolve_dependencies.h"
 
-std::filesystem::path db_path(getenv("CHEESE_DB"));
+std::filesystem::path db_path(getenv("FROMAGER_DB"));
 std::unordered_map<std::string, std::vector<std::string>> adjacency_list;
 std::unordered_map<std::string, bool> system_packages;
 std::unordered_map<std::string, std::string> abstract_packages;

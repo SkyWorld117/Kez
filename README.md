@@ -1,9 +1,9 @@
-# Cheese
+# Fromager
 
-## Structure of $CHEESE_WORKDIR
+## Structure of $FROMAGER_WORKDIR
 
 ```
-$CHEESE_WORKDIR
+$FROMAGER_WORKDIR
 ├── config.yaml
 ├── states.yaml
 ├── compilers.yaml

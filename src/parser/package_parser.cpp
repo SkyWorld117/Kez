@@ -90,7 +90,7 @@ std::vector<std::string> parse_package(
 
     // Stages
     INFO("Stages for package: " + package_name);
-    std::string threads = getenv("CHEESE_NPROC");
+    std::string threads = getenv("FROMAGER_NPROC");
     if (pkg_config["cheese"]["build"]["stages"]) {
         YAML::Node stages = pkg_config["cheese"]["build"]["stages"];
 

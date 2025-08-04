@@ -2,14 +2,14 @@
 
 set -Eeuo pipefail
 
-# This script uses the `bin/cheese_config_verifier` to check the database correctness file by file.
+# This script uses the `bin/fromager_config_verifier` to check the database correctness file by file.
 
 echo "Starting database check..."
 
-file_list=$(find "${CHEESE_DB}" -type f -name "*.yaml" | sort)
+file_list=$(find "${FROMAGER_DB}" -type f -name "*.yaml" | sort)
 for file in $file_list; do
     echo "Checking file: $file"
-    if ! cheese_config_verifier "$file"; then
+    if ! fromager_config_verifier "$file"; then
         echo "Error: Verification failed for $file"
         exit 1
     fi

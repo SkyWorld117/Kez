@@ -2,19 +2,19 @@
 
 set -Eeuo pipefail
 
-# This script creates a nearly distribution-independent Cheese environment.
+# This script creates a nearly distribution-independent Fromager environment.
 # This environment offers the essential system utilities. 
 
-if [ -d "${CHEESE_WORKDIR}/env/system" ]; then
-    rm -rf "${CHEESE_WORKDIR}/env/system"/*
+if [ -d "${FROMAGER_WORKDIR}/env/system" ]; then
+    rm -rf "${FROMAGER_WORKDIR}/env/system"/*
 fi
-mkdir -p "${CHEESE_WORKDIR}/env/system"
+mkdir -p "${FROMAGER_WORKDIR}/env/system"
 
-mkdir -p "${CHEESE_WORKDIR}/.tmp"
-rm -rf "${CHEESE_WORKDIR}"/.tmp/*
-cd "${CHEESE_WORKDIR}/.tmp"
+mkdir -p "${FROMAGER_WORKDIR}/.tmp"
+rm -rf "${FROMAGER_WORKDIR}"/.tmp/*
+cd "${FROMAGER_WORKDIR}/.tmp"
 
-SYSTEM_PREFIX="${CHEESE_ENV}/system" # System prefix of Cheese
+SYSTEM_PREFIX="${FROMAGER_ENV}/system" # System prefix of Fromager
 
 # Helper function: GNU latest release detection
 fetch_latest_gnu() {
@@ -37,13 +37,13 @@ fetch_latest_gnu() {
         return 1
     fi
 
-    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/${latest}" "${url}${latest}"
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "${url}${latest}"
     if [ ${ext} = "tar.xz" ]; then
-        tar -xf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+        tar -xf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
     elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+        tar -xzf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
     elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+        tar -xjf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
     else
         echo >&2 "Unsupported file extension: ${ext}"
         return 1
@@ -60,8 +60,8 @@ fetch_latest_github() {
         return 1
     fi
     
-    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
-    tar -xzf "${CHEESE_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" && cd "${CHEESE_WORKDIR}/.tmp/${repo##*/}-${tag#v}"
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
+    tar -xzf "${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag#v}"
 }
 
 fetch_latest_isl() {
@@ -79,13 +79,13 @@ fetch_latest_isl() {
         return 1
     fi
 
-    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/${latest}" "${url}${latest}"
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "${url}${latest}"
     if [ ${ext} = "tar.xz" ]; then
-        tar -xf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+        tar -xf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
     elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+        tar -xzf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
     elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${latest}" && cd "${CHEESE_WORKDIR}/.tmp/${latest%.tar.*}"
+        tar -xjf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
     else
         echo >&2 "Unsupported file extension: ${ext}"
         return 1
@@ -93,9 +93,9 @@ fetch_latest_isl() {
 }
 
 fetch_latest_elfutils() {
-    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
-    bzip2 -d "${CHEESE_WORKDIR}/.tmp/elfutils.bz2"
-    tar -xf "${CHEESE_WORKDIR}/.tmp/elfutils" && cd "${CHEESE_WORKDIR}/.tmp"/elfutils-*
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
+    bzip2 -d "${FROMAGER_WORKDIR}/.tmp/elfutils.bz2"
+    tar -xf "${FROMAGER_WORKDIR}/.tmp/elfutils" && cd "${FROMAGER_WORKDIR}/.tmp"/elfutils-*
 }
 
 
@@ -109,8 +109,8 @@ fetch_latest_gnu "gmp"
     --enable-cxx \
     --enable-shared \
     --enable-static
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # mpfr
 fetch_latest_gnu "mpfr"
@@ -121,8 +121,8 @@ fetch_latest_gnu "mpfr"
     --enable-static \
     --enable-float128 \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # mpc
 fetch_latest_gnu "mpc" "tar.gz"
@@ -133,8 +133,8 @@ fetch_latest_gnu "mpc" "tar.gz"
     --enable-shared \
     --enable-static \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # isl
 fetch_latest_isl
@@ -145,21 +145,21 @@ fetch_latest_isl
     --with-gmp-prefix="${SYSTEM_PREFIX}" \
     --with-int=gmp \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 
 # PHASE 2: Compression Libraries
 # ----------------------------------------------------
 
 # zlib
-wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/zlib.tar.gz" "https://zlib.net/current/zlib.tar.gz"
-tar -xzf "${CHEESE_WORKDIR}/.tmp/zlib.tar.gz" && cd "${CHEESE_WORKDIR}/.tmp"/zlib-*
+wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" "https://zlib.net/current/zlib.tar.gz"
+tar -xzf "${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp"/zlib-*
 ./configure \
     --prefix="${SYSTEM_PREFIX}" \
     --64
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # xz
 fetch_latest_github "tukaani-project/xz"
@@ -167,21 +167,21 @@ fetch_latest_github "tukaani-project/xz"
 ./configure \
     --prefix="${SYSTEM_PREFIX}" \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # lz4
 fetch_latest_github "lz4/lz4"
-make -j"${CHEESE_NPROC}" install PREFIX="${SYSTEM_PREFIX}" LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" install PREFIX="${SYSTEM_PREFIX}" LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # zstd
 fetch_latest_github "facebook/zstd"
 CFLAGS="-I${SYSTEM_PREFIX}/include" \
 CXXFLAGS="-I${SYSTEM_PREFIX}/include" \
 LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
-    make -j"${CHEESE_NPROC}" install PREFIX="${SYSTEM_PREFIX}" HAVE_ZLIB=1 HAVE_LZ4=1 HAVE_LZMA=1
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+    make -j"${FROMAGER_NPROC}" install PREFIX="${SYSTEM_PREFIX}" HAVE_ZLIB=1 HAVE_LZ4=1 HAVE_LZMA=1
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 
 # PHASE 3: Essential System Tools
@@ -191,7 +191,7 @@ cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
 fetch_latest_gnu "binutils"
 ./configure \
     --prefix="${SYSTEM_PREFIX}" \
-    --includedir="${CHEESE_WORKDIR}/.tmp/include" \
+    --includedir="${FROMAGER_WORKDIR}/.tmp/include" \
     --disable-multilib \
     --disable-nls \
     --enable-gold \
@@ -204,12 +204,12 @@ fetch_latest_gnu "binutils"
     --with-isl="${SYSTEM_PREFIX}" \
     --with-zstd="${SYSTEM_PREFIX}" \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # gcc 11.5.0 (for compatibility)
-wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" "https://ftpmirror.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
-tar -xf "${CHEESE_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" && cd "${CHEESE_WORKDIR}/.tmp/gcc-11.5.0"
+wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" "https://ftpmirror.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
+tar -xf "${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" && cd "${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0"
 ./configure \
     --prefix="${SYSTEM_PREFIX}" \
     --enable-languages=c,c++,fortran \
@@ -223,8 +223,8 @@ tar -xf "${CHEESE_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" && cd "${CHEESE_WORKDIR}/.tmp
     --with-zstd-lib="${SYSTEM_PREFIX}/lib" \
     --with-stage1-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
     --with-boot-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # elfutils
 fetch_latest_elfutils
@@ -233,8 +233,8 @@ fetch_latest_elfutils
     --enable-install-elfh \
     --disable-nls \
     LDFLAGS="-Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 
 # PHASE 4: Build Tools
@@ -248,8 +248,8 @@ fetch_latest_gnu "m4"
     --enable-threads=isoc+posix \
     --disable-nls \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # autoconf
 fetch_latest_gnu "autoconf"
@@ -257,16 +257,16 @@ fetch_latest_gnu "autoconf"
     --prefix="${SYSTEM_PREFIX}" \
     M4="${SYSTEM_PREFIX}/bin/m4" \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # automake
 fetch_latest_gnu "automake"
 ./configure \
     --prefix="${SYSTEM_PREFIX}" \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # libtool
 fetch_latest_gnu "libtool"
@@ -275,8 +275,8 @@ fetch_latest_gnu "libtool"
     --enable-shared \
     --enable-static \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # make
 fetch_latest_gnu "make" "tar.gz"
@@ -284,8 +284,8 @@ fetch_latest_gnu "make" "tar.gz"
     --prefix="${SYSTEM_PREFIX}" \
     --disable-nls \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # cmake
 cmake_tag="$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" | jq -r '.tag_name')"
@@ -297,12 +297,12 @@ else
     echo >&2 "Unsupported architecture: $( uname -m )"
     exit 1
 fi
-wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag}.sh"
-bash "${CHEESE_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag}.sh"
+bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 
-# PHASE 5: Essential Tools for Cheese
+# PHASE 5: Essential Tools for Fromager
 # ----------------------------------------------------
 
 # yq (should be installed by setup-env.sh, here in case we are performing an update)
@@ -323,11 +323,11 @@ cmake .. \
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     -DCMAKE_INSTALL_PREFIX="${SYSTEM_PREFIX}" \
     -DYAML_BUILD_SHARED_LIBS=ON
-make -j"${CHEESE_NPROC}" && make install
-cd "${CHEESE_WORKDIR}/.tmp" && rm -rf *
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
-# Cheese (WIP)
-make -C "${CHEESE_HOME}" -j"${CHEESE_NPROC}" release
+# Fromager (WIP)
+make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}" release
 
 
 ## PHASE 6: Other Tools
@@ -348,10 +348,10 @@ if command -v nvidia-smi &> /dev/null; then
         echo >&2 "Unsupported architecture: $(uname -m)"
         exit 1
     fi
-    cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${CHEESE_DB}/cuda.yaml")
-    wget --quiet --show-progress --output-document="${CHEESE_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
-    bash "${CHEESE_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${CHEESE_WORKDIR}/.tmp"
-    rm -f "${CHEESE_WORKDIR}/.tmp/cuda.run"
+    cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml")
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
+    bash "${FROMAGER_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${FROMAGER_WORKDIR}/.tmp"
+    rm -f "${FROMAGER_WORKDIR}/.tmp/cuda.run"
 else
     echo "No NVIDIA GPU detected, skipping CUDA installation."
 fi

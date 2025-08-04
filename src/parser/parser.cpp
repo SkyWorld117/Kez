@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    std::filesystem::path db_path(getenv("CHEESE_DB"));
+    std::filesystem::path db_path(getenv("FROMAGER_DB"));
 
     std::string config_file = argv[1];
     std::string build_mode = argv[2];

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Cheese Toolchain Configuration Generator
+# Fromager Toolchain Configuration Generator
 # This script generates a portable crosstool-NG configuration file
 # with automatic architecture detection and kernel version matching
 #
@@ -8,21 +8,21 @@
 set -euo pipefail
 
 # Configuration paths
-TEMPLATE_FILE="${CHEESE_DB}/.config.template"
-OUTPUT_FILE="${CHEESE_WORKDIR}/.tmp/.config"
+TEMPLATE_FILE="${FROMAGER_DB}/.config.template"
+OUTPUT_FILE="${FROMAGER_WORKDIR}/.tmp/.config"
 
 # Color output functions
 info() { echo -e "\033[32m[INFO]\033[0m $*"; }
 warn() { echo -e "\033[33m[WARN]\033[0m $*"; }
 error() { echo -e "\033[31m[ERROR]\033[0m $*"; }
 
-# Fetch latest GNU package version (based on cheese_init logic)
+# Fetch latest GNU package version (based on fromager_init logic)
 fetch_latest_gnu_version() {
     local pkg="$1"
     local ext="${2:-tar.gz}"
     local url="https://ftpmirror.gnu.org/gnu/${pkg}/"
     
-    # Get listing and extract filenames (exact same logic as cheese_init)
+    # Get listing and extract filenames (exact same logic as fromager_init)
     local latest
     latest=$(curl -sSL "$url" 2>/dev/null \
         | grep -oE "${pkg}-[0-9]+\.[0-9]+(\.[0-9]+)?\.${ext}" \
@@ -627,7 +627,7 @@ generate_config() {
     local force_glibc_version="${6:-}"
     local force_gdb_version="${7:-}"
     
-    info "Generating crosstool-NG configuration for Cheese package manager..."
+    info "Generating crosstool-NG configuration for Fromager package manager..."
     
     # Detect system capabilities
     info "Detecting system capabilities..."
@@ -891,7 +891,7 @@ usage() {
     cat <<EOF
 Usage: $0 [OPTIONS]
 
-Generate a crosstool-NG configuration file for Cheese package manager.
+Generate a crosstool-NG configuration file for Fromager package manager.
 
 OPTIONS:
     -a, --arch ARCH         Force architecture (x86_64, aarch64)

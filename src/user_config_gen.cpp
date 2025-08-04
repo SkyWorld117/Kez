@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 
     config["cheese"] = YAML::Node(YAML::NodeType::Map);
 
-    std::filesystem::path db_path(getenv("CHEESE_DB"));
+    std::filesystem::path db_path(getenv("FROMAGER_DB"));
     for (const auto& dep : dependencies) {
         std::filesystem::path config_file(dep + ".yaml");
         std::filesystem::path config_path = db_path / config_file;

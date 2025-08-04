@@ -1,5 +1,5 @@
 # Dummy config file, CUDA version should be determined by the system CUDA driver.
-# This should be installed by the `cheese_init` script.
+# This should be installed by the `fromager_init` script.
 
 cheese:
   name: cuda

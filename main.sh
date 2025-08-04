@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
 
-cheese () {
+fromager () {
 
     while [ $# -gt 0 ]; do
         case "$1" in
 
 
             -v | --version )
-                echo "Cheese version 0.0.1"
+                echo "Fromager version 0.0.1"
                 shift
                 ;;
 
 
             -h | --help )
-                echo -e "Usage: cheese [OPTION]..."
+                echo -e "Usage: fromager [OPTION]..."
                 shift
                 ;;
 
             init )
-                cheese_init
+                fromager_init
                 shift
                 ;;
 
 
             selfcheck )
-                cheese_db_check
+                fromager_db_check
                 shift
                 ;;
 
@@ -65,17 +65,17 @@ cheese () {
                             echo "Error: No environment specified to remove."
                             return 1
                         fi
-                        if [ ! -d "${CHEESE_ENV}/$3" ]; then
+                        if [ ! -d "${FROMAGER_ENV}/$3" ]; then
                             echo "Error: Environment '$3' does not exist."
                             return 1
                         fi
-                        rm -rf "${CHEESE_ENV}/$3"
+                        rm -rf "${FROMAGER_ENV}/$3"
                         shift 3
                     ;;
 
                     ls | list )
                         echo "Listing environments:"
-                        if [ -d "${CHEESE_ENV}" ]; then
+                        if [ -d "${FROMAGER_ENV}" ]; then
                             echo "$(ls ${MS_TARG} | sed "s~Backups~~g" | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)${NC}"
                         else
                             echo "No environments found."

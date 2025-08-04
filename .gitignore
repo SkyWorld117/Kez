@@ -1,9 +1,9 @@
 .vscode
 
 # Ignore binary tools
-bin/cheese_config_verifier
-bin/cheese_user_config_gen
-bin/cheese_parser
+bin/fromager_config_verifier
+bin/fromager_user_config_gen
+bin/fromager_parser
 bin/test*
 
 # Ignore object files

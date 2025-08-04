@@ -1,4 +1,4 @@
-cheese:
+fromager:
   n_proc_for_build: 4
 
   external:
