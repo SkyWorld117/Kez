@@ -1,7 +1,7 @@
 cheese:
   name: openmpi
   description: Open Source Implementation of the Message Passing Interface
-  type: package
+  type: mpi
   toolchain: autotools
 
   source:
