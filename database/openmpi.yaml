@@ -112,8 +112,12 @@ cheese:
 
         - name: --with-hcoll
           description: Build with HCOLL support
+          user_configurable: true
+          enabled:
+            default: false
           enabled_value:
             default: ${hcoll.prefix}
+          requires: [hcoll]
     stages:
       - target: ~
       - target: install
