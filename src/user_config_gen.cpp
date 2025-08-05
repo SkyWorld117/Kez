@@ -4,6 +4,7 @@
 #include <yaml-cpp/yaml.h>
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -122,7 +123,7 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
         // Default to the latest release
         config["cheese"][pkg_name]["version"] = db_pkg_node["cheese"]["source"]["releases"][0]["version"];
     }
-    if (db_pkg_node["cheese"]["type"].as<std::string>() != "vendor") {
+    if (db_pkg_node["cheese"]["type"].as<std::string>() != "vendor" && db_pkg_node["cheese"]["type"].as<std::string>() != "external") {
         config["cheese"][pkg_name]["compiler"] = "system"; // default to system compiler
     }
     if (db_pkg_node["cheese"]["implementations"]) {
@@ -155,8 +156,8 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        ERROR("Usage: " + std::string(argv[0]) + " <package_name>");
-        return 1;
+        ERROR("Usage: " + std::string(argv[0]) + " <package_name> [<output_file>]");
+        exit(EXIT_FAILURE);
     }
 
     std::string pkg_name = argv[1];
@@ -167,7 +168,7 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, std::string> abstract_packages = result.second;
     if (dependencies.empty()) {
         ERROR("No dependencies found for package: " + pkg_name);
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     config["cheese"] = YAML::Node(YAML::NodeType::Map);
@@ -178,7 +179,7 @@ int main(int argc, char* argv[]) {
         std::filesystem::path config_path = db_path / config_file;
         if (!std::filesystem::exists(config_path)) {
             ERROR("Configuration file does not exist: " + config_path.string());
-            continue;
+            exit(EXIT_FAILURE);
         }
         YAML::Node db_pkg_node = YAML::LoadFile(config_path.string());
         config_per_pkg(db_pkg_node);
@@ -201,6 +202,21 @@ int main(int argc, char* argv[]) {
     out << config;
 
     std::cout << out.c_str() << std::endl;
+
+    // If an output file is specified, write the configuration to it
+    if (argc > 2) {
+        std::string output_file = argv[2];
+        std::ofstream ofs(output_file);
+        if (!ofs) {
+            ERROR("Could not open output file: " + output_file);
+            exit(EXIT_FAILURE);
+        }
+        ofs << out.c_str();
+        ofs.close();
+        INFO("Configuration written to: " + output_file);
+    } else {
+        INFO("Configuration output to stdout.");
+    }
 
     return 0;
 }
