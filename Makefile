@@ -21,18 +21,15 @@ fromager_user_config_gen: src/user_config_gen.cpp src/dependency_resolver/*.cpp
 fromager_parser: src/parser/*.cpp src/parser/*.h
 	g++ src/parser/*.cpp -o bin/fromager_parser $(CXXFLAGS)
 
-test_parser: src/test_parser.cpp src/parser/*.cpp
-	g++ src/test_parser.cpp src/parser/*.cpp -o bin/test_parser $(CXXFLAGS)
-
 .PHONY: all
-all: fromager_config_verifier fromager_deps_resolve test_deps_resolve fromager_user_config_gen test_parser
+all: fromager_config_verifier fromager_deps_resolve test_deps_resolve fromager_user_config_gen fromager_parser
 
 .PHONY: release
-release: fromager_config_verifier fromager_deps_resolve fromager_user_config_gen
+release: fromager_config_verifier fromager_deps_resolve fromager_user_config_gen fromager_parser
 
 .PHONY: clean
 clean:
 	rm -f bin/fromager_config_verifier
 	rm -f bin/test_deps_resolve
 	rm -f bin/fromager_user_config_gen
-	rm -f src/*.o
+	rm -f bin/fromager_parser
