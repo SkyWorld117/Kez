@@ -59,8 +59,6 @@ std::vector<std::string> parse_environment(
                 template_map,
                 user_config,
                 user_config_pkg,
-                user_config_context,
-                pkg_config,
                 build_mode,
                 env_path
             );

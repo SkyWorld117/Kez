@@ -26,8 +26,6 @@ std::vector<std::string> parse_package(
             template_map,
             user_config,
             user_config_pkg,
-            user_config_context,
-            pkg_config,
             build_mode,
             env_path
         );
@@ -102,8 +100,6 @@ std::vector<std::string> parse_package(
                     template_map,
                     user_config,
                     user_config_pkg,
-                    user_config_context,
-                    pkg_config,
                     build_mode,
                     env_path
                 );
@@ -169,8 +165,6 @@ std::vector<std::string> parse_package(
             template_map,
             user_config,
             user_config_pkg,
-            user_config_context,
-            pkg_config,
             build_mode,
             env_path
         );

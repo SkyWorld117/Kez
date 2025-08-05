@@ -5,8 +5,6 @@ std::string parse_property(
     std::unordered_map<std::string, std::string>& template_map,
     const YAML::Node& user_config,
     const YAML::Node& user_config_pkg,
-    const YAML::Node& user_config_context,
-    const YAML::Node& pkg_config,
     const std::string& build_mode,
     const std::string& env_path
 ) {
@@ -57,8 +55,6 @@ std::string parse_property(
                     template_map,
                     user_config,
                     user_config_pkg,
-                    user_config_context,
-                    pkg_config_node,
                     build_mode,
                     env_path
                 );
@@ -115,8 +111,6 @@ std::string parse_property(
             template_map,
             user_config,
             user_config_pkg,
-            user_config_context,
-            pkg_config_node,
             build_mode,
             env_path
         );
@@ -169,8 +163,6 @@ std::string parse_complex_property(
             template_map,
             user_config,
             user_config_pkg,
-            user_config_pkg, // Use pkg_config as context
-            pkg_config_node,
             build_mode,
             env_path
         );
