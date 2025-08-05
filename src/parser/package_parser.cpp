@@ -149,7 +149,7 @@ std::vector<std::string> parse_package(
                     stage_target = env + " " + stage_target;
                 }
                 if (!parsed_stage_configurations.second.empty()) {
-                    stage_target = parsed_stage_configurations.second + " " + stage_target;
+                    stage_target += " " + parsed_stage_configurations.second;
                 }
             }
 
