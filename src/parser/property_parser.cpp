@@ -27,13 +27,73 @@ std::string parse_property(
     }
 
     if (property == "prefix") {
+        if (pkg_config_node["cheese"]["type"].as<std::string>() == "mpi") {
+            // For MPI packages, we need to handle the prefix differently
+            // The goal is to share MPI libraries across the environments
+            std::string mpi_version = user_config["cheese"][package_name]["version"].as<std::string>();
+            std::string compiler_spec = user_config["cheese"][package_name]["compiler"].as<std::string>();
+            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
+            std::filesystem::path prefix_path;
+            if (compiler_spec == "system") {
+                prefix_path = fromager_env / "mpi" / (package_name + "-" + mpi_version + "-system");
+            } else {
+                std::string compiler_name = compiler_spec.substr(0, compiler_spec.find('@'));
+                std::string compiler_version = compiler_spec.substr(compiler_spec.find('@') + 1);
+                prefix_path = fromager_env / "mpi" / (package_name + "-" + mpi_version + "-" + compiler_name + "-" + compiler_version);
+            }
+            return prefix_path.string(); 
+        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "system") {
+            // For system packages, we can use the FROMAGER_ENV variable
+            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
+            std::filesystem::path prefix_path = fromager_env / "system";
+            return prefix_path.string();
+        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "vendor") {
+            // Some vendor packages are submodules of other vendor packages
+            // We need to handle the prefix differently
+            if (user_config["cheese"][package_name]["properties"] &&
+                user_config["cheese"][package_name]["properties"]["prefix"]) {
+                return parse_scalar(
+                    user_config["cheese"][package_name]["properties"]["prefix"].as<std::string>(),
+                    template_map,
+                    user_config,
+                    user_config_pkg,
+                    user_config_context,
+                    pkg_config_node,
+                    build_mode,
+                    env_path
+                );
+            }
+            // We share vendor packages across the environments
+            std::string pkg_version = user_config["cheese"][package_name]["version"].as<std::string>();
+            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
+            std::filesystem::path vendor_prefix_path = fromager_env / "vendor" / (package_name + "-" + pkg_version);
+            return vendor_prefix_path.string();
+        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "external") {
+            // Information about external packages is stored in the `config.yaml` file
+            std::filesystem::path fromager_workdir(getenv("FROMAGER_WORKDIR"));
+            std::filesystem::path config_path = fromager_workdir / "config.yaml";
+            YAML::Node config_node = YAML::LoadFile(config_path.string());
+            if (config_node["fromager"]["external"] &&
+                config_node["fromager"]["external"][package_name]) {
+                if (!config_node["fromager"]["external"][package_name]["prefix"].IsNull()) {
+                    return config_node["fromager"]["external"][package_name]["prefix"].as<std::string>();
+                } else {
+                    ERROR("External package '" + package_name + "' does not have a prefix defined in config.yaml.");
+                    exit(EXIT_FAILURE);
+                }
+            } else {
+                ERROR("External package '" + package_name + "' not found in config.yaml.");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        // Regular packages
         if (build_mode == "release") {
             return env_path;
         } else if (build_mode == "debug") {
             // Get the first key in the user_config["cheese"] map
             std::string target_package = user_config["cheese"].begin()->first.as<std::string>();
-            std::string current_package = pkg_config["cheese"]["name"].as<std::string>();
-            if (target_package == current_package) {
+            if (target_package == package_name) {
                 return env_path + "/" + target_package;
             } else {
                 return env_path + "/deps";

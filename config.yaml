@@ -2,9 +2,12 @@ fromager:
   n_proc_for_build: 4
 
   external:
-    - name: rdma-core
-      prefix: /usr
-    - name: hcoll
-      prefix: /usr
-    - name: gdrcopy
-      prefix: /usr
+    rdma-core:
+      prefix: ~
+      version: ~
+    hcoll:
+      prefix: ~
+      version: ~
+    gdrcopy:
+      prefix: ~
+      version: ~

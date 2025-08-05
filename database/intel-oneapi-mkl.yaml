@@ -36,6 +36,7 @@ cheese:
             default: openmpi
 
   properties:
+    prefix: ${intel-oneapi.prefix}/mkl/latest
     ldflags:
       default: -L${intel-oneapi.prefix}/mkl/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/mkl/latest/lib -Wl,--no-as-needed -m64
     libs:
