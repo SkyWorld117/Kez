@@ -118,6 +118,39 @@ cheese:
           enabled_value:
             default: ${hcoll.prefix}
           requires: [hcoll]
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CXX
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: CXXFLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: FC
+          description: Fortran compiler
+          enabled_value:
+            default: ${compiler.fort}
+
+        - name: FCFLAGS
+          description: Fortran compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
     stages:
       - target: ~
       - target: install

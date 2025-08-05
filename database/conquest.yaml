@@ -24,29 +24,37 @@ cheese:
     stages:
       - target: ~
         configurations:
-          environment:
+          options:
             - name: FC
               description: Fortran compiler
-              default: ${mpi.fort}
-            
+              enabled_value:
+                default: ${mpi.fort}
+
             - name: F77
               description: Fortran 77 compiler
-              default: ${mpi.fort}
-            
+              enabled_value:
+                default: ${mpi.fort}
+
             - name: LINKFLAGS
               description: Linker flags for Fortran
-              default: ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} ${libxc.ldflags}
+              enabled_value:
+                default: ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} ${libxc.ldflags}
 
             - name: COMPFLAGS
               description: Fortran compiler flags
               user_configurable: true
-              default: -O3 -fallow-argument-mismatch ${blas.includes} ${lapack.includes} ${scalapack.includes} ${fftw3-api.includes} ${libxc.includes}
+              enabled_value:
+                default: -O3 -fallow-argument-mismatch ${blas.includes} ${lapack.includes} ${scalapack.includes} ${fftw3-api.includes} ${libxc.includes}
 
             - name: LIBS
               description: Libraries to link against
-              default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fftw3-api.libs} ${libxc.libs}
+              enabled_value:
+                default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fftw3-api.libs} ${libxc.libs}
 
             - name: MULT_KERN
               description: Matrix multiplication kernel
               user_configurable: true
-              default: default
+              enabled_value:
+                default: default
+
+  properties: ~
