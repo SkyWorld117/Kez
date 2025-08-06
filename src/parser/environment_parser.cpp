@@ -16,7 +16,18 @@ std::vector<std::string> parse_environment(
     for (YAML::Node var : env_node) {
         std::string var_name = var["name"].as<std::string>();
         std::string base_value;
-        if (var["user_configurable"] && var["user_configurable"].as<bool>()) {
+
+        bool is_required = true;
+        if (var["requires"]) {
+            std::vector<std::string> all_dependencies = user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
+            for (const auto& dep : var["requires"]) {
+                if (std::find(all_dependencies.begin(), all_dependencies.end(), dep.as<std::string>()) == all_dependencies.end()) {
+                    is_required = false;
+                    break;
+                }
+            }
+        }
+        if (var["user_configurable"] && var["user_configurable"].as<bool>() && is_required) {
             YAML::Node user_config_var;
             for (YAML::Node user_var : user_config_context) {
                 if (user_var["name"].as<std::string>() == var_name) {

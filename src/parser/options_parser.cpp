@@ -17,7 +17,18 @@ std::string parse_options(
         std::string opt_name = opt["name"].as<std::string>();
         INFO("Parsing option: " + opt_name);
         std::string base_enabled, base_enabled_value, base_disabled_value;
-        if (opt["user_configurable"] && opt["user_configurable"].as<bool>()) {
+
+        bool is_required = true;
+        if (opt["requires"]) {
+            std::vector<std::string> all_dependencies = user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
+            for (const auto& dep : opt["requires"]) {
+                if (std::find(all_dependencies.begin(), all_dependencies.end(), dep.as<std::string>()) == all_dependencies.end()) {
+                    is_required = false;
+                    break;
+                }
+            }
+        }
+        if (opt["user_configurable"] && opt["user_configurable"].as<bool>() && is_required) {
             YAML::Node user_config_opt;
             for (YAML::Node user_opt : user_config_context) {
                 if (user_opt["name"].as<std::string>() == opt_name) {

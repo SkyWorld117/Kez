@@ -40,6 +40,22 @@ YAML::Node filtered_options(const YAML::Node& opts_node) {
     for (const auto& opt : opts_node) {
         if (opt["user_configurable"] && opt["user_configurable"].as<bool>()) {
             YAML::Node tmp_opt = YAML::Node(YAML::NodeType::Map);
+
+            // Early abort if the option is not enabled (insufficient conditions)
+            if (opt["requires"]) {
+                std::vector<std::string> all_dependencies = config["recipe"]["dependencies"].as<std::vector<std::string>>();
+                bool all_deps_present = true;
+                for (const auto& dep : opt["requires"]) {
+                    if (std::find(all_dependencies.begin(), all_dependencies.end(), dep.as<std::string>()) == all_dependencies.end()) {
+                        all_deps_present = false;
+                        break;
+                    }
+                }
+                if (!all_deps_present) {
+                    continue; // Skip this option if not all required dependencies are present
+                }
+            }
+
             tmp_opt["name"] = opt["name"];
 
             if (opt["description"]) {
@@ -173,18 +189,6 @@ int main(int argc, char* argv[]) {
 
     config["cheese"] = YAML::Node(YAML::NodeType::Map);
 
-    std::filesystem::path db_path(getenv("FROMAGER_DB"));
-    for (const auto& dep : dependencies) {
-        std::filesystem::path config_file(dep + ".yaml");
-        std::filesystem::path config_path = db_path / config_file;
-        if (!std::filesystem::exists(config_path)) {
-            ERROR("Configuration file does not exist: " + config_path.string());
-            exit(EXIT_FAILURE);
-        }
-        YAML::Node db_pkg_node = YAML::LoadFile(config_path.string());
-        config_per_pkg(db_pkg_node);
-    }
-
     // Additional section to store abstract package selections
     config["recipe"] = YAML::Node(YAML::NodeType::Map);
     config["recipe"]["abstract_packages"] = YAML::Node(YAML::NodeType::Map);
@@ -195,6 +199,18 @@ int main(int argc, char* argv[]) {
     config["recipe"]["dependencies"] = YAML::Node(YAML::NodeType::Sequence);
     for (const auto& dep : all_dependencies) {
         config["recipe"]["dependencies"].push_back(dep);
+    }
+
+    std::filesystem::path db_path(getenv("FROMAGER_DB"));
+    for (const auto& dep : dependencies) {
+        std::filesystem::path config_file(dep + ".yaml");
+        std::filesystem::path config_path = db_path / config_file;
+        if (!std::filesystem::exists(config_path)) {
+            ERROR("Configuration file does not exist: " + config_path.string());
+            exit(EXIT_FAILURE);
+        }
+        YAML::Node db_pkg_node = YAML::LoadFile(config_path.string());
+        config_per_pkg(db_pkg_node);
     }
 
     // Output the generated configuration
