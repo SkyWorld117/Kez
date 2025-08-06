@@ -65,7 +65,7 @@ std::string parse_property(
             // We share vendor packages across the environments
             std::string pkg_version = user_config["cheese"][package_name]["version"].as<std::string>();
             std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
-            std::filesystem::path vendor_prefix_path = fromager_env / "vendor" / (package_name + "-" + pkg_version);
+            std::filesystem::path vendor_prefix_path = fromager_env / "vendors" / (package_name + "-" + pkg_version);
             return vendor_prefix_path.string();
         } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "external") {
             // Information about external packages is stored in the `config.yaml` file

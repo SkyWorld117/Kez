@@ -76,7 +76,7 @@ fromager () {
                     ls | list )
                         echo "Listing environments:"
                         if [ -d "${FROMAGER_ENV}" ]; then
-                            echo "$(ls ${MS_TARG} | sed "s~Backups~~g" | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)${NC}"
+                            echo "$(ls ${FROMAGER_ENV} | sed "s~system~~g" | sed "s~utilities~~g" | sed "s~compilers~~g" | sed "s~vendors~~g" | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)"
                         else
                             echo "No environments found."
                         fi
