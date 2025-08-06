@@ -25,7 +25,9 @@ std::vector<std::string> parse_package(
     // TODO: Implement downloading etc.
 
     // Preprocessing
-    INFO("Preprocessing package: " + package_name);
+    if (build_mode == "debug") {
+        INFO("- Preprocessing for package: " + package_name);
+    }
     if (pkg_config["cheese"]["build"]["preprocessing"]) {
         std::string preprocessing = parse_scalar(
             pkg_config["cheese"]["build"]["preprocessing"].as<std::string>(),
@@ -39,9 +41,11 @@ std::vector<std::string> parse_package(
     }
 
     // Compiling
-    INFO("Compiling package: " + package_name);
+
     // Global configurations
-    INFO("Global configurations for package: " + package_name);
+    if (build_mode == "debug") {
+        INFO("- Global configurations for package: " + package_name);
+    }
     if (pkg_config["cheese"]["build"]["configurations"]) {
         YAML::Node configurations = pkg_config["cheese"]["build"]["configurations"];
         YAML::Node user_config_context_config;
@@ -93,7 +97,9 @@ std::vector<std::string> parse_package(
     }
 
     // Stages
-    INFO("Stages for package: " + package_name);
+    if (build_mode == "debug") {
+        INFO("- Stages for package: " + package_name);
+    }
     std::string threads = getenv("FROMAGER_NPROC");
     if (pkg_config["cheese"]["build"]["stages"]) {
         YAML::Node stages = pkg_config["cheese"]["build"]["stages"];
@@ -169,7 +175,9 @@ std::vector<std::string> parse_package(
     }
 
     // Postprocessing
-    INFO("Postprocessing package: " + package_name);
+    if (build_mode == "debug") {
+        INFO("- Postprocessing for package: " + package_name);
+    }
     if (pkg_config["cheese"]["build"]["postprocessing"]) {
         std::string postprocessing = parse_scalar(
             pkg_config["cheese"]["build"]["postprocessing"].as<std::string>(),

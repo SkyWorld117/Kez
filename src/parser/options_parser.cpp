@@ -15,7 +15,9 @@ std::string parse_options(
 
     for (YAML::Node opt : opts_node) {
         std::string opt_name = opt["name"].as<std::string>();
-        INFO("Parsing option: " + opt_name);
+        if (build_mode == "debug") {
+            INFO("  - Parsing option: " + opt_name);
+        }
         std::string base_enabled, base_enabled_value, base_disabled_value;
 
         bool is_required = true;
@@ -67,7 +69,6 @@ std::string parse_options(
 
         std::string final_enabled, final_enabled_value, final_disabled_value;
 
-        INFO("Getting enabled state for option: " + opt_name);
         if (opt["enabled"]["conditions"]) {
             final_enabled = parse_conditions(
                 base_enabled,
@@ -82,7 +83,6 @@ std::string parse_options(
             final_enabled = base_enabled;
         }
 
-        INFO("Getting enabled value for option: " + opt_name);
         if (final_enabled == "true" && opt["enabled_value"]["conditions"]) {
             final_enabled_value = parse_conditions(
                 base_enabled_value,
@@ -107,7 +107,6 @@ std::string parse_options(
             );
         }
 
-        INFO("Getting disabled value for option: " + opt_name);
         if (final_enabled == "false" && opt["disabled_value"]["conditions"]) {
             final_disabled_value = parse_conditions(
                 base_disabled_value,
@@ -132,7 +131,6 @@ std::string parse_options(
             );
         }
 
-        INFO("Final enabled state for option: " + opt_name + " is " + final_enabled);
         if (final_enabled == "true") {
             std::string enabled_format = opt["enabled_format"] ? opt["enabled_format"].as<std::string>() : opt_name;
             options += enabled_format + (final_enabled_value.empty() ? "" : "=\"" + final_enabled_value + "\"");

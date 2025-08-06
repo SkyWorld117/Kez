@@ -60,7 +60,9 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, std::vector<std::string>> package_instructions;
 
     for (const auto& item : user_config["cheese"]) {
-        INFO("Processing package: " + item.first.as<std::string>());
+        if (build_mode == "debug") {
+            INFO("Processing package: " + item.first.as<std::string>());
+        }
         std::string pkg_name = item.first.as<std::string>();
 
         // Skip if already processed
@@ -68,7 +70,9 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        INFO("Loading configuration for package: " + pkg_name);
+        if (build_mode == "debug") {
+            INFO("Loading configuration for package: " + pkg_name);
+        }
         std::filesystem::path config_path = db_path / (pkg_name + ".yaml");
         if (!std::filesystem::exists(config_path)) {
             ERROR("Configuration file does not exist: " + config_path.string());
@@ -77,7 +81,9 @@ int main(int argc, char* argv[]) {
         YAML::Node pkg_config = YAML::LoadFile(config_path.string());
 
         // Parse the package configuration
-        INFO("Parsing package: " + pkg_name);
+        if (build_mode == "debug") {
+            INFO("Parsing package configuration for: " + pkg_name);
+        }
         std::vector<std::string> instructions = parse_package(
             pkg_name,
             template_map,
@@ -93,7 +99,9 @@ int main(int argc, char* argv[]) {
     }
 
     for (const auto& pkg : user_config["cheese"]) {
-        INFO("Second pass for property parsing in package: " + pkg.first.as<std::string>());
+        if (build_mode == "debug") {
+            INFO("Second pass for property parsing in package: " + pkg.first.as<std::string>());
+        }
         std::string pkg_name = pkg.first.as<std::string>();
         if (package_instructions.find(pkg_name) == package_instructions.end()) {
             continue; // Skip if no instructions found

@@ -14,6 +14,9 @@ std::vector<std::string> parse_environment(
     std::vector<std::string> env_vars;
 
     for (YAML::Node var : env_node) {
+        if (build_mode == "debug") {
+            INFO("  - Parsing environment variable: " + var["name"].as<std::string>());
+        }
         std::string var_name = var["name"].as<std::string>();
         std::string base_value;
 
