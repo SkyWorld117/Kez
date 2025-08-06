@@ -9,4 +9,4 @@ cheese:
         url: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d0df6732-bf5c-493b-a484-6094bea53787/intel-oneapi-hpc-toolkit-2025.1.0.666_offline.sh
 
   build:
-    postprocessing: bash ${source} -a --silent --eula accept --cli --install-dir=${intel-oneapi.prefix}
+    postprocessing: bash ${source}.sh -a --silent --eula accept --cli --install-dir=${intel-oneapi.prefix}
