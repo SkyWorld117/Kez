@@ -39,6 +39,9 @@ std::string parse_property(
                 std::string compiler_version = compiler_spec.substr(compiler_spec.find('@') + 1);
                 prefix_path = fromager_env / "mpi" / (package_name + "-" + mpi_version + "-" + compiler_name + "-" + compiler_version);
             }
+            if (!std::filesystem::exists(prefix_path)) {
+                WARNING("MPI prefix path does not exist: " + prefix_path.string());
+            }
             return prefix_path.string(); 
         } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "system") {
             // For system packages, we can use the FROMAGER_ENV variable
@@ -99,8 +102,25 @@ std::string parse_property(
             exit(EXIT_FAILURE);
         }
     } else if (property == "version") {
-        // TODO: Implement version fetching logic
-        return "x.x.x";
+        if (pkg_config_node["cheese"]["type"].as<std::string>() == "system") {
+            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
+            std::filesystem::path state_path = fromager_env / "system" / "state.yaml";
+            YAML::Node state_node = YAML::LoadFile(state_path.string());
+            if (state_node["cheese"] && state_node["cheese"][package_name] &&
+                state_node["cheese"][package_name]["version"]) {
+                return state_node["cheese"][package_name]["version"].as<std::string>();
+            } else {
+                ERROR("Package '" + package_name + "' version not found in state.yaml.");
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            if (user_config["cheese"][package_name]["version"]) {
+                return user_config["cheese"][package_name]["version"].as<std::string>();
+            } else {
+                ERROR("Package '" + package_name + "' version not found in user config.");
+                exit(EXIT_FAILURE);
+            }
+        }
     } else if (property == "c" or
                property == "cxx" or
                property == "fort" or

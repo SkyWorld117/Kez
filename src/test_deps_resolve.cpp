@@ -8,25 +8,29 @@ int main(int argc, char* argv[]) {
 
     std::string pkg_name = argv[1];
 
-    std::vector<std::string> dependencies = resolve_dependencies(pkg_name);
+    std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>, std::unordered_map<std::string, std::string>> result = resolve_dependencies(pkg_name);
+    std::vector<std::string> all_dependencies = result.first.first;
+    std::vector<std::string> dependencies = result.first.second;
+    std::unordered_map<std::string, std::string> abstract_packages = result.second;
     if (dependencies.empty()) {
-        std::cout << "No dependencies found for package: " << pkg_name << std::endl;
-    } else {
-        std::cout << "Dependencies for package '" << pkg_name << "':" << std::endl;
-        for (const auto& dep : dependencies) {
-            std::cout << "- " << dep << std::endl;
-        }
+        std::cerr << "No dependencies found for package: " << pkg_name << std::endl;
+        return 1;
     }
 
-    // std::vector<std::string> filtered_dependencies = resolve_filtered_dependencies(pkg_name);
-    // if (filtered_dependencies.empty()) {
-    //     std::cout << "No filtered dependencies found for package: " << pkg_name << std::endl;
-    // } else {
-    //     std::cout << "Filtered dependencies for package '" << pkg_name << "':" << std::endl;
-    //     for (const auto& dep : filtered_dependencies) {
-    //         std::cout << "- " << dep << std::endl;
-    //     }
-    // }
+    std::cout << "All dependencies for package '" << pkg_name << "':" << std::endl;
+    for (const auto& dep : all_dependencies) {
+        std::cout << " - " << dep << std::endl;
+    }
+
+    std::cout << "Filtered dependencies for package '" << pkg_name << "':" << std::endl;
+    for (const auto& dep : dependencies) {
+        std::cout << " - " << dep << std::endl;
+    }
+
+    std::cout << "Abstract packages:" << std::endl;
+    for (const auto& pair : abstract_packages) {
+        std::cout << " - " << pair.first << " resolved to " << pair.second << std::endl;
+    }
 
     return 0;
 }

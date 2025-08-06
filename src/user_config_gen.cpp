@@ -146,7 +146,12 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
     if (db_pkg_node["cheese"]["type"].as<std::string>() != "vendor" && db_pkg_node["cheese"]["type"].as<std::string>() != "external") {
         config["cheese"][pkg_name]["compiler"] = "system"; // default to system compiler
     }
-    if (db_pkg_node["cheese"]["build"]) {
+    // MPI needs to be handled separately
+    std::vector<std::string> all_dependencies = config["recipe"]["dependencies"].as<std::vector<std::string>>();
+    bool pkg_is_target = (db_pkg_node["cheese"]["type"].as<std::string>() != "mpi" &&
+                         db_pkg_node["cheese"]["type"].as<std::string>() != "compiler") ||
+                         all_dependencies[0] == pkg_name;
+    if (db_pkg_node["cheese"]["build"] && pkg_is_target) {
         if (db_pkg_node["cheese"]["build"]["configurations"]) {
             if (db_pkg_node["cheese"]["build"]["configurations"]) {
                 YAML::Node filtered_config = filtered_configurations(db_pkg_node["cheese"]["build"]["configurations"]);
@@ -178,9 +183,9 @@ int main(int argc, char* argv[]) {
 
     std::string pkg_name = argv[1];
 
-    std::vector<std::string> all_dependencies = resolve_dependencies(pkg_name);
-    std::pair<std::vector<std::string>, std::unordered_map<std::string, std::string>> result = resolve_dependencies(pkg_name, true);
-    std::vector<std::string> dependencies = result.first;
+    std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>, std::unordered_map<std::string, std::string>> result = resolve_dependencies(pkg_name);
+    std::vector<std::string> all_dependencies = result.first.first;
+    std::vector<std::string> dependencies = result.first.second;
     std::unordered_map<std::string, std::string> abstract_packages = result.second;
     if (dependencies.empty()) {
         ERROR("No dependencies found for package: " + pkg_name);

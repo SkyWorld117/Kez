@@ -16,6 +16,12 @@ std::vector<std::string> parse_package(
         return instructions; // No build instructions available
     }
 
+    if ((pkg_config["cheese"]["type"].as<std::string>() == "compiler" ||
+        pkg_config["cheese"]["type"].as<std::string>() == "mpi") &&
+        !user_config_context["build"]) {
+        return instructions; // No build context available for compilers or MPI
+    }
+
     // TODO: Implement downloading etc.
 
     // Preprocessing

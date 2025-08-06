@@ -9,12 +9,15 @@ std::vector<std::string> topological_sort(const std::unordered_map<std::string, 
         if (!visited[name]) {
             std::function<void(const std::string&)> dfs = [&](const std::string& current) {
                 visited[current] = true;
-                for (const auto& dep : adjacency_list.at(current)) {
-                    if (!visited[dep]) {
-                        dfs(dep);
+                // Check if current node has dependencies before accessing
+                if (adjacency_list.find(current) != adjacency_list.end()) {
+                    for (const auto& dep : adjacency_list.at(current)) {
+                        if (!visited[dep]) {
+                            dfs(dep);
+                        }
                     }
+                    sorted.push_back(current);
                 }
-                sorted.push_back(current);
             };
             dfs(name);
         }
