@@ -73,6 +73,10 @@ YAML::Node filtered_options(const YAML::Node& opts_node) {
                 }
             }
 
+            if (opt["requires"]) {
+                tmp_opt["requires"] = opt["requires"];
+            }
+
             opts.push_back(tmp_opt);
         }
     }
@@ -125,10 +129,6 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
     }
     if (db_pkg_node["cheese"]["type"].as<std::string>() != "vendor" && db_pkg_node["cheese"]["type"].as<std::string>() != "external") {
         config["cheese"][pkg_name]["compiler"] = "system"; // default to system compiler
-    }
-    if (db_pkg_node["cheese"]["implementations"]) {
-        // Choose the first implementation as default
-        config["cheese"][pkg_name]["implementation"] = db_pkg_node["cheese"]["implementations"][0].as<std::string>();
     }
     if (db_pkg_node["cheese"]["build"]) {
         if (db_pkg_node["cheese"]["build"]["configurations"]) {
