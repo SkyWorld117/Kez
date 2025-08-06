@@ -116,10 +116,15 @@ std::vector<std::string> parse_package(
             } else {
                 multithreaded = true; // Default to true if not specified
             }
+
+            if (!stage_target.empty()) {
+                stage_target = " " + stage_target;
+            }
+
             if (multithreaded && !threads.empty()) {
-                stage_target = "make -j" + threads + " " + stage_target;
+                stage_target = "make -j" + threads + stage_target;
             } else {
-                stage_target = "make " + stage_target;
+                stage_target = "make" + stage_target;
             }
 
             if (stage["configurations"]) {
