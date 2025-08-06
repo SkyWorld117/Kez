@@ -11,6 +11,7 @@ if [ -d "${SYSTEM_PREFIX}" ]; then
     rm -rf "${SYSTEM_PREFIX}"/*
 fi
 mkdir -p "${SYSTEM_PREFIX}"
+echo "cheese:" > "${SYSTEM_PREFIX}/state.yaml"
 
 mkdir -p "${FROMAGER_WORKDIR}/.tmp"
 rm -rf "${FROMAGER_WORKDIR}"/.tmp/*
@@ -48,6 +49,10 @@ fetch_latest_gnu() {
         echo >&2 "Unsupported file extension: ${ext}"
         return 1
     fi
+
+    local version="${latest#${pkg}-}"
+    version="${version%.${ext}}"
+    echo -e "  ${pkg}:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 }
 
 fetch_latest_github() {
@@ -62,6 +67,9 @@ fetch_latest_github() {
     
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
     tar -xzf "${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag#v}"
+
+    local version="${tag#v}"
+    echo -e "  ${repo##*/}:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 }
 
 fetch_latest_isl() {
@@ -90,12 +98,19 @@ fetch_latest_isl() {
         echo >&2 "Unsupported file extension: ${ext}"
         return 1
     fi
+
+    local version="${latest#isl-}"
+    version="${version%.${ext}}"
+    echo -e "  isl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 }
 
 fetch_latest_elfutils() {
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
     bzip2 -d "${FROMAGER_WORKDIR}/.tmp/elfutils.bz2"
     tar -xf "${FROMAGER_WORKDIR}/.tmp/elfutils" && cd "${FROMAGER_WORKDIR}/.tmp"/elfutils-*
+
+    local version=$(grep -oP 'Version: \K[0-9]+\.[0-9]+' elfutils.spec)
+    echo -e "  elfutils:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 }
 
 
@@ -155,6 +170,8 @@ cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 # zlib
 wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" "https://zlib.net/current/zlib.tar.gz"
 tar -xzf "${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp"/zlib-*
+version=$(grep -oP 'ZLIB_VERSION "\K[0-9]+\.[0-9]+\.[0-9]+' zlib.h)
+echo -e "  zlib:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 ./configure \
     --prefix="${SYSTEM_PREFIX}" \
     --64
@@ -225,6 +242,7 @@ tar -xf "${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" && cd "${FROMAGER_WORKDIR}/
     --with-boot-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
 make -j"${FROMAGER_NPROC}" && make install
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+echo -e "  gcc:\n    version: 11.5.0" >> "${SYSTEM_PREFIX}/state.yaml"
 
 # elfutils
 fetch_latest_elfutils
@@ -300,6 +318,7 @@ fi
 wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag}.sh"
 bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
 
 
 # PHASE 5: Essential Tools for Fromager
@@ -315,6 +334,8 @@ else
     exit 1
 fi
 chmod +x "${SYSTEM_PREFIX}/bin/yq"
+version=$(yq --version | grep -oP 'version v\K[0-9]+\.[0-9]+\.[0-9]+')
+echo -e "  yq:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 
 # yaml-cpp
 fetch_latest_github "jbeder/yaml-cpp"
@@ -340,6 +361,7 @@ if command -v nvidia-smi &> /dev/null; then
     # Get CUDA version
     # Format `CUDA Version        : 12.4`
     cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
+    echo -e "  cuda:\n    version: ${cuda_version}" >> "${SYSTEM_PREFIX}/state.yaml"
     if [ "$(uname -m)" = "x86_64" ]; then
         cuda_version="${cuda_version}-x86_64"
     elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
