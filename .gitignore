@@ -4,6 +4,12 @@
 bin/fromager_config_verifier
 bin/fromager_user_config_gen
 bin/fromager_parser
+# Colored IO
+bin/fromager_info
+bin/fromager_warning
+bin/fromager_error
+bin/fromager_success
+# Test binaries
 bin/test*
 
 # Ignore object files

@@ -7,24 +7,24 @@ fromager () {
 
 
             -v | --version )
-                echo "Fromager version 0.0.1"
+                ${FROMAGER_HOME}/bin/fromager_info "Fromager version 0.0.1"
                 shift
                 ;;
 
 
             -h | --help )
-                echo -e "Usage: fromager [OPTION]..."
+                ${FROMAGER_HOME}/bin/fromager_info "Usage: fromager [OPTION]..."
                 shift
                 ;;
 
             init )
-                fromager_init
+                ${FROMAGER_HOME}/bin/fromager_init
                 shift
                 ;;
 
 
             selfcheck )
-                fromager_db_check
+                ${FROMAGER_HOME}/bin/fromager_db_check
                 shift
                 ;;
 

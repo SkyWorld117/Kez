@@ -21,6 +21,21 @@ fromager_user_config_gen: src/user_config_gen.cpp src/dependency_resolver/*.cpp
 fromager_parser: src/parser/*.cpp src/parser/*.h
 	g++ src/parser/*.cpp -o bin/fromager_parser $(CXXFLAGS)
 
+fromager_info: src/colors/info.cpp src/colors/*.h
+	g++ src/colors/info.cpp -o bin/fromager_info $(CXXFLAGS)
+
+fromager_warning: src/colors/warning.cpp src/colors/*.h
+	g++ src/colors/warning.cpp -o bin/fromager_warning $(CXXFLAGS)
+
+fromager_error: src/colors/error.cpp src/colors/*.h
+	g++ src/colors/error.cpp -o bin/fromager_error $(CXXFLAGS)
+
+fromager_success: src/colors/success.cpp src/colors/*.h
+	g++ src/colors/success.cpp -o bin/fromager_success $(CXXFLAGS)
+
+.PHONY: fromager_colored_io
+fromager_colored_io: fromager_info fromager_warning fromager_error fromager_success
+
 .PHONY: all
 all: fromager_config_verifier fromager_deps_resolve test_deps_resolve fromager_user_config_gen fromager_parser
 
