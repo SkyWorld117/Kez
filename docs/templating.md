@@ -21,7 +21,3 @@ Exceptionally, there are also some predefined variables that can be used in the 
 Additionally, we also support reading configurations like options and variables from the configuration file. For example, if you have an option named `enable-feature`, you can access its value using `${package.config.enable-feature}`. Its value changes based on whether the option is enabled or disabled and which value is set for it. Similarly, you can access variables defined in the environment using `${package.env.variable_name}`.
 
 Substitution is not performed in `condition` string, as for the ease of use there exists an ambiguity in the syntax. Usually, `${package.config.variable_name}` is used to access variable values, but in a condition, it is used to define a full option, i.e., `package.config.variable_name` is the state of the option (whether it is enabled or disabled), and optionally followed by a value which developer intends to verify. We may develop a more suitable syntax or solution in the future, but for now, it is not supported.
-
-## TODOs
-
-- [ ] Allow using self-reference in templates, e.g. `${self.prefix}` to refer to the current package's prefix.
