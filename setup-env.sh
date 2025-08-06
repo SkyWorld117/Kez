@@ -9,7 +9,7 @@ if [ -z "${FROMAGER_WORKDIR:-}" ]; then
     export FROMAGER_WORKDIR="${HOME}/.fromager"
 fi
 
-export FROMAGER_ENV="${FROMAGER_WORKDIR}/env"
+export FROMAGER_ENV="${FROMAGER_WORKDIR}/cellars"
 export FROMAGER_STATE="${FROMAGER_WORKDIR}/state"
 
 export FROMAGER_HOME="${SCRIPT_DIR}"
