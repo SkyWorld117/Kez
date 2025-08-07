@@ -113,6 +113,19 @@ std::string parse_property(
                 ERROR("Package '" + package_name + "' version not found in state.yaml.");
                 exit(EXIT_FAILURE);
             }
+        } if (pkg_config_node["cheese"]["type"].as<std::string>() == "external") {
+            // For external packages, we can use the FROMAGER_ENV variable
+            std::filesystem::path fromager_workdir(getenv("FROMAGER_WORKDIR"));
+            std::filesystem::path config_path = fromager_workdir / "config.yaml";
+            YAML::Node config_node = YAML::LoadFile(config_path.string());
+            if (config_node["fromager"]["external"] &&
+                config_node["fromager"]["external"][package_name] &&
+                config_node["fromager"]["external"][package_name]["version"]) {
+                return config_node["fromager"]["external"][package_name]["version"].as<std::string>();
+            } else {
+                ERROR("External package '" + package_name + "' version not found in config.yaml.");
+                exit(EXIT_FAILURE);
+            }
         } else {
             if (user_config["cheese"][package_name]["version"]) {
                 return user_config["cheese"][package_name]["version"].as<std::string>();
