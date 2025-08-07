@@ -113,7 +113,7 @@ std::string parse_property(
                 ERROR("Package '" + package_name + "' version not found in state.yaml.");
                 exit(EXIT_FAILURE);
             }
-        } if (pkg_config_node["cheese"]["type"].as<std::string>() == "external") {
+        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "external") {
             // For external packages, we can use the FROMAGER_ENV variable
             std::filesystem::path fromager_workdir(getenv("FROMAGER_WORKDIR"));
             std::filesystem::path config_path = fromager_workdir / "config.yaml";
