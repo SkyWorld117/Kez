@@ -34,19 +34,23 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
                 INFO("- " + impl_name);
             }
             std::string selected_impl;
-            INFO("Enter the implementation name: ");
-            std::getline(std::cin, selected_impl);
-            // Remove leading/trailing whitespace/newline etc.
-            selected_impl.erase(0, selected_impl.find_first_not_of(" \n\r\t"));
-            selected_impl.erase(selected_impl.find_last_not_of(" \n\r\t") + 1);
-            // Validate the selected implementation
-            std::vector<std::string> implementations = config["cheese"]["implementations"].as<std::vector<std::string>>();
-            if (std::find(implementations.begin(), implementations.end(), selected_impl) == implementations.end()) {
-                ERROR("Invalid implementation selected: " + selected_impl);
-                exit(EXIT_FAILURE);
+            while (true) {
+                // Prompt user for implementation selection
+                INFO("Enter the implementation name: ");
+                std::getline(std::cin, selected_impl);
+                // Remove leading/trailing whitespace/newline etc.
+                selected_impl.erase(0, selected_impl.find_first_not_of(" \n\r\t"));
+                selected_impl.erase(selected_impl.find_last_not_of(" \n\r\t") + 1);
+                // Validate the selected implementation
+                std::vector<std::string> implementations = config["cheese"]["implementations"].as<std::vector<std::string>>();
+                if (std::find(implementations.begin(), implementations.end(), selected_impl) == implementations.end()) {
+                    ERROR("Invalid implementation selected: " + selected_impl);
+                    continue; // Ask again
+                }
+                abstract_packages[pkg_name] = selected_impl;
+                concrete_pkg_name = selected_impl; // Use the selected implementation for further processing
+                break;
             }
-            abstract_packages[pkg_name] = selected_impl;
-            concrete_pkg_name = selected_impl; // Use the selected implementation for further processing
         } else {
             concrete_pkg_name = abstract_packages[pkg_name]; // Use the already selected implementation
         }
