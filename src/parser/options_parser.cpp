@@ -133,8 +133,12 @@ std::string parse_options(
 
         if (final_enabled == "true") {
             std::string enabled_format = opt["enabled_format"] ? opt["enabled_format"].as<std::string>() : opt_name;
-            options += enabled_format + (final_enabled_value.empty() ? "" : "=\"" + final_enabled_value + "\"");
-            options += " ";
+            // This happens only if a developer explicitly set `enabled_format` to an empty string
+            // It is useful if one only wishes to store the value for parsing
+            if (!enabled_format.empty()) {
+                options += enabled_format + (final_enabled_value.empty() ? "" : "=\"" + final_enabled_value + "\"");
+                options += " ";
+            }
         } else if (final_enabled == "false") {
             std::string disabled_format = opt["disabled_format"] ? opt["disabled_format"].as<std::string>() : "";
             if (!disabled_format.empty()) {
