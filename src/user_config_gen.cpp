@@ -234,9 +234,9 @@ int main(int argc, char* argv[]) {
         }
         ofs << out.c_str();
         ofs.close();
-        INFO("Configuration written to: " + output_file);
+        SUCCESS("Configuration written to: " + output_file);
     } else {
-        INFO("Configuration output to stdout.");
+        SUCCESS("Configuration output to stdout.");
     }
 
     return 0;
