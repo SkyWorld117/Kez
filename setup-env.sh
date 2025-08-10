@@ -15,9 +15,20 @@ export FROMAGER_STATE="${FROMAGER_WORKDIR}/state"
 export FROMAGER_HOME="${SCRIPT_DIR}"
 export FROMAGER_SRC="${FROMAGER_HOME}/src"
 export FROMAGER_DB="${FROMAGER_HOME}/database"
-export PATH="${FROMAGER_HOME}/bin:${PATH}"
 
-export PATH="${FROMAGER_ENV}/system/bin:${FROMAGER_ENV}/toolkits/bin:${PATH}"
+# Fromager binaries, included to PATH only for now
+# It may interfere with bash auto-completion
+if [[ ":$PATH:" != *":${FROMAGER_HOME}/bin:"* ]]; then
+    export PATH="${FROMAGER_HOME}/bin:${PATH}"
+fi
+
+# Check if `system/bin` and `toolkits/bin` are already in PATH
+if [[ ":$PATH:" != *":${FROMAGER_ENV}/system/bin:"* ]]; then
+    export PATH="${FROMAGER_ENV}/system/bin:${PATH}"
+fi
+if [[ ":$PATH:" != *":${FROMAGER_ENV}/toolkits/bin:"* ]]; then
+    export PATH="${FROMAGER_ENV}/toolkits/bin:${PATH}"
+fi
 
 # Load main script
 source "${SCRIPT_DIR}/main.sh"
