@@ -33,11 +33,11 @@ std::string parse_property(
             std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
             std::filesystem::path prefix_path;
             if (compiler_spec == "system") {
-                prefix_path = fromager_env / "mpi" / (package_name + "-" + mpi_version + "-system");
+                prefix_path = fromager_env / "mpis" / (package_name + "-" + mpi_version + "-system");
             } else {
                 std::string compiler_name = compiler_spec.substr(0, compiler_spec.find('@'));
                 std::string compiler_version = compiler_spec.substr(compiler_spec.find('@') + 1);
-                prefix_path = fromager_env / "mpi" / (package_name + "-" + mpi_version + "-" + compiler_name + "-" + compiler_version);
+                prefix_path = fromager_env / "mpis" / (package_name + "-" + mpi_version + "-" + compiler_name + "-" + compiler_version);
             }
             if (!std::filesystem::exists(prefix_path)) {
                 WARNING("MPI prefix path does not exist: " + prefix_path.string());
