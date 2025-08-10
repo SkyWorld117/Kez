@@ -39,9 +39,9 @@ fgr () {
                     ;;
 
                     add )
-                        echo "Adding utility: $3"
+                        fromager_info "Adding utility: $3"
                         if [ -z "$3" ]; then
-                            echo "Error: No utility specified to add."
+                            fromager_error "No utility specified to add."
                             return 1
                         fi
                         shift 3
@@ -50,7 +50,7 @@ fgr () {
                 ;;
 
 
-            env )
+            cellar )
                 # Manage per application environments.
 
                 case "$2" in
@@ -60,24 +60,24 @@ fgr () {
                     ;;
 
                     add | create )
-                        fromager_info "Creating environment: $3"
+                        fromager_info "Creating new cellar: $3"
                         if [ -z "$3" ]; then
-                            fromager_error "No environment specified to create."
+                            fromager_error "No cellar specified to create."
                             return 1
                         fi
                         mkdir -p "${FROMAGER_ENV}/$3"
-                        fromager_success "Environment '$3' created successfully."
+                        fromager_success "Cellar '$3' created successfully."
                         shift 3
                     ;;
 
                     rm | remove )
-                        echo "Removing environment: $3"
+                        fromager_info "Removing cellar: $3"
                         if [ -z "$3" ]; then
-                            echo "Error: No environment specified to remove."
+                            fromager_error "No cellar specified to remove."
                             return 1
                         fi
                         if [ ! -d "${FROMAGER_ENV}/$3" ]; then
-                            echo "Error: Environment '$3' does not exist."
+                            fromager_error "Cellar '$3' does not exist."
                             return 1
                         fi
                         rm -rf "${FROMAGER_ENV}/$3"
@@ -85,18 +85,31 @@ fgr () {
                     ;;
 
                     ls | list )
-                        echo "Listing environments:"
+                        fromager_info "Listing cellars:"
+                        local cellars
                         if [ -d "${FROMAGER_ENV}" ]; then
-                            echo "$(ls ${FROMAGER_ENV} | sed "s~system~~g" | sed "s~utilities~~g" | sed "s~compilers~~g" | sed "s~vendors~~g" | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)"
+                            cellars="$(ls ${FROMAGER_ENV} | sed "s~system~~g" | sed "s~utilities~~g" | sed "s~compilers~~g" | sed "s~mpis~~g" | sed "s~vendors~~g" | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)"
+                        fi
+                        # Check if cellars is empty or only contains whitespace/newline etc.
+                        if [ -z "${cellars// }" ]; then
+                            fromager_info "No cellars found."
                         else
-                            echo "No environments found."
+                            echo "$cellars"
                         fi
                         shift 2
                     ;;
 
+                    enter )
+                        fromager_info "Entering cellar: $3"
+                        if [ -z "$3" ] || [ ! -d "${FROMAGER_ENV}/$3" ]; then
+                            fromager_error "Invalid cellar specified."
+                            return 1
+                        fi
+                        shift 3
+                    ;;
+
                 esac
                 ;;
-
 
             install )
                 # Install should create an environment and then install the package.
@@ -104,17 +117,58 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
-                        echo "Install a package."
                         shift 2
                     ;;
 
                     -r | --read )
-                        echo "Install a package from a requirements file."
-                        shift 3
+                        local requirements_file="$3"
+                        if [ -z "$requirements_file" ] || [ ! -f "$requirements_file" ]; then
+                            fromager_error "Invalid requirements file specified."
+                            return 1
+                        fi
+                        local target_pkg="$(yq -r '.recipe.dependencies[0]' "$requirements_file")"
+                        local pkg_type=$(yq -r '.cheese.type' "${FROMAGER_DB}/$target_pkg.yaml")
+                        local pkg_version=$(yq -r ".cheese.${target_pkg}.version" "$requirements_file")
+                        # Compilers, MPIs and vendor packages do not require a cellar.
+                        # (In fact requires NOT to specify a cellar)
+                        local cellar
+                        if [ "$pkg_type" = "compiler" ]; then
+                            cellar="${FROMAGER_ENV}/compilers/${target_pkg}-${pkg_version}"
+                            fromager_install "$requirements_file" "$cellar"
+                            shift 3
+                        elif [ "$pkg_type" = "mpi" ]; then
+                            local compiler_spec
+                            local compiler="$(yq -r ".cheese.${target_pkg}.compiler" "$requirements_file")"
+                            if [ "$compiler" = "system" ]; then
+                                compiler_spec="system"
+                            else
+                                # Split at `@` (format: <compiler-name>@<compiler-version>)
+                                local compiler_name=$(echo "$compiler" | cut -d'@' -f1)
+                                local compiler_version=$(echo "$compiler" | cut -d'@' -f2)
+                                compiler_spec="${FROMAGER_ENV}/compilers/${compiler_name}-${compiler_version}"
+                            fi
+                            cellar="${FROMAGER_ENV}/mpis/${target_pkg}-${pkg_version}-${compiler_spec}"
+                            fromager_install "$requirements_file" "$cellar"
+                            shift 3
+                        elif [ "$pkg_type" = "vendor" ]; then
+                            cellar="${FROMAGER_ENV}/vendors/${target_pkg}-${pkg_version}"
+                            fromager_install "$requirements_file" "$cellar"
+                            shift 3
+                        else
+                            # Require a cellar for other package types
+                            if [ -z "$4" ] || [ ! -d "${FROMAGER_ENV}/$4" ]; then
+                                fromager_error "Invalid cellar specified or not found."
+                                return 1
+                            fi
+                            cellar="${FROMAGER_ENV}/$4"
+                            fromager_install "$requirements_file" "$cellar"
+                            shift 4
+                        fi
                     ;;
 
                     * )
-                        echo "Installing package: $2"
+                        fromager_info "Installing package: $2"
+                        fromager_error "NOT IMPLEMENTED"
                         shift 2
                     ;;
 
@@ -128,12 +182,27 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
-                        echo "Template for configuring the application."
+                        fromager_info "Template for configuring the application."
                         shift 2
                     ;;
 
+                    -s | --save )
+                        fromager_info "Saving template for: $3"
+                        if [ -z "$3" ]; then
+                            fromager_error "No template name specified."
+                            return 1
+                        fi
+                        if [ -z "$4" ]; then
+                            fromager_error "No package specified."
+                            return 1
+                        fi
+                        fromager_user_config_gen "$4" "$3"
+                        shift 4
+                    ;;
+
                     * )
-                        echo "Generating template for: $2"
+                        fromager_info "Generating template for: $2"
+                        fromager_user_config_gen "$2"
                         shift 2
                     ;;
 
@@ -142,8 +211,8 @@ fgr () {
 
         
             * )
-                echo "Unknown option: $1"
-                echo "Use -h or --help for usage information."
+                fromager_error "Unknown option: $1"
+                fromager_info "Use -h or --help for usage information."
                 return 1
                 ;;
 

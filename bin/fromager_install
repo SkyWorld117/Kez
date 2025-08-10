@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+user_config=$1
+target_cellar=$2
+
+# Convert user_config to absolute path before changing directories
+user_config=$(realpath "$user_config")
+
+fromager_info "Using $user_config for user configuration and $target_cellar as target cellar."
+
+mkdir -p "$target_cellar/.tmp" && cd "$target_cellar/.tmp"
+rm -rf *
+fromager_parser "$user_config" release "$target_cellar" > /dev/null
+
+# Process each package and its instructions
+package_count=$(yq -r '. | length' "$target_cellar/.tmp/ins.yaml")
+
+for ((i=0; i<package_count; i++)); do
+    # Extract package name
+    package_name=$(yq -r ".[$i].package" "$target_cellar/.tmp/ins.yaml")
+    fromager_info "Processing package: $package_name"
+    cd "$target_cellar/.tmp"
+
+    # Get number of instructions for this package
+    instruction_count=$(yq -r ".[$i].instructions | length" "$target_cellar/.tmp/ins.yaml")
+    
+    # Execute each instruction
+    for ((j=0; j<instruction_count; j++)); do
+        instruction=$(yq -r ".[$i].instructions[$j]" "$target_cellar/.tmp/ins.yaml")
+        fromager_info "Executing: $instruction"
+        eval "$instruction"
+        if [ $? -ne 0 ]; then
+            fromager_error "Failed to execute: $instruction"
+            exit 1
+        fi
+    done
+    
+    fromager_success "Completed processing package: $package_name"
+
+    rm -rf "$target_cellar/.tmp/source"
+done
+
+set +Eeuo pipefail
