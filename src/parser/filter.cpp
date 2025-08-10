@@ -22,13 +22,17 @@ void filter(std::string& input) {
             }
             term.erase(0, termPos + 1);
         }
+        // Add the last remaining term (after the final space)
+        if (!term.empty() && std::find(terms.begin(), terms.end(), term) == terms.end()) {
+            terms.push_back(term);
+        }
         // Join terms with a space
         std::string joined;
         for (size_t i = 0; i < terms.size(); ++i) {
             joined += terms[i];
             if (i != terms.size() - 1) joined += ' ';
         }
-        input.replace(pos + 1, end - pos - 1, joined.empty() ? term : joined);
-        pos += joined.empty() ? term.length() + 2 : joined.length() + 2; // Move past the replaced term
+        input.replace(pos + 1, end - pos - 1, joined);
+        pos += joined.length() + 2; // Move past the replaced term
     }
 }
