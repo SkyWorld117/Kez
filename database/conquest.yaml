@@ -38,18 +38,23 @@ cheese:
             - name: LINKFLAGS
               description: Linker flags for Fortran
               enabled_value:
-                default: ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} ${libxc.ldflags}
+                default: ${compiler.omp_flags} ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} ${libxc.ldflags}
 
             - name: COMPFLAGS
               description: Fortran compiler flags
               user_configurable: true
               enabled_value:
-                default: -O3 -fallow-argument-mismatch ${blas.includes} ${lapack.includes} ${scalapack.includes} ${fftw3-api.includes} ${libxc.includes}
+                default: -O3 -fallow-argument-mismatch ${compiler.omp_flags} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${fftw3-api.includes} ${libxc.includes}
 
             - name: LIBS
               description: Libraries to link against
               enabled_value:
                 default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fftw3-api.libs} ${libxc.libs}
+
+            - name: XC_LIBRARY
+              description: XC library to link against
+              enabled_value:
+                default: LibXC_v5
 
             - name: MULT_KERN
               description: Matrix multiplication kernel

@@ -8,6 +8,8 @@ cheese:
     releases:
       - version: 7.0.0
         url: https://gitlab.com/libxc/libxc/-/archive/7.0.0/libxc-7.0.0.tar.gz
+      - version: 6.2.2
+        url: https://gitlab.com/libxc/libxc/-/archive/6.2.2/libxc-6.2.2.tar.gz
 
   build:
     preprocessing: autoreconf -i
@@ -64,6 +66,6 @@ cheese:
     ldflags:
       default: -L${libxc.prefix}/lib -Wl,-rpath,${libxc.prefix}/lib
     libs:
-      default: -lxc
+      default: -lxcf90 -lxc
     includes:
       default: -I${libxc.prefix}/include
