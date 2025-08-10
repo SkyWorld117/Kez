@@ -16,13 +16,9 @@ export FROMAGER_HOME="${SCRIPT_DIR}"
 export FROMAGER_SRC="${FROMAGER_HOME}/src"
 export FROMAGER_DB="${FROMAGER_HOME}/database"
 
-# Fromager binaries, included to PATH only for now
-# It may interfere with bash auto-completion
 if [[ ":$PATH:" != *":${FROMAGER_HOME}/bin:"* ]]; then
     export PATH="${FROMAGER_HOME}/bin:${PATH}"
 fi
-
-# Check if `system/bin` and `toolkits/bin` are already in PATH
 if [[ ":$PATH:" != *":${FROMAGER_ENV}/system/bin:"* ]]; then
     export PATH="${FROMAGER_ENV}/system/bin:${PATH}"
 fi

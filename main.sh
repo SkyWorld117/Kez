@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
 
-fromager () {
+fgr () {
 
     while [ $# -gt 0 ]; do
         case "$1" in
 
 
             -v | --version )
-                ${FROMAGER_HOME}/bin/fromager_info "Fromager version 0.0.1"
+                fromager_info "Fromager version 0.0.1"
                 shift
                 ;;
 
 
             -h | --help )
-                ${FROMAGER_HOME}/bin/fromager_info "Usage: fromager [OPTION]..."
+                fromager_info "Usage: fromager [OPTION]..."
                 shift
                 ;;
 
             init )
-                ${FROMAGER_HOME}/bin/fromager_init
+                fromager_init
                 shift
                 ;;
 
 
             selfcheck )
-                ${FROMAGER_HOME}/bin/fromager_db_check
+                fromager_db_check
                 shift
                 ;;
 
@@ -57,6 +57,17 @@ fromager () {
 
                     -h | --help )
                         shift 2
+                    ;;
+
+                    add | create )
+                        fromager_info "Creating environment: $3"
+                        if [ -z "$3" ]; then
+                            fromager_error "No environment specified to create."
+                            return 1
+                        fi
+                        mkdir -p "${FROMAGER_ENV}/$3"
+                        fromager_success "Environment '$3' created successfully."
+                        shift 3
                     ;;
 
                     rm | remove )
