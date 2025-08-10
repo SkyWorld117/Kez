@@ -31,7 +31,53 @@ std::vector<std::string> parse_package(
         }
     }
 
-    // TODO: Implement downloading etc.
+    // Download
+    if (pkg_config["cheese"]["source"] && user_config_pkg["version"]) {
+        std::string version = user_config_pkg["version"].as<std::string>();
+        bool found = false;
+        for (const auto& release : pkg_config["cheese"]["source"]["releases"]) {
+            std::string release_version = release["version"].as<std::string>();
+            if (release_version == version) {
+                std::string source_type = pkg_config["cheese"]["source"]["type"].as<std::string>();
+
+                if (source_type == "tarball") {
+                    // Case 1: Tarball
+                    // Tarball has `url` entry
+                    std::string url = release["url"].as<std::string>();
+                    instructions.push_back("wget --quiet --show-progress --output-document=source.tar.gz " + url);
+                    instructions.push_back("tar -xzf source.tar.gz");
+                    instructions.push_back("mv $(tar -tzf source.tar.gz | head -1 | cut -f1 -d'/') source");
+                    instructions.push_back("rm source.tar.gz");
+                    instructions.push_back("cd source");
+                } else if (source_type == "git") {
+                    // Case 2: Git
+                    // Git has `tag` entry
+                    std::string git_url = pkg_config["cheese"]["source"]["url"].as<std::string>();
+                    std::string git_tag = release["tag"].as<std::string>();
+                    instructions.push_back("git clone --depth 1 --branch " + git_tag + " " + git_url + " source");
+                    instructions.push_back("cd source");
+                } else if (source_type == "script" && release["url"]) {
+                    // Case 3: Script
+                    // Script may or may not have `url` entry
+                    // When not present, we assume the developer calls a script from `bin` at the preprocessing or postprocessing stage (no need to handle this case)
+                    // Else, we download the script
+                    std::string script_url = release["url"].as<std::string>();
+                    instructions.push_back("wget --quiet --show-progress --output-document=source.sh " + script_url);
+                } else {
+                    // Handle unknown source types
+                    ERROR("Unknown source type for package: " + package_name);
+                    exit(EXIT_FAILURE);
+                }
+
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ERROR("Version " + version + " not found in source releases for package: " + package_name);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     // Preprocessing
     if (build_mode == "debug") {
