@@ -19,7 +19,7 @@ cheese:
     - libxc
 
   build:
-    preprocessing: cd ${source}/src
+    preprocessing: cd ${source}/src && cp system/system.young.make system/system.make
     postprocessing: mkdir -p ${conquest.prefix}/bin && cp ${source}/bin/Conquest ${conquest.prefix}/bin/
     stages:
       - target: ~
