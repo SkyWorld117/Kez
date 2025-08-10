@@ -145,6 +145,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Create the file to `env_path/.tmp/ins.yaml`
+    YAML::Emitter out;
+    out << instructions_yaml;
+
     std::filesystem::path tmp_path = std::filesystem::path(env_path) / ".tmp";
     std::filesystem::create_directories(tmp_path);
     std::ofstream ofs((tmp_path / "ins.yaml").string());
@@ -152,8 +155,10 @@ int main(int argc, char* argv[]) {
         ERROR("Failed to create instruction file");
         exit(EXIT_FAILURE);
     }
-    ofs << YAML::Dump(instructions_yaml);
+    ofs << out.c_str();
     ofs.close();
+
+    SUCCESS("Instructions written to: " + (tmp_path / "ins.yaml").string());
 
     return 0;
 }

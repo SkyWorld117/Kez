@@ -153,5 +153,8 @@ std::string parse_options(
         template_map[pkg_name + ".config." + opt_name] = final_enabled + "." + (final_enabled == "true" ? final_enabled_value : final_disabled_value);
     }
 
+    // Remove trailing whitespace
+    options.erase(options.find_last_not_of(" ") + 1);
+
     return options;
 }
