@@ -1,5 +1,6 @@
 #include <yaml-cpp/yaml.h>
 #include <iostream>
+#include <fstream>
 #include <filesystem>
 #include <vector>
 #include <unordered_map>
@@ -128,6 +129,31 @@ int main(int argc, char* argv[]) {
             std::cout << "- " << instruction << std::endl;
         }
     }
+
+    // Convert package_instructions to YAML format
+    YAML::Node instructions_yaml = YAML::Node(YAML::NodeType::Sequence);
+    std::vector<std::string> all_dependencies = user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
+    std::reverse(all_dependencies.begin(), all_dependencies.end());
+    for (const std::string& pkg_name : all_dependencies) {
+        if (package_instructions.find(pkg_name) != package_instructions.end() &&
+            !package_instructions[pkg_name].empty()) {
+            YAML::Node pkg_node(YAML::NodeType::Map);
+            pkg_node["package"] = pkg_name;
+            pkg_node["instructions"] = package_instructions[pkg_name];
+            instructions_yaml.push_back(pkg_node);
+        }
+    }
+
+    // Create the file to `env_path/.tmp/ins.yaml`
+    std::filesystem::path tmp_path = std::filesystem::path(env_path) / ".tmp";
+    std::filesystem::create_directories(tmp_path);
+    std::ofstream ofs((tmp_path / "ins.yaml").string());
+    if (!ofs) {
+        ERROR("Failed to create instruction file");
+        exit(EXIT_FAILURE);
+    }
+    ofs << YAML::Dump(instructions_yaml);
+    ofs.close();
 
     return 0;
 }
