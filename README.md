@@ -1,7 +1,23 @@
 # Fromager
 
-Fromager is a 
+Fromager is an HPC-focused package manager for GNU/Linux systems.
 
+Everything is at its very early stage, use with caution.
+
+You can find more information in the [documentation](docs/01-Getting_Started.md).
+
+## Why Fromager?
+
+Traditional package managers often struggle with the complexities of HPC environments, where multiple versions of libraries and tools need to coexist. Cluster administrators often leave the users to manage these complexities themselves, creating the demand of a user-site package manager that can handle such complexities.
+
+Although there are existing solutions such as Spack and EasyBuild, they miss one or more key features below:
+
+- User-friendly configuration
+- High maintainability for package developers
+- High performance
+- Precise shell (bash) environment management
+
+Fromager achieves the points above by using a C++ backend, a database of YAML files that are easy to modify and extend, and a novel environment structure to achieve both efficiency and isolation.
 
 ## Known Issues
 
@@ -14,4 +30,4 @@ Fromager is a
 - [ ] Format verifier is a bit broken (too strict), needs to be fixed.
 - [ ] Add smart default selection for abstract packages.
 - [ ] Add command line configuration and installation (not always through files).
-- [ ] Add fast testing mechanism
+- [ ] Add fast testing mechanism.
