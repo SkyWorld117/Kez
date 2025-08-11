@@ -347,8 +347,8 @@ cmake .. \
 make -j"${FROMAGER_NPROC}" && make install
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
-# # Fromager (WIP)
-# make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}" release
+# Fromager
+make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}"
 
 
 ## PHASE 6: Other Tools
