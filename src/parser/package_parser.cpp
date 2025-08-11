@@ -62,7 +62,7 @@ std::vector<std::string> parse_package(
                     // When not present, we assume the developer calls a script from `bin` at the preprocessing or postprocessing stage (no need to handle this case)
                     // Else, we download the script
                     std::string script_url = release["url"].as<std::string>();
-                    instructions.push_back("wget --quiet --show-progress --output-document=source.sh " + script_url);
+                    instructions.push_back("wget --quiet --show-progress --output-document=source " + script_url);
                 } else {
                     // Handle unknown source types
                     ERROR("Unknown source type for package: " + package_name);
