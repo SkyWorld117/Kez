@@ -373,6 +373,14 @@ if command -v nvidia-smi &> /dev/null; then
     cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml")
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
     bash "${FROMAGER_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${FROMAGER_WORKDIR}/.tmp"
+    # Soft link CUDA files
+    if [ "$(uname -m)" = "x86_64" ]; then
+        cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/include"/* "${SYSTEM_PREFIX}/include/"
+        cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
+    elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+        cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/include"/* "${SYSTEM_PREFIX}/include/"
+        cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
+    fi
     rm -f "${FROMAGER_WORKDIR}/.tmp/cuda.run"
 else
     echo "No NVIDIA GPU detected, skipping CUDA installation."
