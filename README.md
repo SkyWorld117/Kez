@@ -1,31 +1,7 @@
 # Fromager
 
-## Structure of $FROMAGER_WORKDIR
+Fromager is a 
 
-```
-$FROMAGER_WORKDIR
-├── config.yaml
-├── states.yaml
-├── compilers.yaml
-├── mpis.yaml
-├── env
-    ├── system
-    ├── utilities
-    ├── compilers
-        ├── gcc-x.x.x
-        ├── llvm-x.x.x
-        ├── ...
-    ├── mpis
-        ├── openmpi-gcc-x.x.x-x.x.x
-        ├── openmpi-llvm-x.x.x-x.x.x
-        ├── ...
-    ├── vendors
-        ├── nvhpc-x.x
-        ├── oneapi-x.x.x.x
-        ├── ...
-    ├── apps
-        ├── ...
-```
 
 ## Known Issues
 
@@ -38,3 +14,4 @@ $FROMAGER_WORKDIR
 - [ ] Format verifier is a bit broken (too strict), needs to be fixed.
 - [ ] Add smart default selection for abstract packages.
 - [ ] Add command line configuration and installation (not always through files).
+- [ ] Add fast testing mechanism

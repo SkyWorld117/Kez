@@ -14,6 +14,19 @@ fgr () {
 
             -h | --help )
                 fromager_info "Usage: fromager [OPTION]..."
+                echo "Options:"
+                echo "  -v, --version    Show version information"
+                echo "  -h, --help       Show this help message"
+                echo "  init             Initialize the Fromager environment"
+                echo "  selfcheck        Run self-checks on the Fromager installation"
+                echo "  utilities        Manage utilities"
+                echo "                   run `fgr utilities --help` for more information"
+                echo "  cellar           Manage per application environments"
+                echo "                   run `fgr cellar --help` for more information"
+                echo "  install          Install a package"
+                echo "                   run `fgr install --help` for more information"
+                echo "  template         Fetch a template for an application"
+                echo "                   run `fgr template --help` for more information"
                 shift
                 ;;
 
@@ -35,6 +48,7 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
+                        echo "NOT IMPLEMENTED MODULE"
                         shift 2
                     ;;
 
@@ -56,6 +70,12 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
+                        fromager_info "Usage: fgr cellar [OPTION] [ARGUMENTS]"
+                        echo "Options:"
+                        echo "  add, create <cellar_name>       Create a new cellar named <cellar_name>"
+                        echo "  rm, remove <cellar_name>        Remove an existing cellar named <cellar_name>"
+                        echo "  ls, list                        List all existing cellars"
+                        echo "  enter <cellar_name>             Load the environment of the specified cellar"
                         shift 2
                     ;;
 
@@ -117,6 +137,12 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
+                        fromager_info "Usage: fgr install [OPTIONS] [REQUIREMENTS_FILE] [CELLAR]"
+                        echo "Options:"
+                        echo "  -h, --help                                Show this help message"
+                        echo "  -r, --read <requirements_file> [cellar]   Read requirements from <requirements_file> and install in [cellar]"
+                        echo "                                            Notice the cellar argument should not be specified for compilers, "
+                        echo "                                            MPIs, and vendor packages."
                         shift 2
                     ;;
 
@@ -182,7 +208,12 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
-                        fromager_info "Template for configuring the application."
+                        fromager_info "Usage: fgr template [OPTION] [ARGUMENTS]"
+                        echo "Options:"
+                        echo "  -h, --help                             Show this help message"
+                        echo "  <package>                              Generate the configuration template for the specified package"
+                        echo "                                         without saving"
+                        echo "  -s, --save <file name> <package>       Save the configuration template for the specified package"
                         shift 2
                     ;;
 
