@@ -84,6 +84,7 @@ fgr () {
             -v | --version )
                 fromager_info "Fromager version 0.0.1"
                 shift
+                break
                 ;;
 
 
@@ -103,17 +104,20 @@ fgr () {
                 format_option_help "template" "Fetch a template for an application"
                 format_option_help "" "run \`fgr template --help\` for more information"
                 shift
+                break
                 ;;
 
             init )
                 fromager_init
                 shift
+                break
                 ;;
 
 
             selfcheck )
                 fromager_db_check
                 shift
+                break
                 ;;
 
 
@@ -136,6 +140,7 @@ fgr () {
                         shift 3
                     ;;
                 esac
+                break
                 ;;
 
 
@@ -240,6 +245,7 @@ fgr () {
                         shift 2
 
                 esac
+                break
                 ;;
 
 
@@ -310,6 +316,7 @@ fgr () {
                     ;;
 
                 esac
+                break
                 ;;
 
 
@@ -359,6 +366,7 @@ fgr () {
                     ;;
 
                 esac
+                break
                 ;;
 
         
@@ -372,5 +380,12 @@ fgr () {
         esac
 
     done
+
+    if [ $# -gt 0 ]; then
+        fromager_error "Too many arguments"
+        fromager_warning "Arguments starting with $1 are ignored."
+        fromager_info "Use -h or --help for usage information."
+        return 1
+    fi
 
 }
