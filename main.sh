@@ -214,7 +214,18 @@ fgr () {
                         echo "  <package>                              Generate the configuration template for the specified package"
                         echo "                                         without saving"
                         echo "  -s, --save <file name> <package>       Save the configuration template for the specified package"
+                        echo "  parse <file name>                      Parse the user configuration file <file name>"
                         shift 2
+                    ;;
+
+                    parse )
+                        fromager_info "Parsing template for: $3"
+                        if [ -z "$3" ]; then
+                            fromager_error "No package specified to parse."
+                            return 1
+                        fi
+                        fromager_parser "$3" debug "${FROMAGER_WORKDIR}/.tmp"
+                        shift 3
                     ;;
 
                     -s | --save )
