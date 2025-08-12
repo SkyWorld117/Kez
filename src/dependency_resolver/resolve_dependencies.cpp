@@ -2,13 +2,11 @@
 
 std::filesystem::path db_path(getenv("FROMAGER_DB"));
 std::unordered_map<std::string, std::vector<std::string>> adjacency_list;
-std::unordered_map<std::string, bool> system_packages;
-std::unordered_map<std::string, bool> compiler_packages;
-std::unordered_map<std::string, bool> mpi_packages;
+std::vector<std::string> system_packages;
 std::unordered_map<std::string, std::string> abstract_packages;
 std::unordered_map<std::string, bool> use_optional_packages;
 
-void build_adjacency_list(const std::string& pkg_name, const std::string& target_pkg_name, const bool filter_pkg) {
+void build_adjacency_list(const std::string& pkg_name, const std::string& target_pkg_name) {
     if (adjacency_list.find(pkg_name) != adjacency_list.end()) {
         return; // Already processed
     }
@@ -69,15 +67,15 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
         concrete_pkg_name = pkg_name; // Use the original package name for non-abstract packages
     }
 
-    if (filter_pkg) {
-        if (config["cheese"]["type"].as<std::string>() == "system") {
-            return; // Skip system packages
-        } else if ((config["cheese"]["type"].as<std::string>() == "compiler" ||
-                    config["cheese"]["type"].as<std::string>() == "mpi") &&
-                   concrete_pkg_name != target_pkg_name) {
-            adjacency_list[concrete_pkg_name] = {}; // Skip compiler and MPI packages that are not the target
-            return;
-        }
+    if (config["cheese"]["type"].as<std::string>() == "system") {
+        adjacency_list[concrete_pkg_name] = {};
+        system_packages.push_back(concrete_pkg_name);
+        return; // Skip system packages
+    } else if ((config["cheese"]["type"].as<std::string>() == "compiler" ||
+                config["cheese"]["type"].as<std::string>() == "mpi") &&
+                concrete_pkg_name != target_pkg_name) {
+        adjacency_list[concrete_pkg_name] = {}; // Skip compiler and MPI packages that are not the target
+        return;
     }
 
     // Get essential and optional dependencies
@@ -111,13 +109,13 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
     adjacency_list[concrete_pkg_name] = essential_deps;
 
     for (const auto& dep : essential_deps) {
-        build_adjacency_list(dep, target_pkg_name, filter_pkg);
+        build_adjacency_list(dep, target_pkg_name);
     }
 }
 
-std::vector<std::string> resolve_dependencies(const std::string& pkg_name, const bool filter_pkg) {
-    adjacency_list.clear();
-    build_adjacency_list(pkg_name, pkg_name, filter_pkg);
+// Return: ((full list of dependencies, filtered list of dependencies), abstract packages)
+std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>, std::unordered_map<std::string, std::string>> resolve_dependencies(const std::string& pkg_name) {
+    build_adjacency_list(pkg_name, pkg_name);
 
     // Unify the adjacency list to ensure all abstract packages are resolved to their selected implementations
     std::unordered_map<std::string, std::vector<std::string>> unified_adjacency_list;
@@ -141,13 +139,12 @@ std::vector<std::string> resolve_dependencies(const std::string& pkg_name, const
     std::vector<std::string> ordered_dependencies = topological_sort(unified_adjacency_list);
     std::reverse(ordered_dependencies.begin(), ordered_dependencies.end());
 
-    return ordered_dependencies;
-}
-
-// Return: ((full list of dependencies, filtered list of dependencies), abstract packages)
-std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>, std::unordered_map<std::string, std::string>> resolve_dependencies(const std::string& pkg_name) {
-    std::vector<std::string> ordered_dependencies = resolve_dependencies(pkg_name, false);
-    std::vector<std::string> filtered_dependencies = resolve_dependencies(pkg_name, true);
+    std::vector<std::string> filtered_dependencies;
+    for (const auto& dep : ordered_dependencies) {
+        if (std::find(system_packages.begin(), system_packages.end(), dep) == system_packages.end()) {
+            filtered_dependencies.push_back(dep);
+        }
+    }
 
     return { { ordered_dependencies, filtered_dependencies }, abstract_packages };
 }
