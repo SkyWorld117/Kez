@@ -1,7 +1,7 @@
 # Compiler and flags
 CXX ?= g++
-CXXFLAGS ?= -O3 -std=c++17
-CXXFLAGS += -I$(FROMAGER_ENV)/system/include
+CXXFLAGS ?= -O3 -flto -std=c++17
+INCLUDES = -I$(FROMAGER_ENV)/system/include
 LDFLAGS += -L$(FROMAGER_ENV)/system/lib -L$(FROMAGER_ENV)/system/lib64
 LDFLAGS += -lyaml-cpp
 LDFLAGS += -Wl,-rpath=$(FROMAGER_ENV)/system/lib -Wl,-rpath=$(FROMAGER_ENV)/system/lib64
@@ -58,42 +58,42 @@ $(OBJ_DIR):
 
 # Object file rules for package format verifier
 $(OBJ_DIR)/package_format_verifier/%.o: $(SRC_DIR)/package_format_verifier/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for dependency resolver
 $(OBJ_DIR)/dependency_resolver/%.o: $(SRC_DIR)/dependency_resolver/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for parser
 $(OBJ_DIR)/parser/%.o: $(SRC_DIR)/parser/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for colors (with prefixed names to avoid conflicts)
 $(OBJ_DIR)/colors/%.o: $(SRC_DIR)/colors/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Special rules for main executables
 $(OBJ_DIR)/test_deps_resolve.o: $(SRC_DIR)/test_deps_resolve.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ_DIR)/user_config_gen.o: $(SRC_DIR)/user_config_gen.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Executables
 $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/test_deps_resolve: $(OBJ_DIR)/test_deps_resolve.o $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_user_config_gen: $(OBJ_DIR)/user_config_gen.o $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_parser: $(PARSER_OBJS) | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Create bin directory
 $(BIN_DIR):
