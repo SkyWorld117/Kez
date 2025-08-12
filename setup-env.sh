@@ -26,19 +26,25 @@ if [[ ":$PATH:" != *":${FROMAGER_ENV}/toolkits/bin:"* ]]; then
     export PATH="${FROMAGER_ENV}/toolkits/bin:${PATH}"
 fi
 
+if [ "$(uname -m)" = "x86_64" ]; then
+    export FROMAGER_ARCH="x86_64"
+elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+    export FROMAGER_ARCH="arm64"
+else
+    echo "Unsupported architecture: $(uname -m)"
+    return 1
+fi
+
 # Load main script
 source "${SCRIPT_DIR}/main.sh"
 
 # Prepare yq for YAML processing
 if [ ! -f "${FROMAGER_ENV}/system/bin/yq" ]; then
     mkdir -p "${FROMAGER_ENV}/system/bin"
-    if [ "$(uname -m)" = "x86_64" ]; then
+    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
         wget --quiet --show-progress --output-document="${FROMAGER_ENV}/system/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-    elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
         wget --quiet --show-progress --output-document="${FROMAGER_ENV}/system/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
-    else
-        echo "Unsupported architecture: $(uname -m)"
-        return 1
     fi
     chmod +x "${FROMAGER_ENV}/system/bin/yq"
 fi

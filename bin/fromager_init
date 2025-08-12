@@ -307,13 +307,10 @@ cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # cmake
 cmake_tag="$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" | jq -r '.tag_name')"
-if [ "$( uname -m )" = "x86_64" ]; then
+if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
     cmake_tag="${cmake_tag#v}-linux-x86_64"
-elif [ "$( uname -m )" = "aarch64" ] || [ "$( uname -m )" = "arm64" ]; then
+elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
     cmake_tag="${cmake_tag#v}-linux-aarch64"
-else
-    echo >&2 "Unsupported architecture: $( uname -m )"
-    exit 1
 fi
 wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag}.sh"
 bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
@@ -325,13 +322,10 @@ echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
 # ----------------------------------------------------
 
 # yq (should be installed by setup-env.sh, here in case we are performing an update)
-if [ "$(uname -m)" = "x86_64" ]; then
+if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
     wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
     wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
-else
-    echo >&2 "Unsupported architecture: $(uname -m)"
-    exit 1
 fi
 chmod +x "${SYSTEM_PREFIX}/bin/yq"
 version=$(yq --version | grep -oP 'version v\K[0-9]+\.[0-9]+\.[0-9]+')
@@ -362,10 +356,10 @@ if command -v nvidia-smi &> /dev/null; then
     # Format `CUDA Version        : 12.4`
     cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
     echo -e "  cuda:\n    version: ${cuda_version}" >> "${SYSTEM_PREFIX}/state.yaml"
-    if [ "$(uname -m)" = "x86_64" ]; then
+    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
         cuda_version="${cuda_version}-x86_64"
-    elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
-        cuda_version="${cuda_version}-aarch64"
+    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+        cuda_version="${cuda_version}-arm64"
     else
         echo >&2 "Unsupported architecture: $(uname -m)"
         exit 1
@@ -374,10 +368,10 @@ if command -v nvidia-smi &> /dev/null; then
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
     bash "${FROMAGER_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${FROMAGER_WORKDIR}/.tmp"
     # Soft link CUDA files
-    if [ "$(uname -m)" = "x86_64" ]; then
+    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
         cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/include"/* "${SYSTEM_PREFIX}/include/"
         cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
-    elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
         cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/include"/* "${SYSTEM_PREFIX}/include/"
         cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
     fi
