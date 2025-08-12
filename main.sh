@@ -150,7 +150,9 @@ fgr () {
                         format_option_help "add, create <cellar>" "Create a new cellar named <cellar>"
                         format_option_help "rm, remove <cellar>" "Remove an existing cellar named <cellar>"
                         format_option_help "ls, list" "List all existing cellars"
-                        format_option_help "enter <cellar>" "Load the environment of the specified cellar"
+                        format_option_help "enter <cellar>" "Load the environment of <cellar>"
+                        format_option_help "exit" "Exit the current cellar"
+                        format_option_help "which" "Show the current cellar"
                         shift 2
                     ;;
 
@@ -200,7 +202,35 @@ fgr () {
                             fromager_error "Invalid cellar specified."
                             return 1
                         fi
+                        if [ -z "${FROMAGER_CELLAR:-}" ]; then
+                            export FROMAGER_CELLAR="$3"
+                            export PATH="${FROMAGER_ENV}/${FROMAGER_CELLAR}/bin:$PATH"
+                        else
+                            fromager_error "Already in the cellar ${FROMAGER_CELLAR}, please exit first."
+                            return 1
+                        fi
                         shift 3
+                    ;;
+
+                    exit )
+                        fromager_info "Exiting cellar: ${FROMAGER_CELLAR}"
+                        if [ -n "${FROMAGER_CELLAR:-}" ]; then
+                            unset FROMAGER_CELLAR
+                            export PATH=$(echo "$PATH" | sed "s|${FROMAGER_ENV}/${FROMAGER_CELLAR}/bin| |g")
+                        else
+                            fromager_error "Not currently in a cellar."
+                            return 1
+                        fi
+                        shift 2
+                    ;;
+
+                    which )
+                        if [ -z "${FROMAGER_CELLAR:-}" ]; then
+                            fromager_info "Not currently in a cellar."
+                        else
+                            fromager_info "You are currently in the cellar: ${FROMAGER_CELLAR}"
+                        fi
+                        shift 2
                     ;;
 
                 esac
