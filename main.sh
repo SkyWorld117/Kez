@@ -1,5 +1,80 @@
 #!/usr/bin/env bash
 
+# Format option and help text with dynamic wrapping and proper alignment
+format_option_help() {
+    local option="$1"
+    local help_text="$2"
+    local base_indent="  "
+    local option_width=25  # Standard width for option column
+    local width=$(tput cols 2>/dev/null) || width=80
+    local min_help_width=30
+    local min_option_width=15
+    
+    # Calculate available space for help text
+    local total_prefix_width=$((${#base_indent} + option_width))
+    local help_width=$((width - total_prefix_width))
+    local option_content_width=$((width - ${#base_indent}))
+    
+    # Check if option itself is too long for the allocated space
+    local option_too_long=false
+    if [ "${#option}" -gt "$option_width" ] && [ "$option_content_width" -gt "$min_option_width" ]; then
+        option_too_long=true
+    fi
+    
+    # Use stacked format if:
+    # - Terminal is too narrow for side-by-side layout
+    # - Help text is very long
+    # - Option text is too long for the allocated space
+    if [ "$help_width" -lt "$min_help_width" ] || [ "${#help_text}" -gt $((help_width * 2)) ] || [ "$option_too_long" = true ]; then
+        # Stacked format: option on one line, help text on next line with extra indent
+        local help_indent="${base_indent}    "  # Extra indentation for help text
+        local help_content_width=$((width - ${#help_indent}))
+        
+        # Ensure minimum widths
+        if [ "$help_content_width" -lt 20 ]; then
+            help_content_width=20
+        fi
+        if [ "$option_content_width" -lt 15 ]; then
+            option_content_width=15
+        fi
+        
+        # Wrap and output option if it's too long
+        if [ "${#option}" -gt "$option_content_width" ]; then
+            echo "$option" | fold -s -w "$option_content_width" | sed "s/^/$base_indent/"
+        else
+            echo "${base_indent}${option}"
+        fi
+        
+        # Wrap and output help text
+        if [ -n "$help_text" ]; then
+            echo "$help_text" | fold -s -w "$help_content_width" | sed "s/^/$help_indent/"
+        fi
+    else
+        # Side-by-side format: option and help text on same line
+        local help_alignment_spaces=""
+        local current_option_width=${#option}
+        
+        # Create alignment spaces
+        if [ "$current_option_width" -lt "$option_width" ]; then
+            local spaces_needed=$((option_width - current_option_width))
+            help_alignment_spaces=$(printf "%*s" "$spaces_needed" "")
+        fi
+        
+        # Format help text with proper wrapping
+        local wrapped_help
+        if [ "${#help_text}" -gt "$help_width" ]; then
+            # Wrap help text and align continuation lines
+            local continuation_indent="${base_indent}$(printf "%*s" "$option_width" "")"
+            wrapped_help=$(echo "$help_text" | fold -s -w "$help_width" | sed "1!s/^/$continuation_indent/")
+        else
+            wrapped_help="$help_text"
+        fi
+        
+        # Output the formatted line
+        echo "${base_indent}${option}${help_alignment_spaces}${wrapped_help}"
+    fi
+}
+
 fgr () {
 
     while [ $# -gt 0 ]; do
@@ -15,18 +90,18 @@ fgr () {
             -h | --help )
                 fromager_info "Usage: fromager [OPTION]..."
                 echo "Options:"
-                echo "  -v, --version    Show version information"
-                echo "  -h, --help       Show this help message"
-                echo "  init             Initialize the Fromager environment"
-                echo "  selfcheck        Run self-checks on the Fromager installation"
-                echo "  utilities        Manage utilities"
-                echo "                   run `fgr utilities --help` for more information"
-                echo "  cellar           Manage per application environments"
-                echo "                   run `fgr cellar --help` for more information"
-                echo "  install          Install a package"
-                echo "                   run `fgr install --help` for more information"
-                echo "  template         Fetch a template for an application"
-                echo "                   run `fgr template --help` for more information"
+                format_option_help "-v, --version" "Show version information"
+                format_option_help "-h, --help" "Show this help message"
+                format_option_help "init" "Initialize the Fromager environment"
+                format_option_help "selfcheck" "Run self-checks on the Fromager installation"
+                format_option_help "utilities" "Manage utilities"
+                format_option_help "" "run \`fgr utilities --help\` for more information"
+                format_option_help "cellar" "Manage per application environments"
+                format_option_help "" "run \`fgr cellar --help\` for more information"
+                format_option_help "install" "Install a package"
+                format_option_help "" "run \`fgr install --help\` for more information"
+                format_option_help "template" "Fetch a template for an application"
+                format_option_help "" "run \`fgr template --help\` for more information"
                 shift
                 ;;
 
@@ -72,10 +147,10 @@ fgr () {
                     -h | --help )
                         fromager_info "Usage: fgr cellar [OPTION] [ARGUMENTS]"
                         echo "Options:"
-                        echo "  add, create <cellar_name>       Create a new cellar named <cellar_name>"
-                        echo "  rm, remove <cellar_name>        Remove an existing cellar named <cellar_name>"
-                        echo "  ls, list                        List all existing cellars"
-                        echo "  enter <cellar_name>             Load the environment of the specified cellar"
+                        format_option_help "add, create <cellar>" "Create a new cellar named <cellar>"
+                        format_option_help "rm, remove <cellar>" "Remove an existing cellar named <cellar>"
+                        format_option_help "ls, list" "List all existing cellars"
+                        format_option_help "enter <cellar>" "Load the environment of the specified cellar"
                         shift 2
                     ;;
 
@@ -137,34 +212,33 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
-                        fromager_info "Usage: fgr install [OPTIONS] [REQUIREMENTS_FILE] [CELLAR]"
+                        fromager_info "Usage: fgr install [OPTIONS] [CONFIG] [CELLAR]"
                         echo "Options:"
-                        echo "  -h, --help                                Show this help message"
-                        echo "  -r, --read <requirements_file> [cellar]   Read requirements from <requirements_file> and install in [cellar]"
-                        echo "                                            Notice the cellar argument should not be specified for compilers, "
-                        echo "                                            MPIs, and vendor packages."
+                        format_option_help "-h, --help" "Show this help message"
+                        format_option_help "-r, --read <config> [cellar]" "Read requirements from <config> and install in [cellar]"
+                        format_option_help "" "Notice the cellar argument should not be specified for compilers, MPIs, and vendor packages."
                         shift 2
                     ;;
 
                     -r | --read )
-                        local requirements_file="$3"
-                        if [ -z "$requirements_file" ] || [ ! -f "$requirements_file" ]; then
+                        local config_file="$3"
+                        if [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
                             fromager_error "Invalid requirements file specified."
                             return 1
                         fi
-                        local target_pkg="$(yq -r '.recipe.dependencies[0]' "$requirements_file")"
+                        local target_pkg="$(yq -r '.recipe.dependencies[0]' "$config_file")"
                         local pkg_type=$(yq -r '.cheese.type' "${FROMAGER_DB}/$target_pkg.yaml")
-                        local pkg_version=$(yq -r ".cheese.${target_pkg}.version" "$requirements_file")
+                        local pkg_version=$(yq -r ".cheese.${target_pkg}.version" "$config_file")
                         # Compilers, MPIs and vendor packages do not require a cellar.
                         # (In fact requires NOT to specify a cellar)
                         local cellar
                         if [ "$pkg_type" = "compiler" ]; then
                             cellar="${FROMAGER_ENV}/compilers/${target_pkg}-${pkg_version}"
-                            fromager_install "$requirements_file" "$cellar"
+                            fromager_install "$config_file" "$cellar"
                             shift 3
                         elif [ "$pkg_type" = "mpi" ]; then
                             local compiler_spec
-                            local compiler="$(yq -r ".cheese.${target_pkg}.compiler" "$requirements_file")"
+                            local compiler="$(yq -r ".cheese.${target_pkg}.compiler" "$config_file")"
                             if [ "$compiler" = "system" ]; then
                                 compiler_spec="system"
                             else
@@ -174,11 +248,11 @@ fgr () {
                                 compiler_spec="${FROMAGER_ENV}/compilers/${compiler_name}-${compiler_version}"
                             fi
                             cellar="${FROMAGER_ENV}/mpis/${target_pkg}-${pkg_version}-${compiler_spec}"
-                            fromager_install "$requirements_file" "$cellar"
+                            fromager_install "$config_file" "$cellar"
                             shift 3
                         elif [ "$pkg_type" = "vendor" ]; then
                             cellar="${FROMAGER_ENV}/vendors/${target_pkg}-${pkg_version}"
-                            fromager_install "$requirements_file" "$cellar"
+                            fromager_install "$config_file" "$cellar"
                             shift 3
                         else
                             # Require a cellar for other package types
@@ -187,7 +261,7 @@ fgr () {
                                 return 1
                             fi
                             cellar="${FROMAGER_ENV}/$4"
-                            fromager_install "$requirements_file" "$cellar"
+                            fromager_install "$config_file" "$cellar"
                             shift 4
                         fi
                     ;;
@@ -210,11 +284,10 @@ fgr () {
                     -h | --help )
                         fromager_info "Usage: fgr template [OPTION] [ARGUMENTS]"
                         echo "Options:"
-                        echo "  -h, --help                             Show this help message"
-                        echo "  <package>                              Generate the configuration template for the specified package"
-                        echo "                                         without saving"
-                        echo "  -s, --save <file name> <package>       Save the configuration template for the specified package"
-                        echo "  parse <file name>                      Parse the user configuration file <file name>"
+                        format_option_help "-h, --help" "Show this help message"
+                        format_option_help "<package>" "Generate the configuration template for the specified package without saving"
+                        format_option_help "-s, --save <file> <package>" "Save the configuration template for the specified package"
+                        format_option_help "parse <file>" "Parse the user configuration file <file>"
                         shift 2
                     ;;
 
