@@ -12,47 +12,64 @@ OBJ_DIR = obj
 BIN_DIR = bin
 
 # Object files for different components
-PACKAGE_FORMAT_VERIFIER_OBJS = $(OBJ_DIR)/build_verifier.o $(OBJ_DIR)/cheese_verifier.o \
-                               $(OBJ_DIR)/conditions_verifier.o $(OBJ_DIR)/configurations_verifier.o \
-                               $(OBJ_DIR)/dependencies_verifier.o $(OBJ_DIR)/environment_verifier.o \
-                               $(OBJ_DIR)/implementations_verifier.o $(OBJ_DIR)/options_verifier.o \
-                               $(OBJ_DIR)/properties_verifier.o $(OBJ_DIR)/source_verifier.o \
-                               $(OBJ_DIR)/stages_verifier.o $(OBJ_DIR)/templates_verifier.o \
-                               $(OBJ_DIR)/main.o
+PACKAGE_FORMAT_VERIFIER_OBJS = \
+	$(OBJ_DIR)/package_format_verifier/build_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/cheese_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/conditions_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/configurations_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/dependencies_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/environment_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/implementations_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/options_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/properties_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/source_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/stages_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/templates_verifier.o \
+	$(OBJ_DIR)/package_format_verifier/main.o
 
-DEPENDENCY_RESOLVER_OBJS = $(OBJ_DIR)/essential_dependencies.o $(OBJ_DIR)/optional_dependencies.o \
-                          $(OBJ_DIR)/resolve_dependencies.o $(OBJ_DIR)/toposort.o
+DEPENDENCY_RESOLVER_OBJS = \
+	$(OBJ_DIR)/dependency_resolver/essential_dependencies.o \
+	$(OBJ_DIR)/dependency_resolver/optional_dependencies.o \
+	$(OBJ_DIR)/dependency_resolver/resolve_dependencies.o \
+	$(OBJ_DIR)/dependency_resolver/toposort.o
 
-PARSER_OBJS = $(OBJ_DIR)/conditions_parser.o $(OBJ_DIR)/configuration_parser.o \
-              $(OBJ_DIR)/environment_parser.o $(OBJ_DIR)/filter.o \
-              $(OBJ_DIR)/options_parser.o $(OBJ_DIR)/package_parser.o \
-              $(OBJ_DIR)/parser.o $(OBJ_DIR)/property_parser.o \
-              $(OBJ_DIR)/scalar_parser.o $(OBJ_DIR)/template_parser.o
-
-COLORS_OBJS = $(OBJ_DIR)/colors_info.o $(OBJ_DIR)/colors_warning.o \
-              $(OBJ_DIR)/colors_error.o $(OBJ_DIR)/colors_success.o
+PARSER_OBJS = \
+	$(OBJ_DIR)/parser/conditions_parser.o \
+	$(OBJ_DIR)/parser/configuration_parser.o \
+	$(OBJ_DIR)/parser/environment_parser.o \
+	$(OBJ_DIR)/parser/filter.o \
+	$(OBJ_DIR)/parser/options_parser.o \
+	$(OBJ_DIR)/parser/package_parser.o \
+	$(OBJ_DIR)/parser/parser.o \
+	$(OBJ_DIR)/parser/property_parser.o \
+	$(OBJ_DIR)/parser/scalar_parser.o \
+	$(OBJ_DIR)/parser/template_parser.o \
+	$(OBJ_DIR)/parser/main.o
 
 # Default target
 .DEFAULT_GOAL := release
 
 # Create object directory
 $(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+	mkdir -p $(OBJ_DIR)/package_format_verifier
+	mkdir -p $(OBJ_DIR)/dependency_resolver
+	mkdir -p $(OBJ_DIR)/parser
+	mkdir -p $(OBJ_DIR)/colors
 
 # Object file rules for package format verifier
-$(OBJ_DIR)/%.o: $(SRC_DIR)/package_format_verifier/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/package_format_verifier/%.o: $(SRC_DIR)/package_format_verifier/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Object file rules for dependency resolver
-$(OBJ_DIR)/%.o: $(SRC_DIR)/dependency_resolver/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/dependency_resolver/%.o: $(SRC_DIR)/dependency_resolver/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Object file rules for parser
-$(OBJ_DIR)/%.o: $(SRC_DIR)/parser/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/parser/%.o: $(SRC_DIR)/parser/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Object file rules for colors (with prefixed names to avoid conflicts)
-$(OBJ_DIR)/colors_%.o: $(SRC_DIR)/colors/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/colors/%.o: $(SRC_DIR)/colors/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Special rules for main executables
@@ -75,16 +92,7 @@ $(BIN_DIR)/fromager_user_config_gen: $(OBJ_DIR)/user_config_gen.o $(DEPENDENCY_R
 $(BIN_DIR)/fromager_parser: $(PARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_info: $(OBJ_DIR)/colors_info.o | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
-
-$(BIN_DIR)/fromager_warning: $(OBJ_DIR)/colors_warning.o | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
-
-$(BIN_DIR)/fromager_error: $(OBJ_DIR)/colors_error.o | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
-
-$(BIN_DIR)/fromager_success: $(OBJ_DIR)/colors_success.o | $(BIN_DIR)
+$(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 # Create bin directory
