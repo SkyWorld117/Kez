@@ -233,8 +233,15 @@ fgr () {
                         shift 2
                     ;;
 
+                    * )
+                        fromager_error "Unknown cellar command: $2"
+                        fromager_info "Use -h or --help for usage information."
+                        return 1
+                        shift 2
+
                 esac
                 ;;
+
 
             install )
                 # Install should create an environment and then install the package.
