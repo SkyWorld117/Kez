@@ -64,6 +64,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/user_config_generator
 	mkdir -p $(OBJ_DIR)/parser
 	mkdir -p $(OBJ_DIR)/colors
+	mkdir -p $(OBJ_DIR)/tests
 
 # Object file rules for package format verifier
 $(OBJ_DIR)/package_format_verifier/%.o: $(SRC_DIR)/package_format_verifier/%.cpp | $(OBJ_DIR)
@@ -86,17 +87,14 @@ $(OBJ_DIR)/colors/%.o: $(SRC_DIR)/colors/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Special rules for main executables
-$(OBJ_DIR)/test_deps_resolve.o: $(SRC_DIR)/test_deps_resolve.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
-
-$(OBJ_DIR)/user_config_gen.o: $(SRC_DIR)/user_config_gen.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/tests/test_deps_resolve.o: $(SRC_DIR)/tests/test_deps_resolve.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Executables
 $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_deps_resolve: $(OBJ_DIR)/test_deps_resolve.o $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_deps_resolve: $(OBJ_DIR)/tests/test_deps_resolve.o $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_user_config_gen: $(USER_CONFIG_GENERATOR_OBJS) $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
