@@ -18,17 +18,17 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::cout << "All dependencies for package '" << pkg_name << "':" << std::endl;
+    INFO("All dependencies for package '" + pkg_name + "':");
     for (const auto& dep : all_dependencies) {
         std::cout << " - " << dep << std::endl;
     }
 
-    std::cout << "Filtered dependencies for package '" << pkg_name << "':" << std::endl;
+    INFO("Filtered dependencies for package '" + pkg_name + "':");
     for (const auto& dep : dependencies) {
         std::cout << " - " << dep << std::endl;
     }
 
-    std::cout << "Abstract packages:" << std::endl;
+    INFO("Abstract packages:");
     for (const auto& pair : abstract_packages) {
         std::cout << " - " << pair.first << " resolved to " << pair.second << std::endl;
     }
