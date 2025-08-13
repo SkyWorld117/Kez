@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+target_cellar=$1
+
+mkdir -p "$target_cellar/.tmp" && cd "$target_cellar/.tmp"
+rm -rf source/ source*
+
+# Process each package and its instructions
+package_count=$(yq -r '. | length' "$target_cellar/.tmp/ins.yaml")
+
+for ((i=0; i<package_count; i++)); do
+    # Extract package name
+    package_name=$(yq -r ".[$i].package" "$target_cellar/.tmp/ins.yaml")
+    fromager_info "Processing package: $package_name"
+    cd "$target_cellar/.tmp"
+
+    # Get number of instructions for this package
+    instruction_count=$(yq -r ".[$i].instructions | length" "$target_cellar/.tmp/ins.yaml")
+    
+    # Execute each instruction
+    for ((j=0; j<instruction_count; j++)); do
+        instruction=$(yq -r ".[$i].instructions[$j]" "$target_cellar/.tmp/ins.yaml")
+        fromager_info "Executing: $instruction"
+        eval "$instruction"
+        if [ $? -ne 0 ]; then
+            fromager_error "Failed to execute: $instruction"
+            exit 1
+        fi
+    done
+    
+    fromager_success "Completed processing package: $package_name"
+
+    rm -rf "$target_cellar/.tmp/source"
+done
+
+set +Eeuo pipefail

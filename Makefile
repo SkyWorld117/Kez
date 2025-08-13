@@ -55,6 +55,14 @@ PARSER_OBJS = \
 	$(OBJ_DIR)/parser/template_parser.o \
 	$(OBJ_DIR)/parser/main.o
 
+CMDLINE_PARSER_OBJS = \
+	$(OBJ_DIR)/cmdline_parser/traverse.o \
+	$(OBJ_DIR)/cmdline_parser/main.o
+
+# Library versions (without main.o files)
+USER_CONFIG_GENERATOR_LIB_OBJS = $(filter-out $(OBJ_DIR)/user_config_generator/main.o, $(USER_CONFIG_GENERATOR_OBJS))
+PARSER_LIB_OBJS = $(filter-out $(OBJ_DIR)/parser/main.o, $(PARSER_OBJS))
+
 # Default target
 .DEFAULT_GOAL := release
 
@@ -64,6 +72,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/dependency_resolver
 	mkdir -p $(OBJ_DIR)/user_config_generator
 	mkdir -p $(OBJ_DIR)/parser
+	mkdir -p $(OBJ_DIR)/cmdline_parser
 	mkdir -p $(OBJ_DIR)/colors
 	mkdir -p $(OBJ_DIR)/tests
 
@@ -81,6 +90,10 @@ $(OBJ_DIR)/user_config_generator/%.o: $(SRC_DIR)/user_config_generator/%.cpp | $
 
 # Object file rules for parser
 $(OBJ_DIR)/parser/%.o: $(SRC_DIR)/parser/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# Object file rules for cmdline parser
+$(OBJ_DIR)/cmdline_parser/%.o: $(SRC_DIR)/cmdline_parser/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for colors (with prefixed names to avoid conflicts)
@@ -104,6 +117,9 @@ $(BIN_DIR)/fromager_user_config_gen: $(USER_CONFIG_GENERATOR_OBJS) $(DEPENDENCY_
 $(BIN_DIR)/fromager_parser: $(PARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
+$(BIN_DIR)/fromager_cmdline_parser: $(CMDLINE_PARSER_OBJS) $(USER_CONFIG_GENERATOR_LIB_OBJS) $(PARSER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
 $(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
@@ -116,29 +132,25 @@ $(BIN_DIR):
 
 fromager_colored_io: $(BIN_DIR)/fromager_info $(BIN_DIR)/fromager_warning $(BIN_DIR)/fromager_error $(BIN_DIR)/fromager_success
 
-all: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/test_deps_resolve $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser
+all: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/test_deps_resolve $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_cmdline_parser fromager_colored_io
 
-release: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser fromager_colored_io
+release: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_cmdline_parser fromager_colored_io
 
 help:
 	@echo "Available targets:"
 	@echo "  release                     - Build release binaries (default)"
 	@echo "  all                         - Build all binaries including test tools"
-	@echo "  fromager_colored_io         - Build colored I/O utilities"
-	@echo "  fromager_config_verifier    - Build config verifier"
-	@echo "  fromager_user_config_gen    - Build user config generator"
-	@echo "  fromager_parser             - Build parser"
-	@echo "  test_deps_resolve           - Build dependency resolver test"
 	@echo "  clean                       - Remove all built files"
 	@echo "  help                        - Show this help message"
 
 clean:
 	rm -rf $(OBJ_DIR)
 	rm -f $(BIN_DIR)/fromager_config_verifier
-	rm -f $(BIN_DIR)/test_deps_resolve
 	rm -f $(BIN_DIR)/fromager_user_config_gen
 	rm -f $(BIN_DIR)/fromager_parser
+	rm -f $(BIN_DIR)/fromager_cmdline_parser
 	rm -f $(BIN_DIR)/fromager_info
 	rm -f $(BIN_DIR)/fromager_warning
 	rm -f $(BIN_DIR)/fromager_error
 	rm -f $(BIN_DIR)/fromager_success
+	rm -f $(BIN_DIR)/test_deps_resolve

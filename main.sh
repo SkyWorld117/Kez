@@ -255,8 +255,10 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
-                        fromager_info "Usage: fgr install [OPTIONS] [CONFIG] [CELLAR]"
+                        fromager_info "Usage: fgr install [OPTION] [ARGUMENTS]"
                         echo "Options:"
+                        format_option_help "<pkg> [--config [configs]] [--cellar <cellar>]" "Install <pkg> with [configs] and in [cellar]."
+                        format_option_help "" "Notice the cellar argument should not be specified for compilers, MPIs, and vendor packages."
                         format_option_help "-h, --help" "Show this help message"
                         format_option_help "-r, --read <config> [cellar]" "Read requirements from <config> and install in [cellar]"
                         format_option_help "" "Notice the cellar argument should not be specified for compilers, MPIs, and vendor packages."
@@ -311,8 +313,10 @@ fgr () {
 
                     * )
                         fromager_info "Installing package: $2"
-                        fromager_error "NOT IMPLEMENTED"
-                        shift 2
+                        shift 1
+                        local cellar="$(fromager_cmdline_parser "$@" | tail -n 1)"
+                        fromager_cmdline_install "$cellar"
+                        shift "$#"
                     ;;
 
                 esac
@@ -331,7 +335,7 @@ fgr () {
                         format_option_help "-h, --help" "Show this help message"
                         format_option_help "<package>" "Generate the configuration template for the specified package without saving"
                         format_option_help "-s, --save <file> <package>" "Save the configuration template for the specified package"
-                        format_option_help "parse <file>" "Parse the user configuration file <file>"
+                        format_option_help "parse <file>" "Parse the user configuration file <file> for debugging, cellar path is set to FROMAGER_WORKDIR/.tmp"
                         shift 2
                     ;;
 
