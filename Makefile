@@ -33,6 +33,14 @@ DEPENDENCY_RESOLVER_OBJS = \
 	$(OBJ_DIR)/dependency_resolver/resolve_dependencies.o \
 	$(OBJ_DIR)/dependency_resolver/toposort.o
 
+USER_CONFIG_GENERATOR_OBJS = \
+	$(OBJ_DIR)/user_config_generator/configurations_filter.o \
+	$(OBJ_DIR)/user_config_generator/environment_filter.o \
+	$(OBJ_DIR)/user_config_generator/options_filter.o \
+	$(OBJ_DIR)/user_config_generator/stages_filter.o \
+	$(OBJ_DIR)/user_config_generator/user_config_generator.o \
+	$(OBJ_DIR)/user_config_generator/main.o
+
 PARSER_OBJS = \
 	$(OBJ_DIR)/parser/conditions_parser.o \
 	$(OBJ_DIR)/parser/configuration_parser.o \
@@ -53,6 +61,7 @@ PARSER_OBJS = \
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/package_format_verifier
 	mkdir -p $(OBJ_DIR)/dependency_resolver
+	mkdir -p $(OBJ_DIR)/user_config_generator
 	mkdir -p $(OBJ_DIR)/parser
 	mkdir -p $(OBJ_DIR)/colors
 
@@ -62,6 +71,10 @@ $(OBJ_DIR)/package_format_verifier/%.o: $(SRC_DIR)/package_format_verifier/%.cpp
 
 # Object file rules for dependency resolver
 $(OBJ_DIR)/dependency_resolver/%.o: $(SRC_DIR)/dependency_resolver/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# Object file rules for user config generator
+$(OBJ_DIR)/user_config_generator/%.o: $(SRC_DIR)/user_config_generator/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for parser
@@ -86,7 +99,7 @@ $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR
 $(BIN_DIR)/test_deps_resolve: $(OBJ_DIR)/test_deps_resolve.o $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_user_config_gen: $(OBJ_DIR)/user_config_gen.o $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_user_config_gen: $(USER_CONFIG_GENERATOR_OBJS) $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_parser: $(PARSER_OBJS) | $(BIN_DIR)
