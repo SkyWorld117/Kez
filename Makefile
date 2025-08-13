@@ -28,6 +28,7 @@ PACKAGE_FORMAT_VERIFIER_OBJS = \
 	$(OBJ_DIR)/package_format_verifier/main.o
 
 DEPENDENCY_RESOLVER_OBJS = \
+	$(OBJ_DIR)/dependency_resolver/advisor.o \
 	$(OBJ_DIR)/dependency_resolver/essential_dependencies.o \
 	$(OBJ_DIR)/dependency_resolver/optional_dependencies.o \
 	$(OBJ_DIR)/dependency_resolver/resolve_dependencies.o \

@@ -6,7 +6,7 @@ std::vector<std::string> system_packages;
 std::unordered_map<std::string, std::string> abstract_packages;
 std::unordered_map<std::string, bool> use_optional_packages;
 
-void build_adjacency_list(const std::string& pkg_name, const std::string& target_pkg_name) {
+void build_adjacency_list(const std::string& pkg_name, const std::string& target_pkg_name, bool interactive) {
     if (adjacency_list.find(pkg_name) != adjacency_list.end()) {
         return; // Already processed
     }
@@ -26,29 +26,40 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
     // Ask for user selection if the package is abstract and not already selected
     if (config["cheese"]["type"].as<std::string>() == "abstract") {
         if (abstract_packages.find(pkg_name) == abstract_packages.end()) {
-            INFO("Package '" + pkg_name + "' is abstract. Please select one of the following implementations:");
-            for (const auto& impl : config["cheese"]["implementations"]) {
-                std::string impl_name = impl.as<std::string>();
-                INFO("- " + impl_name);
-            }
             std::string selected_impl;
-            while (true) {
-                // Prompt user for implementation selection
-                INFO("Enter the implementation name: ");
-                std::getline(std::cin, selected_impl);
-                // Remove leading/trailing whitespace/newline etc.
-                selected_impl.erase(0, selected_impl.find_first_not_of(" \n\r\t"));
-                selected_impl.erase(selected_impl.find_last_not_of(" \n\r\t") + 1);
+            if (interactive) {
+                INFO("Package '" + pkg_name + "' is abstract. Please select one of the following implementations:");
+                for (const auto& impl : config["cheese"]["implementations"]) {
+                    std::string impl_name = impl.as<std::string>();
+                    INFO("- " + impl_name);
+                }
+                while (true) {
+                    // Prompt user for implementation selection
+                    INFO("Enter the implementation name: ");
+                    std::getline(std::cin, selected_impl);
+                    // Remove leading/trailing whitespace/newline etc.
+                    selected_impl.erase(0, selected_impl.find_first_not_of(" \n\r\t"));
+                    selected_impl.erase(selected_impl.find_last_not_of(" \n\r\t") + 1);
+                    // Validate the selected implementation
+                    std::vector<std::string> implementations = config["cheese"]["implementations"].as<std::vector<std::string>>();
+                    if (std::find(implementations.begin(), implementations.end(), selected_impl) == implementations.end()) {
+                        ERROR("Invalid implementation selected: " + selected_impl);
+                        continue; // Ask again
+                    }
+                    break;
+                }
+            } else {
+                selected_impl = advise(pkg_name); // Use the advisor to select an implementation
+                INFO("Selected implementation for '" + pkg_name + "': " + selected_impl);
                 // Validate the selected implementation
                 std::vector<std::string> implementations = config["cheese"]["implementations"].as<std::vector<std::string>>();
                 if (std::find(implementations.begin(), implementations.end(), selected_impl) == implementations.end()) {
-                    ERROR("Invalid implementation selected: " + selected_impl);
-                    continue; // Ask again
+                    ERROR("Internal Error: Invalid advice: " + selected_impl);
+                    exit(EXIT_FAILURE);
                 }
-                abstract_packages[pkg_name] = selected_impl;
-                concrete_pkg_name = selected_impl; // Use the selected implementation for further processing
-                break;
             }
+            abstract_packages[pkg_name] = selected_impl;
+            concrete_pkg_name = selected_impl; // Use the selected implementation for further processing
         } else {
             concrete_pkg_name = abstract_packages[pkg_name]; // Use the already selected implementation
         }
@@ -82,7 +93,6 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
     std::vector<std::string> essential_deps = get_essential_dependencies(concrete_pkg_name);
     std::vector<std::string> optional_deps = get_optional_dependencies(concrete_pkg_name);
 
-    // Ask for user selection for optional dependencies
     if (!optional_deps.empty()) {
         bool has_optional = false;
         for (const auto& dep : optional_deps) {
@@ -91,13 +101,20 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
                     INFO("Optional dependencies for '" + concrete_pkg_name + "':");
                     has_optional = true;
                 }
-                INFO("- Include optional dependency: " + dep + "? (y/n)");
-                std::string choice;
-                std::getline(std::cin, choice);
-                if (choice == "y" || choice == "Y") {
-                    essential_deps.push_back(dep);
-                    use_optional_packages[dep] = true;
+                if (interactive) {
+                    // Ask for user selection for optional dependencies
+                    INFO("- Include optional dependency: " + dep + "? (y/n)");
+                    std::string choice;
+                    std::getline(std::cin, choice);
+                    if (choice == "y" || choice == "Y") {
+                        essential_deps.push_back(dep);
+                        use_optional_packages[dep] = true;
+                    } else {
+                        use_optional_packages[dep] = false;
+                    }
                 } else {
+                    // Always exclude optional dependencies in non-interactive mode
+                    INFO("- Exclude optional dependency: " + dep);
                     use_optional_packages[dep] = false;
                 }
             } else if (use_optional_packages[dep]) {
@@ -109,13 +126,13 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
     adjacency_list[concrete_pkg_name] = essential_deps;
 
     for (const auto& dep : essential_deps) {
-        build_adjacency_list(dep, target_pkg_name);
+        build_adjacency_list(dep, target_pkg_name, interactive);
     }
 }
 
 // Return: ((full list of dependencies, filtered list of dependencies), abstract packages)
-std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>, std::unordered_map<std::string, std::string>> resolve_dependencies(const std::string& pkg_name) {
-    build_adjacency_list(pkg_name, pkg_name);
+std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>, std::unordered_map<std::string, std::string>> resolve_dependencies(const std::string& pkg_name, bool interactive) {
+    build_adjacency_list(pkg_name, pkg_name, interactive);
 
     // Unify the adjacency list to ensure all abstract packages are resolved to their selected implementations
     std::unordered_map<std::string, std::vector<std::string>> unified_adjacency_list;

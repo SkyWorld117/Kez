@@ -14,7 +14,8 @@ int main(int argc, char* argv[]) {
     }
 
     std::string pkg_name = argv[1];
-    YAML::Node user_config = gen_user_config(pkg_name);
+    bool interactive = argc == 3; // Interactive only if saving to a file
+    YAML::Node user_config = gen_user_config(pkg_name, interactive);
 
     // Output the generated configuration
     YAML::Emitter out;

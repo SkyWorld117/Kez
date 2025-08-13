@@ -10,4 +10,4 @@
 #include "configurations_filter.h"
 #include "stages_filter.h"
 
-YAML::Node gen_user_config(const std::string& pkg_name);
+YAML::Node gen_user_config(const std::string& pkg_name, bool interactive);
