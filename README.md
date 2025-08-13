@@ -28,6 +28,4 @@ Fromager achieves the points above by using a C++ backend, a database of YAML fi
 ## TODO
 
 - [ ] Format verifier is a bit broken (too strict), needs to be fixed.
-- [ ] Add smart default selection for abstract packages.
-- [ ] Add command line configuration and installation (not always through files).
 - [ ] Add fast testing mechanism.
