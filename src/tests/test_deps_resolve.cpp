@@ -1,8 +1,9 @@
-#include "dependency_resolver/resolve_dependencies.h"
+#include "../colors/colored_io.h"
+#include "../dependency_resolver/resolve_dependencies.h"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <package_name>" << std::endl;
+        ERROR("Usage: " + std::string(argv[0]) + " <package_name>");
         return 1;
     }
 
@@ -13,7 +14,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> dependencies = result.first.second;
     std::unordered_map<std::string, std::string> abstract_packages = result.second;
     if (dependencies.empty()) {
-        std::cerr << "No dependencies found for package: " << pkg_name << std::endl;
+        ERROR("No dependencies found for package: " + pkg_name);
         return 1;
     }
 
