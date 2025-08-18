@@ -113,6 +113,29 @@ fetch_latest_elfutils() {
     echo -e "  elfutils:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 }
 
+fetch_latest_perl() {
+    local url="https://www.cpan.org/src/README.html"
+    local ext="tar.gz"
+
+    local latest
+    latest=$(curl -sSL "$url" \
+        | grep -oE "perl-[0-9]+\.[0-9]+(\.[0-9]+)?\.${ext}" \
+        | sort -Vu \
+        | tail -n1)
+
+    if [[ -z "$latest" ]]; then
+        echo >&2 "No files found for perl with extension .${ext} at $url"
+        return 1
+    fi
+
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "https://www.cpan.org/src/5.0/${latest}"
+    tar -xzf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
+
+    local version="${latest#perl-}"
+    version="${version%.${ext}}"
+    echo -e "  perl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+}
+
 
 # PHASE 1: Mathematical Libraries
 # ----------------------------------------------------
@@ -316,6 +339,12 @@ wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-$
 bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
+
+# perl
+fetch_latest_perl
+./Configure -Dprefix="${SYSTEM_PREFIX}" -Dusethreads -de
+make -j"${FROMAGER_NPROC}" && make install
+cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 
 # PHASE 5: Essential Tools for Fromager
