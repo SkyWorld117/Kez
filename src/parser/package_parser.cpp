@@ -120,20 +120,22 @@ std::vector<std::string> parse_package(
         std::vector<std::string> env_config = parsed_configurations.first;
         std::string opts_config = parsed_configurations.second;
         if (pkg_config["cheese"]["toolchain"]) {
-            if (pkg_config["cheese"]["toolchain"].as<std::string>() == "autotools") {
-                if (!opts_config.empty()) {
-                    opts_config = "./configure " + opts_config;
-                } else {
-                    opts_config = "./configure";
+            std::string cmd;
+            if (pkg_config["cheese"]["build"]["configurations"]["command"]) {
+                cmd = pkg_config["cheese"]["build"]["configurations"]["command"].as<std::string>();
+            } else {
+                if (pkg_config["cheese"]["toolchain"].as<std::string>() == "autotools") {
+                    cmd = "./configure";
+                } else if (pkg_config["cheese"]["toolchain"].as<std::string>() == "cmake") {
+                    cmd = "cmake ../";
                 }
-            } else if (pkg_config["cheese"]["toolchain"].as<std::string>() == "cmake") {
-                if (!opts_config.empty()) {
-                    opts_config = "cmake ../ " + opts_config;
-                } else {
-                    opts_config = "cmake ../";
-                }
+                // Ignore the others for now
             }
-            // Ignore the others for now
+            if (!opts_config.empty()) {
+                opts_config = cmd + " " + opts_config;
+            } else {
+                opts_config = cmd;
+            }
         } else {
             opts_config = "";
         }
