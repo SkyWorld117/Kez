@@ -44,10 +44,19 @@ std::vector<std::string> parse_package(
                     // Case 1: Tarball
                     // Tarball has `url` entry
                     std::string url = release["url"].as<std::string>();
-                    instructions.push_back("wget --quiet --show-progress --output-document=source.tar.gz " + url);
-                    instructions.push_back("tar -xzf source.tar.gz");
-                    instructions.push_back("mv $(tar -tzf source.tar.gz | head -1 | cut -f1 -d'/') source");
-                    instructions.push_back("rm source.tar.gz");
+                    std::string ext = url.substr(url.find(".tar"));
+                    instructions.push_back("wget --quiet --show-progress --output-document=source" + ext + " " + url);
+                    if (ext == ".tar.gz") {
+                        instructions.push_back("tar -xzf source" + ext);
+                        instructions.push_back("mv $(tar -tzf source" + ext + " | head -1 | cut -f1 -d'/') source");
+                    } else if (ext == ".tar.xz") {
+                        instructions.push_back("tar -xf source" + ext);
+                        instructions.push_back("mv $(tar -tf source" + ext + " | head -1 | cut -f1 -d'/') source");
+                    } else {
+                        ERROR("Unimplemented tarball format: " + ext);
+                        exit(EXIT_FAILURE);
+                    }
+                    instructions.push_back("rm source" + ext);
                     instructions.push_back("cd source");
                 } else if (source_type == "git") {
                     // Case 2: Git
