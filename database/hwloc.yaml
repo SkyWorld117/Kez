@@ -10,6 +10,12 @@ cheese:
       - version: 2.12.1
         url: https://download.open-mpi.org/release/hwloc/v2.12/hwloc-2.12.1.tar.gz
 
+  dependencies:
+    - zlib
+    - lz4
+    - libpciaccess
+    - libxml2
+
   build:
     configurations:
       options:
@@ -109,6 +115,11 @@ cheese:
           user_configurable: true
           enabled_value:
             default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags}
     stages:
       - target: ~
       - target: install

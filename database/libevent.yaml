@@ -4,6 +4,9 @@ cheese:
   type: package
   toolchain: autotools
 
+  dependencies:
+    - openssl
+
   source:
     type: tarball
     releases:
@@ -28,6 +31,11 @@ cheese:
           user_configurable: true
           enabled_value:
             default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${openssl.ldflags}
     stages:
       - target: ~
       - target: install
