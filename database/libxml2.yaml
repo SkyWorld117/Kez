@@ -1,0 +1,68 @@
+cheese:
+  name: libxml2
+  description: A library for parsing XML documents.
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 2.14.5
+        url: https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.5.tar.xz
+
+    dependencies:
+      - zlib
+      - lz4
+
+    build:
+      configurations:
+        options:
+          - name: --prefix
+            description: Installation prefix
+            enabled_value:
+              default: ${libxml2.prefix}
+
+          - name: --with-python
+            description: Enable Python bindings
+            enabled:
+              default: false
+            enabled_value:
+              default: ${python.prefix}
+            disabled_format: --without-python
+            requires: [python]
+
+          - name: --with-zlib
+            description: Enable zlib compression
+            enabled_value:
+              default: ${zlib.prefix}
+
+          - name: --with-lzma
+            description: Enable LZMA compression
+            enabled_value:
+              default: ${lzma.prefix}
+
+          - name: CC
+            description: C compiler
+            enabled_value:
+              default: ${compiler.c}
+
+          - name: CFLAGS
+            description: C compiler flags
+            enabled_value:
+              default: -O3
+
+          - name: LDFLAGS
+            description: Linker flags
+            enabled_value:
+              default: ${zlib.ldflags} ${lz4.ldflags}
+      stages:
+        - target: ~
+        - target: install
+
+  properties:
+    ldflags:
+      default: -L${libxml2.prefix}/lib -Wl,-rpath,${libxml2.prefix}/lib
+    libs:
+      default: -lxml2
+    includes:
+      default: -I${libxml2.prefix}/include
