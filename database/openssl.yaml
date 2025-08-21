@@ -71,7 +71,7 @@ cheese:
 
   properties:
     ldflags:
-      default: -L${openssl.prefix}/lib -Wl,-rpath,${openssl.prefix}/lib
+      default: -L${openssl.prefix}/lib -Wl,-rpath,${openssl.prefix}/lib64
     libs:
       default: -lssl -lcrypto
     includes:

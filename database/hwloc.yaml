@@ -120,6 +120,13 @@ cheese:
           description: Linker flags
           enabled_value:
             default: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags}
+            conditions:
+              - condition: ${hwloc.config.use_cuda} true
+                action: append
+                value: ${cuda.ldflags}
+              - condition: ${hwloc.config.use_rocm} true
+                action: append
+                value: ${rocm.ldflags}
     stages:
       - target: ~
       - target: install
