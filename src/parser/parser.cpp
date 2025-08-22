@@ -12,12 +12,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode, const s
         std::string abstract_pkg_name = item.first.as<std::string>();
         std::string concrete_pkg_name = user_config["recipe"]["abstract_packages"][abstract_pkg_name].as<std::string>();
         
-        std::filesystem::path config_path = db_path / (abstract_pkg_name + ".yaml");
-        if (!std::filesystem::exists(config_path)) {
-            ERROR("Configuration file does not exist: " + config_path.string());
-            exit(EXIT_FAILURE);
-        }
-        YAML::Node abstract_pkg_config = YAML::LoadFile(config_path.string());
+        YAML::Node abstract_pkg_config = get_db_config(abstract_pkg_name);
         for (const auto& impl : abstract_pkg_config["cheese"]["implementations"]) {
             std::string impl_name = impl.as<std::string>();
             if (impl_name == concrete_pkg_name) {
@@ -45,12 +40,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode, const s
         if (build_mode == "debug") {
             INFO("Loading configuration for package: " + pkg_name);
         }
-        std::filesystem::path config_path = db_path / (pkg_name + ".yaml");
-        if (!std::filesystem::exists(config_path)) {
-            ERROR("Configuration file does not exist: " + config_path.string());
-            exit(EXIT_FAILURE);
-        }
-        YAML::Node pkg_config = YAML::LoadFile(config_path.string());
+        YAML::Node pkg_config = get_db_config(pkg_name);
 
         // Parse the package configuration
         if (build_mode == "debug") {

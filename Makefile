@@ -59,6 +59,9 @@ CMDLINE_PARSER_OBJS = \
 	$(OBJ_DIR)/cmdline_parser/traverse.o \
 	$(OBJ_DIR)/cmdline_parser/main.o
 
+DATABASE_OBJS = \
+	$(OBJ_DIR)/database/database.o
+
 # Library versions (without main.o files)
 USER_CONFIG_GENERATOR_LIB_OBJS = $(filter-out $(OBJ_DIR)/user_config_generator/main.o, $(USER_CONFIG_GENERATOR_OBJS))
 PARSER_LIB_OBJS = $(filter-out $(OBJ_DIR)/parser/main.o, $(PARSER_OBJS))
@@ -74,6 +77,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/parser
 	mkdir -p $(OBJ_DIR)/cmdline_parser
 	mkdir -p $(OBJ_DIR)/colors
+	mkdir -p $(OBJ_DIR)/database
 	mkdir -p $(OBJ_DIR)/tests
 
 # Object file rules for package format verifier
@@ -100,6 +104,10 @@ $(OBJ_DIR)/cmdline_parser/%.o: $(SRC_DIR)/cmdline_parser/%.cpp | $(OBJ_DIR)
 $(OBJ_DIR)/colors/%.o: $(SRC_DIR)/colors/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+# Object file rules for database
+$(OBJ_DIR)/database/%.o: $(SRC_DIR)/database/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
 # Special rules for main executables
 $(OBJ_DIR)/tests/test_deps_resolve.o: $(SRC_DIR)/tests/test_deps_resolve.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
@@ -108,16 +116,16 @@ $(OBJ_DIR)/tests/test_deps_resolve.o: $(SRC_DIR)/tests/test_deps_resolve.cpp | $
 $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_deps_resolve: $(OBJ_DIR)/tests/test_deps_resolve.o $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_deps_resolve: $(OBJ_DIR)/tests/test_deps_resolve.o $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_user_config_gen: $(USER_CONFIG_GENERATOR_OBJS) $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_user_config_gen: $(USER_CONFIG_GENERATOR_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_parser: $(PARSER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_parser: $(PARSER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_cmdline_parser: $(CMDLINE_PARSER_OBJS) $(USER_CONFIG_GENERATOR_LIB_OBJS) $(PARSER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_cmdline_parser: $(CMDLINE_PARSER_OBJS) $(USER_CONFIG_GENERATOR_LIB_OBJS) $(PARSER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)

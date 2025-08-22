@@ -14,4 +14,6 @@
 #include "property_parser.h"
 #include "filter.h"
 
+#include "../database/database.h"
+
 YAML::Node parse(YAML::Node& config, const std::string& build_mode, const std::string& env_path);

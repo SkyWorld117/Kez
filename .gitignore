@@ -16,6 +16,3 @@ bin/test*
 # Ignore object files
 obj/
 *.o
-
-# Ignore example configuration files
-example.yaml

@@ -10,6 +10,7 @@
 #include "../user_config_generator/user_config_generator.h"
 #include "../parser/parser.h"
 #include "traverse.h"
+#include "../database/database.h"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -72,13 +73,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Verify cellar
-    std::filesystem::path db_path(getenv("FROMAGER_DB"));
-    std::filesystem::path config_path = db_path / (pkg_name + ".yaml");
-    if (!std::filesystem::exists(config_path)) {
-        ERROR("Config file not found: " + config_path.string());
-        exit(EXIT_FAILURE);
-    }
-    YAML::Node config = YAML::LoadFile(config_path.string());
+    YAML::Node config = get_db_config(pkg_name);
     std::string pkg_type = config["cheese"]["type"].as<std::string>();
 
     if (pkg_type == "compiler" || pkg_type == "mpi" || pkg_type == "vendor") {

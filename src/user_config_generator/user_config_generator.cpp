@@ -72,13 +72,7 @@ YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
 
     std::filesystem::path db_path(getenv("FROMAGER_DB"));
     for (const auto& dep : dependencies) {
-        std::filesystem::path config_file(dep + ".yaml");
-        std::filesystem::path config_path = db_path / config_file;
-        if (!std::filesystem::exists(config_path)) {
-            ERROR("Configuration file does not exist: " + config_path.string());
-            exit(EXIT_FAILURE);
-        }
-        YAML::Node db_pkg_node = YAML::LoadFile(config_path.string());
+        YAML::Node db_pkg_node = get_db_config(dep);
         config_per_pkg(db_pkg_node);
     }
 

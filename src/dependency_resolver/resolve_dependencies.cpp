@@ -1,6 +1,5 @@
 #include "resolve_dependencies.h"
 
-std::filesystem::path db_path(getenv("FROMAGER_DB"));
 std::unordered_map<std::string, std::vector<std::string>> adjacency_list;
 std::vector<std::string> system_packages;
 std::unordered_map<std::string, std::string> abstract_packages;
@@ -11,15 +10,7 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
         return; // Already processed
     }
 
-    std::filesystem::path config_file(pkg_name + ".yaml");
-    std::filesystem::path config_path = db_path / config_file;
-
-    if (!std::filesystem::exists(config_path)) {
-        ERROR("Configuration file does not exist: " + config_path.string());
-        exit(EXIT_FAILURE);
-    }
-
-    YAML::Node config = YAML::LoadFile(config_path.string());
+    YAML::Node config = get_db_config(pkg_name);
 
     std::string concrete_pkg_name;
     
@@ -68,12 +59,7 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
             return; // Already processed
         }
 
-        std::filesystem::path concrete_pkg_path = db_path / (concrete_pkg_name + ".yaml");
-        if (!std::filesystem::exists(concrete_pkg_path)) {
-            ERROR("Configuration file for selected implementation does not exist: " + concrete_pkg_path.string());
-            exit(EXIT_FAILURE);
-        }
-        config = YAML::LoadFile(concrete_pkg_path.string());
+        config = get_db_config(concrete_pkg_name);
     } else {
         concrete_pkg_name = pkg_name; // Use the original package name for non-abstract packages
     }

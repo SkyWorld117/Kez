@@ -10,6 +10,7 @@
 #include "../colors/colored_io.h"
 #include "conditions_parser.h"
 #include "scalar_parser.h"
+#include "../database/database.h"
 
 std::string parse_property(
     const std::string& property_name,

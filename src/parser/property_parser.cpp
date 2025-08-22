@@ -12,10 +12,7 @@ std::string parse_property(
     std::string property = property_name.substr(property_name.find('.') + 1);
 
     // Load the package configuration
-    std::filesystem::path db_path(getenv("FROMAGER_DB"));
-    std::filesystem::path package_config_path = db_path / (package_name + ".yaml");
-
-    YAML::Node pkg_config_node = YAML::LoadFile(package_config_path.string());
+    YAML::Node pkg_config_node = get_db_config(package_name);
 
     // Check if the package has the property
     if (property != "prefix" && property != "version" &&
@@ -168,10 +165,7 @@ std::string parse_complex_property(
     std::string package_name = template_str.substr(0, template_str.find('.'));
     std::string property_name = template_str.substr(template_str.find('.') + 1);
 
-    std::filesystem::path db_path(getenv("FROMAGER_DB"));
-    std::filesystem::path package_config_path = db_path / (package_name + ".yaml");
-    // No need to perform a check again, as it is already done in the first pass
-    YAML::Node pkg_config_node = YAML::LoadFile(package_config_path.string());
+    YAML::Node pkg_config_node = get_db_config(package_name);
 
     std::string base_value = pkg_config_node["cheese"]["properties"][property_name]["default"] ?
         pkg_config_node["cheese"]["properties"][property_name]["default"].as<std::string>() : "";

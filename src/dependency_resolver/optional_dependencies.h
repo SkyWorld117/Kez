@@ -8,5 +8,6 @@
 #include <string>
 
 #include "../colors/colored_io.h"
+#include "../database/database.h"
 
 std::vector<std::string> get_optional_dependencies(const std::string& pkg_name);

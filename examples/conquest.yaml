@@ -1,0 +1,77 @@
+cheese:
+  conquest:
+    description: CONQUEST linear scaling DFT code
+    version: 1.4
+    compiler: system
+    build:
+      stages:
+        - target: ~
+          configurations:
+            options:
+              - name: COMPFLAGS
+                description: Fortran compiler flags
+                enabled: true
+                enabled_value: -O3 -fallow-argument-mismatch ${compiler.omp_flags} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${fftw3-api.includes} ${libxc.includes}
+              - name: MULT_KERN
+                description: Matrix multiplication kernel
+                enabled: true
+                enabled_value: default
+  libxc:
+    version: 7.0.0
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: CFLAGS
+            enabled: true
+            enabled_value: -O3
+          - name: FCFLAGS
+            enabled: true
+            enabled_value: -O3
+          - name: LDFLAGS
+            enabled: false
+            enabled_value: ~
+  openmpi:
+    description: Open Source Implementation of the Message Passing Interface
+    version: 5.0.8
+    compiler: system
+  intel-oneapi-mkl:
+    description: Intel oneAPI Math Kernel Library for high-performance math routines
+    build:
+      configurations:
+        options:
+          - name: fortran_format
+            description: Fortran Format [ gf | intel ]
+            enabled: true
+            enabled_value: gf
+          - name: integer_size
+            description: Use ilp64 interface [ lp64 | ilp64 ]
+            enabled: true
+            enabled_value: lp64
+          - name: multithreaded
+            description: Use multithreading
+            enabled: false
+            enabled_value: ~
+          - name: multithreading_library
+            description: Multithreading library [ gnu | tbb ]
+            enabled: true
+            enabled_value: gnu
+          - name: mpi-family
+            description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
+            enabled: true
+            enabled_value: openmpi
+  intel-oneapi:
+    version: 2025.1.0.666
+recipe:
+  abstract_packages:
+    mpi: openmpi
+    scalapack: intel-oneapi-mkl
+    fftw3-api: intel-oneapi-mkl
+    lapack: intel-oneapi-mkl
+    blas: intel-oneapi-mkl
+  dependencies:
+    - conquest
+    - libxc
+    - openmpi
+    - intel-oneapi-mkl
+    - intel-oneapi

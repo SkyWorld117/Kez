@@ -31,16 +31,7 @@ std::vector<std::string> get_optional_dependencies(const YAML::Node& node) {
 std::vector<std::string> get_optional_dependencies(const std::string& pkg_name) {
     std::vector<std::string> optional_deps;
 
-    std::filesystem::path db_path(getenv("FROMAGER_DB"));
-    std::filesystem::path config_file(pkg_name + ".yaml");
-    std::filesystem::path config_path = db_path / config_file;
-
-    if (!std::filesystem::exists(config_path)) {
-        ERROR("Configuration file does not exist: " + config_path.string());
-        return optional_deps;
-    }
-
-    YAML::Node config = YAML::LoadFile(config_path.string());
+    YAML::Node config = get_db_config(pkg_name);
     optional_deps = get_optional_dependencies(config);
 
     return optional_deps;
