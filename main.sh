@@ -220,8 +220,8 @@ fgr () {
                     exit )
                         fromager_info "Exiting cellar: ${FROMAGER_CELLAR}"
                         if [ -n "${FROMAGER_CELLAR:-}" ]; then
+                            export PATH=$(echo "$PATH" | sed "s|${FROMAGER_ENV}/${FROMAGER_CELLAR}/bin:||g")
                             unset FROMAGER_CELLAR
-                            export PATH=$(echo "$PATH" | sed "s|${FROMAGER_ENV}/${FROMAGER_CELLAR}/bin| |g")
                         else
                             fromager_error "Not currently in a cellar."
                             return 1
