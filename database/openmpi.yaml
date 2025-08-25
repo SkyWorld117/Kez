@@ -156,6 +156,11 @@ cheese:
             default: ${hcoll.prefix}
           requires: [hcoll]
 
+        - name: --with-libnuma
+          description: Build with libnuma support
+          enabled_value:
+            default: ${numactl.prefix}
+
         - name: CC
           description: C compiler
           enabled_value:
@@ -176,7 +181,7 @@ cheese:
           description: C++ compiler flags
           user_configurable: true
           enabled_value:
-            default: -O3 ${numactl.includes}
+            default: -O3
 
         - name: FC
           description: Fortran compiler
@@ -187,7 +192,7 @@ cheese:
           description: Fortran compiler flags
           user_configurable: true
           enabled_value:
-            default: -O3 ${numactl.includes}
+            default: -O3
 
         - name: LDFLAGS
           description: Linker flags

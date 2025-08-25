@@ -36,11 +36,11 @@ cheese:
           - name: CXXFLAGS
             description: C++ compiler flags
             enabled: true
-            enabled_value: -O3 ${numactl.includes}
+            enabled_value: -O3
           - name: FCFLAGS
             description: Fortran compiler flags
             enabled: true
-            enabled_value: -O3 ${numactl.includes}
+            enabled_value: -O3
   hcoll:
     description: Modern Interface for Mellanox Fabric Collective Accelerator
   ucx:
