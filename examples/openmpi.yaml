@@ -36,11 +36,11 @@ cheese:
           - name: CXXFLAGS
             description: C++ compiler flags
             enabled: true
-            enabled_value: -O3
+            enabled_value: -O3 ${numactl.includes}
           - name: FCFLAGS
             description: Fortran compiler flags
             enabled: true
-            enabled_value: -O3
+            enabled_value: -O3 ${numactl.includes}
   hcoll:
     description: Modern Interface for Mellanox Fabric Collective Accelerator
   ucx:
@@ -65,6 +65,17 @@ cheese:
             enabled_value: -O3
   rdma-core:
     description: RDMA core userspace libraries and daemons
+  numactl:
+    description: NUMA support for Linux
+    version: 2.0.19
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: CFLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
   prrte:
     description: PMIx Reference RunTime Environment
     version: 4.0.0
@@ -164,6 +175,7 @@ recipe:
     - hcoll
     - ucx
     - rdma-core
+    - numactl
     - prrte
     - pmix
     - libevent
@@ -171,6 +183,7 @@ recipe:
     - hwloc
     - cuda
     - libxml2
+    - xz
     - libpciaccess
     - lz4
     - zlib

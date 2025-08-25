@@ -51,6 +51,11 @@ cheese:
           user_configurable: true
           enabled_value:
             default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags}
     stages:
       - target: ~
       - target: install

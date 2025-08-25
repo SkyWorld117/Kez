@@ -46,7 +46,7 @@ cheese:
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
-            default: ${hwloc.ldflags} ${libevent.ldflags}
+            default: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags}
     stages:
       - target: ~
       - target: install

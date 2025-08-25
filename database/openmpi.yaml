@@ -18,6 +18,7 @@ cheese:
     - pmix
     - prrte
     - ucx
+    - numactl
 
   build:
     configurations:
@@ -26,6 +27,18 @@ cheese:
           description: Installation prefix
           enabled_value:
             default: ${openmpi.prefix}
+
+        - name: --enable-builtin-atomics
+          description: Enable built-in atomics
+
+        - name: --disable-silent-rules
+          description: Disable silent rules
+
+        - name: --disable-wrapper-runpath
+          description: Disable wrapper RPATH
+
+        - name: --disable-sphinx
+          description: Disable building Sphinx documentation
 
         - name: --enable-branch-probabilities
           description: Enable profile arcs and branch probability optimization
@@ -88,6 +101,30 @@ cheese:
           description: Build with UCX support
           enabled_value:
             default: ${ucx.prefix}
+
+        - name: --without-ucc
+          description: Build without UCC support
+
+        - name: --without-psm
+          description: Build without PSM/PSM2 support
+
+        - name: --without-mxm
+          description: Build without MXM support
+
+        - name: --without-ofi
+          description: Build without OFI support
+
+        - name: --without-verbs
+          description: Build without libibverbs support
+
+        - name: --without-knem
+          description: Build without KNEM support
+
+        - name: --without-fca
+          description: Build without FCA support
+
+        - name: --without-xpmem
+          description: Build without XPMEM support
             
         - name: --with-cuda
           description: Build with CUDA support
@@ -139,7 +176,7 @@ cheese:
           description: C++ compiler flags
           user_configurable: true
           enabled_value:
-            default: -O3
+            default: -O3 ${numactl.includes}
 
         - name: FC
           description: Fortran compiler
@@ -150,12 +187,12 @@ cheese:
           description: Fortran compiler flags
           user_configurable: true
           enabled_value:
-            default: -O3
+            default: -O3 ${numactl.includes}
 
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
-            default: ${compiler.ldflags} ${libevent.ldflags} ${hwloc.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} ${hcoll.ldflags}
+            default: ${compiler.ldflags} ${libevent.ldflags} ${hwloc.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} ${hcoll.ldflags} ${numactl.ldflags}
             conditions:
               - condition: ${openmpi.config.--with-cuda} true
                 action: append
