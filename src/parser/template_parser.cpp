@@ -26,7 +26,6 @@ std::string parse_template(
     // 1. context dependent template, such as `compiler.c` or `source`
     // 2. properties of any package in the dependency list, including the current package
     // 3. properties of abstract packages, need to redirect to the selected implementation
-    // TODO: Write in the documentation that the template dependency within a package must be resolved from top to bottom.
 
     if (template_str == "source") {
         std::filesystem::path env_path_fs(env_path);

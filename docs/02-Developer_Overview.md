@@ -18,17 +18,27 @@ The source code of Fromager is organized into several key directories:
 
 ```
 src/
+ ├── cmdline_parser/
  ├── colors/
+ ├── database/
  ├── dependency_resolver/
  ├── package_format_verifier/
  ├── parser/
- ├── user_config_gen.cpp
- ├── ...
+ ├── tests/
+ ├── user_config_generator/
 ```
+
+#### `cmdline_parser`
+
+`cmdline_parser` is based on the `parser`. It offers commandline configuration parsing, making the buildsystem simple and efficient to use when no complicated options are required.
 
 #### `colors`
 
 `colors` contains the utilities for colored output in the terminal. It is not only used in other C++ programs in the format of header files, but also compiled into binaries and used by the bash scripts for consistent output formatting. They are designed to only output colored text in an interactive shell, and regular text if not (e.g. piped into a file).
+
+#### `database`
+
+`database` is a caching system of the internal database. It is supposed to drastically reduce the I/O and parsing overhead when handling dependency solving and parsing.
 
 #### `dependency_resolver`
 
@@ -50,9 +60,13 @@ Although `parser` also performs certain degrees of checking, `package_format_ver
 
 It outputs structured bash commands based on the configurations, stored in `${TARGET_CELLAR}/.tmp/ins.yaml`.
 
-#### `user_config_gen`
+#### `tests`
 
-`user_config_gen` is responsible for generating the user configuration file based on the resolved dependencies. It takes the output from the `dependency_resolver` and produces a YAML file that can be used by the package manager.
+`tests` contains a few test programs. These test programs must be self-contained, and they will only be compiled if the build option is `all` instead of the default `release`.
+
+#### `user_config_generator`
+
+`user_config_generator` is responsible for generating the user configuration file based on the resolved dependencies. It takes the output from the `dependency_resolver` and produces a YAML file that can be used by the package manager.
 
 
 ## `$FROMAGER_WORKDIR` Structure

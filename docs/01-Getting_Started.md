@@ -65,7 +65,7 @@ fromager:
       version: ~
 ```
 
-`n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes. We will talk about this more in the #TODO section. 
+`n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes. We will talk about this more in the [`stages`](03-Database_Configuration_Format.md#stages) section. 
 
 `external` contains a list of external dependencies that Fromager is supposed to use. These are usually libraries that are not supposed to be built by the users of a cluster, as they may cause ABI incompatibilities if the package versions mismatch the driver versions. Fromager will not use them if the entries are left as `~`, which means "null". 
 
@@ -96,3 +96,13 @@ You can find all available commands and their documentation by running
 ```bash
 fgr --help
 ```
+
+### Logic and Terminologies
+
+We first introduce the non-conventional terminologies:
+
+- Fromager, or in commands as `fgr` for short, refers to the package manager
+- Cellar, an isolated folder that contains the target packages
+- Cheese, a configuration file for a package, appears as the header in user configuration files and database configuration files
+
+In HPC workflow, we would like to achieve coexistence of multiple versions and configurations of one single application, thus it is 
