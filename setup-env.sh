@@ -22,8 +22,8 @@ fi
 if [[ ":$PATH:" != *":${FROMAGER_ENV}/system/bin:"* ]]; then
     export PATH="${FROMAGER_ENV}/system/bin:${PATH}"
 fi
-if [[ ":$PATH:" != *":${FROMAGER_ENV}/toolkits/bin:"* ]]; then
-    export PATH="${FROMAGER_ENV}/toolkits/bin:${PATH}"
+if [[ ":$PATH:" != *":${FROMAGER_ENV}/utilities/bin:"* ]]; then
+    export PATH="${FROMAGER_ENV}/utilities/bin:${PATH}"
 fi
 
 if [ "$(uname -m)" = "x86_64" ]; then
