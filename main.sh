@@ -127,17 +127,41 @@ fgr () {
                 case "$2" in
 
                     -h | --help )
-                        echo "NOT IMPLEMENTED MODULE"
+                        fromager_info "Usage: fgr utilities [OPTION] [ARGUMENTS]"
+                        echo "Options:"
+                        format_option_help "-h, --help" "Show this help message"
+                        format_option_help "add <utility>" "Add a utility to the utilities cellar"
+                        format_option_help "add -r, --read <file>" "Read a configuration file and add all utilities specified"
                         shift 2
                     ;;
 
                     add )
-                        fromager_info "Adding utility: $3"
-                        if [ -z "$3" ]; then
-                            fromager_error "No utility specified to add."
-                            return 1
-                        fi
-                        shift 3
+
+                        case "$3" in
+
+                            -r | --read )
+                                if [ -z "$4"]; then
+                                    fromager_error "No utilities file specified to read."
+                                    return 1
+                                fi
+                                fromager_install "$4" "${FROMAGER_ENV}/utilities"
+                                shift 4
+                                ;;
+
+                            * )
+                                fromager_info "Adding utility: $3"
+                                if [ -z "$3" ]; then
+                                    fromager_error "No utility specified to add."
+                                    return 1
+                                fi
+                                shift 2
+                                local cellar=$(fromager_cmdline_parser "$@" --cellar utilities | tail -n 1)
+                                fromager_cmdline_install "$cellar"
+                                shift "$#"
+                                ;;
+
+                        esac
+
                     ;;
                 esac
                 break

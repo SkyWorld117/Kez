@@ -5,6 +5,8 @@ set -Eeuo pipefail
 # This script creates a nearly distribution-independent Fromager environment.
 # This environment offers the essential system utilities. 
 
+mkdir -p "${FROMAGER_ENV}"/utilities
+
 SYSTEM_PREFIX="${FROMAGER_ENV}/system" # System prefix of Fromager
 
 if [ -d "${SYSTEM_PREFIX}" ]; then
