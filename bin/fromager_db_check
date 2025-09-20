@@ -4,13 +4,13 @@ set -Eeuo pipefail
 
 # This script uses the `bin/fromager_config_verifier` to check the database correctness file by file.
 
-echo "Starting database check..."
+fromager_info "Starting database check..."
 
 file_list=$(find "${FROMAGER_DB}" -type f -name "*.yaml" | sort)
 for file in $file_list; do
-    echo "Checking file: $file"
+    fromager_info "Checking file: $file"
     if ! fromager_config_verifier "$file"; then
-        echo "Error: Verification failed for $file"
+        fromager_error "Verification failed for $file"
         exit 1
     fi
 done
