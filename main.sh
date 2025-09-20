@@ -505,6 +505,20 @@ fgr () {
                                 shift 3
                                 ;;
 
+                            cd )
+                                if [ -z "$4" ]; then
+                                    fromager_error "No directory specified to change to."
+                                    return 1
+                                fi
+                                if [ ! -d "${FROMAGER_ENV}/factories/$4" ]; then
+                                    fromager_error "Factory '$4' does not exist."
+                                    return 1
+                                fi
+                                cd "${FROMAGER_ENV}/factories/$4"
+                                fromager_success "Changed directory to factory '$4'."
+                                shift 4
+                                ;;
+
                             * )
                                 fromager_error "Unknown factory command: $3"
                                 fromager_info "Use -h or --help for usage information."

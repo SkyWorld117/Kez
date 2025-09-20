@@ -23,7 +23,7 @@ _fgr_complete() {
 
     # Main command completion
     if [ $COMP_CWORD -eq 1 ]; then
-        local main_options="-v --version -h --help init selfcheck utilities cellar install template"
+        local main_options="-v --version -h --help init selfcheck utilities cellar install template rt"
         COMPREPLY=($(compgen -W "${main_options}" -- "$current_word"))
         return 0
     fi
@@ -189,7 +189,7 @@ _fgr_complete() {
                 3)
                     case "$subcommand_word" in
                         factory)
-                            local factory_options="add create rm remove ls list enter exit which"
+                            local factory_options="add create rm remove ls list enter exit which cd"
                             COMPREPLY=($(compgen -W "${factory_options}" -- "$current_word"))
                             ;;
                         build)
@@ -219,6 +219,14 @@ _fgr_complete() {
                         which|exit)
                             # No additional completion for which or exit
                             COMPREPLY=()
+                            ;;
+                        cd)
+                            # Complete with existing factory names for cd
+                            if [ -d "${FROMAGER_ENV}/factories" ]; then
+                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_ENV}/factories 2>/dev/null)" -- "$current_word"))
+                            else
+                                COMPREPLY=()
+                            fi
                             ;;
                     esac
                     ;;
