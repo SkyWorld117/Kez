@@ -37,6 +37,10 @@ fi
 
 # Load main script
 source "${SCRIPT_DIR}/main.sh"
+# Load bash completion script if in bash shell
+if [ -n "${BASH_VERSION:-}" ] && [ -f "${SCRIPT_DIR}/fgr-completion.bash" ]; then
+    source "${SCRIPT_DIR}/fgr-completion.bash"
+fi
 
 # Prepare yq for YAML processing
 if [ ! -f "${FROMAGER_ENV}/system/bin/yq" ]; then
