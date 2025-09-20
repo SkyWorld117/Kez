@@ -406,6 +406,141 @@ fgr () {
                 ;;
 
         
+            rt )
+                # RT (rapid test) is used for batch building and running tests on packages.
+
+                case "$2" in
+
+                    -h | --help )
+                        fromager_info "Usage: fgr rt [OPTION] [ARGUMENTS]"
+                        echo "Options:"
+                        format_option_help "-h, --help" "Show this help message"
+                        shift 2
+                    ;;
+
+                    factory )
+                        case "$3" in
+
+                            add | create )
+                                fromager_info "Creating new factory: $4"
+                                if [ -z "$4" ]; then
+                                    fromager_error "No factory specified to create."
+                                    return 1
+                                fi
+                                mkdir -p "${FROMAGER_ENV}/factories/$4"
+                                # Create cheese wheels (user configs) directory
+                                mkdir -p "${FROMAGER_ENV}/factories/$4/wheels"
+                                fromager_success "Factory '$4' created successfully."
+                                shift 4
+                                ;;
+
+                            rm | remove )
+                                fromager_info "Removing factory: $4"
+                                if [ -z "$4" ]; then
+                                    fromager_error "No factory specified to remove."
+                                    return 1
+                                fi
+                                if [ ! -d "${FROMAGER_ENV}/factories/$4" ]; then
+                                    fromager_error "Factory '$4' does not exist."
+                                    return 1
+                                fi
+                                rm -rf "${FROMAGER_ENV}/factories/$4"
+                                shift 4
+                                ;;
+
+                            ls | list )
+                                fromager_info "Listing factories:"
+                                local factories
+                                if [ -d "${FROMAGER_ENV}/factories" ]; then
+                                    factories="$(ls ${FROMAGER_ENV}/factories | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)"
+                                fi
+                                # Check if factories is empty or only contains whitespace/newline etc.
+                                if [ -z "${factories// }" ]; then
+                                    fromager_info "No factories found."
+                                else
+                                    echo "$factories"
+                                fi
+                                shift 3
+                                ;;
+
+                            enter )
+                                fromager_info "Entering factory: $4"
+                                if [ -z "$4" ] || [ ! -d "${FROMAGER_ENV}/factories/$4" ]; then
+                                    fromager_error "Invalid factory specified."
+                                    return 1
+                                fi
+                                if [ -z "${FROMAGER_FACTORY:-}" ]; then
+                                    export FROMAGER_FACTORY="$4"
+                                else
+                                    fromager_error "Already in the factory ${FROMAGER_FACTORY}, please exit first."
+                                    return 1
+                                fi
+                                shift 4
+                                ;;
+
+                            exit )
+                                fromager_info "Exiting factory: ${FROMAGER_FACTORY}"
+                                if [ -n "${FROMAGER_FACTORY:-}" ]; then
+                                    unset FROMAGER_FACTORY
+                                else
+                                    fromager_error "Not currently in a factory."
+                                    return 1
+                                fi
+                                shift 3
+                                ;;
+
+                            which )
+                                if [ -z "${FROMAGER_FACTORY:-}" ]; then
+                                    fromager_info "Not currently in a factory."
+                                else
+                                    fromager_info "You are currently in the factory: ${FROMAGER_FACTORY}"
+                                fi
+                                shift 3
+                                ;;
+
+                            * )
+                                fromager_error "Unknown factory command: $3"
+                                fromager_info "Use -h or --help for usage information."
+                                return 1
+                                shift 3
+                                ;;
+
+                        esac
+                    ;;
+
+                    build )
+                        fromager_info "Starting rapid test build process..."
+                        if [ -z "${FROMAGER_FACTORY:-}" ]; then
+                            fromager_error "Not currently in a factory. Please enter a factory first."
+                            return 1
+                        fi
+                        # Install all configurations in the factory's wheels directory
+                        local wheels_dir="${FROMAGER_ENV}/factories/${FROMAGER_FACTORY}/wheels"
+                        if [ ! -d "$wheels_dir" ]; then
+                            fromager_error "Wheels directory not found in the current factory."
+                            return 1
+                        fi
+                        local config_files=("$wheels_dir"/*.yaml)
+                        if [ ${#config_files[@]} -eq 0 ]; then
+                            fromager_error "No configuration files found in the wheels directory."
+                            return 1
+                        fi
+                        for config in "${config_files[@]}"; do
+                            if [ -f "$config" ]; then
+                                fromager_info "Installing from configuration: $config"
+                                fromager_install "$config" "${FROMAGER_ENV}/rt_builds/${FROMAGER_FACTORY}"
+                                fromager_success "Installation from $config completed."
+                            fi
+                        done
+                        fromager_success "Rapid test build process completed."
+                        shift 2
+                    ;;
+
+                esac
+                break
+            ;;
+
+
             * )
                 fromager_error "Unknown option: $1"
                 fromager_info "Use -h or --help for usage information."
