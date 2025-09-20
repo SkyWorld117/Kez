@@ -80,6 +80,14 @@ _fgr_complete() {
                             # Complete with existing cellar names
                             COMPREPLY=($(compgen -W "$(_get_cellars)" -- "$current_word"))
                             ;;
+                        ls|list)
+                            # No additional completion for list
+                            COMPREPLY=()
+                            ;;
+                        which|exit)
+                            # No additional completion for which or exit
+                            COMPREPLY=()
+                            ;;
                     esac
                     ;;
             esac
@@ -166,6 +174,51 @@ _fgr_complete() {
                         -s|--save)
                             # Complete with package names for save command
                             COMPREPLY=($(compgen -W "$(_get_packages)" -- "$current_word"))
+                            ;;
+                    esac
+                    ;;
+            esac
+            ;;
+
+        rt)
+            case $COMP_CWORD in
+                2)
+                    local rt_options="-h --help factory build"
+                    COMPREPLY=($(compgen -W "${rt_options}" -- "$current_word"))
+                    ;;
+                3)
+                    case "$subcommand_word" in
+                        factory)
+                            local factory_options="add create rm remove ls list enter exit which"
+                            COMPREPLY=($(compgen -W "${factory_options}" -- "$current_word"))
+                            ;;
+                        build)
+                            # No additional options for build
+                            COMPREPLY=()
+                            ;;
+                    esac
+                    ;;
+                4)
+                    case "${COMP_WORDS[3]}" in
+                        add|create)
+                            # No completion for new factory name
+                            COMPREPLY=()
+                            ;;
+                        rm|remove|enter)
+                            # Complete with existing factory names
+                            if [ -d "${FROMAGER_ENV}/factories" ]; then
+                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_ENV}/factories 2>/dev/null)" -- "$current_word"))
+                            else
+                                COMPREPLY=()
+                            fi
+                            ;;
+                        ls|list)
+                            # No additional completion for list
+                            COMPREPLY=()
+                            ;;
+                        which|exit)
+                            # No additional completion for which or exit
+                            COMPREPLY=()
                             ;;
                     esac
                     ;;
