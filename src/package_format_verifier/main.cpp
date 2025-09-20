@@ -18,6 +18,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    INFO("Cheese verification succeeded.");
+    SUCCESS("Cheese verification succeeded.");
     return 0;
 }
