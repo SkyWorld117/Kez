@@ -132,6 +132,7 @@ fgr () {
                         format_option_help "-h, --help" "Show this help message"
                         format_option_help "add <utility>" "Add a utility to the utilities cellar"
                         format_option_help "add -r, --read <file>" "Read a configuration file and add all utilities specified"
+                        format_option_help "empty" "Remove all utilities"
                         shift 2
                     ;;
 
@@ -163,6 +164,13 @@ fgr () {
                         esac
 
                     ;;
+
+                empty )
+                    rm -rf "${FROMAGER_ENV}/utilities"/*
+                    fromager_success "All utilities removed."
+                    shift 2
+                ;;
+
                 esac
                 break
                 ;;
