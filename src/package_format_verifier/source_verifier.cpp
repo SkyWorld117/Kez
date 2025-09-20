@@ -11,7 +11,10 @@ bool verify_source(const YAML::Node& node) {
         return false;
     }
 
-    if (node["type"].as<std::string>() != "tarball" && node["type"].as<std::string>() != "git") {
+    if (node["type"].as<std::string>() != "tarball" &&
+        node["type"].as<std::string>() != "git" &&
+        node["type"].as<std::string>() != "script")
+    {
         ERROR("Unsupported source type: " + node["type"].as<std::string>());
         return false;
     }
@@ -56,9 +59,6 @@ bool verify_release(const YAML::Node& node, const std::string& source_type) {
             ERROR("Tarball release must have a url as a scalar value.");
             return false;
         }
-    } else {
-        ERROR("Unsupported source type: " + source_type);
-        return false;
     }
 
     return true;

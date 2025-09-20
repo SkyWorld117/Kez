@@ -23,8 +23,8 @@ bool verify_flags(const YAML::Node& node) {
 }
 
 bool verify_properties(const YAML::Node& node, const std::string& pkg_type) {
-    if (!node.IsMap()) {
-        ERROR("Properties must be a map.");
+    if (!node.IsMap() && !node.IsNull()) {
+        ERROR("Properties must be a map or null.");
         return false;
     }
 
