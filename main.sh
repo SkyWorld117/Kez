@@ -415,6 +415,13 @@ fgr () {
                         fromager_info "Usage: fgr rt [OPTION] [ARGUMENTS]"
                         echo "Options:"
                         format_option_help "-h, --help" "Show this help message"
+                        format_option_help "factory add, create <factory>" "Create a new factory named <factory>"
+                        format_option_help "factory rm, remove <factory>" "Remove an existing factory named <factory>"
+                        format_option_help "factory ls, list" "List all existing factories"
+                        format_option_help "factory enter <factory>" "Load the environment of <factory>"
+                        format_option_help "factory exit" "Exit the current factory"
+                        format_option_help "factory which" "Show the current factory"
+                        format_option_help "build" "Build all configurations in the current factory"
                         shift 2
                     ;;
 
@@ -528,7 +535,9 @@ fgr () {
                         for config in "${config_files[@]}"; do
                             if [ -f "$config" ]; then
                                 fromager_info "Installing from configuration: $config"
-                                fromager_install "$config" "${FROMAGER_ENV}/rt_builds/${FROMAGER_FACTORY}"
+                                local target_cellar="${FROMAGER_ENV}/factories/${FROMAGER_FACTORY}/cellars/$(basename "$config" .yaml)"
+                                mkdir -p "$target_cellar"
+                                fromager_install "$config" "$target_cellar"
                                 fromager_success "Installation from $config completed."
                             fi
                         done
