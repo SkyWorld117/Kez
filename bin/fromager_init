@@ -198,8 +198,7 @@ tar -xzf "${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp"
 version=$(grep -oP 'ZLIB_VERSION "\K[0-9]+\.[0-9]+\.[0-9]+' zlib.h)
 echo -e "  zlib:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 ./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --64
+    --prefix="${SYSTEM_PREFIX}"
 make -j"${FROMAGER_NPROC}" && make install
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
@@ -344,7 +343,7 @@ echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
 
 # perl
 fetch_latest_perl
-./Configure -Dprefix="${SYSTEM_PREFIX}" -Dusethreads -de
+./Configure -Dprefix="${SYSTEM_PREFIX}" -Dusethreads -Dusedevel=true -de
 make -j"${FROMAGER_NPROC}" && make install
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
