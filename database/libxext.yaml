@@ -1,0 +1,51 @@
+cheese:
+  name: libxext
+  description: X11 miscellaneous extensions library
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.3.6
+        url: https://www.x.org/releases/individual/lib/libXext-1.3.6.tar.xz
+
+  dependencies:
+    - libx11
+    - libxcb
+    - libxau
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${libxext.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${libxcb.ldflags} ${libxau.ldflags}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${libxext.prefix}/lib -Wl,-rpath,${libxext.prefix}/lib
+    libs:
+      default: -lXext
+    includes:
+      default: -I${libxext.prefix}/include

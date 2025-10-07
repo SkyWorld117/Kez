@@ -1,0 +1,24 @@
+cheese:
+  name: xcb-proto
+  description: XCB protocol descriptions and C bindings generator
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 0.5.1
+        url: https://www.x.org/releases/individual/proto/xcb-proto-1.17.0.tar.xz
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${xcb-proto.prefix}
+    stages:
+      - target: ~
+      - target: install
+
+  properties: ~

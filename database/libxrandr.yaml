@@ -1,0 +1,53 @@
+cheese:
+  name: libxrandr
+  description: X Resize, Rotate and Reflect Extension library
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.5.4
+        url: https://www.x.org/releases/individual/lib/libXrandr-1.5.4.tar.xz
+
+  dependencies:
+    - xorgproto
+    - libx11
+    - libxext
+    - libxrender
+    - util-macros
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${libxrandr.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${libx11.ldflags} ${libxext.ldflags} ${libxrender.ldflags} ${libxcb.ldflags} ${libxau.ldflags}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${libxrandr.prefix}/lib -Wl,-rpath,${libxrandr.prefix}/lib
+    libs:
+      default: -lXrandr
+    includes:
+      default: -I${libxrandr.prefix}/include

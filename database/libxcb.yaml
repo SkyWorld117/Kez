@@ -1,0 +1,56 @@
+cheese:
+  name: libxcb
+  description: X C Bindings library
+  type: package
+  toolchain: autotools
+
+  dependencies:
+    - xorgproto
+    - xcb-proto
+    - libxau
+    - util-macros
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.17
+        url: https://xcb.freedesktop.org/dist/libxcb-1.17.tar.xz
+
+  build:
+    configurations:
+      environment:
+        - name: PKG_CONFIG_PATH
+          description: Path to look for pkg-config files
+          default: ${xcb-proto.prefix}:${libxau.prefix}/share/pkgconfig:${libxdmcp.prefix}/share/pkgconfig:${xorgproto.prefix}/share/pkgconfig
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${libxcb.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${libxau.ldflags} ${libxdmcp.ldflags}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${libxcb.prefix}/lib -Wl,-rpath,${libxcb.prefix}/lib
+    libs:
+      default: -lxcb
+    includes:
+      default: -I${libxcb.prefix}/include

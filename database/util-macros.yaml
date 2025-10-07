@@ -1,0 +1,24 @@
+cheese:
+  name: util-macros
+  description: X.Org utility macros for configure scripts
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.20.2
+        url: https://www.x.org/releases/individual/util/util-macros-1.20.2.tar.xz
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${util-macros.prefix}
+    stages:
+      - target: ~
+      - target: install
+
+  properties: ~

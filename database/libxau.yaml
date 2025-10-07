@@ -1,0 +1,45 @@
+cheese:
+  name: libxau
+  description: X11 Authorization library
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.0.12
+        url: https://www.x.org/releases/individual/lib/libXau-1.0.12.tar.xz
+
+  dependencies:
+    - xorgproto
+    - util-macros
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${libxau.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${libxau.prefix}/lib -Wl,-rpath,${libxau.prefix}/lib
+    libs:
+      default: -lXau
+    includes:
+      default: -I${libxau.prefix}/include
