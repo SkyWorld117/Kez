@@ -116,7 +116,7 @@ fetch_latest_elfutils() {
 }
 
 fetch_latest_perl() {
-    local url="https://www.cpan.org/src/README.html"
+    local url="https://www.cpan.org/src/5.0/"
     local ext="tar.gz"
 
     local latest
