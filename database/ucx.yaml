@@ -104,6 +104,9 @@ cheese:
         - name: --with-dm
           description: Compile Device Memory support
 
+        - name: --without-go
+          description: Disable Go support
+
         - name: CC
           description: C compiler
           enabled_value:
