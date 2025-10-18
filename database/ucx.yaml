@@ -69,6 +69,7 @@ cheese:
 
         - name: --with-gdrcopy
           description: Specify gdrcopy installation path
+          user_configurable: true
           enabled:
             default: false
           enabled_value:
