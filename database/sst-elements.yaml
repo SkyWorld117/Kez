@@ -17,7 +17,7 @@ cheese:
     - python
 
   build:
-    preprocessing: ${python.prefix}/bin/pip install numpy
+    preprocessing: ${python.prefix}/bin/pip install numpy; ./autogen.sh
     
     configurations:
       options:

@@ -16,6 +16,8 @@ cheese:
     - python
 
   build:
+    preprocessing: ./autogen.sh
+
     configurations:
       options:
         - name: --prefix
