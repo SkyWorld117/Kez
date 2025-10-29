@@ -18,6 +18,9 @@ cheese:
           enabled_value:
             default: ${python.prefix}
 
+        - name: --enable-shared
+          description: Build shared library
+
         - name: --enable-optimizations
           description: Enable optimizations
 
