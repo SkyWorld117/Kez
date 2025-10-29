@@ -36,6 +36,11 @@ cheese:
           user_configurable: true
           enabled_value:
             default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
     stages:
       - target: ~
       - target: install
