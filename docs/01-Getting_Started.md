@@ -71,6 +71,24 @@ fromager:
 
 Users are supposed to find the packages installed by their system administrators or contact them if certain packages are not available.
 
+`prefix` specifies the installation prefix of the external package, while `version` specifies the version of the package. Here is the example configuration on the Piora cluster:
+
+```yaml
+fromager:
+  n_proc_for_build: 32
+
+  external:
+    rdma-core:
+      prefix: /usr
+      version: 51.0
+    hcoll:
+      prefix: /opt/mellanox/hcoll
+      version: 4.8.3227
+    gdrcopy:
+      prefix: ~
+      version: ~
+```
+
 ## Initialization of Fromager Toolchain
 
 To make Fromager as distribution-independent as possible, it creates a mini toolchain which contains a GCC compiler, GNU build system, cmake set, and other essential tools. This toolchain is isolated from the system environment and can be easily managed within the Fromager environment.
@@ -78,12 +96,6 @@ To make Fromager as distribution-independent as possible, it creates a mini tool
 This process takes however quite some time and compute power, so it is recommended to run it on a dedicated compute node.
 
 You can initialize the toolchain by running the following command:
-
-```bash
-fgr initialize
-```
-
-or
 
 ```bash
 fgr init
