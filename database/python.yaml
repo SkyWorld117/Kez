@@ -1,0 +1,39 @@
+cheese:
+  name: python
+  description: Python Programming Language
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 3.13.9
+        url: https://www.python.org/ftp/python/3.13.9/Python-3.13.9.tar.xz
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+
+        - name: --enable-optimizations
+          description: Enable optimizations
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          enabled_value:
+            default: -O3
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
+    includes:
+      default: -I${python.prefix}/include

@@ -1,0 +1,68 @@
+cheese:
+  name: sst-core
+  description: Structural Simulation Toolkit Core
+  type: package
+  toolchain: autotools
+
+  source:
+    type: git
+    url: https://github.com/sstsimulator/sst-core.git
+    releases:
+      - version: scc25
+        tag: 546dda2
+    
+  dependencies:
+    - mpi
+    - python
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${sst-core.prefix}
+
+        - name: --with-python
+          description: Path to Python interpreter
+          enabled_value:
+            default: ${python.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          enabled_value:
+            default: -O3
+
+        - name: CXX
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: CXXFLAGS
+          description: C++ compiler flags
+          enabled_value:
+            default: -O3
+
+        - name: MPICC
+          description: MPI C compiler
+          enabled_value:
+            default: ${mpi.c}
+            
+        - name: MPICXX
+          description: MPI C++ compiler
+          enabled_value:
+            default: ${mpi.cxx}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${sst-core.prefix}/lib -Wl,-rpath,${sst-core.prefix}/lib
+    includes:
+      default: -I${sst-core.prefix}/include
