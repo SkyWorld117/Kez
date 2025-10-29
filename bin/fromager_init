@@ -332,12 +332,12 @@ cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 # cmake
 cmake_tag="$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" | jq -r '.tag_name')"
 if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-    cmake_tag="${cmake_tag#v}-linux-x86_64"
+    cmake_tag_arch="${cmake_tag#v}-linux-x86_64"
 elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-    cmake_tag="${cmake_tag#v}-linux-aarch64"
+    cmake_tag_arch="${cmake_tag#v}-linux-aarch64"
 fi
-wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag}.sh"
-bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
+wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag_arch}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag_arch}.sh"
+bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag_arch}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
 
