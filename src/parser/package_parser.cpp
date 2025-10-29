@@ -63,8 +63,10 @@ std::vector<std::string> parse_package(
                     // Git has `tag` entry
                     std::string git_url = pkg_config["cheese"]["source"]["url"].as<std::string>();
                     std::string git_tag = release["tag"].as<std::string>();
-                    instructions.push_back("git clone --depth 1 --branch " + git_tag + " " + git_url + " source");
+                    instructions.push_back("git clone --depth 1 " + git_url + " source");
                     instructions.push_back("cd source");
+                    instructions.push_back("git fetch --depth 1 origin "+ git_tag);
+                    instructions.push_back("git checkout " + git_tag);
                 } else if (source_type == "script" && release["url"]) {
                     // Case 3: Script
                     // Script may or may not have `url` entry
