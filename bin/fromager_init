@@ -406,6 +406,8 @@ if command -v nvidia-smi &> /dev/null; then
     fi
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
     bash "${FROMAGER_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${FROMAGER_WORKDIR}/.tmp"
+    # Remove /tmp/cuda-installer.log if exists
+    rm -f /tmp/cuda-installer.log
     # Soft link CUDA files
     if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
         cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/include"/* "${SYSTEM_PREFIX}/include/"
