@@ -35,6 +35,7 @@ cheese:
 
         - name: CFLAGS
           description: C compiler flags
+          user_configurable: true
           enabled_value:
             default: -O3
 
@@ -45,6 +46,7 @@ cheese:
 
         - name: CXXFLAGS
           description: C++ compiler flags
+          user_configurable: true
           enabled_value:
             default: -O3
 
