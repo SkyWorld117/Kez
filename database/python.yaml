@@ -48,5 +48,7 @@ cheese:
   properties:
     ldflags:
       default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
+    libs:
+      default: -lpython3
     includes:
       default: -I${python.prefix}/include

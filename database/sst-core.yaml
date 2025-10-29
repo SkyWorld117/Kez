@@ -61,6 +61,11 @@ cheese:
           description: MPI C++ compiler
           enabled_value:
             default: ${mpi.cxx}
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${python.ldflags} ${python.libs}
     stages:
       - target: ~
       - target: install
