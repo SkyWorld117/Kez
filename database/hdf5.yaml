@@ -60,7 +60,7 @@ cheese:
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
-          default: ${compiler.ldflags}
+            default: ${compiler.ldflags}
           conditions:
             - condition: ${hdf5.config.enable-parallel} true
               value: ${mpi.ldflags}
