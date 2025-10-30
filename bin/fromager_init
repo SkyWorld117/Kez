@@ -345,12 +345,12 @@ echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
 fetch_latest_perl
 ./Configure -Dprefix="${SYSTEM_PREFIX}" -Dusethreads -Dusedevel -de
 make -j"${FROMAGER_NPROC}" && make install
-# Find all perl binaries with versioned names and rename (mv) them to unversioned names
+# Find all perl binaries with versioned names and symlink them to unversioned names
 perl_version=$(yq -r ".cheese.perl.version" "${SYSTEM_PREFIX}/state.yaml")
 for bin in "${SYSTEM_PREFIX}/bin/"*${perl_version}; do
     base_bin="$(basename "$bin")"
     unversioned_bin="${base_bin%%${perl_version}}"
-    mv "$bin" "${SYSTEM_PREFIX}/bin/${unversioned_bin}"
+    ln -s "$bin" "${SYSTEM_PREFIX}/bin/${unversioned_bin}"
 done
 cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
