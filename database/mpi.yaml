@@ -6,3 +6,4 @@ cheese:
     - openmpi
     - mpich
     - intel-oneapi-mpi
+    - mvapich
