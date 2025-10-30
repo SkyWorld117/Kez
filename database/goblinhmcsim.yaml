@@ -1,6 +1,6 @@
 cheese:
   name: goblinhmcsim
-  description: Goblim HMC Sim
+  description: Goblin HMC Sim
   type: package
   toolchain: makefile
 
