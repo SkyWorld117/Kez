@@ -1,0 +1,79 @@
+cheese:
+  name: hdf5
+  description: High-performance data management and storage suite
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.10.11
+        url: https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.11/src/hdf5-1.10.11.tar.gz
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          descriptoin: Installation prefix
+          enabled_value: 
+            default: ${hdf5.prefix}
+
+        - name: enable-cxx
+          description: Compile the C++ interface
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_format: --enable-cxx
+          disabled_format: --disable-cxx
+
+        - name: enable-parallel
+          description: Search for MPI-IO and MPI support
+          user_configurable: true
+          enabeld:
+            default: false
+          enabled_format: --enable-parallel
+          disabled_format: --disable-parallel
+          requires: [mpi]
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CXX
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: CXXFLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+          default: ${compiler.ldflags}
+          conditions:
+            - condition: ${hdf5.config.enable-parallel} true
+              value: ${mpi.ldflags}
+    stages:
+      - target: ~
+      - target: install
+
+    properties:
+      ldflags:
+        default: -L${hdf5.prefix}/lib -Wl,-rpath,${hdf5.prefix}/lib
+      libs:
+        default: -lhdf5
+      includes:
+        default: -I${hdf5.prefix}/include
+
+

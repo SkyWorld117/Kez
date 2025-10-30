@@ -30,6 +30,15 @@ cheese:
           enabled_value:
             default: ${python.prefix}
 
+        - name: with-hdf5
+          description: Use HDF5 statistics format
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: --with-hdf5=${hdf5.prefix}
+          disabled_format: --without-hdf5
+          requires: [hdf5]
+
         - name: CC
           description: C compiler
           enabled_value:
