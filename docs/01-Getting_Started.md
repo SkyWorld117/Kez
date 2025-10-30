@@ -10,6 +10,7 @@ Fromager is supposed to run on Linux systems. It heavily relies on the GNU toolc
 - git
 - jq
 - tar
+- gettext (autopoint)
 
 Since Fromager is an HPC-focused package manager, it is designed to work seamlessly with HPC Linux distributions such as CentOS, Rocky Linux, and RHEL. It is tested on Rocky Linux. 
 
@@ -100,6 +101,8 @@ You can initialize the toolchain by running the following command:
 ```bash
 fgr init
 ```
+
+It is recommended to run this command on the login node or a compute node with full compiling toolchain installed. The essential packages are listed above.
 
 ## Usage
 
