@@ -48,10 +48,10 @@ std::vector<std::string> parse_package(
                     instructions.push_back("wget --quiet --show-progress --output-document=source" + ext + " " + url);
                     if (ext == ".tar.gz") {
                         instructions.push_back("tar -xzf source" + ext);
-                        instructions.push_back("mv $(tar -tzf source" + ext + " | sed 's|^\\./||' | head -1 | cut -f1 -d'/') source");
+                        instructions.push_back("mv $(tar -tzf source" + ext + " | head -1 | sed 's|^\\./||' | cut -f1 -d'/') source");
                     } else if (ext == ".tar.xz") {
                         instructions.push_back("tar -xf source" + ext);
-                        instructions.push_back("mv $(tar -tf source" + ext + " | sed 's|^\\./||' | head -1 | cut -f1 -d'/') source");
+                        instructions.push_back("mv $(tar -tf source" + ext + " | head -1 | sed 's|^\\./||' | cut -f1 -d'/') source");
                     } else {
                         ERROR("Unimplemented tarball format: " + ext);
                         exit(EXIT_FAILURE);
