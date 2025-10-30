@@ -1,0 +1,59 @@
+cheese:
+  name: ramulator2
+  description: RAM module simulator
+  type: package
+  toolchain: cmake
+
+  source:
+    type: git
+    url: https://github.com/CMU-SAFARI/ramulator2.git
+    releases:
+      - version: scc25
+        tag: main
+
+  dependencies:
+
+  build:
+    preprocessing: curl -LJO https://github.com/sstsimulator/sst-elements/releases/download/v15.0.0_Final/sstelements-15.0.0.tar.gz; tar xf sstelements-15.0.0.tar.gz; cp ./sst-elements/src/sst/elements/memHierarchy/membackend/ramulator2/sst_frontend.cpp ./src/frontend/impl/external_wrapper/; sed -i.bak '19a impl/external_wrapper/sst_frontend.cpp' ./src/frontend/CMakeLists.txt
+    postprocessing: cp ./ramulator2 ${ramulator2.prefix} 
+
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${dramsim3.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: Build type
+          enabled_value:
+            default: Release
+
+        # Specify c compiler
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        # Specify c flags
+        - name: -DCMAKE_C_FLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        # Specify cxx compiler
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        # Specify cxx flags
+        - name: -DCMAKE_CXX_FLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+  
+  properties: ~
+  
