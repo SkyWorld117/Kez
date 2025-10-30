@@ -1,0 +1,67 @@
+cheese:
+  name: dramsim3
+  description: DRAM Simulator 3
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.0.0
+        url: https://github.com/umd-memsys/DRAMsim3/archive/refs/tags/1.0.0.tar.gz
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${dramsim3.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: Build type
+          enabled_value:
+            default: Release
+
+        # Specify c compiler
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        # Specify c flags
+        - name: -DCMAKE_C_FLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        # Specify cxx compiler
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        # Specify cxx flags
+        - name: -DCMAKE_CXX_FLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        # LD flags
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          description: Linker flags
+          enabled_value:
+            default: ""
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${dramsim3.prefix}/lib -Wl,-rpath,${dramsim3.prefix}/lib
+    libs:
+      default: -ldramsim3
+    includes:
+      default: -I${dramsim3.prefix}/include
