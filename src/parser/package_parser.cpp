@@ -1,40 +1,32 @@
 #include "package_parser.h"
 
-std::vector<std::string> parse_package(
-    const std::string& package_name,
-    std::unordered_map<std::string, std::string>& template_map,
-    const YAML::Node& user_config,
-    const YAML::Node& user_config_pkg,
-    const YAML::Node& user_config_context,
-    const YAML::Node& pkg_config,
-    const std::string& build_mode,
-    const std::string& env_path
-) {
+std::vector<std::string> parse_package(const std::string& package_name, std::unordered_map<std::string, std::string>& template_map,
+                                       const YAML::Node& user_config, const YAML::Node& user_config_pkg, const YAML::Node& user_config_context,
+                                       const YAML::Node& pkg_config, const std::string& build_mode, const std::string& env_path) {
     std::vector<std::string> instructions;
 
     if (!pkg_config["cheese"]["build"]) {
-        return instructions; // No build instructions available
+        return instructions;  // No build instructions available
     }
 
-    if ((pkg_config["cheese"]["type"].as<std::string>() == "compiler" ||
-        pkg_config["cheese"]["type"].as<std::string>() == "mpi") &&
+    if ((pkg_config["cheese"]["type"].as<std::string>() == "compiler" || pkg_config["cheese"]["type"].as<std::string>() == "mpi") &&
         !user_config_context["build"]) {
-        return instructions; // No build context available for compilers or MPI
+        return instructions;  // No build context available for compilers or MPI
     }
 
     // Build vendor packages only if they are not already built
     if (pkg_config["cheese"]["type"].as<std::string>() == "vendor" && user_config_context["version"]) {
-        std::string version = user_config_context["version"].as<std::string>();
+        std::string           version     = user_config_context["version"].as<std::string>();
         std::filesystem::path vendor_path = std::filesystem::path(getenv("FROMAGER_ENV")) / "vendors" / (package_name + "-" + version);
         if (std::filesystem::exists(vendor_path)) {
-            return instructions; // Skip building if the vendor package already exists
+            return instructions;  // Skip building if the vendor package already exists
         }
     }
 
     // Download
     if (pkg_config["cheese"]["source"] && user_config_pkg["version"]) {
         std::string version = user_config_pkg["version"].as<std::string>();
-        bool found = false;
+        bool        found   = false;
         for (const auto& release : pkg_config["cheese"]["source"]["releases"]) {
             std::string release_version = release["version"].as<std::string>();
             if (release_version == version) {
@@ -48,10 +40,10 @@ std::vector<std::string> parse_package(
                     instructions.push_back("wget --quiet --show-progress --output-document=source" + ext + " " + url);
                     if (ext == ".tar.gz") {
                         instructions.push_back("tar -xzf source" + ext);
-                        instructions.push_back("mv $(tar -tzf source" + ext + " | head -1 | cut -f1 -d'/') source");
+                        instructions.push_back("mv $(tar -tzf source" + ext + " | sed 's|^\\./||' | head -1 | cut -f1 -d'/') source");
                     } else if (ext == ".tar.xz") {
                         instructions.push_back("tar -xf source" + ext);
-                        instructions.push_back("mv $(tar -tf source" + ext + " | head -1 | cut -f1 -d'/') source");
+                        instructions.push_back("mv $(tar -tf source" + ext + " | sed 's|^\\./||' | head -1 | cut -f1 -d'/') source");
                     } else {
                         ERROR("Unimplemented tarball format: " + ext);
                         exit(EXIT_FAILURE);
@@ -69,8 +61,8 @@ std::vector<std::string> parse_package(
                 } else if (source_type == "script" && release["url"]) {
                     // Case 3: Script
                     // Script may or may not have `url` entry
-                    // When not present, we assume the developer calls a script from `bin` at the preprocessing or postprocessing stage (no need to handle this case)
-                    // Else, we download the script
+                    // When not present, we assume the developer calls a script from `bin` at the preprocessing or postprocessing stage (no need to
+                    // handle this case) Else, we download the script
                     std::string script_url = release["url"].as<std::string>();
                     instructions.push_back("wget --quiet --show-progress --output-document=source " + script_url);
                 } else {
@@ -94,14 +86,8 @@ std::vector<std::string> parse_package(
         INFO("- Preprocessing for package: " + package_name);
     }
     if (pkg_config["cheese"]["build"]["preprocessing"]) {
-        std::string preprocessing = parse_scalar(
-            pkg_config["cheese"]["build"]["preprocessing"].as<std::string>(),
-            template_map,
-            user_config,
-            user_config_pkg,
-            build_mode,
-            env_path
-        );
+        std::string preprocessing = parse_scalar(pkg_config["cheese"]["build"]["preprocessing"].as<std::string>(), template_map, user_config,
+                                                 user_config_pkg, build_mode, env_path);
         instructions.push_back(preprocessing);
     }
 
@@ -118,18 +104,10 @@ std::vector<std::string> parse_package(
             user_config_context_config = user_config_context["build"]["configurations"];
         }
         std::pair<std::vector<std::string>, std::string> parsed_configurations = parse_configuration(
-            configurations,
-            template_map,
-            user_config,
-            user_config_pkg,
-            user_config_context_config,
-            pkg_config,
-            build_mode,
-            env_path
-        );
-        std::vector<std::string> env_config = parsed_configurations.first;
-        std::string opts_config = parsed_configurations.second;
-        std::string cmd;
+            configurations, template_map, user_config, user_config_pkg, user_config_context_config, pkg_config, build_mode, env_path);
+        std::vector<std::string> env_config  = parsed_configurations.first;
+        std::string              opts_config = parsed_configurations.second;
+        std::string              cmd;
         if (pkg_config["cheese"]["build"]["configurations"]["command"]) {
             cmd = pkg_config["cheese"]["build"]["configurations"]["command"].as<std::string>();
         } else {
@@ -173,16 +151,9 @@ std::vector<std::string> parse_package(
         for (const auto& stage : stages) {
             std::string stage_target;
             if (stage["target"].IsScalar()) {
-                stage_target = parse_scalar(
-                    stage["target"].as<std::string>(),
-                    template_map,
-                    user_config,
-                    user_config_pkg,
-                    build_mode,
-                    env_path
-                );
+                stage_target = parse_scalar(stage["target"].as<std::string>(), template_map, user_config, user_config_pkg, build_mode, env_path);
             } else if (stage["target"].IsNull()) {
-                stage_target = ""; // Default to empty string if not specified
+                stage_target = "";  // Default to empty string if not specified
             } else {
                 ERROR("Invalid target type in stage: " + stage["target"].Type());
                 exit(EXIT_FAILURE);
@@ -192,7 +163,7 @@ std::vector<std::string> parse_package(
             if (stage["multithreaded"] && stage["multithreaded"].IsScalar()) {
                 multithreaded = stage["multithreaded"].as<bool>();
             } else {
-                multithreaded = true; // Default to true if not specified
+                multithreaded = true;  // Default to true if not specified
             }
 
             if (!stage_target.empty()) {
@@ -217,15 +188,7 @@ std::vector<std::string> parse_package(
                     }
                 }
                 std::pair<std::vector<std::string>, std::string> parsed_stage_configurations = parse_configuration(
-                    stage_configurations,
-                    template_map,
-                    user_config,
-                    user_config_pkg,
-                    user_config_context_config,
-                    pkg_config,
-                    build_mode,
-                    env_path
-                );
+                    stage_configurations, template_map, user_config, user_config_pkg, user_config_context_config, pkg_config, build_mode, env_path);
                 std::vector<std::string> stage_env_config = parsed_stage_configurations.first;
                 std::reverse(stage_env_config.begin(), stage_env_config.end());
                 for (const auto& env : stage_env_config) {
@@ -245,14 +208,8 @@ std::vector<std::string> parse_package(
         INFO("- Postprocessing for package: " + package_name);
     }
     if (pkg_config["cheese"]["build"]["postprocessing"]) {
-        std::string postprocessing = parse_scalar(
-            pkg_config["cheese"]["build"]["postprocessing"].as<std::string>(),
-            template_map,
-            user_config,
-            user_config_pkg,
-            build_mode,
-            env_path
-        );
+        std::string postprocessing = parse_scalar(pkg_config["cheese"]["build"]["postprocessing"].as<std::string>(), template_map, user_config,
+                                                  user_config_pkg, build_mode, env_path);
         instructions.push_back(postprocessing);
     }
 
