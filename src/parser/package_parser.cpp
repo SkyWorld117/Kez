@@ -136,6 +136,7 @@ std::vector<std::string> parse_package(
             if (pkg_config["cheese"]["toolchain"] && pkg_config["cheese"]["toolchain"].as<std::string>() == "autotools") {
                 cmd = "./configure";
             } else if (pkg_config["cheese"]["toolchain"] && pkg_config["cheese"]["toolchain"].as<std::string>() == "cmake") {
+                instructions.push_back("mkdir -p build && cd build");
                 cmd = "cmake ../";
             } else {
                 // Ignore the others for now and set to empty string
