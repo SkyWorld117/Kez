@@ -49,19 +49,16 @@ std::vector<std::string> parse_package(
                     if (ext == ".tar.gz") {
                         instructions.push_back("tar -xzf source" + ext);
                         instructions.push_back("mv $(tar -tzf source" + ext + " | sed 's|^\\./||' | head -1 | cut -f1 -d'/') source");
-                    }
-                    else if (ext == ".tar.xz") {
+                    } else if (ext == ".tar.xz") {
                         instructions.push_back("tar -xf source" + ext);
                         instructions.push_back("mv $(tar -tf source" + ext + " | sed 's|^\\./||' | head -1 | cut -f1 -d'/') source");
-                    }
-                    else {
+                    } else {
                         ERROR("Unimplemented tarball format: " + ext);
                         exit(EXIT_FAILURE);
                     }
                     instructions.push_back("rm source" + ext);
                     instructions.push_back("cd source");
-                }
-                else if (source_type == "git") {
+                } else if (source_type == "git") {
                     // Case 2: Git
                     // Git has `tag` entry
                     std::string git_url = pkg_config["cheese"]["source"]["url"].as<std::string>();
@@ -69,16 +66,14 @@ std::vector<std::string> parse_package(
                     instructions.push_back("git clone " + git_url + " source");
                     instructions.push_back("cd source");
                     instructions.push_back("git checkout " + git_tag);
-                }
-                else if (source_type == "script" && release["url"]) {
+                } else if (source_type == "script" && release["url"]) {
                     // Case 3: Script
                     // Script may or may not have `url` entry
                     // When not present, we assume the developer calls a script from `bin` at the preprocessing or postprocessing stage (no need to handle this case)
                     // Else, we download the script
                     std::string script_url = release["url"].as<std::string>();
                     instructions.push_back("wget --quiet --show-progress --output-document=source " + script_url);
-                }
-                else {
+                } else {
                     // Handle unknown source types
                     ERROR("Unknown source type for package: " + package_name);
                     exit(EXIT_FAILURE);
@@ -137,32 +132,27 @@ std::vector<std::string> parse_package(
         std::string cmd;
         if (pkg_config["cheese"]["build"]["configurations"]["command"]) {
             cmd = pkg_config["cheese"]["build"]["configurations"]["command"].as<std::string>();
-        }
-        else {
+        } else {
             if (pkg_config["cheese"]["toolchain"] && pkg_config["cheese"]["toolchain"].as<std::string>() == "autotools") {
                 cmd = "./configure";
-            }
-            else if (pkg_config["cheese"]["toolchain"] && pkg_config["cheese"]["toolchain"].as<std::string>() == "cmake") {
+            } else if (pkg_config["cheese"]["toolchain"] && pkg_config["cheese"]["toolchain"].as<std::string>() == "cmake") {
                 instructions.push_back("mkdir -p build && cd build");
                 cmd = "cmake ../";
-            }
-            else {
+            } else {
                 // Ignore the others for now and set to empty string
                 cmd = "";
             }
         }
         if (!opts_config.empty() && !cmd.empty()) {
             opts_config = cmd + " " + opts_config;
-        }
-        else {
+        } else {
             opts_config = cmd;
         }
         if (opts_config.empty()) {
             for (const auto& env : env_config) {
                 instructions.push_back("export " + env);
             }
-        }
-        else {
+        } else {
             std::string command = opts_config;
             std::reverse(env_config.begin(), env_config.end());
             for (const auto& env : env_config) {
@@ -191,11 +181,9 @@ std::vector<std::string> parse_package(
                     build_mode,
                     env_path
                 );
-            }
-            else if (stage["target"].IsNull()) {
+            } else if (stage["target"].IsNull()) {
                 stage_target = ""; // Default to empty string if not specified
-            }
-            else {
+            } else {
                 ERROR("Invalid target type in stage: " + stage["target"].Type());
                 exit(EXIT_FAILURE);
             }
@@ -203,8 +191,7 @@ std::vector<std::string> parse_package(
             bool multithreaded;
             if (stage["multithreaded"] && stage["multithreaded"].IsScalar()) {
                 multithreaded = stage["multithreaded"].as<bool>();
-            }
-            else {
+            } else {
                 multithreaded = true; // Default to true if not specified
             }
 
@@ -214,8 +201,7 @@ std::vector<std::string> parse_package(
 
             if (multithreaded && !threads.empty()) {
                 stage_target = "make -j" + threads + stage_target;
-            }
-            else {
+            } else {
                 stage_target = "make" + stage_target;
             }
 
