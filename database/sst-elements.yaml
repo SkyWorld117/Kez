@@ -18,7 +18,7 @@ cheese:
 
   build:
     preprocessing: ${python.prefix}/bin/pip3 install numpy; ./autogen.sh
-    
+
     configurations:
       options:
         - name: --prefix
@@ -30,6 +30,46 @@ cheese:
           description: Path to SST Core installation
           enabled_value:
             default: ${sst-core.prefix}
+
+        - name: --with-dramsim3
+          description: Enable DRAMSim3 support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ${dramsim3.prefix}
+          disabled_format: --without-dramsim3
+          requires: [dramsim3]          
+
+        - name: --with-pin
+          description: Enable Intel PIN support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ${intelpin.prefix}
+          disabled_format: --without-pin
+          requires: [intelpin]
+
+        - name: --with-goblin-hmcsim
+          description: Enable Goblin HMC Sim support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ${goblinhmcsim.prefix}
+          disabled_format: --without-goblinhmcsim
+          requires: [goblinhmcsim]
+
+        - name: --with-ramulator2
+          description: Enable Ramulator2 support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ${ramulator2.prefix}
+          disabled_format: --without-ramulator2
+          requires: [ramulator2]
 
         - name: CC
           description: C compiler

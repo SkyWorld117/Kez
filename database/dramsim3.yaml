@@ -11,7 +11,7 @@ cheese:
         url: https://github.com/umd-memsys/DRAMsim3/archive/refs/tags/1.0.0.tar.gz
 
   build:
-    postprocessing: mkdir -p ${dramsim3.prefix}/build && cp dramsim3main && cp ../libdramsim3.so ${dramsim3.prefix}
+    postprocessing: mkdir -p ${dramsim3.prefix}/build && cp dramsim3main ${dramsim3.prefix}/build && cp ../libdramsim3.so ${dramsim3.prefix}
 
     configurations:
       options:

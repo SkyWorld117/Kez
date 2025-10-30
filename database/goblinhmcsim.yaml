@@ -36,7 +36,13 @@ cheese:
             #   user_configurable: true
             #   enabled_value:
             #     default: -O3
-      
+      - target: install
+        configurations:
+          options:
+            - name: PREFIX
+              description: Installation prefix
+              enabled_value:
+                default: ${goblinhmcsim.prefix}
 
   properties:
     ldflags:

@@ -10,7 +10,7 @@ cheese:
         url: https://software.intel.com/sites/landingpage/pintool/downloads/pin-external-3.31-98869-gfa6f126a8-gcc-linux.tar.gz
     
   build:
-    preprocessing: cp -r ${source} ${intelpin.prefix}
+    preprocessing: cp -r ${source}/* ${intelpin.prefix}
 
   properties:
     ldflags:
