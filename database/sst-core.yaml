@@ -17,6 +17,11 @@ cheese:
 
   build:
     preprocessing: ./autogen.sh
+    postprocessing: >
+      mkdir -p ${sst-core.prefix}/src &&
+      cp -r ${source}/src/* ${sst-core.prefix}/src/ &&
+      cp -r ${source}/tests ${sst-core.prefix}/tests &&
+      sed -i 's|testsdir=.*|testsdir=${sst-core.prefix}/tests|' ${sst-core.prefix}/etc/sst/sstsimulator.conf
 
     configurations:
       options:

@@ -18,6 +18,10 @@ cheese:
 
   build:
     preprocessing: ${python.prefix}/bin/pip3 install numpy; ./autogen.sh
+    postprocessing: >
+      mkdir -p ${sst-elements.prefix}/src &&
+      cp -r ${source}/src/* ${sst-elements.prefix}/src/ &&
+      sed -i 's|${source}|${sst-elements.prefix}|g' ${sst-elements.prefix}/etc/sst/sstsimulator.conf
 
     configurations:
       options:
