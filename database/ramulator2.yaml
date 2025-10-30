@@ -60,6 +60,8 @@ cheese:
           description: Minimum CMake policy version
           enabled_value:
             default: 3.15
+    stages:
+      - target: ~
   
   properties: ~
   
