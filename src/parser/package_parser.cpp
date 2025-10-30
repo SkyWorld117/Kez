@@ -118,7 +118,7 @@ std::vector<std::string> parse_package(
     if (pkg_config["cheese"]["build"]["configurations"]) {
         YAML::Node configurations = pkg_config["cheese"]["build"]["configurations"];
         YAML::Node user_config_context_config;
-        if (user_config_context["build"]["configurations"]) {
+        if (user_config_context["build"] && user_config_context["build"]["configurations"]) {
             user_config_context_config = user_config_context["build"]["configurations"];
         }
         std::pair<std::vector<std::string>, std::string> parsed_configurations = parse_configuration(
@@ -212,7 +212,7 @@ std::vector<std::string> parse_package(
             if (stage["configurations"]) {
                 YAML::Node stage_configurations = stage["configurations"];
                 YAML::Node user_config_context_config;
-                if (user_config_context["build"]["stages"]) {
+                if (user_config_context["build"] && user_config_context["build"]["stages"]) {
                     for (const auto& user_stage : user_config_context["build"]["stages"]) {
                         if (user_stage["target"].as<std::string>() == stage["target"].as<std::string>()) {
                             user_config_context_config = user_stage["configurations"];
