@@ -29,7 +29,7 @@ cheese:
         - name: enable-parallel
           description: Search for MPI-IO and MPI support
           user_configurable: true
-          enabeld:
+          enabled:
             default: false
           enabled_format: --enable-parallel
           disabled_format: --disable-parallel
