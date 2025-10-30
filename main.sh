@@ -77,7 +77,7 @@ format_option_help() {
 
 fgr () {
     # Show help if no arguments provided
-    if [ $# -eq 0 ]; then
+    if [[ $# -eq 0 ]]; then
         set -- "-h"
     fi
 
