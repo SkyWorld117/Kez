@@ -76,6 +76,10 @@ format_option_help() {
 }
 
 fgr () {
+    # Show help if no arguments provided
+    if [ $# -eq 0 ]; then
+        set -- "-h"
+    fi
 
     while [ $# -gt 0 ]; do
         case "$1" in
