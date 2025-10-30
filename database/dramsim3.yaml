@@ -11,6 +11,8 @@ cheese:
         url: https://github.com/umd-memsys/DRAMsim3/archive/refs/tags/1.0.0.tar.gz
 
   build:
+    postprocessing: mkdir -p ${dramsim3.prefix}/build && cp dramsim3main && cp ../libdramsim3.so ${dramsim3.prefix}
+
     configurations:
       options:
         - name: -DCMAKE_INSTALL_PREFIX
@@ -53,10 +55,14 @@ cheese:
         - name: -DCMAKE_EXE_LINKER_FLAGS
           description: Linker flags
           enabled_value:
-            default: ""
+            default: ${compiler.ldflags}
+
+        - name: -DCMAKE_POLICY_VERSION_MINIMUM
+          description: CMake policy version minimum
+          enabled_value:
+            default: 3.15
     stages:
       - target: ~
-      - target: install
 
   properties:
     ldflags:
