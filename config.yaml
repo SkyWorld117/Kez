@@ -11,3 +11,6 @@ fromager:
     gdrcopy:
       prefix: ~
       version: ~
+    slurm:
+      prefix: ~
+      version: ~
