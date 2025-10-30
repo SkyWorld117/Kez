@@ -29,19 +29,6 @@ cheese:
           enabled_value:
             default: Release
 
-        # Specify c compiler
-        - name: -DCMAKE_C_COMPILER
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
-
-        # Specify c flags
-        - name: -DCMAKE_C_FLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-
         # Specify cxx compiler
         - name: -DCMAKE_CXX_COMPILER
           description: C++ compiler
