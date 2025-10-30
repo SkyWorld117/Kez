@@ -1,0 +1,125 @@
+cheese:
+  name: mvapich
+  description: High-Performance MPI Library for InfiniBand and RDMA
+  type: mpi
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 4.1
+        url: https://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich-4.1.tar.gz
+
+  dependencies:
+    - hwloc
+    - libevent
+    - slurm
+    - pmix
+    - ucx
+    - libxml2
+    - libpciaccess
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${mvapich.prefix}
+
+        - name: --enable-threads
+          description: Enable thread support
+          enabled_value:
+            default: multiple
+
+        - name: --enable-multi-aliases
+          description: Enable multiple MPI aliases
+
+        - name: --enable-fast
+          description: Enable fast build options
+          enabled_value:
+            default: O3,ndebug,no-strict-alignment,alwaysinline
+
+        - name: --enable-romio
+          description: Enable ROMIO support
+
+        - name: --with-hwloc
+          description: Use hwloc for topology discovery
+          enabled_value:
+            default: ${hwloc.prefix}
+
+        - name: --with-slurm
+          description: Use SLURM for job launching
+          enabled_value:
+            default: ${slurm.prefix}
+
+        - name: --with-pmix
+          description: Use PMIx for process management
+          enabled_value:
+            default: ${pmix.prefix}
+
+        - name: --with-ucx
+          description: Use UCX for communication
+          enabled_value:
+            default: ${ucx.prefix}
+
+        - name: --with-hcoll
+          description: Use HCOLL for collective operations
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_value:
+            default: ${hcoll.prefix}
+          requires: [hcoll]
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3 ${libevent.includes} ${libxml2.includes} ${libpciaccess.includes}
+
+        - name: CXX
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: CXXFLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3 ${libevent.includes} ${libxml2.includes} ${libpciaccess.includes}
+
+        - name: FC
+          description: Fortran compiler
+          enabled_value:
+            default: ${compiler.fort}
+
+        - name: FCFLAGS
+          description: Fortran compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3 ${libevent.includes} ${libxml2.includes} ${libpciaccess.includes}
+
+        - name: LDFLAGS
+          description: Linker flags
+          enabled_value:
+            default: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${slurm.ldflags} ${pmix.ldflags} ${ucx.ldflags} ${libxml2.ldflags} ${libpciaccess.ldflags}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    c: ${mvapich.prefix}/bin/mpicc
+    cxx: ${mvapich.prefix}/bin/mpicxx
+    fort: ${mvapich.prefix}/bin/mpifort
+    ldflags:
+      default: -L${mvapich.prefix}/lib -Wl,-rpath,${mvapich.prefix}/lib
+    libs:
+      default: -lmpi
+    includes:
+      default: -I${mvapich.prefix}/include
