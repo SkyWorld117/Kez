@@ -44,6 +44,10 @@ std::vector<std::string> parse_package(
                     // Case 1: Tarball
                     // Tarball has `url` entry
                     std::string url = release["url"].as<std::string>();
+                    if (url.find(".tar") == std::string::npos) {
+                        ERROR("Invalid tarball URL for package: " + package_name);
+                        exit(EXIT_FAILURE);
+                    }
                     std::string ext = url.substr(url.find(".tar"));
                     instructions.push_back("wget --quiet --show-progress --output-document=source" + ext + " " + url);
                     if (ext == ".tar.gz") {
