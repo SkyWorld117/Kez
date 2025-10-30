@@ -1,7 +1,7 @@
 cheese:
   name: gdrcopy
   description: GDRCopy userspace library
-  type: package
+  type: external
 
   # This package should not be built from source
   # Use the system package instead
