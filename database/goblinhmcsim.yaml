@@ -1,0 +1,45 @@
+cheese:
+  name: goblinhmcsim
+  description: Goblim HMC Sim
+  type: package
+  toolchain: makefile
+
+  source:
+    type: tarball
+    releases: 
+      - version: sst-8.0.0
+        url: https://github.com/tactcomplabs/gc64-hmcsim/archive/refs/tags/sst-8.0.0-release.tar.gz
+
+  build:
+    stages:
+      - target: ~
+        configurations:
+          options:
+            - name: CC
+              description: C compiler
+              enabled_value:
+                default: ${compiler.c}
+
+            # - name: CFLAGS
+            #   description: C compiler flags
+            #   user_configurable: true
+            #   enabled_value:
+            #     default: -O3 -I${source}/include
+
+            - name: CXX
+              description: C++ compiler
+              enabled_value:
+                default: ${compiler.cxx}
+
+            # - name: CXXFLAGS
+            #   description: C++ compiler flags
+            #   user_configurable: true
+            #   enabled_value:
+            #     default: -O3
+      
+
+  properties:
+    ldflags:
+      default: -L${goblinhmcsim.prefix}/lib -Wl,-rpath,${goblinhmcsim.prefix}/lib
+    includes:
+      default: -I${goblinhmcsim.prefix}/include
