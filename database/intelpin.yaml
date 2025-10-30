@@ -1,0 +1,21 @@
+cheese:
+  name: intelpin
+  description: Intel PIN
+  type: vendor
+
+  source:
+    type: tarball
+    releases:
+      - version: 3.31
+        url: https://software.intel.com/sites/landingpage/pintool/downloads/pin-external-3.31-98869-gfa6f126a8-gcc-linux.tar.gz
+    
+  build:
+    preprocessing: cp -r ${source} ${intelpin.prefix}
+
+  properties:
+    ldflags:
+      default: -L${intelpin.prefix}/intel64/lib -Wl,-rpath,${intelpin.prefix}/intel64/lib
+  
+  
+
+  
