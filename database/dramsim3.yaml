@@ -66,8 +66,6 @@ cheese:
 
   properties:
     ldflags:
-      default: -L${dramsim3.prefix}/lib -Wl,-rpath,${dramsim3.prefix}/lib
+      default: -L${dramsim3.prefix}/ -Wl,-rpath,${dramsim3.prefix}
     libs:
       default: -ldramsim3
-    includes:
-      default: -I${dramsim3.prefix}/include
