@@ -28,6 +28,8 @@ std::vector<std::string> parse_package(
         std::filesystem::path vendor_path = std::filesystem::path(getenv("FROMAGER_ENV")) / "vendors" / (package_name + "-" + version);
         if (std::filesystem::exists(vendor_path)) {
             return instructions; // Skip building if the vendor package already exists
+        } else {
+            instructions.push_back("mkdir -p " + vendor_path.string());
         }
     }
 
