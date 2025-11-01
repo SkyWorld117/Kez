@@ -274,6 +274,21 @@ fgr () {
                         shift 2
                     ;;
 
+                    empty )
+                        fromager_info "Emptying cellar: $3"
+                        if [ -z "$3" ]; then
+                            fromager_error "No cellar specified to empty."
+                            return 1
+                        fi
+                        if [ ! -d "${FROMAGER_ENV}/$3" ]; then
+                            fromager_error "Cellar '$3' does not exist."
+                            return 1
+                        fi
+                        rm -rf "${FROMAGER_ENV}/$3"/*
+                        fromager_success "Cellar '$3' emptied successfully."
+                        shift 3
+                    ;;
+
                     * )
                         fromager_error "Unknown cellar command: $2"
                         fromager_info "Use -h or --help for usage information."

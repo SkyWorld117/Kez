@@ -67,7 +67,7 @@ _fgr_complete() {
         cellar)
             case $COMP_CWORD in
                 2)
-                    local cellar_options="-h --help add create rm remove ls list enter exit which"
+                    local cellar_options="-h --help add create rm remove ls list enter exit which empty"
                     COMPREPLY=($(compgen -W "${cellar_options}" -- "$current_word"))
                     ;;
                 3)
@@ -76,7 +76,7 @@ _fgr_complete() {
                             # No completion for new cellar name
                             COMPREPLY=()
                             ;;
-                        rm|remove|enter)
+                        rm|remove|enter|empty)
                             # Complete with existing cellar names
                             COMPREPLY=($(compgen -W "$(_get_cellars)" -- "$current_word"))
                             ;;
