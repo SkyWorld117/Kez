@@ -300,6 +300,76 @@ fgr () {
                 ;;
 
 
+            load-mpi )
+                if [ -z "$2" ]; then
+                    fromager_error "No MPI specified to load."
+                    return 1
+                fi
+                if [ -z "${FROMAGER_ENV}/mpis/$2" ] || [ ! -d "${FROMAGER_ENV}/mpis/$2" ]; then
+                    fromager_error "MPI '$2' not found in the environment."
+                    return 1
+                fi
+                if [ -n "${FROMAGER_MPI:-}" ]; then
+                    fromager_warning "An MPI (${FROMAGER_MPI}) is already loaded. Overwriting with $2."
+                    export PATH=$(echo "$PATH" | sed "s|${FROMAGER_ENV}/mpis/${FROMAGER_MPI}/bin:||g")
+                fi
+                export FROMAGER_MPI="$2"
+                export PATH="${FROMAGER_ENV}/mpis/${FROMAGER_MPI}/bin:$PATH"
+                fromager_success "MPI '$2' loaded successfully."
+                shift 2
+                break
+                ;;
+
+
+            unload-mpi )
+                if [ -z "${FROMAGER_MPI:-}" ]; then
+                    fromager_error "No MPI is currently loaded."
+                    return 1
+                fi
+                fromager_info "Unloading MPI: ${FROMAGER_MPI}"
+                export PATH=$(echo "$PATH" | sed "s|${FROMAGER_ENV}/mpis/${FROMAGER_MPI}/bin:||g")
+                unset FROMAGER_MPI
+                fromager_success "MPI unloaded successfully."
+                shift 1
+                break
+                ;;
+
+
+            load-compiler )
+                if [ -z "$2" ]; then
+                    fromager_error "No compiler specified to load."
+                    return 1
+                fi
+                if [ -z "${FROMAGER_ENV}/compilers/$2" ] || [ ! -d "${FROMAGER_ENV}/compilers/$2" ]; then
+                    fromager_error "Compiler '$2' not found in the environment."
+                    return 1
+                fi
+                if [ -n "${FROMAGER_COMPILER:-}" ]; then
+                    fromager_warning "A compiler (${FROMAGER_COMPILER}) is already loaded. Overwriting with $2."
+                    export PATH=$(echo "$PATH" | sed "s|${FROMAGER_ENV}/compilers/${FROMAGER_COMPILER}/bin:||g")
+                fi
+                export FROMAGER_COMPILER="$2"
+                export PATH="${FROMAGER_ENV}/compilers/${FROMAGER_COMPILER}/bin:$PATH"
+                fromager_success "Compiler '$2' loaded successfully."
+                shift 2
+                break
+                ;;
+
+
+            unload-compiler )
+                if [ -z "${FROMAGER_COMPILER:-}" ]; then
+                    fromager_error "No compiler is currently loaded."
+                    return 1
+                fi
+                fromager_info "Unloading compiler: ${FROMAGER_COMPILER}"
+                export PATH=$(echo "$PATH" | sed "s|${FROMAGER_ENV}/compilers/${FROMAGER_COMPILER}/bin:||g")
+                unset FROMAGER_COMPILER
+                fromager_success "Compiler unloaded successfully."
+                shift 1
+                break
+                ;;
+
+
             install )
                 # Install should create an environment and then install the package.
 

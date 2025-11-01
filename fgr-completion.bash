@@ -14,6 +14,19 @@ _fgr_complete() {
         fi
     }
 
+    # Helper function to get available MPI implementations
+    _get_mpis() {
+        if [ -d "${FROMAGER_ENV}/mpis" ]; then
+            ls "${FROMAGER_ENV}/mpis" 2>/dev/null
+        fi
+    }
+
+    _get_compilers() {
+        if [ -d "${FROMAGER_ENV}/compilers" ]; then
+            ls "${FROMAGER_ENV}/compilers" 2>/dev/null
+        fi
+    }
+
     # Helper function to get available packages from database
     _get_packages() {
         if [ -d "${FROMAGER_DB}" ]; then
@@ -23,7 +36,7 @@ _fgr_complete() {
 
     # Main command completion
     if [ $COMP_CWORD -eq 1 ]; then
-        local main_options="-v --version -h --help init selfcheck utilities cellar install template rt"
+        local main_options="-v --version -h --help init selfcheck utilities cellar install template rt load-mpi load-compiler unload-mpi unload-compiler"
         COMPREPLY=($(compgen -W "${main_options}" -- "$current_word"))
         return 0
     fi
@@ -92,7 +105,25 @@ _fgr_complete() {
                     ;;
             esac
             ;;
-        
+
+        load-mpi)
+            local mpis=$(_get_mpis)
+            if [[ -n "$mpis" ]]; then
+                COMPREPLY=($(compgen -W "$mpis" -- "$current_word"))
+            else
+                COMPREPLY=()
+            fi
+            ;;
+
+        load-compiler)
+            local compilers=$(_get_compilers)
+            if [[ -n "$compilers" ]]; then
+                COMPREPLY=($(compgen -W "$compilers" -- "$current_word"))
+            else
+                COMPREPLY=()
+            fi
+            ;;
+
         install)
             case $COMP_CWORD in
                 2)
