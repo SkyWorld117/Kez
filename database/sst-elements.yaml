@@ -10,6 +10,8 @@ cheese:
     releases:
       - version: scc25
         tag: 22504be
+      - version: latest
+        tag: master
 
   dependencies:
     - sst-core

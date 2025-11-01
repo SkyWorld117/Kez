@@ -10,6 +10,8 @@ cheese:
     releases:
       - version: scc25
         tag: 546dda2
+      - version: latest
+        tag: master
     
   dependencies:
     - mpi
