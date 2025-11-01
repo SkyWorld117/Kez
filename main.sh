@@ -453,9 +453,9 @@ fgr () {
                                     fromager_error "No factory specified to create."
                                     return 1
                                 fi
-                                mkdir -p "${FROMAGER_ENV}/factories/$4"
+                                mkdir -p "${FROMAGER_WORKDIR}/factories/$4"
                                 # Create cheese wheels (user configs) directory
-                                mkdir -p "${FROMAGER_ENV}/factories/$4/wheels"
+                                mkdir -p "${FROMAGER_WORKDIR}/factories/$4/wheels"
                                 fromager_success "Factory '$4' created successfully."
                                 shift 4
                                 ;;
@@ -466,19 +466,19 @@ fgr () {
                                     fromager_error "No factory specified to remove."
                                     return 1
                                 fi
-                                if [ ! -d "${FROMAGER_ENV}/factories/$4" ]; then
+                                if [ ! -d "${FROMAGER_WORKDIR}/factories/$4" ]; then
                                     fromager_error "Factory '$4' does not exist."
                                     return 1
                                 fi
-                                rm -rf "${FROMAGER_ENV}/factories/$4"
+                                rm -rf "${FROMAGER_WORKDIR}/factories/$4"
                                 shift 4
                                 ;;
 
                             ls | list )
                                 fromager_info "Listing factories:"
                                 local factories
-                                if [ -d "${FROMAGER_ENV}/factories" ]; then
-                                    factories="$(ls ${FROMAGER_ENV}/factories | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)"
+                                if [ -d "${FROMAGER_WORKDIR}/factories" ]; then
+                                    factories="$(ls ${FROMAGER_WORKDIR}/factories | xargs | sed "s~ ~\n~g" | nl -s '. ' -w 1)"
                                 fi
                                 # Check if factories is empty or only contains whitespace/newline etc.
                                 if [ -z "${factories// }" ]; then
@@ -491,7 +491,7 @@ fgr () {
 
                             enter )
                                 fromager_info "Entering factory: $4"
-                                if [ -z "$4" ] || [ ! -d "${FROMAGER_ENV}/factories/$4" ]; then
+                                if [ -z "$4" ] || [ ! -d "${FROMAGER_WORKDIR}/factories/$4" ]; then
                                     fromager_error "Invalid factory specified."
                                     return 1
                                 fi
@@ -529,11 +529,11 @@ fgr () {
                                     fromager_error "No directory specified to change to."
                                     return 1
                                 fi
-                                if [ ! -d "${FROMAGER_ENV}/factories/$4" ]; then
+                                if [ ! -d "${FROMAGER_WORKDIR}/factories/$4" ]; then
                                     fromager_error "Factory '$4' does not exist."
                                     return 1
                                 fi
-                                cd "${FROMAGER_ENV}/factories/$4"
+                                cd "${FROMAGER_WORKDIR}/factories/$4"
                                 fromager_success "Changed directory to factory '$4'."
                                 shift 4
                                 ;;
@@ -555,7 +555,7 @@ fgr () {
                             return 1
                         fi
                         # Install all configurations in the factory's wheels directory
-                        local wheels_dir="${FROMAGER_ENV}/factories/${FROMAGER_FACTORY}/wheels"
+                        local wheels_dir="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}/wheels"
                         if [ ! -d "$wheels_dir" ]; then
                             fromager_error "Wheels directory not found in the current factory."
                             return 1
@@ -568,7 +568,7 @@ fgr () {
                         for config in "${config_files[@]}"; do
                             if [ -f "$config" ]; then
                                 fromager_info "Installing from configuration: $config"
-                                local target_cellar="${FROMAGER_ENV}/factories/${FROMAGER_FACTORY}/cellars/$(basename "$config" .yaml)"
+                                local target_cellar="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}/cellars/$(basename "$config" .yaml)"
                                 mkdir -p "$target_cellar"
                                 fromager_install "$config" "$target_cellar"
                                 fromager_success "Installation from $config completed."
