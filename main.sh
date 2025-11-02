@@ -107,6 +107,8 @@ fgr () {
                 format_option_help "" "run \`fgr install --help\` for more information"
                 format_option_help "template" "Fetch a template for an application"
                 format_option_help "" "run \`fgr template --help\` for more information"
+                format_option_help "rt" "Manage rapid test factories"
+                format_option_help "" "run \`fgr rt --help\` for more information"
                 shift
                 break
                 ;;
@@ -511,6 +513,7 @@ fgr () {
                         format_option_help "factory exit" "Exit the current factory"
                         format_option_help "factory which" "Show the current factory"
                         format_option_help "build" "Build all configurations in the current factory"
+                        format_option_help "taste" "Run the rapid test profile in the current factory"
                         shift 2
                     ;;
 
