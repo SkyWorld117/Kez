@@ -24,7 +24,7 @@ std::string multilevel_fetch(
     return "";
 }
 
-YAML::Node parse_run_config(const YAML::Node& factory_config, const YAML::Node& cellar_config, const YAML::Node& profile_config) {
+std::pair<YAML::Node, std::string> parse_run_config(const YAML::Node& factory_config, const YAML::Node& cellar_config, const YAML::Node& profile_config) {
     if (!profile_config.IsMap()) {
         ERROR("Profile configuration should be a map");
         exit(EXIT_FAILURE);
@@ -116,5 +116,7 @@ YAML::Node parse_run_config(const YAML::Node& factory_config, const YAML::Node& 
     for (const auto& instruction : run_instructions) {
         run_instructions_yaml.push_back(instruction);
     }
-    return run_instructions_yaml;
+
+    std::string summary_regex = multilevel_fetch(factory_config, cellar_config, profile_config, "summary_regex");
+    return std::pair(run_instructions_yaml, summary_regex);
 }

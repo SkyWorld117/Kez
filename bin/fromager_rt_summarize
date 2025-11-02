@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+factory_dir="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}"
+ins_yaml="${factory_dir}/tasting_rooms/ins.yaml"
+
+if [ ! -f "${ins_yaml}" ]; then
+    fromager_error "RT instruction file not found: ${ins_yaml}"
+    exit 1
+fi
+
+cellar_count=$(yq -r '. | length' "${ins_yaml}")
+
+for ((i=0; i<cellar_count; i++)); do
+    cellar_name=$(yq -r ".[$i].name" "${ins_yaml}")
+    run_configs_count=$(yq -r ".[$i].profiles | length" "${ins_yaml}")
+    for ((j=0; j<run_configs_count; j++)); do
+        run_config_name=$(yq -r ".[$i].profiles[$j].name" "${ins_yaml}")
+        fgr_stdout="${factory_dir}/tasting_rooms/${cellar_name}_${run_config_name}/fgr.out"
+        fgr_stderr="${factory_dir}/tasting_rooms/${cellar_name}_${run_config_name}/fgr.err"
+
+        if [ ! -f "${fgr_stdout}" ] && [ ! -f "${fgr_stderr}" ]; then
+            fromager_warning "No output files found for cellar: ${cellar_name}, run config: ${run_config_name}"
+            continue
+        fi
+
+        summary_regex=$(yq -r .[$i].profiles[$j].summary_regex "${ins_yaml}")
+
+        if [ -z "${summary_regex}" ]; then
+            fromager_warning "No summary regex defined for cellar: ${cellar_name}, run config: ${run_config_name}"
+            continue
+        fi
+
+        fromager_info "Summary for cellar: ${cellar_name}, run config: ${run_config_name}"
+        fromager_info "$(grep -E "${summary_regex}" "${fgr_stdout}" || echo "No matches found in stdout.")"
+        fromager_info "$(grep -E "${summary_regex}" "${fgr_stderr}" || echo "No matches found in stderr.")"
+    done
+done
+
+set +Eeuo pipefail

@@ -214,7 +214,7 @@ _fgr_complete() {
         rt)
             case $COMP_CWORD in
                 2)
-                    local rt_options="-h --help factory build taste"
+                    local rt_options="-h --help factory build taste summarize"
                     COMPREPLY=($(compgen -W "${rt_options}" -- "$current_word"))
                     ;;
                 3)
@@ -223,7 +223,7 @@ _fgr_complete() {
                             local factory_options="add create rm remove ls list enter exit which cd"
                             COMPREPLY=($(compgen -W "${factory_options}" -- "$current_word"))
                             ;;
-                        build|taste)
+                        build|taste|summarize)
                             # No additional options for build
                             COMPREPLY=()
                             ;;

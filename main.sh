@@ -514,6 +514,7 @@ fgr () {
                         format_option_help "factory which" "Show the current factory"
                         format_option_help "build" "Build all configurations in the current factory"
                         format_option_help "taste" "Run the rapid test profile in the current factory"
+                        format_option_help "summarize" "Summarize the results of the rapid tests"
                         shift 2
                     ;;
 
@@ -673,6 +674,24 @@ fgr () {
                         shift 2
                     ;;
 
+                    summarize )
+                        fromager_info "Summarizing tasting results..."
+                        if [ -z "${FROMAGER_FACTORY:-}" ]; then
+                            fromager_error "Not currently in a factory. Please enter a factory first."
+                            return 1
+                        fi
+                        local tasting_room="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}/tasting_rooms"
+                        if [ ! -d "$tasting_room" ]; then
+                            fromager_error "Tasting room directory not found."
+                            return 1
+                        fi
+                        if ! fromager_rt_summarize; then
+                            fromager_error "Tasting summary failed."
+                            return 1
+                        fi
+                        fromager_success "Tasting summary completed."
+                        shift 2
+                    ;;
                 esac
                 break
             ;;
