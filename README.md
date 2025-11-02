@@ -28,5 +28,4 @@ Fromager achieves the points above by using a C++ backend, a database of YAML fi
 ## TODO
 
 - [ ] Add `state.yaml` for each cellar to allow installation of multiple packages.
-- [ ] Add fast testing mechanism.
 - [ ] Add mkdocs integration.
