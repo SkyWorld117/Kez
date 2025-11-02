@@ -14,10 +14,11 @@ std::string wrap_with_resource_manager(
 ) {
     if (scheduler == "none") {
         // Only launcher
+        std::string cmd;
         if (launcher == "none") {
-            return target;
+            cmd = target;
         } else if (launcher == "mpirun") {
-            std::string cmd = "OMP_NUM_THREADS=" + omp_num_threads + " mpirun ";
+            cmd = "OMP_NUM_THREADS=" + omp_num_threads + " mpirun ";
             cmd += "--prefix $(which mpirun | xargs dirname)/../ ";
             cmd += "-x OMP_NUM_THREADS -x PATH -x LD_LIBRARY_PATH ";
             cmd += "-np " + std::to_string(std::stoi(num_nodes) * std::stoi(num_procs_per_node)) + " ";
@@ -26,9 +27,8 @@ std::string wrap_with_resource_manager(
             // mpirun does not handle GPU allocation
             cmd += launcher_opts + " ";
             cmd += target;
-            return cmd;
         } else if (launcher == "srun") {
-            std::string cmd = "OMP_NUM_THREADS=" + omp_num_threads + " srun ";
+            cmd = "OMP_NUM_THREADS=" + omp_num_threads + " srun ";
             cmd += "--ntasks=" + std::to_string(std::stoi(num_nodes) * std::stoi(num_procs_per_node)) + " ";
             cmd += "--ntasks-per-node=" + num_procs_per_node + " ";
             cmd += "--cpus-per-task=" + cores_per_proc + " ";
@@ -37,11 +37,13 @@ std::string wrap_with_resource_manager(
             }
             cmd += launcher_opts + " ";
             cmd += target;
-            return cmd;
         } else {
             ERROR("Unsupported launcher: " + launcher);
             exit(EXIT_FAILURE);
         }
+        // Split output into fgr.out and fgr.err
+        cmd += " > fgr.out 2> fgr.err";
+        return cmd;
     } else if (scheduler == "slurm") {
         std::string cmd = "sbatch ";
         cmd += "--job-name=${PWD##*/} ";
