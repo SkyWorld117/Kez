@@ -526,6 +526,8 @@ fgr () {
                                 mkdir -p "${FROMAGER_WORKDIR}/factories/$4"
                                 # Create cheese wheels (user configs) directory
                                 mkdir -p "${FROMAGER_WORKDIR}/factories/$4/wheels"
+                                # Create tasting rooms (test results) directory
+                                mkdir -p "${FROMAGER_WORKDIR}/factories/$4/tasting_rooms"
                                 fromager_success "Factory '$4' created successfully."
                                 shift 4
                                 ;;
@@ -645,6 +647,26 @@ fgr () {
                             fi
                         done
                         fromager_success "Rapid test build process completed."
+                        shift 2
+                    ;;
+
+                    taste )
+                        fromager_info "Tasting the cheese..."
+                        if [ -z "${FROMAGER_FACTORY:-}" ]; then
+                            fromager_error "Not currently in a factory. Please enter a factory first."
+                            return 1
+                        fi
+                        # Check if a configuration exists for the tasting
+                        local tasting_room="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}/tasting_rooms"
+                        if [ ! -f "${tasting_room}/config.yaml" ]; then
+                            fromager_error "No tasting configuration found in the tasting room."
+                            return 1
+                        fi
+                        if ! fromager_rt_profile; then
+                            fromager_error "Tasting profile execution failed."
+                            return 1
+                        fi
+                        fromager_success "Tasting completed."
                         shift 2
                     ;;
 

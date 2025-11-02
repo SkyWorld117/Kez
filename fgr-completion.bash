@@ -214,7 +214,7 @@ _fgr_complete() {
         rt)
             case $COMP_CWORD in
                 2)
-                    local rt_options="-h --help factory build"
+                    local rt_options="-h --help factory build taste"
                     COMPREPLY=($(compgen -W "${rt_options}" -- "$current_word"))
                     ;;
                 3)
@@ -223,7 +223,7 @@ _fgr_complete() {
                             local factory_options="add create rm remove ls list enter exit which cd"
                             COMPREPLY=($(compgen -W "${factory_options}" -- "$current_word"))
                             ;;
-                        build)
+                        build|taste)
                             # No additional options for build
                             COMPREPLY=()
                             ;;
@@ -237,8 +237,8 @@ _fgr_complete() {
                             ;;
                         rm|remove|enter)
                             # Complete with existing factory names
-                            if [ -d "${FROMAGER_ENV}/factories" ]; then
-                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_ENV}/factories 2>/dev/null)" -- "$current_word"))
+                            if [ -d "${FROMAGER_WORKDIR}/factories" ]; then
+                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_WORKDIR}/factories 2>/dev/null)" -- "$current_word"))
                             else
                                 COMPREPLY=()
                             fi
@@ -253,8 +253,8 @@ _fgr_complete() {
                             ;;
                         cd)
                             # Complete with existing factory names for cd
-                            if [ -d "${FROMAGER_ENV}/factories" ]; then
-                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_ENV}/factories 2>/dev/null)" -- "$current_word"))
+                            if [ -d "${FROMAGER_WORKDIR}/factories" ]; then
+                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_WORKDIR}/factories 2>/dev/null)" -- "$current_word"))
                             else
                                 COMPREPLY=()
                             fi
