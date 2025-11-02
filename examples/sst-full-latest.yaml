@@ -1,0 +1,142 @@
+cheese:
+  sst-elements:
+    description: Structural Simulation Toolkit Elements
+    version: latest
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: --with-dramsim3
+            description: Enable DRAMSim3 support
+            enabled: true
+            enabled_value: ${dramsim3.prefix}
+            disabled_value: ~
+            requires: [dramsim3]
+          - name: --with-pin
+            description: Enable Intel PIN support
+            enabled: true
+            enabled_value: ${intelpin.prefix}
+            disabled_value: ~
+            requires: [intelpin]
+          - name: --with-goblin-hmcsim
+            description: Enable Goblin HMC Sim support
+            enabled: true
+            enabled_value: ${goblinhmcsim.prefix}
+            disabled_value: ~
+            requires: [goblinhmcsim]
+          - name: --with-ramulator2
+            description: Enable Ramulator2 support
+            enabled: true
+            enabled_value: ${ramulator2.prefix}
+            disabled_value: ~
+            requires: [ramulator2]
+          - name: CFLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+          - name: CXXFLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
+  ramulator2:
+    description: RAM module simulator
+    version: scc25
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: -DCMAKE_CXX_FLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
+  goblinhmcsim:
+    description: Goblin HMC Sim
+    version: sst-8.0.0
+    compiler: system
+  intelpin:
+    description: Intel PIN
+    version: 3.31
+  dramsim3:
+    description: DRAM Simulator 3
+    version: 1.0.0
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: -DCMAKE_C_FLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+          - name: -DCMAKE_CXX_FLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
+  sst-core:
+    description: Structural Simulation Toolkit Core
+    version: latest
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: --with-hdf5
+            description: Use HDF5 statistics format
+            enabled: true
+            enabled_value: ${hdf5.prefix}
+            disabled_value: ~
+            requires: [hdf5]
+          - name: CFLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+          - name: CXXFLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
+  hdf5:
+    description: High-performance data management and storage suite
+    version: 1.10.11
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: enable-cxx
+            description: Compile the C++ interface
+            enabled: true
+            enabled_value: ~
+            disabled_value: ~
+          - name: CFLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+          - name: CXXFLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
+  python:
+    description: Python Programming Language
+    version: 3.13.9
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: CFLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+  openmpi:
+    description: Open Source Implementation of the Message Passing Interface
+    version: 5.0.8
+    compiler: system
+recipe:
+  abstract_packages:
+    mpi: openmpi
+  dependencies:
+    - sst-elements
+    - ramulator2
+    - goblinhmcsim
+    - intelpin
+    - dramsim3
+    - sst-core
+    - hdf5
+    - python
+    - openmpi
