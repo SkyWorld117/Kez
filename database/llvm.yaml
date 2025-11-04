@@ -6,7 +6,9 @@ cheese:
   source:
     type: tarball
     releases:
-      - version: 21.1.0
+      - version: 21.1.0-x86_64
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz 
+      - version: 21.1.0-arm64
         url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz
 
   build:
