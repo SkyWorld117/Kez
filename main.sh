@@ -220,6 +220,10 @@ fgr () {
                             fromager_error "Cellar '$3' does not exist."
                             return 1
                         fi
+                        if [ ! -z "${FROMAGER_CELLAR:-}" ] && [ "${FROMAGER_CELLAR}" = "$3" ]; then
+                            fromager_error "Cannot remove the currently active cellar '$3'. Please exit it first."
+                            return 1
+                        fi
                         rm -rf "${FROMAGER_ENV}/$3"
                         shift 3
                     ;;
