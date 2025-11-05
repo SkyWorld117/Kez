@@ -48,10 +48,11 @@ std::string parse_property(
         } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "vendor") {
             // Some vendor packages are submodules of other vendor packages
             // We need to handle the prefix differently
-            if (user_config["cheese"][package_name]["properties"] &&
-                user_config["cheese"][package_name]["properties"]["prefix"]) {
+            if (pkg_config_node["cheese"]["properties"] &&
+                pkg_config_node["cheese"]["properties"]["prefix"]) {
+                std::cout << "Using user-defined prefix for vendor package: " << package_name << std::endl;
                 return parse_scalar(
-                    user_config["cheese"][package_name]["properties"]["prefix"].as<std::string>(),
+                    pkg_config_node["cheese"]["properties"]["prefix"].as<std::string>(),
                     template_map,
                     user_config,
                     user_config_pkg,
