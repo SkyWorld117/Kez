@@ -11,7 +11,7 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
     }
     if (db_pkg_node["cheese"]["source"]) {
         // Default to the latest release
-        config["cheese"][pkg_name]["version"] = db_pkg_node["cheese"]["source"]["releases"][0]["version"];
+        config["cheese"][pkg_name]["version"] = db_pkg_node["cheese"]["source"]["releases"][0]["version"].as<std::string>();
     }
     if (db_pkg_node["cheese"]["type"].as<std::string>() != "vendor" && db_pkg_node["cheese"]["type"].as<std::string>() != "external") {
         config["cheese"][pkg_name]["compiler"] = "system"; // default to system compiler
