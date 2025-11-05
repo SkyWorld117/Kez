@@ -171,7 +171,18 @@ bool evaluate_condition(
             exit(EXIT_FAILURE);
         }
         std::string option_name = tokens[0].substr(2, tokens[0].size() - 3);
+        // If option not found, check if it starts with `{abstract_package}.use-{any_package_name}` and the abstract package is not recipe
+        // If so, ignore the condition (return false), else throw error
         if (template_map.find(option_name) == template_map.end()) {
+            if (option_name.find(".use-") != std::string::npos) {
+                std::string abstract_pkg_name = option_name.substr(0, option_name.find(".use-"));
+                if (user_config["recipe"]["abstract_packages"]) {
+                    std::unordered_map<std::string, std::string> recipe_abstracts = user_config["recipe"]["abstract_packages"].as<std::unordered_map<std::string, std::string>>();
+                    if (recipe_abstracts.find(abstract_pkg_name) == recipe_abstracts.end()) {
+                        return false; // Ignore the condition
+                    }
+                }
+            }
             ERROR("Option '" + option_name + "' not found in template map.");
             exit(EXIT_FAILURE);
         }
