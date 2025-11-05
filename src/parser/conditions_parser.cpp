@@ -175,10 +175,15 @@ bool evaluate_condition(
         // If so, ignore the condition (return false), else throw error
         if (template_map.find(option_name) == template_map.end()) {
             if (option_name.find(".use-") != std::string::npos) {
-                std::string abstract_pkg_name = option_name.substr(0, option_name.find(".use-"));
-                if (user_config["recipe"]["abstract_packages"]) {
+                std::string abstract_pkg = option_name.substr(0, option_name.find(".use-"));
+                // Verify if abstract_pkg exists in the database as an abstract package
+                YAML::Node abstract_pkg_node = get_db_config(abstract_pkg);
+                if (abstract_pkg_node.IsDefined() &&
+                    abstract_pkg_node["cheese"]["type"].as<std::string>() == "abstract" &&
+                    user_config["recipe"]["abstract_packages"]
+                ) {
                     std::unordered_map<std::string, std::string> recipe_abstracts = user_config["recipe"]["abstract_packages"].as<std::unordered_map<std::string, std::string>>();
-                    if (recipe_abstracts.find(abstract_pkg_name) == recipe_abstracts.end()) {
+                    if (recipe_abstracts.find(abstract_pkg) == recipe_abstracts.end()) {
                         return false; // Ignore the condition
                     }
                 }

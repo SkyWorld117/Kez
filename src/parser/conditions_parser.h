@@ -7,6 +7,7 @@
 #include <string>
 
 #include "../colors/colored_io.h"
+#include "../database/database.h"
 
 std::string parse_conditions(
     const std::string& base_value,
