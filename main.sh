@@ -140,7 +140,7 @@ fgr () {
                         format_option_help "add -r, --read <file>" "Read a configuration file and add all utilities specified"
                         format_option_help "empty" "Remove all utilities"
                         shift 2
-                    ;;
+                        ;;
 
                     add )
 
@@ -169,13 +169,13 @@ fgr () {
 
                         esac
 
-                    ;;
+                        ;;
 
                 empty )
                     rm -rf "${FROMAGER_ENV}/utilities"/*
                     fromager_success "All utilities removed."
                     shift 2
-                ;;
+                    ;;
 
                 esac
                 break
@@ -197,7 +197,7 @@ fgr () {
                         format_option_help "exit" "Exit the current cellar"
                         format_option_help "which" "Show the current cellar"
                         shift 2
-                    ;;
+                        ;;
 
                     add | create )
                         fromager_info "Creating new cellar: $3"
@@ -208,7 +208,7 @@ fgr () {
                         mkdir -p "${FROMAGER_ENV}/$3"
                         fromager_success "Cellar '$3' created successfully."
                         shift 3
-                    ;;
+                        ;;
 
                     rm | remove )
                         fromager_info "Removing cellar: $3"
@@ -226,7 +226,7 @@ fgr () {
                         fi
                         rm -rf "${FROMAGER_ENV}/$3"
                         shift 3
-                    ;;
+                        ;;
 
                     ls | list )
                         fromager_info "Listing cellars:"
@@ -241,7 +241,7 @@ fgr () {
                             echo "$cellars"
                         fi
                         shift 2
-                    ;;
+                        ;;
 
                     enter )
                         fromager_info "Entering cellar: $3"
@@ -257,7 +257,7 @@ fgr () {
                             return 1
                         fi
                         shift 3
-                    ;;
+                        ;;
 
                     exit )
                         fromager_info "Exiting cellar: ${FROMAGER_CELLAR}"
@@ -269,7 +269,7 @@ fgr () {
                             return 1
                         fi
                         shift 2
-                    ;;
+                        ;;
 
                     which )
                         if [ -z "${FROMAGER_CELLAR:-}" ]; then
@@ -278,7 +278,7 @@ fgr () {
                             fromager_info "You are currently in the cellar: ${FROMAGER_CELLAR}"
                         fi
                         shift 2
-                    ;;
+                        ;;
 
                     empty )
                         fromager_info "Emptying cellar: $3"
@@ -293,13 +293,14 @@ fgr () {
                         rm -rf "${FROMAGER_ENV}/$3"/*
                         fromager_success "Cellar '$3' emptied successfully."
                         shift 3
-                    ;;
+                        ;;
 
                     * )
                         fromager_error "Unknown cellar command: $2"
                         fromager_info "Use -h or --help for usage information."
                         return 1
                         shift 2
+                        ;;
 
                 esac
                 break
@@ -390,7 +391,7 @@ fgr () {
                         format_option_help "-r, --read <config> [cellar]" "Read requirements from <config> and install in [cellar]"
                         format_option_help "" "Notice the cellar argument should not be specified for compilers, MPIs, and vendor packages."
                         shift 2
-                    ;;
+                        ;;
 
                     -r | --read )
                         local config_file="$3"
@@ -436,7 +437,7 @@ fgr () {
                             fromager_install "$config_file" "$cellar"
                             shift 4
                         fi
-                    ;;
+                        ;;
 
                     * )
                         fromager_info "Installing package: $2"
@@ -444,7 +445,7 @@ fgr () {
                         local cellar="$(fromager_cmdline_parser "$@" | tail -n 1)"
                         fromager_cmdline_install "$cellar"
                         shift "$#"
-                    ;;
+                        ;;
 
                 esac
                 break
@@ -464,7 +465,7 @@ fgr () {
                         format_option_help "-s, --save <file> <package>" "Save the configuration template for the specified package"
                         format_option_help "parse <file>" "Parse the user configuration file <file> for debugging, cellar path is set to FROMAGER_WORKDIR/.tmp"
                         shift 2
-                    ;;
+                        ;;
 
                     parse )
                         fromager_info "Parsing template for: $3"
@@ -474,7 +475,7 @@ fgr () {
                         fi
                         fromager_parser "$3" debug "${FROMAGER_WORKDIR}/.tmp"
                         shift 3
-                    ;;
+                        ;;
 
                     -s | --save )
                         fromager_info "Saving template for: $3"
@@ -488,13 +489,13 @@ fgr () {
                         fi
                         fromager_user_config_gen "$4" "$3"
                         shift 4
-                    ;;
+                        ;;
 
                     * )
                         fromager_info "Generating template for: $2"
                         fromager_user_config_gen "$2"
                         shift 2
-                    ;;
+                        ;;
 
                 esac
                 break
@@ -520,7 +521,7 @@ fgr () {
                         format_option_help "taste" "Run the rapid test profile in the current factory"
                         format_option_help "summarize" "Summarize the results of the rapid tests"
                         shift 2
-                    ;;
+                        ;;
 
                     factory )
                         case "$3" in
@@ -626,7 +627,7 @@ fgr () {
                                 ;;
 
                         esac
-                    ;;
+                        ;;
 
                     build )
                         fromager_info "Starting rapid test build process..."
@@ -656,7 +657,7 @@ fgr () {
                         done
                         fromager_success "Rapid test build process completed."
                         shift 2
-                    ;;
+                        ;;
 
                     taste )
                         fromager_info "Tasting the cheese..."
@@ -676,7 +677,7 @@ fgr () {
                         fi
                         fromager_success "Tasting completed."
                         shift 2
-                    ;;
+                        ;;
 
                     summarize )
                         fromager_info "Summarizing tasting results..."
@@ -695,10 +696,10 @@ fgr () {
                         fi
                         fromager_success "Tasting summary completed."
                         shift 2
-                    ;;
+                        ;;
                 esac
                 break
-            ;;
+                ;;
 
 
             * )
