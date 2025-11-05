@@ -38,7 +38,15 @@ std::string parse_options(
                     break;
                 }
             }
-            base_enabled = user_config_opt["enabled"].as<std::string>(); // Base enabled must exist in user_config
+            if (!user_config_opt["enabled"]) {
+                if (!opt["enabled"]["conditions"]) {
+                    ERROR("Option '" + opt_name + "' is user configurable but 'enabled' field is missing in user configuration.");
+                    exit(EXIT_FAILURE);
+                }
+                base_enabled = "false";
+            } else {
+                base_enabled = user_config_opt["enabled"].as<std::string>();
+            }
             if (user_config_opt.IsNull() || !user_config_opt["enabled_value"] || user_config_opt["enabled_value"].IsNull()) {
                 base_enabled_value = "";
             } else {
