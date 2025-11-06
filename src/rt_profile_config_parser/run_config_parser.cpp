@@ -6,22 +6,31 @@ std::string multilevel_fetch(
     const YAML::Node& profile_config,
     const std::string& key
 ) {
-    // Check profile_config
-    if (profile_config[key]) {
-        return profile_config[key].as<std::string>();
+    std::string value = "";
+
+    if (factory_config[key] && factory_config[key].IsScalar()) {
+        value = factory_config[key].as<std::string>();
     }
 
-    // Check cellar_config
-    if (cellar_config[key]) {
-        return cellar_config[key].as<std::string>();
+    if (cellar_config[key] && cellar_config[key].IsScalar()) {
+        std::string base = value;
+        value = cellar_config[key].as<std::string>();
+        if (base != "" && value.find("${" + key + "}") != std::string::npos) {
+            size_t pos = value.find("${" + key + "}");
+            value.replace(pos, key.length() + 3, base);
+        }
     }
 
-    // Check factory_config
-    if (factory_config[key]) {
-        return factory_config[key].as<std::string>();
+    if (profile_config[key] && profile_config[key].IsScalar()) {
+        std::string base = value;
+        value = profile_config[key].as<std::string>();
+        if (base != "" && value.find("${" + key + "}") != std::string::npos) {
+            size_t pos = value.find("${" + key + "}");
+            value.replace(pos, key.length() + 3, base);
+        }
     }
 
-    return "";
+    return value;
 }
 
 std::pair<YAML::Node, std::string> parse_run_config(const YAML::Node& factory_config, const YAML::Node& cellar_config, const YAML::Node& profile_config) {
