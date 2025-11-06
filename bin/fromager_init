@@ -138,6 +138,19 @@ fetch_latest_perl() {
     echo -e "  perl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 }
 
+# PHASE 0: Preparations
+# ----------------------------------------------------
+
+# yq (should be installed by setup-env.sh, here in case we are performing an update)
+if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
+fi
+chmod +x "${SYSTEM_PREFIX}/bin/yq"
+version=$(yq --version | grep -oP 'version v\K[0-9]+\.[0-9]+\.[0-9]+')
+echo -e "  yq:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+
 
 # PHASE 1: Mathematical Libraries
 # ----------------------------------------------------
@@ -357,16 +370,6 @@ cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
 
 # PHASE 5: Essential Tools for Fromager
 # ----------------------------------------------------
-
-# yq (should be installed by setup-env.sh, here in case we are performing an update)
-if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
-fi
-chmod +x "${SYSTEM_PREFIX}/bin/yq"
-version=$(yq --version | grep -oP 'version v\K[0-9]+\.[0-9]+\.[0-9]+')
-echo -e "  yq:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 
 # yaml-cpp
 fetch_latest_github "jbeder/yaml-cpp"
