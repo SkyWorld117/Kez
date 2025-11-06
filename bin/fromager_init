@@ -142,6 +142,7 @@ fetch_latest_perl() {
 # ----------------------------------------------------
 
 # yq (should be installed by setup-env.sh, here in case we are performing an update)
+mkdir -p "${SYSTEM_PREFIX}/bin"
 if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
     wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
