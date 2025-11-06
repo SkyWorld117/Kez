@@ -64,7 +64,7 @@ cheese:
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
-            default: ${zlib.ldflags}
+            default: ${zlib.ldflags} ${openssl.ldflags}
     stages:
       - target: ~
       - target: install
