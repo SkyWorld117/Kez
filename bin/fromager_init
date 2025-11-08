@@ -9,11 +9,11 @@ mkdir -p "${FROMAGER_ENV}"/utilities
 
 SYSTEM_PREFIX="${FROMAGER_ENV}/system" # System prefix of Fromager
 
-# if [ -d "${SYSTEM_PREFIX}" ]; then
-#     rm -rf "${SYSTEM_PREFIX}"/*
-# fi
-# mkdir -p "${SYSTEM_PREFIX}"
-# echo "cheese:" > "${SYSTEM_PREFIX}/state.yaml"
+if [ -d "${SYSTEM_PREFIX}" ]; then
+    rm -rf "${SYSTEM_PREFIX}"/*
+fi
+mkdir -p "${SYSTEM_PREFIX}"
+echo "cheese:" > "${SYSTEM_PREFIX}/state.yaml"
 
 mkdir -p "${FROMAGER_WORKDIR}/.tmp"
 rm -rf "${FROMAGER_WORKDIR}"/.tmp/*
