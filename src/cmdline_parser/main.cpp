@@ -83,8 +83,11 @@ int main(int argc, char* argv[]) {
         }
     } else if (!has_cellar) {
         // If not a compiler, MPI, or vendor package, cellar is required
-        ERROR("Cellar must be specified for non-compiler, non-MPI, and non-vendor packages.");
-        exit(EXIT_FAILURE);
+        cellar = getenv("FROMAGER_CELLAR");
+        if (cellar.empty()) {
+            ERROR("Cellar must be specified for non-compiler, non-MPI, and non-vendor packages.");
+            exit(EXIT_FAILURE);
+        }
     }
 
     std::string pkg_version;

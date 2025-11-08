@@ -387,9 +387,11 @@ fgr () {
                         echo "Options:"
                         format_option_help "<pkg> [--config [configs]] [--cellar <cellar>]" "Install <pkg> with [configs] and in [cellar]."
                         format_option_help "" "Notice the cellar argument should not be specified for compilers, MPIs, and vendor packages."
+                        format_option_help "" "If no cellar is specified, the FROMAGER_CELLAR environment variable is used if set."
                         format_option_help "-h, --help" "Show this help message"
                         format_option_help "-r, --read <config> [cellar]" "Read requirements from <config> and install in [cellar]"
                         format_option_help "" "Notice the cellar argument should not be specified for compilers, MPIs, and vendor packages."
+                        format_option_help "" "If no cellar is specified, the FROMAGER_CELLAR environment variable is used if set."
                         shift 2
                         ;;
 
@@ -429,13 +431,24 @@ fgr () {
                             shift 3
                         else
                             # Require a cellar for other package types
-                            if [ -z "$4" ] || [ ! -d "${FROMAGER_ENV}/$4" ]; then
-                                fromager_error "Invalid cellar specified or not found."
+                            # If no cellar specified in command line but FROMAGER_CELLAR is set, use that.
+                            if [ -z "$4" ] && [ -z "${FROMAGER_CELLAR:-}" ]; then
+                                fromager_error "No cellar specified to install the package into."
+                                return 1
+                            else
+                                if [ -n "$4" ]; then
+                                    cellar="${FROMAGER_ENV}/$4"
+                                    shift 4
+                                else
+                                    cellar="${FROMAGER_ENV}/${FROMAGER_CELLAR}"
+                                    shift 3
+                                fi
+                            fi
+                            if [ ! -d "$cellar" ]; then
+                                fromager_error "Cellar '$cellar' does not exist."
                                 return 1
                             fi
-                            cellar="${FROMAGER_ENV}/$4"
                             fromager_install "$config_file" "$cellar"
-                            shift 4
                         fi
                         ;;
 
