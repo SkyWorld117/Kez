@@ -407,7 +407,7 @@ if [[ -n "$folder_and_version" ]]; then
     for bin in "${SYSTEM_PREFIX}/bin/"*${version}; do
         base_bin="$(basename "$bin")"
         unversioned_bin="${base_bin%%${version}}"
-        ln -s "$bin" "${SYSTEM_PREFIX}/bin/${unversioned_bin}"
+        ln -sf "$bin" "${SYSTEM_PREFIX}/bin/${unversioned_bin}"
     done
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  perl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
@@ -496,11 +496,11 @@ if check_installation "cuda"; then
         rm -f /tmp/cuda-installer.log
         # Soft link CUDA files
         if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-            cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/include"/* "${SYSTEM_PREFIX}/include/"
-            cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
+            cp -rsf "${SYSTEM_PREFIX}/targets/x86_64-linux/include"/* "${SYSTEM_PREFIX}/include/"
+            cp -rsf "${SYSTEM_PREFIX}/targets/x86_64-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
         elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-            cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/include"/* "${SYSTEM_PREFIX}/include/"
-            cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
+            cp -rsf "${SYSTEM_PREFIX}/targets/sbsa-linux/include"/* "${SYSTEM_PREFIX}/include/"
+            cp -rsf "${SYSTEM_PREFIX}/targets/sbsa-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
         fi
         rm -f "${FROMAGER_WORKDIR}/.tmp/cuda.run"
         echo -e "  cuda:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
