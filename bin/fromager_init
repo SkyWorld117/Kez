@@ -5,395 +5,455 @@ set -Eeuo pipefail
 # This script creates a nearly distribution-independent Fromager environment.
 # This environment offers the essential system utilities. 
 
+source "${FROMAGER_HOME}/bin/fromager_init_utils"
+
 mkdir -p "${FROMAGER_ENV}"/utilities
 
-SYSTEM_PREFIX="${FROMAGER_ENV}/system" # System prefix of Fromager
+export SYSTEM_PREFIX="${FROMAGER_ENV}/system" # System prefix of Fromager
 
-if [ -d "${SYSTEM_PREFIX}" ]; then
-    rm -rf "${SYSTEM_PREFIX}"/*
+if [ -n "${1:-}" ] && [ "${1:-}" = "--refresh" ]; then
+    echo "Refreshing Fromager system environment..."
+    echo "Note: This will delete the existing system environment at ${SYSTEM_PREFIX} and recreate it."
+    if [ -d "${SYSTEM_PREFIX}" ]; then
+        rm -rf "${SYSTEM_PREFIX}"/*
+    fi
+    mkdir -p "${SYSTEM_PREFIX}"
+    echo "cheese:" > "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "Initializing Fromager system environment..."
 fi
-mkdir -p "${SYSTEM_PREFIX}"
-echo "cheese:" > "${SYSTEM_PREFIX}/state.yaml"
 
 mkdir -p "${FROMAGER_WORKDIR}/.tmp"
 rm -rf "${FROMAGER_WORKDIR}"/.tmp/*
 cd "${FROMAGER_WORKDIR}/.tmp"
 
-# Helper function: GNU latest release detection
-fetch_latest_gnu() {
-    local pkg="$1"
-    local ext="${2:-tar.xz}"
-    # GNU official
-    # local url="https://ftp.gnu.org/gnu/${pkg}/"
-    # GNU mirror (usually much faster)
-    local url="https://ftpmirror.gnu.org/gnu/${pkg}/"
-
-    # Get listing and extract filenames
-    local latest
-    latest=$(curl -sSL "$url" \
-        | grep -oE "${pkg}-[0-9]+\.[0-9]+(\.[0-9]+)?\.${ext}" \
-        | sort -Vu \
-        | tail -n1)
-
-    if [[ -z "$latest" ]]; then
-        echo >&2 "No files found for ${pkg} with extension .${ext} at $url"
-        return 1
-    fi
-
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "${url}${latest}"
-    if [ ${ext} = "tar.xz" ]; then
-        tar -xf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
-    elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
-    elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
-    else
-        echo >&2 "Unsupported file extension: ${ext}"
-        return 1
-    fi
-
-    local version="${latest#${pkg}-}"
-    version="${version%.${ext}}"
-    echo -e "  ${pkg}:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
-}
-
-fetch_latest_github() {
-    local repo="$1"
-    local tag
-    tag=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null)
-    
-    if [[ -z "$tag" || "$tag" == "null" ]]; then
-        warn "Could not fetch latest version for ${repo}, using fallback"
-        return 1
-    fi
-    
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
-    tar -xzf "${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag}.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp/${repo##*/}-${tag#v}"
-
-    local version="${tag#v}"
-    echo -e "  ${repo##*/}:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
-}
-
-fetch_latest_isl() {
-    local url="https://libisl.sourceforge.io/"
-    local ext="${1:-tar.xz}"
-
-    local latest
-    latest=$(curl -sSL "$url" \
-        | grep -oE "isl-[0-9]+\.[0-9]+(\.[0-9]+)?\.${ext}" \
-        | sort -Vu \
-        | tail -n1)
-
-    if [[ -z "$latest" ]]; then
-        echo >&2 "No files found for isl with extension .${ext} at $url"
-        return 1
-    fi
-
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "${url}${latest}"
-    if [ ${ext} = "tar.xz" ]; then
-        tar -xf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
-    elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
-    elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
-    else
-        echo >&2 "Unsupported file extension: ${ext}"
-        return 1
-    fi
-
-    local version="${latest#isl-}"
-    version="${version%.${ext}}"
-    echo -e "  isl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
-}
-
-fetch_latest_elfutils() {
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
-    bzip2 -d "${FROMAGER_WORKDIR}/.tmp/elfutils.bz2"
-    tar -xf "${FROMAGER_WORKDIR}/.tmp/elfutils" && cd "${FROMAGER_WORKDIR}/.tmp"/elfutils-*
-
-    local version=$(grep -oP 'Version: \K[0-9]+\.[0-9]+' elfutils.spec)
-    echo -e "  elfutils:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
-}
-
-fetch_latest_perl() {
-    local url="https://www.cpan.org/src/5.0/"
-    local ext="tar.gz"
-
-    local latest
-    latest=$(curl -sSL "$url" \
-        | grep -oE "perl-[0-9]+\.[0-9]+(\.[0-9]+)?\.${ext}" \
-        | sort -Vu \
-        | tail -n1)
-
-    if [[ -z "$latest" ]]; then
-        echo >&2 "No files found for perl with extension .${ext} at $url"
-        return 1
-    fi
-
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "https://www.cpan.org/src/5.0/${latest}"
-    tar -xzf "${latest}" && cd "${FROMAGER_WORKDIR}/.tmp/${latest%.tar.*}"
-
-    local version="${latest#perl-}"
-    version="${version%.${ext}}"
-    echo -e "  perl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
-}
-
 # PHASE 0: Preparations
 # ----------------------------------------------------
 
 # yq (should be installed by setup-env.sh, here in case we are performing an update)
-mkdir -p "${SYSTEM_PREFIX}/bin"
-if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-    wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
+if [ -f "${SYSTEM_PREFIX}/bin/yq" ] &&
+   [ -f "${SYSTEM_PREFIX}/state.yaml" ] &&
+   $(yq -r ". | has(\"cheese\")" "${SYSTEM_PREFIX}/state.yaml") &&
+   $(yq -r ".cheese | has(\"yq\")" "${SYSTEM_PREFIX}/state.yaml") &&
+   $(yq -r ".cheese.yq | has(\"version\")" "${SYSTEM_PREFIX}/state.yaml"); then
+    echo "yq is already installed, skipping..."
+else
+    echo "Installing yq..."
+    mkdir -p "${SYSTEM_PREFIX}/bin"
+    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+        wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+        wget --quiet --show-progress --output-document="${SYSTEM_PREFIX}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
+    fi
+    chmod +x "${SYSTEM_PREFIX}/bin/yq"
+    # If yq did not exist before, create state.yaml
+    echo "cheese:" > "${SYSTEM_PREFIX}/state.yaml"
+    version=$(yq --version | grep -oP 'version v\K[0-9]+\.[0-9]+\.[0-9]+')
+    echo -e "  yq:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 fi
-chmod +x "${SYSTEM_PREFIX}/bin/yq"
-version=$(yq --version | grep -oP 'version v\K[0-9]+\.[0-9]+\.[0-9]+')
-echo -e "  yq:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 
 
 # PHASE 1: Mathematical Libraries
 # ----------------------------------------------------
 
 # gmp
-fetch_latest_gnu "gmp"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --enable-cxx \
-    --enable-shared \
-    --enable-static
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_gnu "gmp")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing gmp..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --enable-cxx \
+        --enable-shared \
+        --enable-static
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  gmp:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "gmp is already installed, skipping..."
+fi
 
 # mpfr
-fetch_latest_gnu "mpfr"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --with-gmp="${SYSTEM_PREFIX}" \
-    --enable-shared \
-    --enable-static \
-    --enable-float128 \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_gnu "mpfr")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing mpfr..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --with-gmp="${SYSTEM_PREFIX}" \
+        --enable-shared \
+        --enable-static \
+        --enable-float128 \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  mpfr:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "mpfr is already installed, skipping..."
+fi
 
 # mpc
-fetch_latest_gnu "mpc" "tar.gz"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --with-gmp="${SYSTEM_PREFIX}" \
-    --with-mpfr="${SYSTEM_PREFIX}" \
-    --enable-shared \
-    --enable-static \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_gnu "mpc" "tar.gz")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing mpc..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --with-gmp="${SYSTEM_PREFIX}" \
+        --with-mpfr="${SYSTEM_PREFIX}" \
+        --enable-shared \
+        --enable-static \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  mpc:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "mpc is already installed, skipping..."
+fi
 
 # isl
-fetch_latest_isl
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --enable-shared \
-    --enable-static \
-    --with-gmp-prefix="${SYSTEM_PREFIX}" \
-    --with-int=gmp \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_isl)
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing isl..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --enable-shared \
+        --enable-static \
+        --with-gmp-prefix="${SYSTEM_PREFIX}" \
+        --with-int=gmp \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  isl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "isl is already installed, skipping..."
+fi
 
 
 # PHASE 2: Compression Libraries
 # ----------------------------------------------------
 
 # zlib
-wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" "https://zlib.net/current/zlib.tar.gz"
-tar -xzf "${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp"/zlib-*
-version=$(grep -oP 'ZLIB_VERSION "\K[0-9]+\.[0-9]+\.[0-9]+' zlib.h)
-echo -e "  zlib:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
-./configure \
-    --prefix="${SYSTEM_PREFIX}"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+if check_installation "zlib"; then
+    echo "Installing zlib..."
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" "https://zlib.net/current/zlib.tar.gz"
+    tar -xzf "${FROMAGER_WORKDIR}/.tmp/zlib.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp"/zlib-*
+    version=$(grep -oP 'ZLIB_VERSION "\K[0-9]+\.[0-9]+\.[0-9]+' zlib.h)
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  zlib:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "zlib is already installed, skipping..."
+fi
 
 # xz
 fetch_latest_github "tukaani-project/xz"
-./autogen.sh --no-po4a
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_github "tukaani-project/xz")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing xz..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./autogen.sh --no-po4a
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  xz:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "xz is already installed, skipping..."
+fi
 
 # lz4
-fetch_latest_github "lz4/lz4"
-make -j"${FROMAGER_NPROC}" install PREFIX="${SYSTEM_PREFIX}" LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_github "lz4/lz4")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing lz4..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    make -j"${FROMAGER_NPROC}" install PREFIX="${SYSTEM_PREFIX}" LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  lz4:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "lz4 is already installed, skipping..."
+fi
 
 # zstd
-fetch_latest_github "facebook/zstd"
-CFLAGS="-I${SYSTEM_PREFIX}/include" \
-CXXFLAGS="-I${SYSTEM_PREFIX}/include" \
-LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
+folder_and_version=$(fetch_latest_github "facebook/zstd")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing zstd..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    CFLAGS="-I${SYSTEM_PREFIX}/include" \
+    CXXFLAGS="-I${SYSTEM_PREFIX}/include" \
+    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
     make -j"${FROMAGER_NPROC}" install PREFIX="${SYSTEM_PREFIX}" HAVE_ZLIB=1 HAVE_LZ4=1 HAVE_LZMA=1
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  zstd:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "zstd is already installed, skipping..."
+fi
 
 
 # PHASE 3: Essential System Tools
 # ----------------------------------------------------
 
 # binutils (without headers)
-fetch_latest_gnu "binutils"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --includedir="${FROMAGER_WORKDIR}/.tmp/include" \
-    --disable-multilib \
-    --disable-nls \
-    --enable-gold \
-    --enable-ld \
-    --enable-compressed-debug-sections=all \
-    --enable-default-compressed-debug-sections-algorithm=zstd \
-    --with-gmp="${SYSTEM_PREFIX}" \
-    --with-mpfr="${SYSTEM_PREFIX}" \
-    --with-mpc="${SYSTEM_PREFIX}" \
-    --with-isl="${SYSTEM_PREFIX}" \
-    --with-zstd="${SYSTEM_PREFIX}" \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_gnu "binutils")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing binutils..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --includedir="${FROMAGER_WORKDIR}/.tmp/include" \
+        --disable-multilib \
+        --disable-nls \
+        --enable-gold \
+        --enable-ld \
+        --enable-compressed-debug-sections=all \
+        --enable-default-compressed-debug-sections-algorithm=zstd \
+        --with-gmp="${SYSTEM_PREFIX}" \
+        --with-mpfr="${SYSTEM_PREFIX}" \
+        --with-mpc="${SYSTEM_PREFIX}" \
+        --with-isl="${SYSTEM_PREFIX}" \
+        --with-zstd="${SYSTEM_PREFIX}" \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  binutils:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "binutils is already installed, skipping..."
+fi
 
 # gcc 11.5.0 (for compatibility)
-wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" "https://ftpmirror.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
-tar -xf "${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" && cd "${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --enable-languages=c,c++,fortran \
-    --disable-multilib \
-    --disable-nls \
-    --with-gmp="${SYSTEM_PREFIX}" \
-    --with-mpfr="${SYSTEM_PREFIX}" \
-    --with-mpc="${SYSTEM_PREFIX}" \
-    --with-isl="${SYSTEM_PREFIX}" \
-    --with-zstd-include="${SYSTEM_PREFIX}/include" \
-    --with-zstd-lib="${SYSTEM_PREFIX}/lib" \
-    --with-stage1-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
-    --with-boot-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
-echo -e "  gcc:\n    version: 11.5.0" >> "${SYSTEM_PREFIX}/state.yaml"
+if check_installation "gcc"; then
+    echo "Installing gcc 11.5.0..."
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" "https://ftpmirror.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
+    tar -xf "${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0.tar.xz" && cd "${FROMAGER_WORKDIR}/.tmp/gcc-11.5.0"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --enable-languages=c,c++,fortran \
+        --disable-multilib \
+        --disable-nls \
+        --with-gmp="${SYSTEM_PREFIX}" \
+        --with-mpfr="${SYSTEM_PREFIX}" \
+        --with-mpc="${SYSTEM_PREFIX}" \
+        --with-isl="${SYSTEM_PREFIX}" \
+        --with-zstd-include="${SYSTEM_PREFIX}/include" \
+        --with-zstd-lib="${SYSTEM_PREFIX}/lib" \
+        --with-stage1-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
+        --with-boot-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  gcc:\n    version: 11.5.0" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "gcc is already installed, skipping..."
+fi
 
 # elfutils
-fetch_latest_elfutils
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --enable-install-elfh \
-    --disable-nls \
-    LDFLAGS="-Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+version=$(fetch_latest_elfutils)
+if [[ -n "$version" ]]; then
+    echo "Installing elfutils..."
+    cd "${FROMAGER_WORKDIR}/.tmp/elfutils"-*
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --enable-install-elfh \
+        --disable-nls \
+        LDFLAGS="-Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  elfutils:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "elfutils is already installed, skipping..."
+fi
 
 
 # PHASE 4: Build Tools
 # ----------------------------------------------------
 
 # m4
-fetch_latest_gnu "m4"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --enable-c++ \
-    --enable-threads=isoc+posix \
-    --disable-nls \
+folder_and_version=$(fetch_latest_gnu "m4")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing m4..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --enable-c++ \
+        --enable-threads=isoc+posix \
+        --disable-nls \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  m4:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "m4 is already installed, skipping..."
+fi
 
 # autoconf
-fetch_latest_gnu "autoconf"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
+folder_and_version=$(fetch_latest_gnu "autoconf")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing autoconf..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
     M4="${SYSTEM_PREFIX}/bin/m4" \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  autoconf:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "autoconf is already installed, skipping..."
+fi
 
 # automake
-fetch_latest_gnu "automake"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_gnu "automake")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing automake..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  automake:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "automake is already installed, skipping..."
+fi
 
 # libtool
-fetch_latest_gnu "libtool"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --enable-shared \
-    --enable-static \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_gnu "libtool")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing libtool..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --enable-shared \
+        --enable-static \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  libtool:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "libtool is already installed, skipping..."
+fi
 
 # make
-fetch_latest_gnu "make" "tar.gz"
-./configure \
-    --prefix="${SYSTEM_PREFIX}" \
-    --disable-nls \
-    LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_gnu "make" "tar.gz")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing make..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./configure \
+        --prefix="${SYSTEM_PREFIX}" \
+        --disable-nls \
+        LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  make:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "make is already installed, skipping..."
+fi
 
 # cmake
-cmake_tag="$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" | jq -r '.tag_name')"
-if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-    cmake_tag_arch="${cmake_tag#v}-linux-x86_64"
-elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-    cmake_tag_arch="${cmake_tag#v}-linux-aarch64"
+if check_installation "cmake"; then
+    echo "Installing cmake..."
+    cmake_tag="$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" | jq -r '.tag_name')"
+    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+        cmake_tag_arch="${cmake_tag#v}-linux-x86_64"
+    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+        cmake_tag_arch="${cmake_tag#v}-linux-aarch64"
+    fi
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag_arch}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag_arch}.sh"
+    bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag_arch}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "cmake is already installed, skipping..."
 fi
-wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag_arch}.sh" "https://github.com/Kitware/CMake/releases/latest/download/cmake-${cmake_tag_arch}.sh"
-bash "${FROMAGER_WORKDIR}/.tmp/cmake-${cmake_tag_arch}.sh" --skip-license --prefix="${SYSTEM_PREFIX}"
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
-echo -e "  cmake:\n    version: ${cmake_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
 
 # perl
-fetch_latest_perl
-./Configure -Dprefix="${SYSTEM_PREFIX}" -Dusethreads -Dusedevel -de
-make -j"${FROMAGER_NPROC}" && make install
-# Find all perl binaries with versioned names and symlink them to unversioned names
-perl_version=$(yq -r ".cheese.perl.version" "${SYSTEM_PREFIX}/state.yaml")
-for bin in "${SYSTEM_PREFIX}/bin/"*${perl_version}; do
-    base_bin="$(basename "$bin")"
-    unversioned_bin="${base_bin%%${perl_version}}"
-    ln -s "$bin" "${SYSTEM_PREFIX}/bin/${unversioned_bin}"
-done
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_perl)
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing perl..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    ./Configure -Dprefix="${SYSTEM_PREFIX}" -Dusethreads -Dusedevel -de
+    make -j"${FROMAGER_NPROC}" && make install
+    for bin in "${SYSTEM_PREFIX}/bin/"*${version}; do
+        base_bin="$(basename "$bin")"
+        unversioned_bin="${base_bin%%${version}}"
+        ln -s "$bin" "${SYSTEM_PREFIX}/bin/${unversioned_bin}"
+    done
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  perl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "perl is already installed, skipping..."
+fi
 
 
 # PHASE 5: Essential Tools for Fromager
 # ----------------------------------------------------
 
 # yaml-cpp
-fetch_latest_github "jbeder/yaml-cpp"
-mkdir build && cd build
-cmake .. \
-    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-    -DCMAKE_INSTALL_PREFIX="${SYSTEM_PREFIX}" \
-    -DYAML_BUILD_SHARED_LIBS=ON
-make -j"${FROMAGER_NPROC}" && make install
-cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+folder_and_version=$(fetch_latest_github "jbeder/yaml-cpp")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing yaml-cpp..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    mkdir build && cd build
+    cmake .. \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        -DCMAKE_INSTALL_PREFIX="${SYSTEM_PREFIX}" \
+        -DYAML_BUILD_SHARED_LIBS=ON
+    make -j"${FROMAGER_NPROC}" && make install
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  yaml-cpp:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "yaml-cpp is already installed, skipping..."
+fi
 
 # patchelf
-patchelf_tag=$(curl -s "https://api.github.com/repos/NixOS/patchelf/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null)
-patchelf_tag_arch=""
-if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-    patchelf_tag_arch="${patchelf_tag}-x86_64"
-elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-    patchelf_tag_arch="${patchelf_tag}-aarch64"
+if check_installation "patchelf"; then
+    echo "Installing patchelf..."
+    patchelf_tag=$(curl -s "https://api.github.com/repos/NixOS/patchelf/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null)
+    patchelf_tag_arch=""
+    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+        patchelf_tag_arch="${patchelf_tag}-x86_64"
+    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+        patchelf_tag_arch="${patchelf_tag}-aarch64"
+    fi
+    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/patchelf.tar.gz" "https://github.com/NixOS/patchelf/releases/download/${patchelf_tag}/patchelf-${patchelf_tag_arch}.tar.gz"
+    tar -xzf "${FROMAGER_WORKDIR}/.tmp/patchelf.tar.gz" -C "${SYSTEM_PREFIX}"
+    echo -e "  patchelf:\n    version: ${patchelf_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "patchelf is already installed, skipping..."
 fi
-wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/patchelf.tar.gz" "https://github.com/NixOS/patchelf/releases/download/${patchelf_tag}/patchelf-${patchelf_tag_arch}.tar.gz"
-tar -xzf "${FROMAGER_WORKDIR}/.tmp/patchelf.tar.gz" -C "${SYSTEM_PREFIX}"
-echo -e "  patchelf:\n    version: ${patchelf_tag#v}" >> "${SYSTEM_PREFIX}/state.yaml"
-
 
 # Fromager
 make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}"
@@ -403,48 +463,53 @@ make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}"
 # ----------------------------------------------------
 
 # CUDA
-# Test nvidia-smi to check if NVIDIA GPU is available
-if command -v nvidia-smi &> /dev/null; then
-    echo "NVIDIA GPU detected, installing CUDA..."
-    # Get CUDA version
-    # Format `CUDA Version        : 12.4`
-    cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
-    echo -e "  cuda:\n    version: ${cuda_version}" >> "${SYSTEM_PREFIX}/state.yaml"
-    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-        cuda_version="${cuda_version}-x86_64"
-    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-        cuda_version="${cuda_version}-arm64"
-    else
-        echo >&2 "Unsupported architecture: $(uname -m)"
-        exit 1
-    fi
-    cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml")
-    if [ -z "${cuda_runfile_link}" ] || [ "${cuda_runfile_link}" = "null" ]; then
-        # Fallback to the first release if specific version not found
-        echo "Specific CUDA version not found in database, using the latest available version."
+if check_installation "cuda"; then
+    echo "Checking for NVIDIA GPU to install CUDA..."
+    # Test nvidia-smi to check if NVIDIA GPU is available
+    if command -v nvidia-smi &> /dev/null; then
+        echo "NVIDIA GPU detected, installing CUDA..."
+        # Get CUDA version
+        # Format `CUDA Version        : 12.4`
+        cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
+        version="${cuda_version}"
         if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-            cuda_runfile_link=$(yq -r ".cheese.source.releases[0].url" "${FROMAGER_DB}/cuda.yaml")
+            cuda_version="${cuda_version}-x86_64"
         elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-            cuda_runfile_link=$(yq -r ".cheese.source.releases[1].url" "${FROMAGER_DB}/cuda.yaml")
+            cuda_version="${cuda_version}-arm64"
+        else
+            echo >&2 "Unsupported architecture: $(uname -m)"
+            exit 1
         fi
+        cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml")
+        if [ -z "${cuda_runfile_link}" ] || [ "${cuda_runfile_link}" = "null" ]; then
+            # Fallback to the first release if specific version not found
+            echo "Specific CUDA version not found in database, using the latest available version."
+            if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+                cuda_runfile_link=$(yq -r ".cheese.source.releases[0].url" "${FROMAGER_DB}/cuda.yaml")
+            elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+                cuda_runfile_link=$(yq -r ".cheese.source.releases[1].url" "${FROMAGER_DB}/cuda.yaml")
+            fi
+        fi
+        wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
+        bash "${FROMAGER_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${FROMAGER_WORKDIR}/.tmp"
+        # Remove /tmp/cuda-installer.log if exists
+        rm -f /tmp/cuda-installer.log
+        # Soft link CUDA files
+        if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+            cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/include"/* "${SYSTEM_PREFIX}/include/"
+            cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
+        elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+            cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/include"/* "${SYSTEM_PREFIX}/include/"
+            cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
+        fi
+        rm -f "${FROMAGER_WORKDIR}/.tmp/cuda.run"
+        echo -e "  cuda:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+    else
+        echo "No NVIDIA GPU detected, skipping CUDA installation."
     fi
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/cuda.run" "${cuda_runfile_link}"
-    bash "${FROMAGER_WORKDIR}/.tmp/cuda.run" --silent --toolkit --override --toolkitpath="${SYSTEM_PREFIX}" --installpath="${SYSTEM_PREFIX}" --no-drm --tmpdir="${FROMAGER_WORKDIR}/.tmp"
-    # Remove /tmp/cuda-installer.log if exists
-    rm -f /tmp/cuda-installer.log
-    # Soft link CUDA files
-    if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-        cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/include"/* "${SYSTEM_PREFIX}/include/"
-        cp -rs "${SYSTEM_PREFIX}/targets/x86_64-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
-    elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-        cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/include"/* "${SYSTEM_PREFIX}/include/"
-        cp -rs "${SYSTEM_PREFIX}/targets/sbsa-linux/lib"/* "${SYSTEM_PREFIX}/lib64/"
-    fi
-    rm -f "${FROMAGER_WORKDIR}/.tmp/cuda.run"
 else
-    echo "No NVIDIA GPU detected, skipping CUDA installation."
+    echo "CUDA is already installed, skipping..."
 fi
-
 
 # End of Script
 # ----------------------------------------------------

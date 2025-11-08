@@ -98,6 +98,7 @@ fgr () {
                 format_option_help "-v, --version" "Show version information"
                 format_option_help "-h, --help" "Show this help message"
                 format_option_help "init" "Initialize the Fromager environment"
+                format_option_help "" "run \`fgr init --help\` for more information"
                 format_option_help "selfcheck" "Run self-checks on the Fromager installation"
                 format_option_help "utilities" "Manage utilities"
                 format_option_help "" "run \`fgr utilities --help\` for more information"
@@ -114,15 +115,40 @@ fgr () {
                 ;;
 
             init )
-                fromager_init
-                shift
+                if [ -n "${2:-}" ]; then
+                    case "$2" in
+                        -h | --help )
+                            fromager_info "Usage: fgr init [OPTION]"
+                            echo "Options:"
+                            format_option_help "-h, --help" "Show this help message"
+                            format_option_help "--refresh" "Refresh the Fromager environment by reinstalling core utilities"
+                            shift 2
+                            return 0
+                            ;;
+
+                        --refresh )
+                            fromager_init --refresh
+                            shift 2
+                            ;;
+
+                        * )
+                            fromager_error "Unknown init option: $2"
+                            fromager_info "Use -h or --help for usage information."
+                            return 1
+                            ;;
+
+                    esac
+                else
+                    fromager_init
+                    shift 1
+                fi
                 break
                 ;;
 
 
             selfcheck )
                 fromager_db_check
-                shift
+                shift 1
                 break
                 ;;
 

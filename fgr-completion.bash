@@ -43,6 +43,15 @@ _fgr_complete() {
 
     # Subcommand completion based on main command
     case "$command_word" in
+        init)
+            case $COMP_CWORD in
+                2)
+                    local init_options="--refresh -h --help"
+                    COMPREPLY=($(compgen -W "${init_options}" -- "$current_word"))
+                    ;;
+            esac
+            ;;
+
         utilities)
             case $COMP_CWORD in
                 2)
