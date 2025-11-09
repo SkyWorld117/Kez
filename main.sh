@@ -423,6 +423,7 @@ fgr () {
 
                     -r | --read )
                         local config_file="$3"
+                        config_file=$(realpath "$config_file")
                         if [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
                             fromager_error "Invalid requirements file specified."
                             return 1
@@ -435,7 +436,6 @@ fgr () {
                         local cellar
                         if [ "$pkg_type" = "compiler" ]; then
                             cellar="${FROMAGER_ENV}/compilers/${target_pkg}-${pkg_version}"
-                            fromager_install "$config_file" "$cellar"
                             shift 3
                         elif [ "$pkg_type" = "mpi" ]; then
                             local compiler_spec
@@ -449,11 +449,9 @@ fgr () {
                                 compiler_spec="${FROMAGER_ENV}/compilers/${compiler_name}-${compiler_version}"
                             fi
                             cellar="${FROMAGER_ENV}/mpis/${target_pkg}-${pkg_version}-${compiler_spec}"
-                            fromager_install "$config_file" "$cellar"
                             shift 3
                         elif [ "$pkg_type" = "vendor" ]; then
                             cellar="${FROMAGER_ENV}/vendors/${target_pkg}-${pkg_version}"
-                            fromager_install "$config_file" "$cellar"
                             shift 3
                         else
                             # Require a cellar for other package types
@@ -474,15 +472,17 @@ fgr () {
                                 fromager_error "Cellar '$cellar' does not exist."
                                 return 1
                             fi
-                            fromager_install "$config_file" "$cellar"
                         fi
+                        fromager_info "Using $user_config for user configuration and $cellar as target cellar."
+                        fromager_parser "$config_file" release "$cellar" > /dev/null
+                        fromager_install "$cellar"
                         ;;
 
                     * )
                         fromager_info "Installing package: $2"
                         shift 1
                         local cellar="$(fromager_cmdline_parser "$@" | tail -n 1)"
-                        fromager_cmdline_install "$cellar"
+                        fromager_install "$cellar"
                         shift "$#"
                         ;;
 

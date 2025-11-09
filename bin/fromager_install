@@ -2,17 +2,10 @@
 
 set -Eeuo pipefail
 
-user_config=$1
-target_cellar=$2
-
-# Convert user_config to absolute path before changing directories
-user_config=$(realpath "$user_config")
-
-fromager_info "Using $user_config for user configuration and $target_cellar as target cellar."
+target_cellar=$1
 
 mkdir -p "$target_cellar/.tmp" && cd "$target_cellar/.tmp"
 rm -rf source/ source*
-fromager_parser "$user_config" release "$target_cellar" > /dev/null
 
 # Process each package and its instructions
 package_count=$(yq -r '. | length' "$target_cellar/.tmp/ins.yaml")
