@@ -4,7 +4,6 @@ set -Eeuo pipefail
 
 target_cellar=$1
 
-mkdir -p "$target_cellar/.tmp" && cd "$target_cellar/.tmp"
 rm -rf source/ source*
 
 # Process each package and its instructions
