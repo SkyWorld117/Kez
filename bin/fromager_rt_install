@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+target_cellar=$1
+user_config=$2
+target_package=$3
+
+rm -rf source/ source*
+
+fromager_rt_resolve_dependencies "$user_config" "$target_cellar" "$target_package"
+
+# Process each package and its instructions
+package_count=$(yq -r '. | length' "$target_cellar/.tmp/filtered_ins.yaml")
+
+# Create state.yaml to store all the installed packages if it doesn't exist
+if [ ! -f "$target_cellar/state.yaml" ] || ! $(yq -r ". | has(\"cheese\")" "$target_cellar/state.yaml"); then
+    echo "cheese:" > "$target_cellar/state.yaml"
+fi
+
+for ((i=0; i<package_count; i++)); do
+    # Extract package name
+    package_name=$(yq -r ".[$i].package" "$target_cellar/.tmp/filtered_ins.yaml")
+
+    fromager_info "Processing package: $package_name"
+    cd "$target_cellar/.tmp"
+
+    # Get number of instructions for this package
+    instruction_count=$(yq -r ".[$i].instructions | length" "$target_cellar/.tmp/filtered_ins.yaml")
+    
+    # Execute each instruction
+    for ((j=0; j<instruction_count; j++)); do
+        instruction=$(yq -r ".[$i].instructions[$j]" "$target_cellar/.tmp/filtered_ins.yaml")
+        fromager_info "Executing: $instruction"
+        eval "$instruction"
+        if [ $? -ne 0 ]; then
+            fromager_error "Failed to execute: $instruction"
+            exit 1
+        fi
+    done
+
+    # Mark package as installed if not already present
+    if ! $(grep -q "  - $package_name" "$target_cellar/state.yaml"); then
+        echo "  - $package_name" >> "$target_cellar/state.yaml"
+    fi
+
+    fromager_success "Completed processing package: $package_name"
+
+    rm -rf "$target_cellar/.tmp/source"
+done
+
+set +Eeuo pipefail

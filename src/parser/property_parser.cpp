@@ -90,11 +90,7 @@ std::string parse_property(
         } else if (build_mode == "debug") {
             // Get the first key in the user_config["cheese"] map
             std::string target_package = user_config["cheese"].begin()->first.as<std::string>();
-            if (target_package == package_name) {
-                return env_path + "/" + target_package;
-            } else {
-                return env_path + "/deps";
-            }
+            return env_path + "/" + package_name;
         } else {
             ERROR("Unknown build mode: " + build_mode);
             exit(EXIT_FAILURE);

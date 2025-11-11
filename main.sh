@@ -317,6 +317,7 @@ fgr () {
                             return 1
                         fi
                         rm -rf "${FROMAGER_ENV}/$3"/*
+                        rm -rf "${FROMAGER_ENV}/$3"/.tmp
                         fromager_success "Cellar '$3' emptied successfully."
                         shift 3
                         ;;
@@ -512,7 +513,7 @@ fgr () {
                             fromager_error "No package specified to parse."
                             return 1
                         fi
-                        fromager_parser "$3" debug "${FROMAGER_WORKDIR}/.tmp"
+                        fromager_parser "$3" release "${FROMAGER_WORKDIR}/.tmp"
                         shift 3
                         ;;
 
@@ -559,6 +560,7 @@ fgr () {
                         format_option_help "build" "Build all configurations in the current factory"
                         format_option_help "taste" "Run the rapid test profile in the current factory"
                         format_option_help "summarize" "Summarize the results of the rapid tests"
+                        format_option_help "try <config> <package>" "Isolate and install <package> and its dependencies in the current cellar for testing"
                         shift 2
                         ;;
 
@@ -736,6 +738,37 @@ fgr () {
                         fromager_success "Tasting summary completed."
                         shift 2
                         ;;
+
+
+                    try )
+                        # Isolate all the packages in a cellar for testing and rebuilding.
+                        # Must takes a user config and a target package name.
+                        # User must be in a cellar.
+                        if [ -z "${FROMAGER_CELLAR:-}" ]; then
+                            fromager_error "Not currently in a cellar. Please enter a cellar first."
+                            return 1
+                        fi
+                        if [ -z "$3" ] || [ ! -f "$3" ]; then
+                            fromager_error "No user configuration file specified or file does not exist."
+                            return 1
+                        fi
+                        if [ -z "$4" ]; then
+                            fromager_error "No target package specified."
+                            return 1
+                        fi
+                        fromager_parser "$3" debug "${FROMAGER_ENV}/${FROMAGER_CELLAR}" > /dev/null
+                        fromager_rt_install "${FROMAGER_ENV}/${FROMAGER_CELLAR}" "$3" "$4"
+                        fromager_success "Rapid test try completed."
+                        shift 4
+                        ;;
+
+                    * )
+                        fromager_error "Unknown rt command: $2"
+                        fromager_info "Use -h or --help for usage information."
+                        return 1
+                        shift 2
+                        ;;
+
                 esac
                 break
                 ;;

@@ -28,5 +28,4 @@ Fromager achieves the points above by using a C++ backend, a database of YAML fi
 ## TODO
 
 - [ ] Improve templating documentation. (@NickvonWit)
-- [ ] Add a test function that separates all the dependencies and the target package.
 - [ ] Add mkdocs integration.

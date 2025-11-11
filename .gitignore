@@ -6,6 +6,7 @@ bin/fromager_user_config_gen
 bin/fromager_parser
 bin/fromager_cmdline_parser
 bin/fromager_rt_profile_config_parser
+bin/fromager_rt_resolve_dependencies
 # Colored IO
 bin/fromager_info
 bin/fromager_warning

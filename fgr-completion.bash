@@ -223,7 +223,7 @@ _fgr_complete() {
         rt)
             case $COMP_CWORD in
                 2)
-                    local rt_options="-h --help factory build taste summarize"
+                    local rt_options="-h --help factory build taste summarize try"
                     COMPREPLY=($(compgen -W "${rt_options}" -- "$current_word"))
                     ;;
                 3)
@@ -236,37 +236,50 @@ _fgr_complete() {
                             # No additional options for build
                             COMPREPLY=()
                             ;;
+                        try)
+                            # First argument is user configuration file
+                            COMPREPLY=($(compgen -f -- "$current_word"))
+                            ;;
                     esac
                     ;;
                 4)
-                    case "${COMP_WORDS[3]}" in
-                        add|create)
-                            # No completion for new factory name
-                            COMPREPLY=()
+                    case "$subcommand_word" in
+                        factory)
+                            case "${COMP_WORDS[3]}" in
+                                add|create)
+                                    # No completion for new factory name
+                                    COMPREPLY=()
+                                    ;;
+                                rm|remove|enter)
+                                    # Complete with existing factory names
+                                    if [ -d "${FROMAGER_WORKDIR}/factories" ]; then
+                                        COMPREPLY=($(compgen -W "$(ls ${FROMAGER_WORKDIR}/factories 2>/dev/null)" -- "$current_word"))
+                                    else
+                                        COMPREPLY=()
+                                    fi
+                                    ;;
+                                ls|list)
+                                    # No additional completion for list
+                                    COMPREPLY=()
+                                    ;;
+                                which|exit)
+                                    # No additional completion for which or exit
+                                    COMPREPLY=()
+                                    ;;
+                                cd)
+                                    # Complete with existing factory names for cd
+                                    if [ -d "${FROMAGER_WORKDIR}/factories" ]; then
+                                        COMPREPLY=($(compgen -W "$(ls ${FROMAGER_WORKDIR}/factories 2>/dev/null)" -- "$current_word"))
+                                    else
+                                        COMPREPLY=()
+                                    fi
+                                    ;;
+                            esac
                             ;;
-                        rm|remove|enter)
-                            # Complete with existing factory names
-                            if [ -d "${FROMAGER_WORKDIR}/factories" ]; then
-                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_WORKDIR}/factories 2>/dev/null)" -- "$current_word"))
-                            else
-                                COMPREPLY=()
-                            fi
-                            ;;
-                        ls|list)
-                            # No additional completion for list
-                            COMPREPLY=()
-                            ;;
-                        which|exit)
-                            # No additional completion for which or exit
-                            COMPREPLY=()
-                            ;;
-                        cd)
-                            # Complete with existing factory names for cd
-                            if [ -d "${FROMAGER_WORKDIR}/factories" ]; then
-                                COMPREPLY=($(compgen -W "$(ls ${FROMAGER_WORKDIR}/factories 2>/dev/null)" -- "$current_word"))
-                            else
-                                COMPREPLY=()
-                            fi
+
+                        try)
+                            # Second argument is package name
+                            COMPREPLY=($(compgen -W "$(_get_packages)" -- "$current_word"))
                             ;;
                     esac
                     ;;
