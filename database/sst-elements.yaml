@@ -23,7 +23,7 @@ cheese:
     postprocessing: >
       mkdir -p ${sst-elements.prefix}/src &&
       cp -r ${source}/src/* ${sst-elements.prefix}/src/ &&
-      sed -i 's|${source}|${sst-elements.prefix}|g' ${sst-elements.prefix}/etc/sst/sstsimulator.conf
+      sed -i 's|${source}|${sst-elements.prefix}|g' ${sst-core.prefix}/etc/sst/sstsimulator.conf
 
     configurations:
       options:

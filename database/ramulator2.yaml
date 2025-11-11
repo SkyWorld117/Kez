@@ -12,8 +12,12 @@ cheese:
         tag: main
 
   build:
-    preprocessing: curl -LJO https://github.com/sstsimulator/sst-elements/releases/download/v15.0.0_Final/sstelements-15.0.0.tar.gz; tar xf sstelements-15.0.0.tar.gz; cp ./sst-elements/src/sst/elements/memHierarchy/membackend/ramulator2/sst_frontend.cpp ./src/frontend/impl/external_wrapper/; sed -i.bak '19a impl/external_wrapper/sst_frontend.cpp' ./src/frontend/CMakeLists.txt
-    postprocessing: cp ./ramulator2 ${ramulator2.prefix}
+    preprocessing: >
+      curl -LJO https://github.com/sstsimulator/sst-elements/releases/download/v15.0.0_Final/sstelements-15.0.0.tar.gz;
+      tar xf sstelements-15.0.0.tar.gz;
+      cp ./sst-elements/src/sst/elements/memHierarchy/membackend/ramulator2/sst_frontend.cpp ./src/frontend/impl/external_wrapper/;
+      sed -i.bak '19a impl/external_wrapper/sst_frontend.cpp' ./src/frontend/CMakeLists.txt
+    postprocessing: mkdir -p ${ramulator2.prefix} && cp ./ramulator2 ${ramulator2.prefix}
 
     configurations:
       options:
