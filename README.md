@@ -27,5 +27,6 @@ Fromager achieves the points above by using a C++ backend, a database of YAML fi
 
 ## TODO
 
+- [ ] Allow saving a template of multiple packages.
 - [ ] Improve templating documentation. (@NickvonWit)
 - [ ] Add mkdocs integration.
