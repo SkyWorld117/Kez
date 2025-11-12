@@ -456,7 +456,7 @@ else
 fi
 
 # Fromager
-make -C "${FROMAGER_HOME}" -j"${FROMAGER_NPROC}"
+make -C "${FROMAGER_HOME}" -B -j"${FROMAGER_NPROC}"
 
 
 # PHASE 6: Other Tools
