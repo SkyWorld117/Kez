@@ -692,6 +692,7 @@ fgr () {
                                 fromager_info "Installing from configuration: $config"
                                 local target_cellar="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}/cellars/$(basename "$config" .yaml)"
                                 mkdir -p "$target_cellar"
+                                fromager_parser "$config" release "$target_cellar" > /dev/null
                                 fromager_install "$target_cellar"
                                 fromager_success "Installation from $config completed."
                             fi
