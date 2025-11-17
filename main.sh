@@ -447,7 +447,7 @@ fgr () {
                                 # Split at `@` (format: <compiler-name>@<compiler-version>)
                                 local compiler_name=$(echo "$compiler" | cut -d'@' -f1)
                                 local compiler_version=$(echo "$compiler" | cut -d'@' -f2)
-                                compiler_spec="${FROMAGER_ENV}/compilers/${compiler_name}-${compiler_version}"
+                                compiler_spec="${compiler_name}-${compiler_version}"
                             fi
                             cellar="${FROMAGER_ENV}/mpis/${target_pkg}-${pkg_version}-${compiler_spec}"
                             shift 3
