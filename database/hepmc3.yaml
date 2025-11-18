@@ -1,0 +1,72 @@
+cheese:
+  name: hepmc3
+  description: HepMC3 - A C++ event record for Monte Carlo generators
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 3.3.1
+        url: https://gitlab.cern.ch/hepmc/HepMC3/-/archive/3.3.1/HepMC3-3.3.1.tar.gz
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${hepmc3.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: Build type
+          enabled_value:
+            default: Release
+
+        - name: -DHEPMC3_ENABLE_ROOTIO
+          description: Enable ROOT I/O support
+          enabled_value:
+            default: OFF
+
+        - name: -DHEPMC3_ENABLE_PROTOBUF
+          description: Enable Protobuf support
+          enabled_value:
+            default: OFF
+
+        - name: -DHEPMC3_ENABLE_PYTHON
+          description: Enable Python bindings
+          enabled_value:
+            default: OFF
+
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: -DCMAKE_C_FLAGS_RELEASE
+          description: C compiler flags for Release build
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_CXX_FLAGS_RELEASE
+          description: C++ compiler flags for Release build
+          user_configurable: true
+          enabled_value:
+            default: -O3
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${hepmc3.prefix}/lib -Wl,-rpath,${hepmc3.prefix}/lib
+    libs:
+      default: -lhepmc3
+    includes:
+      default: -I${hepmc3.prefix}/include

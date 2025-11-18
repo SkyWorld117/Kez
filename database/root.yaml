@@ -1,0 +1,119 @@
+cheese:
+  name: root
+  description: ROOT Data Analysis Framework
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 6.36.04
+        url: https://root.cern/download/root_v6.36.04.source.tar.gz
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${root.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: Build type
+          enabled_value:
+            default: Release
+
+        - name: -DCMAKE_CXX_STANDARD
+          description: C++ standard version
+          enabled_value:
+            default: 20
+
+        - name: -Dgdml
+          description: Enable GDML support
+          enabled_value:
+            default: ON
+
+        - name: -Dgeom
+          description: Enable Geometry support
+          enabled_value:
+            default: ON
+
+        - name: -Dasimage
+          description: Enable ASImage support
+          enabled_value:
+            default: OFF
+
+        - name: -Dtmva
+          description: Enable TMVA support
+          enabled_value:
+            default: OFF
+
+        - name: -Dxrootd
+          description: Enable XRootD support
+          enabled_value:
+            default: OFF
+
+        - name: -DDAVIX
+          description: Enable DAVIX support
+          enabled_value:
+            default: OFF
+
+        - name: -Dx11
+          description: Enable X11 support
+          enabled_value:
+            default: OFF
+
+        - name: -Dopengl
+          description: Enable OpenGL support
+          enabled_value:
+            default: OFF
+
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: -DCMAKE_C_FLAGS_RELEASE
+          description: C compiler flags for Release build
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_CXX_FLAGS_RELEASE
+          description: C++ compiler flags for Release build
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_BUILD_RPATH
+          description: Build RPATH
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: Install RPATH
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          description: Executable linker flags
+          enabled_value:
+            default: -Wl,-rpath,${compiler.prefix}/lib64
+    postprocessing: cmake --build . -j && cmake --install .
+    # stages:
+    #   - target: ~
+    #     multithreaded: false
+    #   - target: install
+
+  properties:
+    ldflags:
+      default: -L${root.prefix}/lib -Wl,-rpath,${root.prefix}/lib
+    libs:
+      default: -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lMinuit -lMinuit2
+    includes:
+      default: -I${root.prefix}/include

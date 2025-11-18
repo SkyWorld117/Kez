@@ -1,0 +1,145 @@
+cheese:
+  name: dd4hep
+  description: Detector description toolkit for high energy physics
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 01-33
+        url: https://github.com/AIDASoft/DD4hep/archive/refs/tags/v01-33.tar.gz
+
+  dependencies:
+    - geant4
+    - lcio
+    - sio
+    - root
+    - xerces-c
+    - intel-oneapi-tbb
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${dd4hep.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: Build type
+          enabled_value:
+            default: Release
+
+        - name: -DCMAKE_CXX_STANDARD
+          description: C++ standard version
+          enabled_value:
+            default: 20
+
+        - name: -DDD4HEP_USE_GEANT4
+          description: Enable Geant4 support
+          enabled_value:
+            default: ON
+
+        - name: -DDD4HEP_USE_LCIO
+          description: Enable LCIO support
+          enabled_value:
+            default: ON
+
+        - name: -DDD4HEP_USE_SIO
+          description: Enable SIO support
+          enabled_value:
+            default: ON
+
+        - name: -DDD4HEP_USE_ROOT
+          description: Enable ROOT support
+          enabled_value:
+            default: ON
+
+        - name: -DDD4HEP_USE_XERCESC
+          description: Enable Xerces-C support
+          enabled_value:
+            default: ON
+
+        - name: -DGeant4_DIR
+          description: Path to Geant4 installation
+          enabled_value:
+            default: ${geant4.prefix}/lib64/cmake/Geant4
+
+        - name: -DLCIO_DIR
+          description: Path to LCIO installation
+          enabled_value:
+            default: ${lcio.prefix}/lib64/cmake/LCIO
+
+        - name: -DSIO_DIR
+          description: Path to SIO installation
+          enabled_value:
+            default: ${sio.prefix}/lib64/cmake/SIO
+
+        - name: -DROOT_DIR
+          description: Path to ROOT installation
+          enabled_value:
+            default: ${root.prefix}/cmake
+
+        - name: -DXercesC_ROOT
+          description: Path to Xerces-C installation
+          enabled_value:
+            default: ${xerces-c.prefix}
+
+        - name: -DTBB_DIR
+          description: Path to Intel oneAPI TBB installation
+          enabled_value:
+            default: ${intel-oneapi-tbb.prefix}/lib/cmake/tbb
+
+        - name: -DDD4HEP_BUILD_TESTING
+          description: Enable building of test programs
+          enabled_value:
+            default: OFF
+
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: -DCMAKE_C_FLAGS_RELEASE
+          description: C compiler flags for Release build
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_CXX_FLAGS_RELEASE
+          description: C++ compiler flags for Release build
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_BUILD_RPATH
+          description: Linker flags
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: Runtime linker flags
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          description: Executable linker flags
+          enabled_value:
+            default: -Wl,-rpath,${compiler.prefix}/lib64
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${dd4hep.prefix}/lib -Wl,-rpath,${dd4hep.prefix}/lib
+    libs:
+      default: -ldd4hep
+    includes:
+      default: -I${dd4hep.prefix}/include

@@ -1,0 +1,218 @@
+cheese:
+  name: acts
+  description: A Common Tracking Software framework
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 44.2.0
+        url: https://github.com/acts-project/acts/releases/download/v44.2.0/acts-v44.2.0.tar.gz
+
+  # cmake -B "${ACTS_SRC}/build" -S "${ACTS_SRC}" \
+  #   -DCMAKE_INSTALL_PREFIX="${ACTS_SRC}/install" \
+  #   -DCMAKE_BUILD_TYPE=Release \
+  #   -DCMAKE_CXX_FLAGS="-march=znver4 -Ofast -flto -fomit-frame-pointer -fopenmp" \
+  #   -DBoost_ROOT="${HPC_PREFIX}/install/boost-1.86" \
+  #   -DXercesC_ROOT="${HPC_PREFIX}/install/xercesc-3.3.0" \
+  #   -DACTS_BUILD_EXAMPLES=ON \
+  #   -DACTS_BUILD_EXAMPLES_PYTHON_BINDINGS=ON \
+  #   -DACTS_BUILD_PLUGIN_DD4HEP=ON \
+  #   -DACTS_BUILD_EXAMPLES_DD4HEP=ON \
+  #   -DACTS_BUILD_PLUGIN_GEANT4=ON \
+  #   -DACTS_BUILD_PLUGIN_EDM4HEP=OFF \
+  #   -DACTS_BUILD_PLUGIN_PYTHIA8=ON \
+  #   -DACTS_BUILD_EXAMPLES_PYTHIA8=ON \
+  #   -DACTS_BUILD_PLUGIN_ROOT=ON \
+  #   -DACTS_BUILD_ODD=ON \
+  #   -DPythia8_INCLUDE_DIR="${HPC_PREFIX}/install/pythia8-8313/include" \
+  #   -DPythia8_LIBRARY="${HPC_PREFIX}/install/pythia8-8313/lib/libpythia8.so" \
+  #   -DPythia8_DIR="${HPC_PREFIX}/install/pythia8-8313" \
+  #   -DHepMC3_DIR="${HPC_PREFIX}/install/hepmc3-3.3.1/share/HepMC3/cmake" \
+  #   -DGeant4_DIR="${HPC_PREFIX}/install/geant4-11.3/lib64/cmake/Geant4" \
+  #   -DDD4hep_DIR="${HPC_PREFIX}/install/dd4hep-01-32-01/cmake" \
+  #   -DROOT_DIR="${HPC_PREFIX}/install/root-6.34/cmake" \
+  #   -DLCIO_DIR="${HPC_PREFIX}/install/lcio-02-22-05/lib64/cmake/LCIO" \
+  #   -DSIO_DIR="${HPC_PREFIX}/install/sio-0.2.0/lib64/cmake/SIO" \
+  #   -Dnlohmann_json_DIR="${HPC_PREFIX}/install/json-3.11.3/lib/cmake/nlohmann_json" \
+  #   -DTBB_DIR="${HPC_PREFIX}/install/tbb-2022.2/lib64/cmake/TBB"
+
+  dependencies:
+    - boost
+    - xerces-c
+    - hepmc3
+    - geant4
+    - dd4hep
+    - root
+    - lcio
+    - sio
+    - pythia
+    - json
+    - intel-oneapi-tbb 
+    - eigen
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${acts.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: Build type
+          enabled_value:
+            default: Release
+
+        - name: -DCMAKE_CXX_STANDARD
+          description: C++ standard version
+          enabled_value:
+            default: 20
+
+        - name: -DBoost_ROOT
+          description: Path to Boost installation
+          enabled_value:
+            default: ${boost.prefix}
+
+        - name: -DXercesC_ROOT
+          description: Path to Xerces-C installation
+          enabled_value:
+            default: ${xerces-c.prefix}
+
+        - name: -DACTS_BUILD_EXAMPLES
+          description: Enable building of examples
+          enabled_value:
+            default: ON
+
+        - name: -DACTS_BUILD_EXAMPLES_PYTHON_BINDINGS
+          description: Enable building of Python bindings for examples
+          enabled_value:
+            default: ON
+
+        - name: -DACTS_BUILD_PLUGIN_DD4HEP
+          description: Enable DD4hep plugin
+          enabled_value:
+            default: ON
+
+        - name: -DACTS_BUILD_PLUGIN_GEANT4
+          description: Enable Geant4 plugin
+          enabled_value:
+            default: ON
+
+        - name: -DACTS_BUILD_PLUGIN_PYTHIA8
+          description: Enable Pythia8 plugin
+          enabled_value:
+            default: ON
+
+        - name: -DACTS_BUILD_EXAMPLES_PYTHIA8
+          description: Enable building of Pythia8 examples
+          enabled_value:
+            default: ON
+
+        - name: -DACTS_BUILD_PLUGIN_ROOT
+          description: Enable ROOT plugin
+          enabled_value:
+            default: ON
+
+        - name: -DACTS_BUILD_ODD
+          description: Enable ODD support
+          enabled_value:
+            default: ON
+
+        - name: -DPythia8_INCLUDE_DIR
+          description: Path to Pythia8 installation
+          enabled_value:
+            default: ${pythia.prefix}/include
+
+        - name: -DPythia8_LIBRARY
+          description: Path to Pythia8 library
+          enabled_value:
+            default: ${pythia.prefix}/lib/libpythia8.so
+
+        - name: -DHepMC3_DIR
+          description: Path to HepMC3 installation
+          enabled_value:
+            default: ${hepmc3.prefix}/share/HepMC3/cmake
+
+        - name: -DGeant4_DIR
+          description: Path to Geant4 installation
+          enabled_value:
+            default: ${geant4.prefix}/lib64/cmake/Geant4
+
+        - name: -DDD4hep_DIR
+          description: Path to DD4hep installation
+          enabled_value:
+            default: ${dd4hep.prefix}/cmake
+
+        - name: -DROOT_DIR
+          description: Path to ROOT installation
+          enabled_value:
+            default: ${root.prefix}/cmake
+
+        - name: -DLCIO_DIR
+          description: Path to LCIO installation
+          enabled_value:
+            default: ${lcio.prefix}/lib64/cmake/LCIO
+
+        - name: -DSIO_DIR
+          description: Path to SIO installation
+          enabled_value:
+            default: ${sio.prefix}/lib64/cmake/SIO
+
+        - name: -Dnlohmann_json_DIR
+          description: Path to nlohmann_json installation
+          enabled_value:
+            default: ${json.prefix}/lib/cmake/nlohmann_json
+
+        - name: -DTBB_DIR
+          description: Path to oneTBB installation
+          enabled_value:
+            default: ${intel-oneapi-tbb.prefix}/lib/cmake/tbb
+
+        - name: -DEigen3_DIR
+          description: Path to Eigen3 installation
+          enabled_value:
+            default: ${eigen.prefix}/share/eigen3/cmake
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: -DCMAKE_CXX_FLAGS_RELEASE
+          description: C++ compiler flags for Release build
+          user_configurable: true
+          enabled_value:
+            default: -O3 -Wl,rpath,${compiler.prefix}/lib64
+
+        - name: -DCMAKE_BUILD_RPATH
+          description: Linker flags
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: Runtime linker flags
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          description: Executable linker flags
+          enabled_value:
+            default: -Wl,-rpath,${compiler.prefix}/lib64
+
+        - name: -DCMAKE_POLICY_VERSION_MINIMUM
+          description: Minimum CMake policy version
+          enabled_value:
+            default: 3.5
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${acts.prefix}/lib -Wl,-rpath,${acts.prefix}/lib
+    libs:
+      default: -lActsCore -lActsExamples -lActsPluginsGeant4 -lActsPluginsPythia8 -lActsPluginsRoot -lActsPluginsDD4hep
+    includes:
+      default: ${acts.prefix}/include

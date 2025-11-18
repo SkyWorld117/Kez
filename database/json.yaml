@@ -1,0 +1,36 @@
+cheese:
+  name: json
+  description: JSON for Modern C++
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 3.12.0
+        url: https://github.com/nlohmann/json/archive/refs/tags/v3.12.0.tar.gz
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${json.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: Build type
+          enabled_value:
+            default: Release
+
+        - name: -DJSON_BuildTests
+          description: Enable building of test programs
+          enabled_value:
+            default: OFF
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    includes:
+      default: -I${json.prefix}/include
