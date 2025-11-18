@@ -44,7 +44,7 @@ cheese:
           description: C++ compiler flags
           user_configurable: true
           enabled_value:
-            default: -O3
+            default: -O3 -fPIC
     stages:
       - target: ~
       - target: install

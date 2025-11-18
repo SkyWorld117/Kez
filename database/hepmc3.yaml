@@ -11,6 +11,9 @@ cheese:
         url: https://gitlab.cern.ch/hepmc/HepMC3/-/archive/3.3.1/HepMC3-3.3.1.tar.gz
 
   build:
+    postprocessing: >
+      mkdir -p ${hepmc3.prefix}/lib &&
+      cp -rsf ${hepmc3.prefix}/lib64/* ${hepmc3.prefix}/lib/
     configurations:
       options:
         - name: -DCMAKE_INSTALL_PREFIX

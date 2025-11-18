@@ -30,7 +30,7 @@ cheese:
           - name: --cxx-common
             description: C++ compiler flags
             enabled: true
-            enabled_value: -O3
+            enabled_value: -O3 -fPIC
   dd4hep:
     description: Detector description toolkit for high energy physics
     version: 01-33
