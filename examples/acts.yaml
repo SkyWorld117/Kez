@@ -6,14 +6,10 @@ cheese:
     build:
       configurations:
         options:
-          - name: -DCMAKE_C_FLAGS_RELEASE
-            description: C compiler flags for Release build
-            enabled: true
-            enabled_value: -O3
           - name: -DCMAKE_CXX_FLAGS_RELEASE
             description: C++ compiler flags for Release build
             enabled: true
-            enabled_value: -O3
+            enabled_value: -O3 -Wl,-rpath,${compiler.prefix}/lib64 -DEIGEN_USE_MKL_ALL ${intel-oneapi-mkl.includes}
   pythia:
     description: Pythia is a standard tool for the generation of high-energy physics events.
     version: 8.3.16
@@ -52,8 +48,6 @@ cheese:
             enabled_value: -O3
   intel-oneapi-tbb:
     description: Intel oneAPI Threading Building Blocks for parallel programming
-  intel-oneapi:
-    version: 2025.1.0.666
   sio:
     description: SIO - Simple IO
     version: 00-02
@@ -159,6 +153,33 @@ cheese:
     description: Eigen C++ Template Library for Linear Algebra
     version: 3.4.1
     compiler: system
+  intel-oneapi-mkl:
+    description: Intel oneAPI Math Kernel Library for high-performance math routines
+    build:
+      configurations:
+        options:
+          - name: fortran_format
+            description: Fortran Format [ gf | intel ]
+            enabled: true
+            enabled_value: gf
+          - name: integer_size
+            description: Use ilp64 interface [ lp64 | ilp64 ]
+            enabled: true
+            enabled_value: lp64
+          - name: multithreaded
+            description: Use multithreading
+            enabled: false
+            enabled_value: ~
+          - name: multithreading_library
+            description: Multithreading library [ gnu | tbb ]
+            enabled: true
+            enabled_value: gnu
+          - name: mpi-family
+            description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
+            enabled: true
+            enabled_value: openmpi
+  intel-oneapi:
+    version: 2025.1.0.666
   json:
     description: JSON for Modern C++
     version: 3.12.0
@@ -171,7 +192,6 @@ recipe:
     - pythia
     - dd4hep
     - intel-oneapi-tbb
-    - intel-oneapi
     - sio
     - lcio
     - root
@@ -180,4 +200,6 @@ recipe:
     - xerces-c
     - boost
     - eigen
+    - intel-oneapi-mkl
+    - intel-oneapi
     - json

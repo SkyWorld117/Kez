@@ -23,6 +23,7 @@ cheese:
     - json
     - intel-oneapi-tbb 
     - eigen
+    - intel-oneapi-mkl
 
   build:
     configurations:
@@ -156,22 +157,22 @@ cheese:
           description: C++ compiler flags for Release build
           user_configurable: true
           enabled_value:
-            default: -O3 -Wl,rpath,${compiler.prefix}/lib64
+            default: -O3 -DEIGEN_USE_MKL_ALL ${intel-oneapi-mkl.includes}
 
         - name: -DCMAKE_BUILD_RPATH
           description: Linker flags
           enabled_value:
-            default: ${compiler.prefix}/lib64
+            default: ${compiler.prefix}/lib64;${intel-oneapi-mkl.prefix}/lib
 
         - name: -DCMAKE_INSTALL_RPATH
           description: Runtime linker flags
           enabled_value:
-            default: ${compiler.prefix}/lib64
+            default: ${compiler.prefix}/lib64;${intel-oneapi-mkl.prefix}/lib
 
         - name: -DCMAKE_EXE_LINKER_FLAGS
           description: Executable linker flags
           enabled_value:
-            default: -Wl,-rpath,${compiler.prefix}/lib64
+            default: -Wl,-rpath,${compiler.prefix}/lib64 ${intel-oneapi-tbb.ldflags} ${intel-oneapi-tbb.libs} ${intel-oneapi-mkl.ldflags} ${intel-oneapi-mkl.libs} -lmkl_gf_lp64 -lmkl_tbb_thread -lgomp -lmkl_rt
 
         - name: -DCMAKE_POLICY_VERSION_MINIMUM
           description: Minimum CMake policy version
