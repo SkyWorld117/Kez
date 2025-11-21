@@ -430,7 +430,11 @@ if [[ -n "$folder_and_version" ]]; then
     cmake .. \
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -DCMAKE_INSTALL_PREFIX="${SYSTEM_PREFIX}" \
-        -DYAML_BUILD_SHARED_LIBS=ON
+        -DCMAKE_BUILD_TYPE=Release \
+        -DYAML_BUILD_SHARED_LIBS=ON \
+        -DCMAKE_BUILD_RPATH="${SYSTEM_PREFIX}/lib;${SYSTEM_PREFIX}/lib64" \
+        -DCMAKE_INSTALL_RPATH="${SYSTEM_PREFIX}/lib;${SYSTEM_PREFIX}/lib64" \
+        -DCMAKE_EXE_LINKER_FLAGS="-L${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
     make -j"${FROMAGER_NPROC}" && make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  yaml-cpp:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
