@@ -51,6 +51,16 @@ cheese:
           enabled_value:
             default: -O3
 
+        - name: -DCMAKE_BUILD_RPATH
+          description: Build RPATH
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: Install RPATH
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
         # LD flags
         - name: -DCMAKE_EXE_LINKER_FLAGS
           description: Linker flags

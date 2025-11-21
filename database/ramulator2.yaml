@@ -44,6 +44,21 @@ cheese:
           enabled_value:
             default: -O3
 
+        - name: -DCMAKE_BUILD_RPATH
+          description: Build RPATH
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: Install RPATH
+          enabled_value:
+            default: ${compiler.prefix}/lib64
+
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          description: Linker flags
+          enabled_value:
+            default: -L${compiler.prefix}/lib64 -Wl,-rpath,${compiler.prefix}/lib64
+
         # Allow for older Cmake version
         - name: -DCMAKE_POLICY_VERSION_MINIMUM
           description: Minimum CMake policy version

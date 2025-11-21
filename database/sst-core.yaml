@@ -82,7 +82,7 @@ cheese:
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
-            default: ${python.ldflags} ${python.libs}
+            default: ${compiler.ldflags} ${python.ldflags} ${python.libs}
     stages:
       - target: ~
       - target: install
