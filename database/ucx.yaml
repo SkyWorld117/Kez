@@ -132,7 +132,7 @@ cheese:
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
-            default: ${rdma-core.ldflags}
+            default: ${compiler.ldflags} ${rdma-core.ldflags}
             conditions:
               - condition: ${ucx.config.use_cuda} true
                 action: append
