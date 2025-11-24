@@ -51,7 +51,7 @@ std::vector<std::string> parse_package(
                         exit(EXIT_FAILURE);
                     }
                     std::string ext = url.substr(url.find(".tar"));
-                    instructions.push_back("wget --quiet --show-progress --output-document=source" + ext + " " + url);
+                    instructions.push_back("wget --quiet --show-progress --no-check-certificate --output-document=source" + ext + " " + url);
                     if (ext == ".tar.gz") {
                         instructions.push_back("tar -xzf source" + ext);
                         instructions.push_back("mv $(tar -tzf source" + ext + " | head -1 | sed 's|^\\./||' | cut -f1 -d'/') source");
