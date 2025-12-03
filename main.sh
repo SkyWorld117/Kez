@@ -177,7 +177,8 @@ fgr () {
                                     fromager_error "No utilities file specified to read."
                                     return 1
                                 fi
-                                fromager_install "$4" "${FROMAGER_ENV}/utilities"
+                                fromager_parser "$4" release "${FROMAGER_ENV}/utilities" > /dev/null
+                                fromager_install "${FROMAGER_ENV}/utilities"
                                 shift 4
                                 ;;
 
@@ -189,7 +190,7 @@ fgr () {
                                 fi
                                 shift 2
                                 local cellar=$(fromager_cmdline_parser "$@" --cellar utilities | tail -n 1)
-                                fromager_cmdline_install "$cellar"
+                                fromager_install "$cellar"
                                 shift "$#"
                                 ;;
 
