@@ -25,7 +25,7 @@ cheese:
         - name: CC
           description: C compiler
           enabled_value:
-            default: ${libxfixes.cc}
+            default: ${compiler.c}
 
         - name: CFLAGS
           description: C compiler flags

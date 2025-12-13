@@ -14,7 +14,8 @@ cheese:
     type: tarball
     releases:
       - version: 1.17
-        url: https://xcb.freedesktop.org/dist/libxcb-1.17.tar.xz
+        url: https://xorg.freedesktop.org/archive/individual/lib/libxcb-1.17.0.tar.gz
+        # url: https://xcb.freedesktop.org/dist/libxcb-1.17.tar.xz
 
   build:
     configurations:

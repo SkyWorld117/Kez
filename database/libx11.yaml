@@ -8,7 +8,7 @@ cheese:
     type: tarball
     releases:
       - version: 1.8.12
-        url: https://gitlab.freedesktop.org/xorg/lib/libx11/-/archive/libX11-1.8.12/libx11-libX11-1.8.12.tar.gz
+        url: https://www.x.org/archive/individual/lib/libX11-1.8.12.tar.gz
 
   dependencies:
     - xorgproto
@@ -16,12 +16,19 @@ cheese:
     - xtrans
 
   build:
+    preprocessing: >
+      export ACLOCAL_PATH=${xorgproto.prefix}/share/aclocal &&
+      export PKG_CONFIG_PATH=${xtrans.prefix}/share/pkgconfig
     configurations:
-      environment:
-        - name: PKG_CONFIG_PATH
-          description: pkg-config search path
-          enabled_value:
-            default: ${xtrans.prefix}/share/pkgconfig
+      # environment:
+      #   - name: ACLOCAL_PATH
+      #     description: aclocal search path
+      #     enabled_value:
+      #       default: ${xorgproto.prefix}/share/aclocal
+      #   - name: PKG_CONFIG_PATH
+      #     description: pkg-config search path
+      #     enabled_value:
+      #       default: ${xtrans.prefix}/share/pkgconfig
       options:
         - name: --prefix
           description: Installation prefix
