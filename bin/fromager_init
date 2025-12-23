@@ -68,7 +68,8 @@ if [[ -n "$folder_and_version" ]]; then
         --enable-cxx \
         --enable-shared \
         --enable-static
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  gmp:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -89,7 +90,8 @@ if [[ -n "$folder_and_version" ]]; then
         --enable-static \
         --enable-float128 \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  mpfr:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -110,7 +112,8 @@ if [[ -n "$folder_and_version" ]]; then
         --enable-shared \
         --enable-static \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  mpc:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -131,7 +134,8 @@ if [[ -n "$folder_and_version" ]]; then
         --with-gmp-prefix="${SYSTEM_PREFIX}" \
         --with-int=gmp \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  isl:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -150,7 +154,8 @@ if check_installation "zlib"; then
     version=$(grep -oP 'ZLIB_VERSION "\K[0-9]+\.[0-9]+\.[0-9]+' zlib.h)
     ./configure \
         --prefix="${SYSTEM_PREFIX}"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  zlib:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -169,7 +174,8 @@ if [[ -n "$folder_and_version" ]]; then
     ./configure \
         --prefix="${SYSTEM_PREFIX}" \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  xz:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -233,7 +239,8 @@ if [[ -n "$folder_and_version" ]]; then
         --with-isl="${SYSTEM_PREFIX}" \
         --with-zstd="${SYSTEM_PREFIX}" \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  binutils:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -258,7 +265,8 @@ if check_installation "gcc"; then
         --with-zstd-lib="${SYSTEM_PREFIX}/lib" \
         --with-stage1-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
         --with-boot-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
-    make -j"${FROMAGER_NPROC}" && make install  || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
 
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  gcc:\n    version: 11.5.0" >> "${SYSTEM_PREFIX}/state.yaml"
@@ -276,7 +284,8 @@ if [[ -n "$version" ]]; then
         --enable-install-elfh \
         --disable-nls \
         LDFLAGS="-Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  elfutils:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -300,7 +309,8 @@ if [[ -n "$folder_and_version" ]]; then
         --enable-threads=isoc+posix \
         --disable-nls \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  m4:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -318,7 +328,8 @@ if [[ -n "$folder_and_version" ]]; then
         --prefix="${SYSTEM_PREFIX}" \
     M4="${SYSTEM_PREFIX}/bin/m4" \
     LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  autoconf:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -335,7 +346,8 @@ if [[ -n "$folder_and_version" ]]; then
     ./configure \
         --prefix="${SYSTEM_PREFIX}" \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  automake:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -354,7 +366,8 @@ if [[ -n "$folder_and_version" ]]; then
         --enable-shared \
         --enable-static \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  libtool:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -372,7 +385,8 @@ if [[ -n "$folder_and_version" ]]; then
         --prefix="${SYSTEM_PREFIX}" \
         --disable-nls \
         LDFLAGS="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  make:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
@@ -404,7 +418,8 @@ if [[ -n "$folder_and_version" ]]; then
     version="${folder_and_version##*::}"
     cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
     ./Configure -Dprefix="${SYSTEM_PREFIX}" -Dusethreads -Dusedevel -de
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     for bin in "${SYSTEM_PREFIX}/bin/"*${version}; do
         base_bin="$(basename "$bin")"
         unversioned_bin="${base_bin%%${version}}"
@@ -436,7 +451,8 @@ if [[ -n "$folder_and_version" ]]; then
         -DCMAKE_BUILD_RPATH="${SYSTEM_PREFIX}/lib;${SYSTEM_PREFIX}/lib64" \
         -DCMAKE_INSTALL_RPATH="${SYSTEM_PREFIX}/lib;${SYSTEM_PREFIX}/lib64" \
         -DCMAKE_EXE_LINKER_FLAGS="-L${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
-    make -j"${FROMAGER_NPROC}" && make install || { err=$?; echo "make failed with exit code $err"; exit $err; }
+    make -j"${FROMAGER_NPROC}"
+    make install
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  yaml-cpp:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
 else
