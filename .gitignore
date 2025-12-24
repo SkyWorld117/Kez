@@ -18,3 +18,7 @@ bin/test*
 # Ignore object files
 obj/
 *.o
+
+# Ignore clang artefacts
+.cache/
+compile_commands.json

@@ -1,0 +1,25 @@
+cheese:
+  name: bear
+  description: Bear is a tool that generates a compilation database for clang tooling.
+  type: package
+  toolchain: cmake
+
+  source:
+    type: git
+    url: https://github.com/rizsotto/Bear.git
+    releases:
+      - version: latest
+        tag: master
+  dependencies:
+    - cmake # no support for versions, but needs to be cmake <= 3.5
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${bear.prefix}
+    stages:
+      - target: all
+      - target: install
