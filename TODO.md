@@ -1,5 +1,5 @@
 # Core
-| <div style="width:100px">Status</div> | Task Description | <div style="width:70px">Developer</div> |
+| Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Not Started | Add caching system to store source files, reduce redundant downloads and rebuild without internet connection. | - |
 | Not Started | Better source file handling (e.g. support for different source file name patterns). | - |
@@ -11,7 +11,7 @@
 | Not Started | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | - |
 
 # User Interface and Interaction Logic
-| <div style="width:100px">Status</div> | Task Description | <div style="width:70px">Developer</div> |
+| Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Not Started | Add mkdocs integration. | - |
 | Not Started | (Nick) Improve templating documentation. | Nick |
@@ -29,11 +29,11 @@
 | Not Started | Add a TUI interface for easier configuration and package management. | - |
 
 # Package Development and Configurations
-| <div style="width:100px">Status</div> | Task Description | <div style="width:70px">Developer</div> |
+| Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Not Started | Fix `acts` bad isolation. | - |
 | Not Started | Fix `gcc` wrong `stdc++` dynamic linking. | - |
 
 # Uncategorized
-| <div style="width:100px">Status</div> | Task Description | <div style="width:70px">Developer</div> |
+| Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
