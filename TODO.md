@@ -9,6 +9,8 @@
 | Not Started | Use `export` for environment variables instead of initializing them in as "one-liner" before executing the command. | - |
 | Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | - |
 | Not Started | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | - |
+| Not Started | Reduce the bash main script by moving some logic to the C++ backend. | - |
+| Not Started | Add tests. | - |
 
 # User Interface and Interaction Logic
 | Status | Task Description | <div style="width:70px">Developer</div> |
