@@ -25,7 +25,7 @@
 | Not Started | Add toolchain based parsing and templating (e.g. `prefix` will be automatically set to `CMAKE_PREFIX_PATH` if the package is being built with CMake). | - |
 | Not Started | Add an option to initialize Fromager with a scheduler (e.g. Slurm). | - |
 | Not Started | Allow overriding a user config with command line options. | - |
-| Not Started | When `workdir` is not set, throw an error instead of using the default `~/.fromager` to avoid confusion. | - |
+| Done | When `workdir` is not set, throw an error instead of using the default `~/.fromager` to avoid confusion. | Yi |
 | Not Started | Add environment module interface to allow users to load the environment of a package with `module load <package>` after installation. | - |
 | Not Started | `wget` should throw an error when the download fails instead of silently continuing and causing build failures later. | - |
 | Not Started | Add a TUI interface for easier configuration and package management. | - |
