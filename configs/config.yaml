@@ -1,6 +1,8 @@
 fromager:
   n_proc_for_build: 4
 
+  default_compiler: system
+
   external:
     rdma-core:
       prefix: ~
