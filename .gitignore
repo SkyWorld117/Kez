@@ -1,5 +1,9 @@
 .vscode
 
+# Ignore extra files for LSPs
+compile_commands.json
+.cache/
+
 # Ignore binary tools
 bin/fromager_config_verifier
 bin/fromager_user_config_gen
