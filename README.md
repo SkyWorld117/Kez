@@ -39,6 +39,9 @@ pre-commit install
 # (Optional) Run on all existing files
 pre-commit run --all-files
 ```
+Once set up, all C++ code will be automatically checked and formatted before each commit.
+If your code doesn't match the formatting rules, the hook will format it for you. 
+You'll then need to stage the formatted changes with 'git add' and commit again.
 
 ## How to Contribute
 
