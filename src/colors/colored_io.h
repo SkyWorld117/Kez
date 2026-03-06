@@ -2,14 +2,15 @@
 
 #include "colors.h"
 
-#define INFO(message) print_info(message)
+#define INFO(message)    print_info(message)
 #define WARNING(message) print_warning(message)
-#define ERROR(message) print_error(message)
+#define ERROR(message)   print_error(message)
 #define SUCCESS(message) print_success(message)
+
+#include <unistd.h>  // for isatty and STDOUT_FILENO
 
 #include <iostream>
 #include <string>
-#include <unistd.h> // for isatty and STDOUT_FILENO
 
 inline void print_info(const std::string& message) {
     if (isatty(STDOUT_FILENO)) {

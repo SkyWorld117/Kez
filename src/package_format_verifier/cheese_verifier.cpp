@@ -41,7 +41,8 @@ bool verify_cheese(const YAML::Node& node) {
         return false;
     }
 
-    if (node["properties"] && !verify_properties(node["properties"], node["type"].as<std::string>())) {
+    if (node["properties"] &&
+        !verify_properties(node["properties"], node["type"].as<std::string>())) {
         ERROR("Cheese must have a valid 'properties' field.");
         return false;
     }

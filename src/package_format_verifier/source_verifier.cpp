@@ -11,10 +11,8 @@ bool verify_source(const YAML::Node& node) {
         return false;
     }
 
-    if (node["type"].as<std::string>() != "tarball" &&
-        node["type"].as<std::string>() != "git" &&
-        node["type"].as<std::string>() != "script")
-    {
+    if (node["type"].as<std::string>() != "tarball" && node["type"].as<std::string>() != "git" &&
+        node["type"].as<std::string>() != "script") {
         ERROR("Unsupported source type: " + node["type"].as<std::string>());
         return false;
     }

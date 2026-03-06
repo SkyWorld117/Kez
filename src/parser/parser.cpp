@@ -1,6 +1,7 @@
 #include "parser.h"
 
-YAML::Node parse(YAML::Node& user_config, const std::string& build_mode, const std::string& env_path) {
+YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
+                 const std::string& env_path) {
     std::unordered_map<std::string, std::string> template_map;
 
     std::filesystem::path db_path(getenv("FROMAGER_DB"));
@@ -10,8 +11,9 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode, const s
     // 2. Set the `use-<concrete_package_name>` attributes based on the recipe
     for (const auto& item : user_config["recipe"]["abstract_packages"]) {
         std::string abstract_pkg_name = item.first.as<std::string>();
-        std::string concrete_pkg_name = user_config["recipe"]["abstract_packages"][abstract_pkg_name].as<std::string>();
-        
+        std::string concrete_pkg_name =
+            user_config["recipe"]["abstract_packages"][abstract_pkg_name].as<std::string>();
+
         YAML::Node abstract_pkg_config = get_db_config(abstract_pkg_name);
         for (const auto& impl : abstract_pkg_config["cheese"]["implementations"]) {
             std::string impl_name = impl.as<std::string>();
@@ -46,16 +48,9 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode, const s
         if (build_mode == "debug") {
             INFO("Parsing package configuration for: " + pkg_name);
         }
-        std::vector<std::string> instructions = parse_package(
-            pkg_name,
-            template_map,
-            user_config,
-            user_config["cheese"][pkg_name],
-            user_config["cheese"][pkg_name],
-            pkg_config,
-            build_mode,
-            env_path
-        );
+        std::vector<std::string> instructions =
+            parse_package(pkg_name, template_map, user_config, user_config["cheese"][pkg_name],
+                          user_config["cheese"][pkg_name], pkg_config, build_mode, env_path);
 
         package_instructions[pkg_name] = instructions;
     }
@@ -66,22 +61,16 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode, const s
         }
         std::string pkg_name = pkg.first.as<std::string>();
         if (package_instructions.find(pkg_name) == package_instructions.end()) {
-            continue; // Skip if no instructions found
+            continue;  // Skip if no instructions found
         }
         for (auto& instruction : package_instructions[pkg_name]) {
             // Parse properties in the instruction
-            instruction = parse_properties_in_scalar(
-                instruction,
-                template_map,
-                user_config,
-                user_config["cheese"][pkg_name],
-                build_mode,
-                env_path
-            );
-            filter(instruction); // Filter the instruction
+            instruction =
+                parse_properties_in_scalar(instruction, template_map, user_config,
+                                           user_config["cheese"][pkg_name], build_mode, env_path);
+            filter(instruction);  // Filter the instruction
         }
     }
-
 
     // Output the instructions for each package
     for (const auto& pkg : user_config["cheese"]) {
@@ -92,14 +81,15 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode, const s
     }
 
     // Convert package_instructions to YAML format
-    YAML::Node instructions_yaml = YAML::Node(YAML::NodeType::Sequence);
-    std::vector<std::string> all_dependencies = user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
+    YAML::Node               instructions_yaml = YAML::Node(YAML::NodeType::Sequence);
+    std::vector<std::string> all_dependencies =
+        user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
     std::reverse(all_dependencies.begin(), all_dependencies.end());
     for (const std::string& pkg_name : all_dependencies) {
         if (package_instructions.find(pkg_name) != package_instructions.end() &&
             !package_instructions[pkg_name].empty()) {
             YAML::Node pkg_node(YAML::NodeType::Map);
-            pkg_node["package"] = pkg_name;
+            pkg_node["package"]      = pkg_name;
             pkg_node["instructions"] = package_instructions[pkg_name];
             instructions_yaml.push_back(pkg_node);
         }

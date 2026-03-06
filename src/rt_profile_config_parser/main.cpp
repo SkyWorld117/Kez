@@ -1,7 +1,8 @@
 #include <yaml-cpp/yaml.h>
-#include <iostream>
-#include <fstream>
+
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 
 #include "../colors/colored_io.h"
 #include "factory_parser.h"
@@ -32,8 +33,8 @@ int main(int argc, char* argv[]) {
     out << instructions_yaml;
 
     std::filesystem::path factory_path = std::filesystem::path(argv[2]);
-    std::filesystem::path output_path = factory_path / "ins.yaml";
-    std::ofstream ofs(output_path.string());
+    std::filesystem::path output_path  = factory_path / "ins.yaml";
+    std::ofstream         ofs(output_path.string());
     if (!ofs) {
         ERROR("Failed to create instruction file");
         exit(EXIT_FAILURE);

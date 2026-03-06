@@ -4,7 +4,7 @@
 // Replace inplace
 void filter(std::string& input) {
     std::vector<std::string> terms;
-    size_t pos = 0;
+    size_t                   pos = 0;
 
     while ((pos = input.find('"', pos)) != std::string::npos) {
         size_t end = input.find('"', pos + 1);
@@ -33,6 +33,6 @@ void filter(std::string& input) {
             if (i != terms.size() - 1) joined += ' ';
         }
         input.replace(pos + 1, end - pos - 1, joined);
-        pos += joined.length() + 2; // Move past the replaced term
+        pos += joined.length() + 2;  // Move past the replaced term
     }
 }

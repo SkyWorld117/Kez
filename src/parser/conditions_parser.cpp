@@ -2,8 +2,8 @@
 
 std::vector<std::string> tokenizer(const std::string& str) {
     std::vector<std::string> tokens;
-    
-    char last_char = ' ';
+
+    char        last_char = ' ';
     std::string token;
     for (char c : str) {
         if (isspace(c) || c == '(' || c == ')' || c == '&' || c == '|') {
@@ -32,14 +32,10 @@ std::vector<std::string> tokenizer(const std::string& str) {
     return tokens;
 }
 
-bool evaluate_condition(
-    const std::vector<std::string>& tokens,
-    const std::unordered_map<std::string, std::string>& template_map,
-    const YAML::Node& user_config,
-    const YAML::Node& pkg_config,
-    const std::string& build_mode,
-    const std::string& env_path
-) {
+bool evaluate_condition(const std::vector<std::string>&                     tokens,
+                        const std::unordered_map<std::string, std::string>& template_map,
+                        const YAML::Node& user_config, const YAML::Node& pkg_config,
+                        const std::string& build_mode, const std::string& env_path) {
     if (tokens.empty()) {
         ERROR("Condition cannot be empty.");
         exit(EXIT_FAILURE);
@@ -53,7 +49,7 @@ bool evaluate_condition(
 
     // Handle parentheses
     if (tokens[0] == "(") {
-        int paren_count = 0;
+        int    paren_count = 0;
         size_t closing_pos = 0;
         for (size_t i = 0; i < tokens.size(); i++) {
             if (tokens[i] == "(") {
@@ -68,14 +64,8 @@ bool evaluate_condition(
         }
         if (closing_pos == tokens.size() - 1) {
             std::vector<std::string> inner_tokens(tokens.begin() + 1, tokens.end() - 1);
-            return evaluate_condition(
-                inner_tokens,
-                template_map,
-                user_config,
-                pkg_config,
-                build_mode,
-                env_path
-            );
+            return evaluate_condition(inner_tokens, template_map, user_config, pkg_config,
+                                      build_mode, env_path);
         } else {
             ERROR("Mismatched parentheses in condition.");
             exit(EXIT_FAILURE);
@@ -85,7 +75,7 @@ bool evaluate_condition(
     // Handle logical operators
     for (size_t i = 1; i < tokens.size() - 1; i++) {
         if (tokens[i] == "&&" || tokens[i] == "||") {
-            int paren_count = 0;
+            int  paren_count  = 0;
             bool is_top_level = true;
             for (size_t j = 0; j < i; j++) {
                 if (tokens[j] == "(") {
@@ -97,22 +87,10 @@ bool evaluate_condition(
             if (paren_count == 0) {
                 std::vector<std::string> left_tokens(tokens.begin(), tokens.begin() + i);
                 std::vector<std::string> right_tokens(tokens.begin() + i + 1, tokens.end());
-                bool left_result = evaluate_condition(
-                    left_tokens,
-                    template_map,
-                    user_config,
-                    pkg_config,
-                    build_mode,
-                    env_path
-                );
-                bool right_result = evaluate_condition(
-                    right_tokens,
-                    template_map,
-                    user_config,
-                    pkg_config,
-                    build_mode,
-                    env_path
-                );
+                bool left_result  = evaluate_condition(left_tokens, template_map, user_config,
+                                                       pkg_config, build_mode, env_path);
+                bool right_result = evaluate_condition(right_tokens, template_map, user_config,
+                                                       pkg_config, build_mode, env_path);
                 if (tokens[i] == "&&") {
                     return left_result && right_result;
                 } else if (tokens[i] == "||") {
@@ -129,14 +107,8 @@ bool evaluate_condition(
             exit(EXIT_FAILURE);
         }
         std::vector<std::string> remaining_tokens(tokens.begin() + 1, tokens.end());
-        return !evaluate_condition(
-            remaining_tokens,
-            template_map,
-            user_config,
-            pkg_config,
-            build_mode,
-            env_path
-        );
+        return !evaluate_condition(remaining_tokens, template_map, user_config, pkg_config,
+                                   build_mode, env_path);
     }
 
     // Handle "environment" condition
@@ -146,7 +118,8 @@ bool evaluate_condition(
             exit(EXIT_FAILURE);
         }
         if (template_map.find(tokens[1]) != template_map.end()) {
-            std::string env_var = template_map.at(tokens[1]).substr(2, template_map.at(tokens[1]).size() - 3); // Remove ${ and }
+            std::string env_var = template_map.at(tokens[1]).substr(
+                2, template_map.at(tokens[1]).size() - 3);  // Remove ${ and }
             return !template_map.at(env_var).empty();
         } else {
             return false;
@@ -180,11 +153,12 @@ bool evaluate_condition(
                 YAML::Node abstract_pkg_node = get_db_config(abstract_pkg);
                 if (abstract_pkg_node.IsDefined() &&
                     abstract_pkg_node["cheese"]["type"].as<std::string>() == "abstract" &&
-                    user_config["recipe"]["abstract_packages"]
-                ) {
-                    std::unordered_map<std::string, std::string> recipe_abstracts = user_config["recipe"]["abstract_packages"].as<std::unordered_map<std::string, std::string>>();
+                    user_config["recipe"]["abstract_packages"]) {
+                    std::unordered_map<std::string, std::string> recipe_abstracts =
+                        user_config["recipe"]["abstract_packages"]
+                            .as<std::unordered_map<std::string, std::string>>();
                     if (recipe_abstracts.find(abstract_pkg) == recipe_abstracts.end()) {
-                        return false; // Ignore the condition
+                        return false;  // Ignore the condition
                     }
                 }
             }
@@ -193,18 +167,18 @@ bool evaluate_condition(
         }
         std::string option_value = template_map.at(option_name);
         // Check if enabled status matches the second token
-        int dot_index = option_value.find('.');
+        int         dot_index      = option_value.find('.');
         std::string enabled_status = option_value.substr(0, dot_index);
         if (enabled_status != tokens[1]) {
-            return false; // Enabled status does not match
+            return false;  // Enabled status does not match
         }
         // If a value is provided, check if it matches
         if (tokens.size() == 3) {
             std::string expected_value = tokens[2];
-            std::string actual_value = option_value.substr(dot_index + 1);
+            std::string actual_value   = option_value.substr(dot_index + 1);
             return (actual_value == expected_value);
         }
-        return true; // Only enabled status was checked
+        return true;  // Only enabled status was checked
     }
 
     // If we reach here, the condition is not recognized
@@ -216,34 +190,23 @@ bool evaluate_condition(
     exit(EXIT_FAILURE);
 }
 
-std::string parse_conditions(
-    const std::string& base_value,
-    const YAML::Node& conditions_node,
-    const std::unordered_map<std::string, std::string>& template_map,
-    const YAML::Node& user_config,
-    const YAML::Node& pkg_config,
-    const std::string& build_mode,
-    const std::string& env_path
-) {
+std::string parse_conditions(const std::string& base_value, const YAML::Node& conditions_node,
+                             const std::unordered_map<std::string, std::string>& template_map,
+                             const YAML::Node& user_config, const YAML::Node& pkg_config,
+                             const std::string& build_mode, const std::string& env_path) {
     std::string result = base_value;
 
     for (const auto& condition : conditions_node) {
-        std::string condition_str = condition["condition"].as<std::string>();
-        std::vector<std::string> tokens = tokenizer(condition_str);
-        bool condition_result = evaluate_condition(
-            tokens,
-            template_map,
-            user_config,
-            pkg_config,
-            build_mode,
-            env_path
-        );
+        std::string              condition_str = condition["condition"].as<std::string>();
+        std::vector<std::string> tokens        = tokenizer(condition_str);
+        bool                     condition_result =
+            evaluate_condition(tokens, template_map, user_config, pkg_config, build_mode, env_path);
         if (condition_result) {
             if (condition["action"]) {
                 std::string action = condition["action"].as<std::string>();
                 if (action == "set") {
                     result = condition["value"].as<std::string>();
-                    break; // No need to check further conditions
+                    break;  // No need to check further conditions
                 } else if (action == "append") {
                     result += " " + condition["value"].as<std::string>();
                 } else if (action == "prepend") {
@@ -255,7 +218,7 @@ std::string parse_conditions(
             } else {
                 // Default action is to set the value
                 result = condition["value"].as<std::string>();
-                break; // No need to check further conditions
+                break;  // No need to check further conditions
             }
         }
     }

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <vector>
+#include <functional>
 #include <string>
 #include <unordered_map>
-#include <functional>
+#include <vector>
 
-std::vector<std::string> topological_sort(const std::unordered_map<std::string, std::vector<std::string>>& adjacency_list);
+std::vector<std::string> topological_sort(
+    const std::unordered_map<std::string, std::vector<std::string>>& adjacency_list);
