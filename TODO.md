@@ -10,13 +10,13 @@
 | Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | - |
 | Not Started | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | - |
 | Not Started | Reduce the bash main script by moving some logic to the C++ backend. | - |
-| Not Started | Add tests. | - |
+| WIP | Add tests. | Yi |
 
 # User Interface and Interaction Logic
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Not Started | Add mkdocs integration. | - |
-| Not Started | (Nick) Improve templating documentation. | Nick |
+| Not Started | Improve templating documentation. | Nick |
 | Not Started | Allow rebuilding the whole cellar with a specific flag. | - |
 | Not Started | Allow saving a template of multiple packages. | - |
 | Not Started | Allow templating multiple packages at once. | - |
