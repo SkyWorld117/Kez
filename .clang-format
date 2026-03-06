@@ -1,0 +1,40 @@
+BasedOnStyle: Google
+
+ColumnLimit: 100
+IndentWidth: 4
+TabWidth:     4
+UseTab:       Never
+
+AlignConsecutiveMacros: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true
+
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: MultiLine
+BreakBeforeTernaryOperators: true
+
+CompactNamespaces: true
+FixNamespaceComments: true
+
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+IndentCaseLabels: true
+IndentWrappedFunctionNames: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: All
+ReflowComments: false
+SortUsingDeclarations: false
+
+SpaceAfterCStyleCast: true
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeParens: ControlStatements
