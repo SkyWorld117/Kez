@@ -10,7 +10,7 @@
 | Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
 | Not Started | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | - |
 | Not Started | Reduce the bash main script by moving some logic to the C++ backend. | - |
-| WIP | Add tests. | Yi |
+| Done | Add basic tests. | Yi |
 
 # User Interface and Interaction Logic
 | Status | Task Description | <div style="width:70px">Developer</div> |
@@ -34,7 +34,7 @@
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Not Started | Fix `acts` bad isolation. | - |
-| Done | Fix `gcc` wrong `stdc++` dynamic linking. | - |
+| Done | Fix `gcc` wrong `stdc++` dynamic linking. | Yi |
 | Not Started | Add `bear - build ear` package | Sophia |
 
 # Uncategorized

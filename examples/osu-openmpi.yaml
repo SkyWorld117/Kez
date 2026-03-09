@@ -16,7 +16,7 @@ cheese:
             enabled_value: -O3
   openmpi:
     description: Open Source Implementation of the Message Passing Interface
-    version: 5.0.8
+    version: 5.0.9
     compiler: system
 recipe:
   abstract_packages:
