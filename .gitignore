@@ -22,3 +22,7 @@ bin/test*
 # Ignore object files
 obj/
 *.o
+
+# Ignore slurm logs
+*.out
+*.err
