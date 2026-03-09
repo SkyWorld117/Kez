@@ -30,6 +30,13 @@ fetch_latest_web() {
     fi
 
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "${url}${latest}"
+
+    # Check if the file was downloaded successfully
+    if [ ! -f "${FROMAGER_WORKDIR}/.tmp/${latest}" ]; then
+        echo >&2 "Failed to download ${latest} from ${url}"
+        return 1
+    fi
+
     if [ ${ext} = "tar.xz" ]; then
         tar -xf "${latest}"
     elif [ ${ext} = "tar.gz" ]; then
@@ -74,6 +81,13 @@ fetch_latest_github() {
     fi
 
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${pkg}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
+
+    # Check if the file was downloaded successfully
+    if [ ! -f "${FROMAGER_WORKDIR}/.tmp/${pkg}-${tag}.tar.gz" ]; then
+        echo >&2 "Failed to download ${pkg} version ${tag} from GitHub"
+        return 1
+    fi
+
     tar -xzf "${FROMAGER_WORKDIR}/.tmp/${pkg}-${tag}.tar.gz"
 
     local version="${tag#v}"
@@ -93,6 +107,13 @@ fetch_latest_elfutils() {
     fi
 
     wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
+
+    # Check if the file was downloaded successfully
+    if [ ! -f "${FROMAGER_WORKDIR}/.tmp/elfutils.bz2" ]; then
+        echo >&2 "Failed to download elfutils from sourceware.org"
+        return 1
+    fi
+
     bzip2 -d "${FROMAGER_WORKDIR}/.tmp/elfutils.bz2"
     tar -xf "${FROMAGER_WORKDIR}/.tmp/elfutils" && cd "${FROMAGER_WORKDIR}/.tmp/elfutils"-*
 
