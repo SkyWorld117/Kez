@@ -34,7 +34,7 @@
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Not Started | Fix `acts` bad isolation. | - |
-| Not Started | Fix `gcc` wrong `stdc++` dynamic linking. | - |
+| WIP | Fix `gcc` wrong `stdc++` dynamic linking. | - |
 | Not Started | Add `bear - build ear` package | Sophia |
 
 # Uncategorized

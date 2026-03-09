@@ -263,10 +263,12 @@ if check_installation "gcc"; then
         --with-isl="${SYSTEM_PREFIX}" \
         --with-zstd-include="${SYSTEM_PREFIX}/include" \
         --with-zstd-lib="${SYSTEM_PREFIX}/lib" \
-        --with-stage1-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib" \
+        --with-stage1-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64" \
         --with-boot-ldflags="-L${SYSTEM_PREFIX}/lib -Wl,-rpath,${SYSTEM_PREFIX}/lib -L${SYSTEM_PREFIX}/lib64 -Wl,-rpath,${SYSTEM_PREFIX}/lib64"
+    export LD_RUN_PATH="${SYSTEM_PREFIX}/lib:${SYSTEM_PREFIX}/lib64"
     make -j"${FROMAGER_NPROC}"
     make install
+    unset LD_RUN_PATH
 
     cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
     echo -e "  gcc:\n    version: 11.5.0" >> "${SYSTEM_PREFIX}/state.yaml"
