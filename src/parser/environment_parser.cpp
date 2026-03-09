@@ -5,7 +5,7 @@ std::vector<std::string> parse_environment(
     const YAML::Node& user_config, const YAML::Node& user_config_pkg,
     const YAML::Node& user_config_context, const YAML::Node& pkg_config,
     const std::string& build_mode, const std::string& env_path) {
-    std::string              pkg_name = pkg_config["cheese"]["name"].as<std::string>();
+    std::string pkg_name = pkg_config["cheese"]["name"].as<std::string>();
     std::vector<std::string> env_vars;
 
     for (YAML::Node var : env_node) {

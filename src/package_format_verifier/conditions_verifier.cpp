@@ -19,8 +19,8 @@ bool verify_condition_format(std::string condition) {
 
     // Split the condition into tokens
     std::vector<std::string> tokens;
-    std::string              token;
-    char                     last_char = ' ';
+    std::string token;
+    char last_char = ' ';
     for (char c : condition) {
         if (isspace(c) || c == '(' || c == ')' || c == '&' || c == '|') {
             if ((c == '&' || c == '|') && last_char == c) {
@@ -61,7 +61,7 @@ bool verify_condition_format(std::vector<std::string> tokens) {
 
     // Handle parentheses - check if entire expression is wrapped in a single pair
     if (tokens[0] == "(") {
-        int    paren_count = 0;
+        int paren_count    = 0;
         size_t closing_pos = 0;
         for (size_t i = 0; i < tokens.size(); i++) {
             if (tokens[i] == "(") {
@@ -86,7 +86,7 @@ bool verify_condition_format(std::vector<std::string> tokens) {
     for (size_t i = 1; i < tokens.size() - 1; i++) {
         if (tokens[i] == "&&" || tokens[i] == "||") {
             // Check if this operator is at the top level (not inside parentheses)
-            int  paren_count  = 0;
+            int paren_count   = 0;
             bool is_top_level = true;
             for (size_t j = 0; j < i; j++) {
                 if (tokens[j] == "(") {

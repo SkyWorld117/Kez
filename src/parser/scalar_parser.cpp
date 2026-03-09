@@ -1,6 +1,6 @@
 #include "scalar_parser.h"
 
-std::string parse_scalar(const std::string&                            scalar_str,
+std::string parse_scalar(const std::string& scalar_str,
                          std::unordered_map<std::string, std::string>& template_map,
                          const YAML::Node& user_config, const YAML::Node& user_config_pkg,
                          const std::string& build_mode, const std::string& env_path) {
@@ -8,7 +8,7 @@ std::string parse_scalar(const std::string&                            scalar_st
     // using the template parser.
 
     std::string result = scalar_str;
-    size_t      pos    = 0;
+    size_t pos         = 0;
     while ((pos = result.find("${", pos)) != std::string::npos) {
         size_t end_pos = result.find('}', pos);
         if (end_pos == std::string::npos) {

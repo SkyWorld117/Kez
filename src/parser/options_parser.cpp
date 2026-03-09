@@ -1,6 +1,6 @@
 #include "options_parser.h"
 
-std::string parse_options(const YAML::Node                             &opts_node,
+std::string parse_options(const YAML::Node &opts_node,
                           std::unordered_map<std::string, std::string> &template_map,
                           const YAML::Node &user_config, const YAML::Node &user_config_pkg,
                           const YAML::Node &user_config_context, const YAML::Node &pkg_config,

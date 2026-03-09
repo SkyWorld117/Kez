@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
 
     std::unordered_map<std::string, std::string> config_options;
 
-    bool        has_cellar = false;
+    bool has_cellar = false;
     std::string cellar;
 
-    int  i              = 2;
+    int i               = 2;
     bool parsing_config = false;
     while (i < argc) {
         if (std::string(argv[i]) == "--config" || std::string(argv[i]) == "-c") {
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
         } else {
             // Handle configurations in format: <option>=<value>
             std::string option, value;
-            size_t      pos = std::string(argv[i]).find('=');
+            size_t pos = std::string(argv[i]).find('=');
             if (pos != std::string::npos) {
                 option = std::string(argv[i]).substr(0, pos);
                 value  = std::string(argv[i]).substr(pos + 1);
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Verify cellar
-    YAML::Node  config   = get_db_config(pkg_name);
+    YAML::Node config    = get_db_config(pkg_name);
     std::string pkg_type = config["cheese"]["type"].as<std::string>();
 
     if (pkg_type == "compiler" || pkg_type == "mpi" || pkg_type == "vendor") {

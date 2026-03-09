@@ -4,7 +4,7 @@
 // Replace inplace
 void filter(std::string& input) {
     std::vector<std::string> terms;
-    size_t                   pos = 0;
+    size_t pos = 0;
 
     while ((pos = input.find('"', pos)) != std::string::npos) {
         size_t end = input.find('"', pos + 1);

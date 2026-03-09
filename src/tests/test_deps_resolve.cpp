@@ -11,9 +11,9 @@ int main(int argc, char* argv[]) {
 
     std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>,
               std::unordered_map<std::string, std::string>>
-                                                 result = resolve_dependencies(pkg_name, true);
-    std::vector<std::string>                     all_dependencies  = result.first.first;
-    std::vector<std::string>                     dependencies      = result.first.second;
+        result                                = resolve_dependencies(pkg_name, true);
+    std::vector<std::string> all_dependencies = result.first.first;
+    std::vector<std::string> dependencies     = result.first.second;
     std::unordered_map<std::string, std::string> abstract_packages = result.second;
     if (dependencies.empty()) {
         ERROR("No dependencies found for package: " + pkg_name);

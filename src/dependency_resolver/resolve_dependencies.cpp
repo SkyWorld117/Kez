@@ -1,9 +1,9 @@
 #include "resolve_dependencies.h"
 
 std::unordered_map<std::string, std::vector<std::string>> adjacency_list;
-std::vector<std::string>                                  system_packages;
-std::unordered_map<std::string, std::string>              abstract_packages;
-std::unordered_map<std::string, bool>                     use_optional_packages;
+std::vector<std::string> system_packages;
+std::unordered_map<std::string, std::string> abstract_packages;
+std::unordered_map<std::string, bool> use_optional_packages;
 
 void build_adjacency_list(const std::string& pkg_name, const std::string& target_pkg_name,
                           bool interactive) {
@@ -134,8 +134,8 @@ std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>,
     // Unify the adjacency list to ensure all abstract packages are resolved to their selected implementations
     std::unordered_map<std::string, std::vector<std::string>> unified_adjacency_list;
     for (const auto& pair : adjacency_list) {
-        const std::string& name          = pair.first;
-        std::string        resolved_name = name;
+        const std::string& name   = pair.first;
+        std::string resolved_name = name;
         if (abstract_packages.find(name) != abstract_packages.end()) {
             resolved_name = abstract_packages[name];
         }

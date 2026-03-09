@@ -1,6 +1,6 @@
 #include "property_parser.h"
 
-std::string parse_property(const std::string&                            property_name,
+std::string parse_property(const std::string& property_name,
                            std::unordered_map<std::string, std::string>& template_map,
                            const YAML::Node& user_config, const YAML::Node& user_config_pkg,
                            const std::string& build_mode, const std::string& env_path) {
@@ -68,7 +68,7 @@ std::string parse_property(const std::string&                            propert
             // Information about external packages is stored in the `config.yaml` file
             std::filesystem::path fromager_workdir(getenv("FROMAGER_WORKDIR"));
             std::filesystem::path config_path = fromager_workdir / "config.yaml";
-            YAML::Node            config_node = YAML::LoadFile(config_path.string());
+            YAML::Node config_node            = YAML::LoadFile(config_path.string());
             if (config_node["fromager"]["external"] &&
                 config_node["fromager"]["external"][package_name]) {
                 if (!config_node["fromager"]["external"][package_name]["prefix"].IsNull()) {
@@ -100,7 +100,7 @@ std::string parse_property(const std::string&                            propert
         if (pkg_config_node["cheese"]["type"].as<std::string>() == "system") {
             std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
             std::filesystem::path state_path = fromager_env / "system" / "state.yaml";
-            YAML::Node            state_node = YAML::LoadFile(state_path.string());
+            YAML::Node state_node            = YAML::LoadFile(state_path.string());
             if (state_node["cheese"] && state_node["cheese"][package_name] &&
                 state_node["cheese"][package_name]["version"]) {
                 return state_node["cheese"][package_name]["version"].as<std::string>();
@@ -112,7 +112,7 @@ std::string parse_property(const std::string&                            propert
             // For external packages, we can use the FROMAGER_ENV variable
             std::filesystem::path fromager_workdir(getenv("FROMAGER_WORKDIR"));
             std::filesystem::path config_path = fromager_workdir / "config.yaml";
-            YAML::Node            config_node = YAML::LoadFile(config_path.string());
+            YAML::Node config_node            = YAML::LoadFile(config_path.string());
             if (config_node["fromager"]["external"] &&
                 config_node["fromager"]["external"][package_name] &&
                 config_node["fromager"]["external"][package_name]["version"]) {
@@ -144,7 +144,7 @@ std::string parse_property(const std::string&                            propert
     }
 }
 
-std::string parse_complex_property(const std::string&                            template_str,
+std::string parse_complex_property(const std::string& template_str,
                                    std::unordered_map<std::string, std::string>& template_map,
                                    const YAML::Node& user_config, const YAML::Node& user_config_pkg,
                                    const std::string& build_mode, const std::string& env_path) {
@@ -175,13 +175,13 @@ std::string parse_complex_property(const std::string&                           
     return final_value;
 }
 
-std::string parse_properties_in_scalar(const std::string&                            command,
+std::string parse_properties_in_scalar(const std::string& command,
                                        std::unordered_map<std::string, std::string>& template_map,
-                                       const YAML::Node&                             user_config,
-                                       const YAML::Node&  user_config_pkg,
+                                       const YAML::Node& user_config,
+                                       const YAML::Node& user_config_pkg,
                                        const std::string& build_mode, const std::string& env_path) {
     std::string result = command;
-    size_t      pos    = 0;
+    size_t pos         = 0;
     while ((pos = result.find("${", pos)) != std::string::npos) {
         size_t end_pos = result.find('}', pos);
         if (end_pos == std::string::npos) {

@@ -1,8 +1,8 @@
 #include "package_parser.h"
 
-std::vector<std::string> parse_package(const std::string&                            package_name,
+std::vector<std::string> parse_package(const std::string& package_name,
                                        std::unordered_map<std::string, std::string>& template_map,
-                                       const YAML::Node&                             user_config,
+                                       const YAML::Node& user_config,
                                        const YAML::Node& user_config_pkg,
                                        const YAML::Node& user_config_context,
                                        const YAML::Node& pkg_config, const std::string& build_mode,
@@ -22,7 +22,7 @@ std::vector<std::string> parse_package(const std::string&                       
     // Build vendor packages only if they are not already built
     if (pkg_config["cheese"]["type"].as<std::string>() == "vendor" &&
         user_config_context["version"]) {
-        std::string           version     = user_config_context["version"].as<std::string>();
+        std::string version               = user_config_context["version"].as<std::string>();
         std::filesystem::path vendor_path = std::filesystem::path(getenv("FROMAGER_ENV")) /
                                             "vendors" / (package_name + "-" + version);
         if (std::filesystem::exists(vendor_path)) {
@@ -35,7 +35,7 @@ std::vector<std::string> parse_package(const std::string&                       
     // Download
     if (pkg_config["cheese"]["source"] && user_config_pkg["version"]) {
         std::string version = user_config_pkg["version"].as<std::string>();
-        bool        found   = false;
+        bool found          = false;
         for (const auto& release : pkg_config["cheese"]["source"]["releases"]) {
             std::string release_version = release["version"].as<std::string>();
             if (release_version == version) {
@@ -133,9 +133,9 @@ std::vector<std::string> parse_package(const std::string&                       
         std::pair<std::vector<std::string>, std::string> parsed_configurations =
             parse_configuration(configurations, template_map, user_config, user_config_pkg,
                                 user_config_context_config, pkg_config, build_mode, env_path);
-        std::vector<std::string> env_config  = parsed_configurations.first;
-        std::string              opts_config = parsed_configurations.second;
-        std::string              cmd;
+        std::vector<std::string> env_config = parsed_configurations.first;
+        std::string opts_config             = parsed_configurations.second;
+        std::string cmd;
         if (pkg_config["cheese"]["build"]["configurations"]["command"]) {
             cmd = pkg_config["cheese"]["build"]["configurations"]["command"].as<std::string>();
         } else {

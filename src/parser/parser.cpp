@@ -81,7 +81,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
     }
 
     // Convert package_instructions to YAML format
-    YAML::Node               instructions_yaml = YAML::Node(YAML::NodeType::Sequence);
+    YAML::Node instructions_yaml = YAML::Node(YAML::NodeType::Sequence);
     std::vector<std::string> all_dependencies =
         user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
     std::reverse(all_dependencies.begin(), all_dependencies.end());

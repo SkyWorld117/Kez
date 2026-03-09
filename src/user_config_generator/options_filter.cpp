@@ -1,6 +1,6 @@
 #include "options_filter.h"
 
-YAML::Node filtered_options(const YAML::Node&               options_node,
+YAML::Node filtered_options(const YAML::Node& options_node,
                             const std::vector<std::string>& all_dependencies) {
     YAML::Node opts = YAML::Node(YAML::NodeType::Sequence);
     for (const auto& opt : options_node) {

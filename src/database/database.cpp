@@ -1,7 +1,7 @@
 #include "database.h"
 
 std::unordered_map<std::string, YAML::Node> db_cache;
-std::filesystem::path                       db_path(getenv("FROMAGER_DB"));
+std::filesystem::path db_path(getenv("FROMAGER_DB"));
 
 YAML::Node get_db_config(std::string pkg_name) {
     // Check if the config is already cached

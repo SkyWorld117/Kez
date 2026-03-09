@@ -1,6 +1,6 @@
 #include "configurations_filter.h"
 
-YAML::Node filtered_configurations(const YAML::Node&               config_node,
+YAML::Node filtered_configurations(const YAML::Node& config_node,
                                    const std::vector<std::string>& all_dependencies) {
     YAML::Node configs = YAML::Node(YAML::NodeType::Map);
     if (config_node["environment"]) {

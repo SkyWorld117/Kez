@@ -54,7 +54,7 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
 YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
     std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>,
               std::unordered_map<std::string, std::string>>
-                             result           = resolve_dependencies(pkg_name, interactive);
+        result                                = resolve_dependencies(pkg_name, interactive);
     std::vector<std::string> all_dependencies = result.first.first;
     std::vector<std::string> dependencies     = result.first.second;
     std::unordered_map<std::string, std::string> abstract_packages = result.second;

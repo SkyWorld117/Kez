@@ -24,7 +24,7 @@ bool verify_templates(const YAML::Node& node) {
         return true;
     } else if (node.IsScalar()) {
         std::string str = node.as<std::string>();
-        size_t      pos = 0;
+        size_t pos      = 0;
         while ((pos = str.find("${", pos)) != std::string::npos) {
             // size_t end_pos = str.find('}', pos + 2);
             size_t end_pos;

@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
     std::filesystem::path factory_path = std::filesystem::path(argv[2]);
     std::filesystem::path output_path  = factory_path / "ins.yaml";
-    std::ofstream         ofs(output_path.string());
+    std::ofstream ofs(output_path.string());
     if (!ofs) {
         ERROR("Failed to create instruction file");
         exit(EXIT_FAILURE);
