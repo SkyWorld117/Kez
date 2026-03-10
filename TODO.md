@@ -8,7 +8,7 @@
 | Not Started | Add `state.yaml` for compilers and MPIs to indicate which compilers and MPIs are available. | - |
 | Done | Use `export` for environment variables instead of initializing them in as "one-liner" before executing the command. | Yi |
 | Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
-| Not Started | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | - |
+| Done | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | Yi |
 | Not Started | Reduce the bash main script by moving some logic to the C++ backend. | - |
 | Done | Add basic tests. | Yi |
 
