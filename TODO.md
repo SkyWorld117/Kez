@@ -6,7 +6,7 @@
 | Not Started | Fix CMake multithreading. (Use `cmake --build . --parallel` instead of `make -j`). | Nick |
 | Not Started | Unify the path finding logic by using a C++ executable/header that can be called from both the CLI and the C++ backend. | - |
 | Not Started | Add `state.yaml` for compilers and MPIs to indicate which compilers and MPIs are available. | - |
-| Not Started | Use `export` for environment variables instead of initializing them in as "one-liner" before executing the command. | - |
+| Done | Use `export` for environment variables instead of initializing them in as "one-liner" before executing the command. | Yi |
 | Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
 | Not Started | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | - |
 | Not Started | Reduce the bash main script by moving some logic to the C++ backend. | - |

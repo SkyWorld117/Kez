@@ -156,17 +156,26 @@ std::vector<std::string> parse_package(const std::string& package_name,
         } else {
             opts_config = cmd;
         }
-        if (opts_config.empty()) {
-            for (const auto& env : env_config) {
-                instructions.push_back("export " + env);
-            }
-        } else {
-            std::string command = opts_config;
-            std::reverse(env_config.begin(), env_config.end());
-            for (const auto& env : env_config) {
-                command = env + " " + command;
-            }
-            instructions.push_back(command);
+        // if (opts_config.empty()) {
+        //     for (const auto& env : env_config) {
+        //         instructions.push_back("export " + env);
+        //     }
+        // } else {
+        //     std::string command = opts_config;
+        //     std::reverse(env_config.begin(), env_config.end());
+        //     for (const auto& env : env_config) {
+        //         command = env + " " + command;
+        //     }
+        //     instructions.push_back(command);
+        // }
+        for (const auto& env : env_config) {
+            instructions.push_back("export " + env);
+        }
+        if (!opts_config.empty()) {
+            instructions.push_back(opts_config);
+        }
+        for (const auto& env : env_config) {
+            instructions.push_back("unset " + env.substr(0, env.find('=')));
         }
     }
 
