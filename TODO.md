@@ -27,7 +27,7 @@
 | Not Started | Allow overriding a user config with command line options. | - |
 | Done | When `workdir` is not set, throw an error instead of using the default `~/.fromager` to avoid confusion. | Yi |
 | Not Started | Add environment module interface to allow users to load the environment of a package with `module load <package>` after installation. | - |
-| Not Started | `wget` should throw an error when the download fails instead of silently continuing and causing build failures later. | - |
+| Done | `wget` should throw an error when the download fails instead of silently continuing and causing build failures later. | Yi |
 | Not Started | Add a TUI interface for easier configuration and package management. | - |
 
 # Package Development and Configurations
