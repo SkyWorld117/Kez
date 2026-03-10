@@ -1,10 +1,11 @@
 #pragma once
 
 #include <yaml-cpp/yaml.h>
+
+#include <cctype>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cctype>
 
 #include "../colors/colored_io.h"
 

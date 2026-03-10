@@ -1,7 +1,8 @@
 #include <yaml-cpp/yaml.h>
-#include <iostream>
-#include <fstream>
+
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 
 #include "../colors/colored_io.h"
 #include "parser.h"
@@ -18,8 +19,8 @@ int main(int argc, char* argv[]) {
     }
 
     std::string config_file = argv[1];
-    std::string build_mode = argv[2];
-    std::string env_path = argv[3];
+    std::string build_mode  = argv[2];
+    std::string env_path    = argv[3];
 
     YAML::Node user_config;
     user_config = YAML::LoadFile(config_file);

@@ -6,8 +6,8 @@ void traverse(const std::string& path, const std::string& value, YAML::Node& nod
         return;
     }
 
-    size_t pos = path.find('.');
-    std::string key = (pos == std::string::npos) ? path : path.substr(0, pos);
+    size_t pos                 = path.find('.');
+    std::string key            = (pos == std::string::npos) ? path : path.substr(0, pos);
     std::string remaining_path = (pos == std::string::npos) ? "" : path.substr(pos + 1);
 
     if (!node[key]) {

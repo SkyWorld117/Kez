@@ -1,6 +1,7 @@
 #include "toposort.h"
 
-std::vector<std::string> topological_sort(const std::unordered_map<std::string, std::vector<std::string>>& adjacency_list) {
+std::vector<std::string> topological_sort(
+    const std::unordered_map<std::string, std::vector<std::string>>& adjacency_list) {
     std::vector<std::string> sorted;
     std::unordered_map<std::string, bool> visited;
 

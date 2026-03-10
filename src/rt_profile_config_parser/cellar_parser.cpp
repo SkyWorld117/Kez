@@ -19,8 +19,9 @@ YAML::Node parse_cellar_config(const YAML::Node& factory_config, const YAML::Nod
 
         std::string sibling_name = cellar_config["sibling"].as<std::string>();
         for (const auto& sibling_cellar : factory_config["cellars"]) {
-            if (!sibling_cellar.IsMap() || !sibling_cellar["name"] || !sibling_cellar["name"].IsScalar()) {
-                continue; // Skip invalid sibling entries
+            if (!sibling_cellar.IsMap() || !sibling_cellar["name"] ||
+                !sibling_cellar["name"].IsScalar()) {
+                continue;  // Skip invalid sibling entries
             }
 
             if (sibling_cellar["name"].as<std::string>() == sibling_name) {
@@ -44,8 +45,9 @@ YAML::Node parse_cellar_config(const YAML::Node& factory_config, const YAML::Nod
         YAML::Node run_instructions(YAML::NodeType::Map);
         run_instructions["name"] = profile_config["name"].as<std::string>();
         INFO("  Parsing profile: " + profile_config["name"].as<std::string>());
-        auto [instructions, summary_regex] = parse_run_config(factory_config, cellar_config, profile_config);
-        run_instructions["instructions"] = instructions;
+        auto [instructions, summary_regex] =
+            parse_run_config(factory_config, cellar_config, profile_config);
+        run_instructions["instructions"]  = instructions;
         run_instructions["summary_regex"] = summary_regex;
         profile_instructions.push_back(run_instructions);
     }

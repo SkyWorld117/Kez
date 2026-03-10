@@ -1,7 +1,8 @@
 #include <yaml-cpp/yaml.h>
-#include <iostream>
-#include <fstream>
+
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <string>
 
 #include "../colors/colored_io.h"
@@ -13,8 +14,8 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    std::string pkg_name = argv[1];
-    bool interactive = argc == 3; // Interactive only if saving to a file
+    std::string pkg_name   = argv[1];
+    bool interactive       = argc == 3;  // Interactive only if saving to a file
     YAML::Node user_config = gen_user_config(pkg_name, interactive);
 
     // Output the generated configuration

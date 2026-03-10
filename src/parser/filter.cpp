@@ -33,6 +33,6 @@ void filter(std::string& input) {
             if (i != terms.size() - 1) joined += ' ';
         }
         input.replace(pos + 1, end - pos - 1, joined);
-        pos += joined.length() + 2; // Move past the replaced term
+        pos += joined.length() + 2;  // Move past the replaced term
     }
 }

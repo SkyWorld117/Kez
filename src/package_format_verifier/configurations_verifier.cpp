@@ -15,7 +15,8 @@ bool verify_configurations(const YAML::Node& node) {
     }
 
     if (!node["environment"] && !node["options"]) {
-        WARNING("Configurations should have either 'environment' or 'options', otherwise consider removing this section.");
+        WARNING("Configurations should have either 'environment' or 'options', otherwise consider "
+                "removing this section.");
     }
     return true;
 }

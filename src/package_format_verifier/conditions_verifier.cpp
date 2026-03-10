@@ -1,13 +1,13 @@
 #include "conditions_verifier.h"
 
-// condition = 
-//     "required" <dependency> | 
-//     "environment" <variable> | 
-//     <option> <enabled:bool> [<value>] | 
+// condition =
+//     "required" <dependency> |
+//     "environment" <variable> |
+//     <option> <enabled:bool> [<value>] |
 //     "version" <version_range> |
-//     <condition> && <condition> | 
-//     <condition> || <condition> | 
-//     "not" <condition> | 
+//     <condition> && <condition> |
+//     <condition> || <condition> |
+//     "not" <condition> |
 //     "(" <condition> ")"
 
 bool verify_condition_format(std::vector<std::string> tokens);
@@ -56,12 +56,12 @@ bool verify_condition_format(std::vector<std::string> tokens) {
     }
 
     if (tokens.size() == 1) {
-        return false; // Single token conditions are not valid
+        return false;  // Single token conditions are not valid
     }
 
     // Handle parentheses - check if entire expression is wrapped in a single pair
     if (tokens[0] == "(") {
-        int paren_count = 0;
+        int paren_count    = 0;
         size_t closing_pos = 0;
         for (size_t i = 0; i < tokens.size(); i++) {
             if (tokens[i] == "(") {
@@ -86,7 +86,7 @@ bool verify_condition_format(std::vector<std::string> tokens) {
     for (size_t i = 1; i < tokens.size() - 1; i++) {
         if (tokens[i] == "&&" || tokens[i] == "||") {
             // Check if this operator is at the top level (not inside parentheses)
-            int paren_count = 0;
+            int paren_count   = 0;
             bool is_top_level = true;
             for (size_t j = 0; j < i; j++) {
                 if (tokens[j] == "(") {
@@ -98,7 +98,8 @@ bool verify_condition_format(std::vector<std::string> tokens) {
             if (paren_count == 0) {
                 std::vector<std::string> left_tokens(tokens.begin(), tokens.begin() + i);
                 std::vector<std::string> right_tokens(tokens.begin() + i + 1, tokens.end());
-                return verify_condition_format(left_tokens) && verify_condition_format(right_tokens);
+                return verify_condition_format(left_tokens) &&
+                       verify_condition_format(right_tokens);
             }
         }
     }
@@ -172,7 +173,7 @@ bool verify_condition_format(std::vector<std::string> tokens) {
                     return false;
                 }
             }
-            
+
             // Option with boolean only
             if (tokens.size() == 2) {
                 return true;
@@ -187,9 +188,9 @@ bool verify_condition_format(std::vector<std::string> tokens) {
                     }
                 }
                 return true;
-            }
-            else {
-                ERROR("Option condition can have at most 3 tokens: option, enabled, and optional value.");
+            } else {
+                ERROR("Option condition can have at most 3 tokens: option, enabled, and optional "
+                      "value.");
                 return false;
             }
         }

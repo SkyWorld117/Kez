@@ -1,8 +1,9 @@
 #pragma once
 
 #include <yaml-cpp/yaml.h>
-#include <vector>
+
 #include <string>
+#include <vector>
 
 #include "configurations_filter.h"
 

@@ -1,15 +1,10 @@
 #include "environment_parser.h"
 
 std::vector<std::string> parse_environment(
-    const YAML::Node& env_node,
-    std::unordered_map<std::string, std::string>& template_map,
-    const YAML::Node& user_config,
-    const YAML::Node& user_config_pkg,
-    const YAML::Node& user_config_context,
-    const YAML::Node& pkg_config,
-    const std::string& build_mode,
-    const std::string& env_path
-) {
+    const YAML::Node& env_node, std::unordered_map<std::string, std::string>& template_map,
+    const YAML::Node& user_config, const YAML::Node& user_config_pkg,
+    const YAML::Node& user_config_context, const YAML::Node& pkg_config,
+    const std::string& build_mode, const std::string& env_path) {
     std::string pkg_name = pkg_config["cheese"]["name"].as<std::string>();
     std::vector<std::string> env_vars;
 
@@ -22,9 +17,11 @@ std::vector<std::string> parse_environment(
 
         bool is_required = true;
         if (var["requires"]) {
-            std::vector<std::string> all_dependencies = user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
+            std::vector<std::string> all_dependencies =
+                user_config["recipe"]["dependencies"].as<std::vector<std::string>>();
             for (const auto& dep : var["requires"]) {
-                if (std::find(all_dependencies.begin(), all_dependencies.end(), dep.as<std::string>()) == all_dependencies.end()) {
+                if (std::find(all_dependencies.begin(), all_dependencies.end(),
+                              dep.as<std::string>()) == all_dependencies.end()) {
                     is_required = false;
                     break;
                 }
@@ -53,29 +50,16 @@ std::vector<std::string> parse_environment(
 
         std::string value;
         if (var["conditions"]) {
-            value = parse_conditions(
-                base_value,
-                var["conditions"],
-                template_map,
-                user_config,
-                pkg_config,
-                build_mode,
-                env_path
-            );
+            value = parse_conditions(base_value, var["conditions"], template_map, user_config,
+                                     pkg_config, build_mode, env_path);
         } else {
             value = base_value;
         }
 
         if (!value.empty()) {
             // Resolve templates in the value
-            value = parse_scalar(
-                value,
-                template_map,
-                user_config,
-                user_config_pkg,
-                build_mode,
-                env_path
-            );
+            value = parse_scalar(value, template_map, user_config, user_config_pkg, build_mode,
+                                 env_path);
             env_vars.push_back(var_name + "=\"" + value + "\"");
         }
 

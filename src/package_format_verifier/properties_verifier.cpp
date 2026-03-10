@@ -2,12 +2,14 @@
 
 bool verify_flags(const YAML::Node& node) {
     if (!node.IsMap()) {
-        ERROR("Error at '" + std::to_string(node.Mark().line) + "':\n"
+        ERROR("Error at '" + std::to_string(node.Mark().line) +
+              "':\n"
               "Flags must be a map.");
         return false;
     }
     if (node["default"] && !node["default"].IsScalar()) {
-        ERROR("Error at '" + std::to_string(node.Mark().line) + "':\n"
+        ERROR("Error at '" + std::to_string(node.Mark().line) +
+              "':\n"
               "The 'default' key must be a scalar value.");
         return false;
     }
@@ -15,8 +17,10 @@ bool verify_flags(const YAML::Node& node) {
         return false;
     }
     if (!node["default"] && !node["conditions"]) {
-        WARNING("At '" + std::to_string(node.Mark().line) + "':\n"
-                "Flags should have either a 'default' value or 'conditions', otherwise consider removing this section.");
+        WARNING("At '" + std::to_string(node.Mark().line) +
+                "':\n"
+                "Flags should have either a 'default' value or 'conditions', otherwise consider "
+                "removing this section.");
     }
 
     return true;
