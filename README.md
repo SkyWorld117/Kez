@@ -48,3 +48,5 @@ You'll then need to stage the formatted changes with 'git add' and commit again.
 At the moment, the repository is mainly maintained by Team RACKlette. If you want to contribute, please feel free to open an issue or a pull request.
 
 For RACKlette members, please refer to the [TODO list](TODO.md) for the current tasks and their status. If you want to take on a task, please contact me (@SkyWorld117) first then update the TODO list accordingly to avoid duplicated work. The `main` branch is protected, any form of update or contribution should be done through pull requests.
+
+A pull request can only be merged if it passes at least the `test-01.sh` check, which is the only test we have at the moment. Contributors are asked to perform the test on their site before pushing the code. This will likely never be automated as a CI check because of the intensive compilation and the distributed MPI tests.
