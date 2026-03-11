@@ -34,6 +34,7 @@
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Not Started | Fix `acts` bad isolation. | - |
+| Not Started | Update `exascale-climate-emulator` to the public GitHub version, possibly remove the sketchy `patchelf` logic. | - |
 | Done | Fix `gcc` wrong `stdc++` dynamic linking. | Yi |
 | Not Started | Add `bear - build ear` package | Sophia |
 
