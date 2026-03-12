@@ -104,11 +104,10 @@ cheese:
           description: Executable linker flags
           enabled_value:
             default: -Wl,-rpath,${compiler.prefix}/lib64
-    postprocessing: cmake --build . -j && cmake --install .
-    # stages:
-    #   - target: ~
-    #     multithreaded: false
-    #   - target: install
+    stages:
+      - target: ~
+        multithreaded: true
+      - target: install
 
   properties:
     ldflags:
