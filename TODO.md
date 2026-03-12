@@ -3,7 +3,7 @@
 |------------------|--------|-----------|
 | Not Started | Add caching system to store source files, reduce redundant downloads and rebuild without internet connection. | - |
 | Not Started | Better source file handling (e.g. support for different source file name patterns). | - |
-| Not Started | Fix CMake multithreading. (Use `cmake --build . --parallel` instead of `make -j`). | Nick |
+| Done | Fix CMake multithreading. (Use `cmake --build . --parallel` instead of `make -j`). | Nick |
 | Not Started | Unify the path finding logic by using a C++ executable/header that can be called from both the CLI and the C++ backend. | - |
 | Not Started | Add `state.yaml` for compilers and MPIs to indicate which compilers and MPIs are available. | - |
 | Done | Use `export` for environment variables instead of initializing them in as "one-liner" before executing the command. | Yi |
