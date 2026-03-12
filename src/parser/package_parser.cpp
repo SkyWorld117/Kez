@@ -1,7 +1,5 @@
 #include "package_parser.h"
 
-#include <string>
-
 std::vector<std::string> parse_package(const std::string& package_name,
                                        std::unordered_map<std::string, std::string>& template_map,
                                        const YAML::Node& user_config,
