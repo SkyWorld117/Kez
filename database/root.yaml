@@ -106,7 +106,6 @@ cheese:
             default: -Wl,-rpath,${compiler.prefix}/lib64
     stages:
       - target: ~
-        multithreaded: true
       - target: install
 
   properties:
