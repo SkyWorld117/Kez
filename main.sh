@@ -795,3 +795,5 @@ fgr () {
     fi
 
 }
+
+export -f fgr
