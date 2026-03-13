@@ -193,12 +193,12 @@ std::vector<std::string> parse_package(const std::string& package_name,
         YAML::Node stages = pkg_config["cheese"]["build"]["stages"];
 
         for (const auto& stage : stages) {
-            std::string target;
+            std::string stage_target;
             if (stage["target"].IsScalar()) {
-                target = parse_scalar(stage["target"].as<std::string>(), template_map, user_config,
-                                      user_config_pkg, build_mode, env_path);
+                stage_target = parse_scalar(stage["target"].as<std::string>(), template_map,
+                                            user_config, user_config_pkg, build_mode, env_path);
             } else if (stage["target"].IsNull()) {
-                target = "";  // Default to empty string if not specified
+                stage_target = "";  // Default to empty string if not specified
             } else {
                 ERROR("Invalid target type in stage: " + stage["target"].Type());
                 exit(EXIT_FAILURE);
@@ -220,8 +220,8 @@ std::vector<std::string> parse_package(const std::string& package_name,
                     stage_cmd += " --parallel " + threads;
                 }
 
-                if (!target.empty()) {
-                    stage_cmd += " --target " + target;
+                if (!stage_target.empty()) {
+                    stage_cmd += " --target " + stage_target;
                 }
             } else {
                 stage_cmd = "make";
@@ -230,8 +230,8 @@ std::vector<std::string> parse_package(const std::string& package_name,
                     stage_cmd += " -j" + threads;
                 }
 
-                if (!target.empty()) {
-                    stage_cmd = " " + target;
+                if (!stage_target.empty()) {
+                    stage_cmd = " " + stage_target;
                 }
             }
 
