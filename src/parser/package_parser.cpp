@@ -257,11 +257,7 @@ std::vector<std::string> parse_package(const std::string& package_name,
                     stage_cmd = env + " " + stage_cmd;
                 }
                 if (!parsed_stage_configurations.second.empty()) {
-                    if (toolchain == "cmake") {
-                        stage_cmd += " -- " + parsed_stage_configurations.second;
-                    } else {
-                        stage_cmd += " " + parsed_stage_configurations.second;
-                    }
+                    stage_cmd += " " + parsed_stage_configurations.second;
                 }
             }
 
