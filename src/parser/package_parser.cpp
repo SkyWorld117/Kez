@@ -231,7 +231,7 @@ std::vector<std::string> parse_package(const std::string& package_name,
                 }
 
                 if (!stage_target.empty()) {
-                    stage_cmd = " " + stage_target;
+                    stage_cmd += " " + stage_target;
                 }
             }
 
