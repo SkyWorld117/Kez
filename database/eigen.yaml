@@ -24,6 +24,11 @@ cheese:
           description: Build type
           enabled_value:
             default: Release
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
     stages:
       - target: ~
       - target: install
