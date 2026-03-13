@@ -184,6 +184,11 @@ std::vector<std::string> parse_package(const std::string& package_name,
         INFO("- Stages for package: " + package_name);
     }
     std::string threads = getenv("FROMAGER_NPROC");
+
+    std::string toolchain = "";
+    if (pkg_config["cheese"]["toolchain"])
+        toolchain = pkg_config["cheese"]["toolchain"].as<std::string>();
+
     if (pkg_config["cheese"]["build"]["stages"]) {
         YAML::Node stages = pkg_config["cheese"]["build"]["stages"];
 
@@ -206,14 +211,28 @@ std::vector<std::string> parse_package(const std::string& package_name,
                 multithreaded = true;  // Default to true if not specified
             }
 
-            if (!stage_target.empty()) {
-                stage_target = " " + stage_target;
-            }
+            std::string stage_cmd;
 
-            if (multithreaded && !threads.empty()) {
-                stage_target = "make -j" + threads + stage_target;
+            if (toolchain == "cmake") {
+                stage_cmd = "cmake --build .";
+
+                if (multithreaded && !threads.empty()) {
+                    stage_cmd += " --parallel " + threads;
+                }
+
+                if (!stage_target.empty()) {
+                    stage_cmd += " --target " + stage_target;
+                }
             } else {
-                stage_target = "make" + stage_target;
+                stage_cmd = "make";
+
+                if (multithreaded && !threads.empty()) {
+                    stage_cmd += " -j" + threads;
+                }
+
+                if (!stage_target.empty()) {
+                    stage_cmd += " " + stage_target;
+                }
             }
 
             if (stage["configurations"]) {
@@ -235,14 +254,14 @@ std::vector<std::string> parse_package(const std::string& package_name,
                 std::vector<std::string> stage_env_config = parsed_stage_configurations.first;
                 std::reverse(stage_env_config.begin(), stage_env_config.end());
                 for (const auto& env : stage_env_config) {
-                    stage_target = env + " " + stage_target;
+                    stage_cmd = env + " " + stage_cmd;
                 }
                 if (!parsed_stage_configurations.second.empty()) {
-                    stage_target += " " + parsed_stage_configurations.second;
+                    stage_cmd += " " + parsed_stage_configurations.second;
                 }
             }
 
-            instructions.push_back(stage_target);
+            instructions.push_back(stage_cmd);
         }
     }
 
