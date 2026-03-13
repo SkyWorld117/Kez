@@ -9,7 +9,7 @@
 | Done | Use `export` for environment variables instead of initializing them in as "one-liner" before executing the command. | Yi |
 | Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
 | Done | Allow missing packages in the global configuration as long as they are not required by any package in the user configuration. | Yi |
-| Not Started | Reduce the bash main script by moving some logic to the C++ backend. | Yi |
+| WIP | Reduce the bash main script by moving some logic to the C++ backend. | Yi |
 | Done | Add basic tests. | Yi |
 
 # User Interface and Interaction Logic

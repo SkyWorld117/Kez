@@ -461,6 +461,20 @@ else
     echo "yaml-cpp is already installed, skipping..."
 fi
 
+# argparse
+folder_and_version=$(fetch_latest_github "p-ranav/argparse")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing argparse..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_WORKDIR}/.tmp/${folder}"
+    cp -r include/argparse "${SYSTEM_PREFIX}/include/argparse"
+    cd "${FROMAGER_WORKDIR}/.tmp" && rm -rf *
+    echo -e "  argparse:\n    version: ${version}" >> "${SYSTEM_PREFIX}/state.yaml"
+else
+    echo "argparse is already installed, skipping..."
+fi
+
 # patchelf
 if check_installation "patchelf"; then
     echo "Installing patchelf..."
