@@ -1,4 +1,4 @@
-#include "options_parser.h"
+#include <parser/options_parser.hpp>
 
 std::string parse_options(const YAML::Node &opts_node,
                           std::unordered_map<std::string, std::string> &template_map,

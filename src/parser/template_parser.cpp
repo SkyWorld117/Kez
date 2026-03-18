@@ -1,4 +1,4 @@
-#include "template_parser.h"
+#include <parser/template_parser.hpp>
 
 std::string parse_template(const std::string& template_str,
                            std::unordered_map<std::string, std::string>& template_map,

@@ -1,4 +1,4 @@
-#include "resource_manager.h"
+#include <rt_profile_config_parser/resource_manager.hpp>
 
 std::string wrap_with_resource_manager(
     const std::string& target, const std::string& launcher, const std::string& launcher_opts,

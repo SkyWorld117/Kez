@@ -1,17 +1,14 @@
 #include <yaml-cpp/yaml.h>
 
-#include <algorithm>
+#include <cmdline_parser/traverse.hpp>
+#include <colors/colored_io.hpp>
+#include <database/database.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <parser/parser.hpp>
 #include <string>
-#include <vector>
-
-#include "../colors/colored_io.h"
-#include "../database/database.h"
-#include "../parser/parser.h"
-#include "../user_config_generator/user_config_generator.h"
-#include "traverse.h"
+#include <user_config_generator/user_config_generator.hpp>
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {

@@ -1,4 +1,4 @@
-#include "run_config_parser.h"
+#include <rt_profile_config_parser/run_config_parser.hpp>
 
 std::string multilevel_fetch(const YAML::Node& factory_config, const YAML::Node& cellar_config,
                              const YAML::Node& profile_config, const std::string& key) {

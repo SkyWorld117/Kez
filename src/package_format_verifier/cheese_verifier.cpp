@@ -1,4 +1,4 @@
-#include "cheese_verifier.h"
+#include <package_format_verifier/cheese_verifier.hpp>
 
 bool verify_cheese(const YAML::Node& node) {
     if (!node.IsMap()) {

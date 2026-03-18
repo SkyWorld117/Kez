@@ -1,12 +1,10 @@
 #include <yaml-cpp/yaml.h>
 
-#include <filesystem>
+#include <colors/colored_io.hpp>
 #include <fstream>
 #include <iostream>
 #include <string>
-
-#include "../colors/colored_io.h"
-#include "user_config_generator.h"
+#include <user_config_generator/user_config_generator.hpp>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {

@@ -1,7 +1,7 @@
 # Compiler and flags
 CXX ?= g++
 CXXFLAGS ?= -O3 -flto -std=c++17
-INCLUDES = -I$(FROMAGER_ENV)/system/include
+INCLUDES = -I$(FROMAGER_ENV)/system/include -I$(FROMAGER_HOME)/include
 LDFLAGS += -L$(FROMAGER_ENV)/system/lib -L$(FROMAGER_ENV)/system/lib64
 LDFLAGS += -lyaml-cpp
 LDFLAGS += -Wl,-rpath=$(FROMAGER_ENV)/system/lib -Wl,-rpath=$(FROMAGER_ENV)/system/lib64
@@ -75,9 +75,13 @@ DATABASE_OBJS = \
 	$(OBJ_DIR)/database/database.o
 
 # Library versions (without main.o files)
+PACKAGE_FORMAT_VERIFIER_LIB_OBJS = $(filter-out $(OBJ_DIR)/package_format_verifier/main.o, $(PACKAGE_FORMAT_VERIFIER_OBJS))
 USER_CONFIG_GENERATOR_LIB_OBJS = $(filter-out $(OBJ_DIR)/user_config_generator/main.o, $(USER_CONFIG_GENERATOR_OBJS))
 PARSER_LIB_OBJS = $(filter-out $(OBJ_DIR)/parser/main.o, $(PARSER_OBJS))
-DEPENDENCY_RESOLVER_LIB_OBJS = $(filter-out $(OBJ_DIR)/dependency_resolver/main.o, $(DEPENDENCY_RESOLVER_OBJS))
+CMDLINE_PARSER_LIB_OBJS = $(filter-out $(OBJ_DIR)/cmdline_parser/main.o, $(CMDLINE_PARSER_OBJS))
+RT_PROFILE_PARSER_LIB_OBJS = $(filter-out $(OBJ_DIR)/rt_profile_config_parser/main.o, $(RT_PROFILE_PARSER_OBJS))
+RT_DEPENDENCY_RESOLVER_LIB_OBJS = $(filter-out $(OBJ_DIR)/rt_dependency_resolver/main.o, $(RT_DEPENDENCY_RESOLVER_OBJS))
+# DEPENDENCY_RESOLVER_LIB_OBJS = $(filter-out $(OBJ_DIR)/dependency_resolver/main.o, $(DEPENDENCY_RESOLVER_OBJS))
 
 # Default target
 .DEFAULT_GOAL := release
@@ -135,6 +139,10 @@ $(OBJ_DIR)/database/%.o: $(SRC_DIR)/database/%.cpp | $(OBJ_DIR)
 $(OBJ_DIR)/tests/test_deps_resolve.o: $(SRC_DIR)/tests/test_deps_resolve.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+# Object file rules for main executable
+$(OBJ_DIR)/main.o: $(SRC_DIR)/main.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
 # Executables
 $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
@@ -154,10 +162,13 @@ $(BIN_DIR)/fromager_cmdline_parser: $(CMDLINE_PARSER_OBJS) $(USER_CONFIG_GENERAT
 $(BIN_DIR)/fromager_rt_profile_config_parser: $(RT_PROFILE_PARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+$(BIN_DIR)/fromager: $(OBJ_DIR)/main.o $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(USER_CONFIG_GENERATOR_LIB_OBJS) $(PARSER_LIB_OBJS) $(CMDLINE_PARSER_LIB_OBJS) $(RT_PROFILE_PARSER_LIB_OBJS) $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Create bin directory
@@ -169,9 +180,9 @@ $(BIN_DIR):
 
 fromager_colored_io: $(BIN_DIR)/fromager_info $(BIN_DIR)/fromager_warning $(BIN_DIR)/fromager_error $(BIN_DIR)/fromager_success
 
-all: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/test_deps_resolve $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_cmdline_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io
+all: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/test_deps_resolve $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_cmdline_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io $(BIN_DIR)/fromager
 
-release: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_cmdline_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io
+release: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_cmdline_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io $(BIN_DIR)/fromager
 
 help:
 	@echo "Available targets:"
@@ -193,3 +204,4 @@ clean:
 	rm -f $(BIN_DIR)/fromager_error
 	rm -f $(BIN_DIR)/fromager_success
 	rm -f $(BIN_DIR)/test_deps_resolve
+	rm -f $(BIN_DIR)/fromager

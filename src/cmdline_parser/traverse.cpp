@@ -1,4 +1,4 @@
-#include "traverse.h"
+#include <cmdline_parser/traverse.hpp>
 
 void traverse(const std::string& path, const std::string& value, YAML::Node& node) {
     if (path.empty()) {

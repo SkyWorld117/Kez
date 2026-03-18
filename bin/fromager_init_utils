@@ -2,8 +2,8 @@
 
 check_installation() {
     local pkg="$1"
-    if $(yq -r ".cheese | has(\"${pkg}\")" "${SYSTEM_PREFIX}/state.yaml") &&
-       $(yq -r ".cheese.${pkg} | has(\"version\")" "${SYSTEM_PREFIX}/state.yaml"); then
+    if $(yq -r ".cheese | has(\"${pkg}\")" "${FROMAGER_SYSTEM}/state.yaml") &&
+       $(yq -r ".cheese.${pkg} | has(\"version\")" "${FROMAGER_SYSTEM}/state.yaml"); then
         return 1
     else
         return 0
@@ -29,10 +29,10 @@ fetch_latest_web() {
         return 1
     fi
 
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${latest}" "${url}${latest}"
+    wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/${latest}" "${url}${latest}"
 
     # Check if the file was downloaded successfully
-    if [ ! -f "${FROMAGER_WORKDIR}/.tmp/${latest}" ]; then
+    if [ ! -f "${FROMAGER_SYSTEM_TMP}/${latest}" ]; then
         echo >&2 "Failed to download ${latest} from ${url}"
         return 1
     fi
@@ -80,15 +80,15 @@ fetch_latest_github() {
         return 1
     fi
 
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/${pkg}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
+    wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/${pkg}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
 
     # Check if the file was downloaded successfully
-    if [ ! -f "${FROMAGER_WORKDIR}/.tmp/${pkg}-${tag}.tar.gz" ]; then
+    if [ ! -f "${FROMAGER_SYSTEM_TMP}/${pkg}-${tag}.tar.gz" ]; then
         echo >&2 "Failed to download ${pkg} version ${tag} from GitHub"
         return 1
     fi
 
-    tar -xzf "${FROMAGER_WORKDIR}/.tmp/${pkg}-${tag}.tar.gz"
+    tar -xzf "${FROMAGER_SYSTEM_TMP}/${pkg}-${tag}.tar.gz"
 
     local version="${tag#v}"
     echo "${pkg}-${tag#v}::${version}"
@@ -106,16 +106,16 @@ fetch_latest_elfutils() {
         return 0
     fi
 
-    wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/.tmp/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
+    wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/elfutils.bz2" "https://sourceware.org/elfutils/ftp/elfutils-latest.tar.bz2"
 
     # Check if the file was downloaded successfully
-    if [ ! -f "${FROMAGER_WORKDIR}/.tmp/elfutils.bz2" ]; then
+    if [ ! -f "${FROMAGER_SYSTEM_TMP}/elfutils.bz2" ]; then
         echo >&2 "Failed to download elfutils from sourceware.org"
         return 1
     fi
 
-    bzip2 -d "${FROMAGER_WORKDIR}/.tmp/elfutils.bz2"
-    tar -xf "${FROMAGER_WORKDIR}/.tmp/elfutils" && cd "${FROMAGER_WORKDIR}/.tmp/elfutils"-*
+    bzip2 -d "${FROMAGER_SYSTEM_TMP}/elfutils.bz2"
+    tar -xf "${FROMAGER_SYSTEM_TMP}/elfutils" && cd "${FROMAGER_WORKDIR}/.tmp/elfutils"-*
 
     local version=$(grep -oP 'Version: \K[0-9]+\.[0-9]+' elfutils.spec)
     echo "${version}"

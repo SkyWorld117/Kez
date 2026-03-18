@@ -1,4 +1,4 @@
-#include "dependencies_verifier.h"
+#include <package_format_verifier/dependencies_verifier.hpp>
 
 bool verify_dependencies(const YAML::Node& node) {
     if (!node.IsSequence()) {

@@ -1,4 +1,4 @@
-#include "user_config_generator.h"
+#include <user_config_generator/user_config_generator.hpp>
 
 YAML::Node config = YAML::Node(YAML::NodeType::Map);
 

@@ -1,4 +1,4 @@
-#include "environment_filter.h"
+#include <user_config_generator/environment_filter.hpp>
 
 YAML::Node filtered_environment(const YAML::Node& env_node,
                                 const std::vector<std::string>& all_dependencies) {

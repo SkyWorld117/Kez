@@ -1,11 +1,10 @@
 #include <yaml-cpp/yaml.h>
 
+#include <colors/colored_io.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-
-#include "../colors/colored_io.h"
-#include "parser.h"
+#include <parser/parser.hpp>
 
 int main(int argc, char* argv[]) {
     // Expected arguments:

@@ -1,14 +1,13 @@
 #include <yaml-cpp/yaml.h>
 
+#include <colors/colored_io.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <rt_dependency_resolver/dependents.hpp>
+#include <rt_dependency_resolver/unbuilt_dependencies.hpp>
 #include <string>
 #include <vector>
-
-#include "../colors/colored_io.h"
-#include "dependents.h"
-#include "unbuilt_dependencies.h"
 
 int main(int argc, char* argv[]) {
     // Expected arguments:

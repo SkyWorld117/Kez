@@ -3,6 +3,14 @@ fromager:
 
   default_compiler: system
 
+  paths:
+    system: cellars/system
+    utilities: cellars/utilities
+    compilers: cellars/compilers
+    mpis: cellars/mpis
+    vendors: cellars/vendors
+    factories: factories
+
   external:
     rdma-core:
       prefix: ~

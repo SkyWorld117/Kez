@@ -1,4 +1,4 @@
-#include "property_parser.h"
+#include <parser/property_parser.hpp>
 
 std::string parse_property(const std::string& property_name,
                            std::unordered_map<std::string, std::string>& template_map,

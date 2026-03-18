@@ -1,4 +1,4 @@
-#include "parser.h"
+#include <parser/parser.hpp>
 
 YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
                  const std::string& env_path) {

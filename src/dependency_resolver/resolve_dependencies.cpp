@@ -1,4 +1,4 @@
-#include "resolve_dependencies.h"
+#include <dependency_resolver/resolve_dependencies.hpp>
 
 std::unordered_map<std::string, std::vector<std::string>> adjacency_list;
 std::vector<std::string> system_packages;

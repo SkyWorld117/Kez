@@ -1,4 +1,4 @@
-#include "package_parser.h"
+#include <parser/package_parser.hpp>
 
 std::vector<std::string> parse_package(const std::string& package_name,
                                        std::unordered_map<std::string, std::string>& template_map,

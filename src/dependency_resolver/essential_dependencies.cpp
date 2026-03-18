@@ -1,4 +1,4 @@
-#include "essential_dependencies.h"
+#include <dependency_resolver/essential_dependencies.hpp>
 
 std::vector<std::string> get_essential_dependencies(const std::string& pkg_name) {
     std::vector<std::string> essential_deps;

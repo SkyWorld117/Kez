@@ -1,4 +1,4 @@
-#include "stages_verifier.h"
+#include <package_format_verifier/stages_verifier.hpp>
 
 bool verify_stages(const YAML::Node& node) {
     if (!node.IsSequence()) {

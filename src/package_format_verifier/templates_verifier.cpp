@@ -1,4 +1,4 @@
-#include "templates_verifier.h"
+#include <package_format_verifier/templates_verifier.hpp>
 
 // Go through all the scalar entries to check if there exists a template entry
 // and whether it is a valid template

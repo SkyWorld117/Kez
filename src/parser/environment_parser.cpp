@@ -1,4 +1,4 @@
-#include "environment_parser.h"
+#include <parser/environment_parser.hpp>
 
 std::vector<std::string> parse_environment(
     const YAML::Node& env_node, std::unordered_map<std::string, std::string>& template_map,
