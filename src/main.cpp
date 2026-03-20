@@ -1,11 +1,15 @@
 #include <stdlib.h>
+#include <yaml-cpp/yaml.h>
 
 #include <argparse/argparse.hpp>
+#include <cmdline_parser/cmdline_parser.hpp>
 #include <colors/colored_io.hpp>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <global_config.hpp>
 #include <iostream>
+#include <string>
 
 void EXE_AND_CHECK(const std::string& cmd) {
     int ret = system(cmd.c_str());
@@ -39,11 +43,16 @@ int main(int argc, char* argv[]) {
     utilities_parser.add_description("Manage utilities");
 
     argparse::ArgumentParser util_add_parser("add");
-    util_add_parser.add_argument("-r", "--read")
-        .help("Read a configuration file and add all utilities specified")
-        .default_value(false)
-        .implicit_value(true);
-    util_add_parser.add_argument("utility").help("Utility name or file to read").remaining();
+    util_add_parser.add_description("Add a utility to the utilities cellar");
+    auto& util_mutually_exclusive_group = util_add_parser.add_mutually_exclusive_group();
+    util_mutually_exclusive_group.add_argument("-r", "--read")
+        .help("Read a configuration file")
+        .required()
+        .nargs(1);
+    util_mutually_exclusive_group.add_argument("utility").help("Utility name").nargs(1);
+    util_add_parser.add_argument("--config")
+        .help("Additional configuration options for the utility in the format <option>=<value>")
+        .nargs(argparse::nargs_pattern::at_least_one);
 
     argparse::ArgumentParser util_empty_parser("empty");
 
@@ -195,42 +204,48 @@ int main(int argc, char* argv[]) {
     // --- Handle utilities ---
     if (program.is_subcommand_used("utilities")) {
         if (utilities_parser.is_subcommand_used("add")) {
-            if (util_add_parser.get<bool>("--read")) {
-                std::vector<std::string> utilities =
-                    util_add_parser.get<std::vector<std::string>>("utility");
-                for (const auto& util : utilities) {
-                    INFO("Reading utility configuration from: " + util);
-                    if (std::filesystem::exists(util)) {
-                        EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_parser " + util +
-                                      " release ${FROMAGER_ENV}/utilities > /dev/null");
-                        EXE_AND_CHECK(
-                            "${FROMAGER_HOME}/bin/fromager_install ${FROMAGER_ENV}/utilities");
-                    } else {
-                        ERROR("Utility configuration file not found: " + util);
-                        exit(EXIT_FAILURE);
-                    }
-                }
+            std::string target;
+            bool is_config_file;
+            if (util_add_parser.is_used("--read")) {
+                target         = util_add_parser.get<std::string>("--read");
+                is_config_file = true;
             } else {
-                // In this mode we only accept one utility such that we can avoid ambiguity in the command line arguments (e.g. which configuration belongs to which temporary config file)
-                std::vector<std::string> utility_args =
-                    util_add_parser.get<std::vector<std::string>>("utility");
-                if (utility_args.empty()) {
-                    ERROR("No utilities specified to add.");
-                    exit(EXIT_FAILURE);
-                }
-                std::string concatenated_args;
-                for (const auto& arg : utility_args) {
-                    concatenated_args += arg + " ";
-                }
-                INFO("Adding utility: " + concatenated_args);
-                EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_cmdline_parser " + concatenated_args +
-                              " --cellar utilities | tail -n 1");
+                target         = util_add_parser.get<std::string>("utility");
+                is_config_file = false;
             }
+
+            CellarPathQuery query;
+            // Set the `pkg_name` in the query to trigger the correct parsing logic in `get_cellar_path`
+            // This should prevent non-regular packages to be installed
+            if (is_config_file) {
+                // TODO: Remember to change this part once we figure out how to handle multiple target packages in a single user config file.
+                YAML::Node config          = YAML::LoadFile(target);
+                std::string target_package = config["recipe"]["dependencies"][0].as<std::string>();
+                query.pkg_name             = target_package;
+            } else {
+                query.pkg_name = target;
+            }
+            query.cellar_name            = "utilities";
+            std::string utilities_cellar = get_cellar_path(query);
+            if (util_add_parser.is_used("--config")) {
+                std::vector<std::string> config_options =
+                    util_add_parser.get<std::vector<std::string>>("--config");
+                parse_cmdline(target, is_config_file, utilities_cellar, config_options);
+            } else {
+                parse_cmdline(target, is_config_file, utilities_cellar);
+            }
+
+            EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + utilities_cellar);
         }
 
         if (utilities_parser.is_subcommand_used("empty")) {
-            INFO("Emptying utilities cellar...");
-            EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_cellar_empty utilities");
+            std::filesystem::path utilities_cellar = global_config::get_path("utilities");
+            if (std::filesystem::exists(utilities_cellar)) {
+                std::filesystem::remove_all(utilities_cellar);
+                SUCCESS("Utilities cellar has been emptied.");
+            } else {
+                WARNING("Utilities cellar does not exist. Nothing to empty.");
+            }
         }
     }
 

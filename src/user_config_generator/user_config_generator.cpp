@@ -1,8 +1,6 @@
 #include <user_config_generator/user_config_generator.hpp>
 
-YAML::Node config = YAML::Node(YAML::NodeType::Map);
-
-void config_per_pkg(const YAML::Node& db_pkg_node) {
+void config_per_pkg(YAML::Node& config, const YAML::Node& db_pkg_node) {
     std::string pkg_name = db_pkg_node["cheese"]["name"].as<std::string>();
 
     config["cheese"][pkg_name] = YAML::Node(YAML::NodeType::Map);
@@ -64,7 +62,8 @@ YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
         exit(EXIT_FAILURE);
     }
 
-    config["cheese"] = YAML::Node(YAML::NodeType::Map);
+    YAML::Node config = YAML::Node(YAML::NodeType::Map);
+    config["cheese"]  = YAML::Node(YAML::NodeType::Map);
 
     // Additional section to store abstract package selections
     config["recipe"]                      = YAML::Node(YAML::NodeType::Map);
@@ -81,7 +80,7 @@ YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
     std::filesystem::path db_path(getenv("FROMAGER_DB"));
     for (const auto& dep : dependencies) {
         YAML::Node db_pkg_node = get_db_config(dep);
-        config_per_pkg(db_pkg_node);
+        config_per_pkg(config, db_pkg_node);
     }
 
     return config;

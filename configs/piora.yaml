@@ -2,6 +2,7 @@ fromager:
   n_proc_for_build: 32
 
   paths:
+    cellars: cellars
     system: cellars/system
     utilities: cellars/utilities
     compilers: cellars/compilers
