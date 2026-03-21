@@ -4,6 +4,7 @@ fromager:
   default_compiler: system
 
   paths:
+    cellars: cellars
     system: cellars/system
     utilities: cellars/utilities
     compilers: cellars/compilers
