@@ -9,7 +9,9 @@
 #include <fstream>
 #include <global_config.hpp>
 #include <iostream>
+#include <parser/parser.hpp>
 #include <string>
+#include <user_config_generator/user_config_generator.hpp>
 
 void EXE_AND_CHECK(const std::string& cmd) {
     int ret = system(cmd.c_str());
@@ -47,14 +49,15 @@ int main(int argc, char* argv[]) {
     auto& util_mutex_group = util_add_parser.add_mutually_exclusive_group();
     util_mutex_group.add_argument("-r", "--read")
         .help("Read a configuration file")
-        .required()
-        .nargs(1);
+        .default_value(false)
+        .implicit_value(true);
     util_mutex_group.add_argument("utility").help("Utility name").nargs(1);
     util_add_parser.add_argument("--config")
         .help("Additional configuration options for the utility in the format <option>=<value>")
         .nargs(argparse::nargs_pattern::at_least_one);
 
     argparse::ArgumentParser util_empty_parser("empty");
+    util_empty_parser.add_description("Empty the utilities cellar");
 
     utilities_parser.add_subparser(util_add_parser);
     utilities_parser.add_subparser(util_empty_parser);
@@ -152,22 +155,30 @@ int main(int argc, char* argv[]) {
     argparse::ArgumentParser install_parser("install");
     install_parser.add_description("Install a package");
     install_parser.add_argument("-r", "--read")
-        .help("Read requirements from config and install in [cellar]")
+        .help("Read a configuration file for installation")
         .default_value(false)
         .implicit_value(true);
-    install_parser.add_argument("--config").help("Configs to install with");
-    install_parser.add_argument("--cellar").help("Target cellar");
-    install_parser.add_argument("pkg_or_file").help("Package name or config file if -r is used");
+    install_parser.add_argument("pkg_or_file")
+        .help("Package name or config file if -r is used")
+        .nargs(1);
+    install_parser.add_argument("--config")
+        .help("Configs to install with")
+        .nargs(argparse::nargs_pattern::at_least_one);
+    install_parser.add_argument("--cellar")
+        .help("Target cellar (only used when installing a package that is not a "
+              "compiler/MPI/vendor type)")
+        .nargs(1);
 
     // --- template ---
     argparse::ArgumentParser template_parser("template");
     template_parser.add_description("Fetch a template for an application");
 
     argparse::ArgumentParser template_parse_parser("parse");
+    template_parse_parser.add_description("Parse a user configuration file into instructions");
     template_parse_parser.add_argument("file");
 
-    template_parser.add_argument("-s", "--save").help("Save the configuration template");
-    template_parser.add_argument("package").help("Package for template generation").remaining();
+    template_parser.add_argument("package").help("Package for template generation").nargs(1);
+    template_parser.add_argument("-s", "--save").help("Save the configuration template").nargs(1);
 
     template_parser.add_subparser(template_parse_parser);
 
@@ -245,15 +256,8 @@ int main(int argc, char* argv[]) {
     // --- Handle utilities ---
     if (program.is_subcommand_used("utilities")) {
         if (utilities_parser.is_subcommand_used("add")) {
-            std::string target;
-            bool is_config_file;
-            if (util_add_parser.is_used("--read")) {
-                target         = util_add_parser.get<std::string>("--read");
-                is_config_file = true;
-            } else {
-                target         = util_add_parser.get<std::string>("utility");
-                is_config_file = false;
-            }
+            bool is_config_file = util_add_parser.get<bool>("--read");
+            std::string target  = util_add_parser.get<std::string>("utility");
 
             CellarPathQuery query;
             // Set the `pkg_name` in the query to trigger the correct parsing logic in `get_cellar_path`
@@ -268,6 +272,7 @@ int main(int argc, char* argv[]) {
             }
             query.cellar_name            = "utilities";
             std::string utilities_cellar = get_cellar_path(query);
+
             if (util_add_parser.is_used("--config")) {
                 std::vector<std::string> config_options =
                     util_add_parser.get<std::vector<std::string>>("--config");
@@ -604,6 +609,85 @@ int main(int argc, char* argv[]) {
             SUCCESS("MPI implementation removed: " + mpi_name);
 
             exit(EXIT_SUCCESS);
+        }
+    }
+
+    if (program.is_subcommand_used("install")) {
+        bool is_config_file = install_parser.get<bool>("--read");
+        std::string target  = install_parser.get<std::string>("pkg_or_file");
+
+        CellarPathQuery query;
+        if (is_config_file) {
+            YAML::Node config          = YAML::LoadFile(target);
+            std::string target_package = config["recipe"]["dependencies"][0].as<std::string>();
+            query.pkg_name             = target_package;
+        } else {
+            query.pkg_name = target;
+        }
+        if (install_parser.is_used("--cellar")) {
+            query.cellar_name = install_parser.get<std::string>("--cellar");
+        }
+        std::string target_cellar = get_cellar_path(query);
+
+        if (install_parser.is_used("--config")) {
+            std::vector<std::string> config_options =
+                install_parser.get<std::vector<std::string>>("--config");
+            parse_cmdline(target, is_config_file, target_cellar, config_options);
+        } else {
+            parse_cmdline(target, is_config_file, target_cellar);
+        }
+
+        EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + target_cellar);
+
+        exit(EXIT_SUCCESS);
+    }
+
+    if (program.is_subcommand_used("template")) {
+        if (template_parser.is_subcommand_used("parse")) {
+            std::string file  = template_parse_parser.get<std::string>("file");
+            YAML::Node config = YAML::LoadFile(file);
+
+            std::filesystem::path tmp_path =
+                std::filesystem::path(getenv("FROMAGER_WORKDIR")) / ".tmp";
+            std::filesystem::create_directories(tmp_path);
+
+            YAML::Node instructions_yaml = parse(config, "release", tmp_path.string());
+            YAML::Emitter out;
+            out << instructions_yaml;
+            std::ofstream ofs((tmp_path / "ins.yaml").string());
+            if (!ofs) {
+                ERROR("Failed to create instruction file");
+                exit(EXIT_FAILURE);
+            }
+            ofs << out.c_str();
+            ofs.close();
+
+            SUCCESS("Instructions written to: " + (tmp_path / "ins.yaml").string());
+
+            exit(EXIT_SUCCESS);
+        } else {
+            std::string package = template_parser.get<std::string>("package");
+            bool save_template  = template_parser.is_used("--save");
+
+            YAML::Node user_config = gen_user_config(package, save_template);
+            YAML::Emitter out;
+            out << user_config;
+
+            std::cout << out.c_str() << std::endl;
+
+            if (save_template) {
+                std::string output_file = template_parser.get<std::string>("--save");
+                std::ofstream ofs(output_file);
+                if (!ofs) {
+                    ERROR("Could not open output file: " + output_file);
+                    exit(EXIT_FAILURE);
+                }
+                ofs << out.c_str();
+                ofs.close();
+                SUCCESS("Configuration template written to: " + output_file);
+            } else {
+                SUCCESS("Configuration template output to stdout.");
+            }
         }
     }
 
