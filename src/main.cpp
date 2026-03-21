@@ -68,16 +68,21 @@ int main(int argc, char* argv[]) {
     cellar_create_parser.add_argument("cellar_name");
 
     argparse::ArgumentParser cellar_remove_parser("remove");
+    cellar_remove_parser.add_description("Remove an existing cellar");
     cellar_remove_parser.add_argument("cellar_name");
 
     argparse::ArgumentParser cellar_list_parser("list");
+    cellar_list_parser.add_description("List all existing cellars");
 
     argparse::ArgumentParser cellar_enter_parser("enter");
+    cellar_enter_parser.add_description("Enter a cellar to use its environment");
     cellar_enter_parser.add_argument("cellar_name");
 
     argparse::ArgumentParser cellar_exit_parser("exit");
+    cellar_exit_parser.add_description("Exit the currently entered cellar");
 
     argparse::ArgumentParser cellar_which_parser("which");
+    cellar_which_parser.add_description("Show the currently entered cellar");
 
     argparse::ArgumentParser cellar_empty_parser("empty");
     cellar_empty_parser.add_argument("cellar_name");
@@ -90,14 +95,58 @@ int main(int argc, char* argv[]) {
     cellar_parser.add_subparser(cellar_which_parser);
     cellar_parser.add_subparser(cellar_empty_parser);
 
-    // --- mpi & compiler ---
-    argparse::ArgumentParser load_mpi_parser("load-mpi");
-    load_mpi_parser.add_argument("mpi");
-    argparse::ArgumentParser unload_mpi_parser("unload-mpi");
+    // --- compiler & mpi ---
+    argparse::ArgumentParser compiler_parser("compiler");
+    compiler_parser.add_description("Manage compilers");
 
-    argparse::ArgumentParser load_compiler_parser("load-compiler");
-    load_compiler_parser.add_argument("compiler");
-    argparse::ArgumentParser unload_compiler_parser("unload-compiler");
+    argparse::ArgumentParser compiler_load_parser("load");
+    compiler_load_parser.add_description("Load a compiler");
+    compiler_load_parser.add_argument("compiler_name");
+
+    argparse::ArgumentParser compiler_unload_parser("unload");
+    compiler_unload_parser.add_description("Unload the currently loaded compiler");
+
+    argparse::ArgumentParser compiler_list_parser("list");
+    compiler_list_parser.add_description("List available compilers");
+
+    argparse::ArgumentParser compiler_which_parser("which");
+    compiler_which_parser.add_description("Show the currently loaded compiler");
+
+    argparse::ArgumentParser compiler_remove_parser("remove");
+    compiler_remove_parser.add_description("Remove a compiler from the system");
+    compiler_remove_parser.add_argument("compiler_name");
+
+    compiler_parser.add_subparser(compiler_load_parser);
+    compiler_parser.add_subparser(compiler_unload_parser);
+    compiler_parser.add_subparser(compiler_list_parser);
+    compiler_parser.add_subparser(compiler_which_parser);
+    compiler_parser.add_subparser(compiler_remove_parser);
+
+    argparse::ArgumentParser mpi_parser("mpi");
+    mpi_parser.add_description("Manage MPI implementations");
+
+    argparse::ArgumentParser mpi_load_parser("load");
+    mpi_load_parser.add_description("Load an MPI implementation");
+    mpi_load_parser.add_argument("mpi_name");
+
+    argparse::ArgumentParser mpi_unload_parser("unload");
+    mpi_unload_parser.add_description("Unload the currently loaded MPI implementation");
+
+    argparse::ArgumentParser mpi_list_parser("list");
+    mpi_list_parser.add_description("List available MPI implementations");
+
+    argparse::ArgumentParser mpi_which_parser("which");
+    mpi_which_parser.add_description("Show the currently loaded MPI implementation");
+
+    argparse::ArgumentParser mpi_remove_parser("remove");
+    mpi_remove_parser.add_description("Remove an MPI implementation from the system");
+    mpi_remove_parser.add_argument("mpi_name");
+
+    mpi_parser.add_subparser(mpi_load_parser);
+    mpi_parser.add_subparser(mpi_unload_parser);
+    mpi_parser.add_subparser(mpi_list_parser);
+    mpi_parser.add_subparser(mpi_which_parser);
+    mpi_parser.add_subparser(mpi_remove_parser);
 
     // --- install ---
     argparse::ArgumentParser install_parser("install");
@@ -150,10 +199,8 @@ int main(int argc, char* argv[]) {
     program.add_subparser(selfcheck_parser);
     program.add_subparser(utilities_parser);
     program.add_subparser(cellar_parser);
-    program.add_subparser(load_mpi_parser);
-    program.add_subparser(unload_mpi_parser);
-    program.add_subparser(load_compiler_parser);
-    program.add_subparser(unload_compiler_parser);
+    program.add_subparser(compiler_parser);
+    program.add_subparser(mpi_parser);
     program.add_subparser(install_parser);
     program.add_subparser(template_parser);
     program.add_subparser(rt_parser);
@@ -390,6 +437,171 @@ int main(int argc, char* argv[]) {
                 std::filesystem::remove_all(entry.path());
             }
             SUCCESS("Cellar has been emptied: " + cellar_name);
+
+            exit(EXIT_SUCCESS);
+        }
+    }
+
+    if (program.is_subcommand_used("compiler")) {
+        if (compiler_parser.is_subcommand_used("load")) {
+            std::string compiler_name = compiler_load_parser.get<std::string>("compiler_name");
+            if (compiler_name.empty()) {
+                ERROR("Compiler name cannot be empty.");
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::path compiler_path =
+                global_config::get_path("compilers") + "/" + compiler_name;
+            if (!std::filesystem::exists(compiler_path)) {
+                ERROR("Compiler does not exist: " + compiler_name);
+                exit(EXIT_FAILURE);
+            }
+            // Print out the command to set PATH for the loaded compiler. The main shell script will evaluate this output and update the environment accordingly.
+            std::cout << "export PATH=\"" << compiler_path.string()
+                      << "/bin:$PATH\"; export FROMAGER_COMPILER=\"" << compiler_name << "\""
+                      << std::endl;
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (compiler_parser.is_subcommand_used("unload")) {
+            // Print out the command to unset PATH for the unloaded compiler. The main shell script will evaluate this output and update the environment accordingly.
+            std::string compiler_name =
+                std::getenv("FROMAGER_COMPILER") ? std::getenv("FROMAGER_COMPILER") : "";
+            if (compiler_name.empty()) {
+                ERROR("No compiler is currently loaded.");
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::path compiler_path =
+                global_config::get_path("compilers") + "/" + compiler_name;
+            std::cout << "export PATH=\"$(echo $PATH | sed -e 's;" + compiler_path.string() +
+                             "/bin:;;g')\"; unset FROMAGER_COMPILER"
+                      << std::endl;
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (compiler_parser.is_subcommand_used("list")) {
+            std::filesystem::path compilers_path = global_config::get_path("compilers");
+            if (!std::filesystem::exists(compilers_path)) {
+                INFO("No compilers found.");
+                exit(EXIT_SUCCESS);
+            }
+            INFO("Available compilers:");
+            for (const auto& entry : std::filesystem::directory_iterator(compilers_path)) {
+                if (entry.is_directory()) {
+                    std::cout << "  - " << entry.path().filename().string() << std::endl;
+                }
+            }
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (compiler_parser.is_subcommand_used("which")) {
+            std::string compiler_name =
+                std::getenv("FROMAGER_COMPILER") ? std::getenv("FROMAGER_COMPILER") : "";
+            if (compiler_name.empty()) {
+                INFO("No compiler is currently loaded.");
+            } else {
+                INFO("Currently loaded compiler: " + compiler_name);
+            }
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (compiler_parser.is_subcommand_used("remove")) {
+            std::string compiler_name = compiler_remove_parser.get<std::string>("compiler_name");
+            if (compiler_name.empty()) {
+                ERROR("Compiler name cannot be empty.");
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::path compiler_path =
+                global_config::get_path("compilers") + "/" + compiler_name;
+            if (!std::filesystem::exists(compiler_path)) {
+                ERROR("Compiler does not exist: " + compiler_name);
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::remove_all(compiler_path);
+            SUCCESS("Compiler removed: " + compiler_name);
+
+            exit(EXIT_SUCCESS);
+        }
+    }
+
+    if (program.is_subcommand_used("mpi")) {
+        // Similar handling for MPI implementations can be implemented here following the pattern of compilers
+        if (mpi_parser.is_subcommand_used("load")) {
+            std::string mpi_name = mpi_load_parser.get<std::string>("mpi_name");
+            if (mpi_name.empty()) {
+                ERROR("MPI implementation name cannot be empty.");
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::path mpi_path = global_config::get_path("mpis") + "/" + mpi_name;
+            if (!std::filesystem::exists(mpi_path)) {
+                ERROR("MPI implementation does not exist: " + mpi_name);
+                exit(EXIT_FAILURE);
+            }
+            // Print out the command to set PATH for the loaded MPI implementation. The main shell script will evaluate this output and update the environment accordingly.
+            std::cout << "export PATH=\"" << mpi_path.string()
+                      << "/bin:$PATH\"; export FROMAGER_MPI=\"" << mpi_name << "\"" << std::endl;
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (mpi_parser.is_subcommand_used("unload")) {
+            // Print out the command to unset PATH for the unloaded MPI implementation. The main shell script will evaluate this output and update the environment accordingly.
+            std::string mpi_name = std::getenv("FROMAGER_MPI") ? std::getenv("FROMAGER_MPI") : "";
+            if (mpi_name.empty()) {
+                ERROR("No MPI implementation is currently loaded.");
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::path mpi_path = global_config::get_path("mpis") + "/" + mpi_name;
+            std::cout << "export PATH=\"$(echo $PATH | sed -e 's;" + mpi_path.string() +
+                             "/bin:;;g')\"; unset FROMAGER_MPI"
+                      << std::endl;
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (mpi_parser.is_subcommand_used("list")) {
+            std::filesystem::path mpis_path = global_config::get_path("mpis");
+            if (!std::filesystem::exists(mpis_path)) {
+                INFO("No MPI implementations found.");
+                exit(EXIT_SUCCESS);
+            }
+            INFO("Available MPI implementations:");
+            for (const auto& entry : std::filesystem::directory_iterator(mpis_path)) {
+                if (entry.is_directory()) {
+                    std::cout << "  - " << entry.path().filename().string() << std::endl;
+                }
+            }
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (mpi_parser.is_subcommand_used("which")) {
+            std::string mpi_name = std::getenv("FROMAGER_MPI") ? std::getenv("FROMAGER_MPI") : "";
+            if (mpi_name.empty()) {
+                INFO("No MPI implementation is currently loaded.");
+            } else {
+                INFO("Currently loaded MPI implementation: " + mpi_name);
+            }
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (mpi_parser.is_subcommand_used("remove")) {
+            std::string mpi_name = mpi_remove_parser.get<std::string>("mpi_name");
+            if (mpi_name.empty()) {
+                ERROR("MPI implementation name cannot be empty.");
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::path mpi_path = global_config::get_path("mpis") + "/" + mpi_name;
+            if (!std::filesystem::exists(mpi_path)) {
+                ERROR("MPI implementation does not exist: " + mpi_name);
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::remove_all(mpi_path);
+            SUCCESS("MPI implementation removed: " + mpi_name);
 
             exit(EXIT_SUCCESS);
         }
