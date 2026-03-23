@@ -77,6 +77,16 @@ DATABASE_OBJS = \
 GLOBAL_CONFIG_OBJS = \
 	$(OBJ_DIR)/global_config.o
 
+UI_ARGPARSER_OBJS = \
+	$(OBJ_DIR)/ui/argparser/init.o \
+	$(OBJ_DIR)/ui/argparser/selfcheck.o \
+	$(OBJ_DIR)/ui/argparser/utilities.o \
+	$(OBJ_DIR)/ui/argparser/cellar.o \
+	$(OBJ_DIR)/ui/argparser/compiler_mpi.o \
+	$(OBJ_DIR)/ui/argparser/install.o \
+	$(OBJ_DIR)/ui/argparser/template.o \
+	$(OBJ_DIR)/ui/argparser/rt.o
+
 # Library versions (without main.o files)
 PACKAGE_FORMAT_VERIFIER_LIB_OBJS = $(filter-out $(OBJ_DIR)/package_format_verifier/main.o, $(PACKAGE_FORMAT_VERIFIER_OBJS))
 USER_CONFIG_GENERATOR_LIB_OBJS = $(filter-out $(OBJ_DIR)/user_config_generator/main.o, $(USER_CONFIG_GENERATOR_OBJS))
@@ -101,6 +111,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/colors
 	mkdir -p $(OBJ_DIR)/database
 	mkdir -p $(OBJ_DIR)/tests
+	mkdir -p $(OBJ_DIR)/ui/argparser
 
 # Object file rules for package format verifier
 $(OBJ_DIR)/package_format_verifier/%.o: $(SRC_DIR)/package_format_verifier/%.cpp | $(OBJ_DIR)
@@ -146,6 +157,10 @@ $(OBJ_DIR)/tests/test_deps_resolve.o: $(SRC_DIR)/tests/test_deps_resolve.cpp | $
 $(OBJ_DIR)/global_config.o: $(SRC_DIR)/global_config.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+# Object file rules for UI argparser
+$(OBJ_DIR)/ui/argparser/%.o: $(SRC_DIR)/ui/argparser/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
 # Object file rules for main executable
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
@@ -172,7 +187,7 @@ $(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DE
 $(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager: $(OBJ_DIR)/main.o $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(USER_CONFIG_GENERATOR_LIB_OBJS) $(PARSER_LIB_OBJS) $(CMDLINE_PARSER_LIB_OBJS) $(RT_PROFILE_PARSER_LIB_OBJS) $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager: $(OBJ_DIR)/main.o $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(USER_CONFIG_GENERATOR_LIB_OBJS) $(PARSER_LIB_OBJS) $(CMDLINE_PARSER_LIB_OBJS) $(RT_PROFILE_PARSER_LIB_OBJS) $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UI_ARGPARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Create bin directory
