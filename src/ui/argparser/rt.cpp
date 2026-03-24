@@ -1,4 +1,5 @@
 #include <ui/argparser/argparser.hpp>
+#include <ui/bash_completion/utils.hpp>
 
 static argparse::ArgumentParser rt_parser("rt");
 static argparse::ArgumentParser rt_factory_parser("factory");
@@ -293,4 +294,43 @@ void execute_rt_parser() {
         SUCCESS("Rapid test try process completed.");
         exit(EXIT_SUCCESS);
     }
+}
+
+std::vector<std::string> get_rt_suggestions(const int comp_cword,
+                                            const std::vector<std::string>& comp_words) {
+    if (comp_cword == 2) {
+        std::vector<std::string> suggestions = {"factory", "build",  "taste", "summarize",
+                                                "try",     "--help", "-h"};
+        return suggestions;
+    } else if (comp_cword == 3 && comp_words[2] == "factory") {
+        std::vector<std::string> suggestions = {"create", "remove", "list",   "enter",
+                                                "exit",   "which",  "--help", "-h"};
+        return suggestions;
+    } else if (comp_cword == 3 && (comp_words[2] == "build" || comp_words[1] == "taste" ||
+                                   comp_words[1] == "summarize")) {
+        std::vector<std::string> suggestions = {"--help", "-h"};
+        return suggestions;
+    } else if (comp_cword == 3 && comp_words[2] == "try") {
+        std::vector<std::string> suggestions  = {"--help", "-h"};
+        std::vector<std::string> config_files = get_filesystem_suggestions(comp_cword, comp_words);
+        suggestions.insert(suggestions.end(), config_files.begin(), config_files.end());
+        return suggestions;
+    } else if (comp_cword == 4 && comp_words[2] == "factory" &&
+               (comp_words[3] == "enter" || comp_words[3] == "remove")) {
+        std::vector<std::string> suggestions = {"--help", "-h"};
+
+        std::filesystem::path factories_path = global_config::get_path("factories");
+        if (std::filesystem::exists(factories_path) &&
+            std::filesystem::is_directory(factories_path)) {
+            for (const auto& entry : std::filesystem::directory_iterator(factories_path)) {
+                if (entry.is_directory()) {
+                    suggestions.push_back(entry.path().filename().string());
+                }
+            }
+        }
+
+        return suggestions;
+    }
+
+    return {};
 }

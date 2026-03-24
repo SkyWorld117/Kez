@@ -24,3 +24,12 @@ void execute_init_parser() {
 
     exit(EXIT_SUCCESS);
 }
+
+std::vector<std::string> get_init_suggestions(const int comp_cword,
+                                              const std::vector<std::string>& comp_words) {
+    if (comp_cword == 2) {
+        std::vector<std::string> suggestions = {"--refresh", "-h", "--help"};
+        return suggestions;
+    }
+    return {};
+}

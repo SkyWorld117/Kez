@@ -116,6 +116,30 @@ void execute_compiler_parser() {
     }
 }
 
+std::vector<std::string> get_compiler_suggestions(const int comp_cword,
+                                                  const std::vector<std::string>& comp_words) {
+    if (comp_cword == 2) {
+        std::vector<std::string> suggestions = {"load",   "unload", "list",  "which",
+                                                "remove", "-h",     "--help"};
+        return suggestions;
+    } else if (comp_cword == 3 && (comp_words[2] == "load" || comp_words[2] == "remove")) {
+        std::vector<std::string> suggestions = {"--help", "-h"};
+
+        std::filesystem::path compilers_path = global_config::get_path("compilers");
+        if (std::filesystem::exists(compilers_path) &&
+            std::filesystem::is_directory(compilers_path)) {
+            for (const auto& entry : std::filesystem::directory_iterator(compilers_path)) {
+                if (entry.is_directory()) {
+                    suggestions.push_back(entry.path().filename().string());
+                }
+            }
+        }
+
+        return suggestions;
+    }
+    return {};
+}
+
 static argparse::ArgumentParser mpi_parser("mpi");
 static argparse::ArgumentParser mpi_load_parser("load");
 static argparse::ArgumentParser mpi_unload_parser("unload");
@@ -225,4 +249,27 @@ void execute_mpi_parser() {
 
         exit(EXIT_SUCCESS);
     }
+}
+
+std::vector<std::string> get_mpi_suggestions(const int comp_cword,
+                                             const std::vector<std::string>& comp_words) {
+    if (comp_cword == 2) {
+        std::vector<std::string> suggestions = {"load",   "unload", "list",  "which",
+                                                "remove", "-h",     "--help"};
+        return suggestions;
+    } else if (comp_cword == 3 && (comp_words[2] == "load" || comp_words[2] == "remove")) {
+        std::vector<std::string> suggestions = {"--help", "-h"};
+
+        std::filesystem::path mpis_path = global_config::get_path("mpis");
+        if (std::filesystem::exists(mpis_path) && std::filesystem::is_directory(mpis_path)) {
+            for (const auto& entry : std::filesystem::directory_iterator(mpis_path)) {
+                if (entry.is_directory()) {
+                    suggestions.push_back(entry.path().filename().string());
+                }
+            }
+        }
+
+        return suggestions;
+    }
+    return {};
 }

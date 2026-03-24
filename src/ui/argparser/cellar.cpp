@@ -1,4 +1,5 @@
 #include <ui/argparser/argparser.hpp>
+#include <ui/bash_completion/utils.hpp>
 
 static argparse::ArgumentParser cellar_parser("cellar");
 static argparse::ArgumentParser cellar_create_parser("create");
@@ -177,4 +178,18 @@ void execute_cellar_parser() {
 
         exit(EXIT_SUCCESS);
     }
+}
+
+std::vector<std::string> get_cellar_suggestions(const int comp_cword,
+                                                const std::vector<std::string>& comp_words) {
+    if (comp_cword == 2) {
+        std::vector<std::string> suggestions = {"create", "remove", "list", "enter", "exit",
+                                                "which",  "empty",  "-h",   "--help"};
+        return suggestions;
+    } else if (comp_cword == 3 && (comp_words[2] == "create" || comp_words[2] == "remove" ||
+                                   comp_words[2] == "enter" || comp_words[2] == "empty")) {
+        std::vector<std::string> cellars = get_cellars_suggestions();
+        return cellars;
+    }
+    return {};
 }

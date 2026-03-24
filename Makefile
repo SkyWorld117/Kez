@@ -112,6 +112,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/database
 	mkdir -p $(OBJ_DIR)/tests
 	mkdir -p $(OBJ_DIR)/ui/argparser
+	mkdir -p $(OBJ_DIR)/ui/bash_completion
 
 # Object file rules for package format verifier
 $(OBJ_DIR)/package_format_verifier/%.o: $(SRC_DIR)/package_format_verifier/%.cpp | $(OBJ_DIR)
@@ -161,6 +162,10 @@ $(OBJ_DIR)/global_config.o: $(SRC_DIR)/global_config.cpp | $(OBJ_DIR)
 $(OBJ_DIR)/ui/argparser/%.o: $(SRC_DIR)/ui/argparser/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+# Object file rules for Bash completion
+$(OBJ_DIR)/ui/bash_completion/%.o: $(SRC_DIR)/ui/bash_completion/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
 # Object file rules for main executable
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
@@ -187,6 +192,9 @@ $(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DE
 $(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
+$(BIN_DIR)/fromager_bash_completion: $(OBJ_DIR)/ui/bash_completion/main.o $(UI_ARGPARSER_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
 $(BIN_DIR)/fromager: $(OBJ_DIR)/main.o $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(USER_CONFIG_GENERATOR_LIB_OBJS) $(PARSER_LIB_OBJS) $(CMDLINE_PARSER_LIB_OBJS) $(RT_PROFILE_PARSER_LIB_OBJS) $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UI_ARGPARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
@@ -199,9 +207,9 @@ $(BIN_DIR):
 
 fromager_colored_io: $(BIN_DIR)/fromager_info $(BIN_DIR)/fromager_warning $(BIN_DIR)/fromager_error $(BIN_DIR)/fromager_success
 
-all: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/test_deps_resolve $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io $(BIN_DIR)/fromager
+all: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/test_deps_resolve $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io $(BIN_DIR)/fromager $(BIN_DIR)/fromager_bash_completion
 
-release: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io $(BIN_DIR)/fromager
+release: $(BIN_DIR)/fromager_config_verifier $(BIN_DIR)/fromager_user_config_gen $(BIN_DIR)/fromager_parser $(BIN_DIR)/fromager_rt_profile_config_parser $(BIN_DIR)/fromager_rt_resolve_dependencies fromager_colored_io $(BIN_DIR)/fromager $(BIN_DIR)/fromager_bash_completion
 
 help:
 	@echo "Available targets:"
@@ -224,3 +232,4 @@ clean:
 	rm -f $(BIN_DIR)/fromager_success
 	rm -f $(BIN_DIR)/test_deps_resolve
 	rm -f $(BIN_DIR)/fromager
+	rm -f $(BIN_DIR)/fromager_bash_completion

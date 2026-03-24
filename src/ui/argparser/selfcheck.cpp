@@ -10,3 +10,12 @@ void execute_selfcheck_parser() {
     EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_db_check");
     exit(EXIT_SUCCESS);
 }
+
+std::vector<std::string> get_selfcheck_suggestions(const int comp_cword,
+                                                   const std::vector<std::string>& comp_words) {
+    if (comp_cword == 2) {
+        std::vector<std::string> suggestions = {"-h", "--help"};
+        return suggestions;
+    }
+    return {};
+}
