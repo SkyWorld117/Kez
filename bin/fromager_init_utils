@@ -115,7 +115,7 @@ fetch_latest_elfutils() {
     fi
 
     bzip2 -d "${FROMAGER_SYSTEM_TMP}/elfutils.bz2"
-    tar -xf "${FROMAGER_SYSTEM_TMP}/elfutils" && cd "${FROMAGER_WORKDIR}/.tmp/elfutils"-*
+    tar -xf "${FROMAGER_SYSTEM_TMP}/elfutils" && cd "${FROMAGER_SYSTEM_TMP}/elfutils"-*
 
     local version=$(grep -oP 'Version: \K[0-9]+\.[0-9]+' elfutils.spec)
     echo "${version}"
