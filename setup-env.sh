@@ -39,15 +39,17 @@ else
 
     export FROMAGER_ENV="${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.cellars' ${FROMAGER_WORKDIR}/config.yaml)"
 
-    FROMAGER_SYSTEM_PATH=$(yq -r '.fromager.paths.system' "${FROMAGER_WORKDIR}/config.yaml")
-    FROMAGER_UTILITIES_PATH=$(yq -r '.fromager.paths.utilities' "${FROMAGER_WORKDIR}/config.yaml")
+    FROMAGER_SYSTEM_BIN="${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.system' "${FROMAGER_WORKDIR}/config.yaml")/bin"
+    FROMAGER_UTILITIES_BIN="${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.utilities' "${FROMAGER_WORKDIR}/config.yaml")/bin"
 
-    if [[ ":$PATH:" != *":${FROMAGER_SYSTEM_PATH}:"* ]]; then
-        export PATH="${FROMAGER_SYSTEM_PATH}:${PATH}"
+    if [[ ":$PATH:" != *":${FROMAGER_SYSTEM_BIN}:"* ]]; then
+        export PATH="${FROMAGER_SYSTEM_BIN}:${PATH}"
     fi
-    if [[ ":$PATH:" != *":${FROMAGER_UTILITIES_PATH}:"* ]]; then
-        export PATH="${FROMAGER_UTILITIES_PATH}:${PATH}"
+    if [[ ":$PATH:" != *":${FROMAGER_UTILITIES_BIN}:"* ]]; then
+        export PATH="${FROMAGER_UTILITIES_BIN}:${PATH}"
     fi
+
+    unset FROMAGER_SYSTEM_BIN FROMAGER_UTILITIES_BIN
 
     if [ "$(uname -m)" = "x86_64" ]; then
         export FROMAGER_ARCH="x86_64"

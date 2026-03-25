@@ -30,9 +30,15 @@ if [ -d "${FROMAGER_WORKDIR}" ]; then
     rm -rf "${FROMAGER_WORKDIR}"
 fi
 
+# Remove environment variables that might interfere with the test
+unset FROMAGER_DB FROMAGER_ENV
+# Edit PATH to remove any existing Fromager paths
+export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v "${FROMAGER_WORKDIR}" | grep -v "${FROMAGER_HOME}" | tr '\n' ':')
+
 # Set up the test Fromager environment
 source "${FROMAGER_HOME}/setup-env.sh"
 cp "${STANDARD_CONFIG}" "${FROMAGER_WORKDIR}/config.yaml"
+source "${FROMAGER_HOME}/setup-env.sh" # Source again to load the new config
 
 # Initialize Fromager
 fgr init
