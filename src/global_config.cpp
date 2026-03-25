@@ -2,6 +2,7 @@
 #include <database/database.hpp>
 #include <filesystem>
 #include <global_config.hpp>
+#include <string>
 
 std::filesystem::path prefix_path = std::filesystem::path(getenv("FROMAGER_WORKDIR"));
 std::filesystem::path config_path = prefix_path / "config.yaml";
@@ -45,6 +46,28 @@ namespace global_config {
             exit(EXIT_FAILURE);
         } else {
             return config["default_mpi"].as<std::string>();
+        }
+    }
+
+    std::string get_external_package_prefix(const std::string& package_name) {
+        if (!config["external"] || !config["external"][package_name] ||
+            !config["external"][package_name]["prefix"]) {
+            ERROR("Illformed configuration: prefix for external package '" + package_name +
+                  "' is missing");
+            exit(EXIT_FAILURE);
+        } else {
+            return config["external"][package_name]["prefix"].as<std::string>();
+        }
+    }
+
+    std::string get_external_package_version(const std::string& package_name) {
+        if (!config["external"] || !config["external"][package_name] ||
+            !config["external"][package_name]["version"]) {
+            ERROR("Illformed configuration: version for external package '" + package_name +
+                  "' is missing");
+            exit(EXIT_FAILURE);
+        } else {
+            return config["external"][package_name]["version"].as<std::string>();
         }
     }
 
@@ -99,9 +122,26 @@ std::string get_cellar_path(CellarPathQuery query) {
             }
             // If version is "system", we return the system cellar path; otherwise, we return the path to the specific package version in the expected cellar
             // This is mostly used for the compilers because we prepare a default compiler in the system cellar, but we still want to allow users to specify compiler versions in the config file and have them installed in the compilers cellar
-            return query.pkg_version == "system" ? global_config::get_path("system")
-                                                 : global_config::get_path(expected_cellar) + "/" +
-                                                       query.pkg_name + "-" + query.pkg_version;
+            if (query.pkg_version == "system") {
+                return global_config::get_path("system");
+            } else if (pkg_type == "mpi") {
+                // For MPI packages, we need to handle the prefix differently
+                // The goal is to share MPI libraries across the environments
+                if (query.compiler_spec.empty()) {
+                    ERROR(
+                        "Compiler specification (name and version) is required for MPI package '" +
+                        query.pkg_name + "' to determine the cellar path.");
+                    exit(EXIT_FAILURE);
+                }
+                return global_config::get_path("mpis") + "/" + query.pkg_name + "-" +
+                       query.pkg_version + "-" + compiler_spec_to_cellar_name(query.compiler_spec);
+            } else {
+                return global_config::get_path(expected_cellar) + "/" + query.pkg_name + "-" +
+                       query.pkg_version;
+            }
+        } else if (pkg_type == "external") {
+            // TODO: Handle external packages that are not in the system cellar
+            return global_config::get_external_package_prefix(query.pkg_name);
         } else {
             if (query.cellar_name.empty()) {
                 ERROR("Cellar name is required for package '" + query.pkg_name + "' of type '" +
@@ -110,5 +150,28 @@ std::string get_cellar_path(CellarPathQuery query) {
             }
             return global_config::get_path("cellars") + "/" + query.cellar_name;
         }
+    }
+}
+
+std::pair<std::string, std::string> parse_compiler_spec(const std::string& compiler_spec) {
+    if (compiler_spec == "system") {
+        return {"gcc", "system"};  // Default to gcc for system compiler
+    } else if (compiler_spec.find('@') != std::string::npos) {
+        std::string compiler_name    = compiler_spec.substr(0, compiler_spec.find('@'));
+        std::string compiler_version = compiler_spec.substr(compiler_spec.find('@') + 1);
+        return {compiler_name, compiler_version};
+    } else {
+        ERROR("Invalid compiler specification: " + compiler_spec +
+              ". Expected format is 'compiler@version' or 'system'.");
+        exit(EXIT_FAILURE);
+    }
+}
+
+std::string compiler_spec_to_cellar_name(const std::string& compiler_spec) {
+    auto [compiler_name, compiler_version] = parse_compiler_spec(compiler_spec);
+    if (compiler_name == "system") {
+        return "system";
+    } else {
+        return compiler_name + "-" + compiler_version;
     }
 }

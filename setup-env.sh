@@ -12,10 +12,8 @@ if [ -z "${FROMAGER_WORKDIR:-}" ]; then
 else
 
     export FROMAGER_ENV="${FROMAGER_WORKDIR}/cellars"
-    export FROMAGER_STATE="${FROMAGER_WORKDIR}/state"
 
     export FROMAGER_HOME="${SCRIPT_DIR}"
-    export FROMAGER_SRC="${FROMAGER_HOME}/src"
     export FROMAGER_DB="${FROMAGER_HOME}/database"
 
     if [[ ":$PATH:" != *":${FROMAGER_HOME}/bin:"* ]]; then

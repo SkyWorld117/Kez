@@ -2,6 +2,8 @@
 
 set -Eeuo pipefail
 
+export PATH=${FROMAGER_HOME}/bin:${PATH}
+
 target_cellar=$1
 
 rm -rf source/ source*

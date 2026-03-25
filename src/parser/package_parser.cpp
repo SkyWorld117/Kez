@@ -1,3 +1,4 @@
+#include <global_config.hpp>
 #include <parser/package_parser.hpp>
 
 std::vector<std::string> parse_package(const std::string& package_name,
@@ -22,9 +23,10 @@ std::vector<std::string> parse_package(const std::string& package_name,
     // Build vendor packages only if they are not already built
     if (pkg_config["cheese"]["type"].as<std::string>() == "vendor" &&
         user_config_context["version"]) {
-        std::string version               = user_config_context["version"].as<std::string>();
-        std::filesystem::path vendor_path = std::filesystem::path(getenv("FROMAGER_ENV")) /
-                                            "vendors" / (package_name + "-" + version);
+        std::string version = user_config_context["version"].as<std::string>();
+        std::filesystem::path vendor_path =
+            std::filesystem::path(global_config::get_path("vendors")) /
+            (package_name + "-" + version);
         if (std::filesystem::exists(vendor_path)) {
             return instructions;  // Skip building if the vendor package already exists
         } else {
@@ -183,7 +185,7 @@ std::vector<std::string> parse_package(const std::string& package_name,
     if (build_mode == "debug") {
         INFO("- Stages for package: " + package_name);
     }
-    std::string threads = getenv("FROMAGER_NPROC");
+    std::string threads = global_config::get_num_proc();
 
     std::string toolchain = "";
     if (pkg_config["cheese"]["toolchain"])
