@@ -525,7 +525,7 @@ if check_installation "cuda"; then
             fi
         fi
         wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/cuda.run" "${cuda_runfile_link}"
-        bash "${FROMAGER_SYSTEM_TMP}/cuda.run" --silent --toolkit --override --toolkitpath="${FROMAGER_SYSTEM}" --installpath="${FROMAGER_SYSTEM}" --no-drm --tmpdir="${FROMAGER_WORKDIR}/.tmp"
+        bash "${FROMAGER_SYSTEM_TMP}/cuda.run" --silent --toolkit --override --toolkitpath="${FROMAGER_SYSTEM}" --installpath="${FROMAGER_SYSTEM}" --no-drm --tmpdir="${FROMAGER_SYSTEM_TMP}"
         # Remove /tmp/cuda-installer.log if exists
         rm -f /tmp/cuda-installer.log
         # Soft link CUDA files
@@ -537,6 +537,7 @@ if check_installation "cuda"; then
             cp -rsf "${FROMAGER_SYSTEM}/targets/sbsa-linux/lib"/* "${FROMAGER_SYSTEM}/lib64/"
         fi
         rm -f "${FROMAGER_SYSTEM_TMP}/cuda.run"
+        rm -f /tmp/cuda-installer.log
         echo -e "  cuda:\n    version: ${version}" >> "${FROMAGER_SYSTEM}/state.yaml"
     else
         echo "No NVIDIA GPU detected, skipping CUDA installation."
