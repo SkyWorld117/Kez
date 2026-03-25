@@ -147,7 +147,7 @@ fi
 if check_installation "zlib"; then
     echo "Installing zlib..."
     wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/zlib.tar.gz" "https://zlib.net/current/zlib.tar.gz"
-    tar -xzf "${FROMAGER_SYSTEM_TMP}/zlib.tar.gz" && cd "${FROMAGER_WORKDIR}/.tmp"/zlib-*
+    tar -xzf "${FROMAGER_SYSTEM_TMP}/zlib.tar.gz" && cd "${FROMAGER_SYSTEM_TMP}"/zlib-*
     version=$(grep -oP 'ZLIB_VERSION "\K[0-9]+\.[0-9]+\.[0-9]+' zlib.h)
     ./configure \
         --prefix="${FROMAGER_SYSTEM}"
