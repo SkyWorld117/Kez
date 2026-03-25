@@ -7,7 +7,7 @@ set -Eeuo pipefail
 
 source "${FROMAGER_HOME}/bin/fromager_init_utils"
 
-mkdir -p "${FROMAGER_ENV}"/utilities
+mkdir -p "${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.utilities' ${FROMAGER_WORKDIR}/config.yaml)"
 
 export FROMAGER_SYSTEM="${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.system' ${FROMAGER_WORKDIR}/config.yaml)" # System prefix of Fromager
 export FROMAGER_SYSTEM_TMP="${FROMAGER_SYSTEM}/.tmp"
