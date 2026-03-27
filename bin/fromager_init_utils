@@ -58,9 +58,9 @@ fetch_latest_gnu() {
     local pkg="$1"
     local ext="${2:-tar.xz}"
     # GNU official
-    # local url="https://ftp.gnu.org/gnu/${pkg}/"
+    local url="https://ftp.gnu.org/gnu/${pkg}/"
     # GNU mirror (usually much faster)
-    local url="https://ftpmirror.gnu.org/gnu/${pkg}/"
+    # local url="https://ftpmirror.gnu.org/gnu/${pkg}/"
 
     echo $(fetch_latest_web "${pkg}" "${url}" "${ext}")
 }
