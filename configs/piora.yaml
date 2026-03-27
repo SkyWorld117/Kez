@@ -1,6 +1,8 @@
 fromager:
   n_proc_for_build: 32
 
+  default_compiler: system
+
   paths:
     cellars: cellars
     system: cellars/system

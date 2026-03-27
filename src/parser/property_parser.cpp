@@ -21,9 +21,17 @@ std::string parse_property(const std::string& property_name,
     std::string pkg_type = pkg_config_node["cheese"]["type"].as<std::string>();
 
     if (property == "prefix") {
+        if (pkg_type == "system") {
+            return global_config::get_path("system");
+        }
+
         CellarPathQuery query;
-        query.pkg_name    = package_name;
-        query.pkg_version = user_config["cheese"][package_name]["version"].as<std::string>();
+        query.pkg_name = package_name;
+        if (pkg_type == "external") {
+            query.pkg_version = global_config::get_external_package_version(package_name);
+        } else {
+            query.pkg_version = user_config["cheese"][package_name]["version"].as<std::string>();
+        }
         if (user_config["cheese"][package_name]["compiler"]) {
             query.compiler_spec = user_config["cheese"][package_name]["compiler"].as<std::string>();
         }

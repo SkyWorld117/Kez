@@ -1,3 +1,4 @@
+#include <global_config.hpp>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
 
@@ -43,6 +44,19 @@ void execute_install_parser() {
         if (!version_set) {
             query.pkg_version = config["cheese"][query.pkg_name]["version"].as<std::string>();
         }
+
+        bool compiler_spec_set = false;
+        if (install_parser.is_used("--config")) {
+            std::vector<std::string> config_options =
+                install_parser.get<std::vector<std::string>>("--config");
+            query.compiler_spec = get_compiler_spec_from_cmdline_config(
+                query.pkg_name, config_options, compiler_spec_set);
+        }
+        if (!compiler_spec_set && config["cheese"][query.pkg_name]["compiler"]) {
+            query.compiler_spec = config["cheese"][query.pkg_name]["compiler"].as<std::string>();
+        } else {
+            query.compiler_spec = global_config::get_default_compiler();
+        }
     } else {
         query.pkg_name = target;
 
@@ -57,6 +71,17 @@ void execute_install_parser() {
             YAML::Node pkg_config = get_db_config(query.pkg_name);
             query.pkg_version =
                 pkg_config["cheese"]["source"]["releases"][0]["version"].as<std::string>();
+        }
+
+        bool compiler_spec_set = false;
+        if (install_parser.is_used("--config")) {
+            std::vector<std::string> config_options =
+                install_parser.get<std::vector<std::string>>("--config");
+            query.compiler_spec = get_compiler_spec_from_cmdline_config(
+                query.pkg_name, config_options, compiler_spec_set);
+        }
+        if (!compiler_spec_set) {
+            query.compiler_spec = global_config::get_default_compiler();
         }
     }
     if (install_parser.is_used("--cellar")) {

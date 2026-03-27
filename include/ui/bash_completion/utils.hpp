@@ -92,3 +92,16 @@ inline std::string get_version_from_cmdline_config(const std::string& target,
     }
     return "";
 }
+
+inline std::string get_compiler_spec_from_cmdline_config(
+    const std::string& pkg_name, const std::vector<std::string>& config_options,
+    bool& compiler_spec_set) {
+    for (const std::string& option : config_options) {
+        if (option.rfind(pkg_name + ".compiler=", 0) == 0) {
+            std::string compiler_spec = option.substr((pkg_name + ".compiler=").length());
+            compiler_spec_set         = true;
+            return compiler_spec;
+        }
+    }
+    return "";
+}
