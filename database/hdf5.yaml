@@ -14,7 +14,7 @@ cheese:
     configurations:
       options:
         - name: --prefix
-          descriptoin: Installation prefix
+          description: Installation prefix
           enabled_value: 
             default: ${hdf5.prefix}
 
