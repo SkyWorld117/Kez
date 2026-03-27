@@ -2,7 +2,7 @@
 
 # Bash completion for fgr (Fromager)
 _fgr_complete() {
-    COMPREPLY=($(fromager_bash_completion "$COMP_CWORD" "${COMP_WORDS[@]}"))
+    COMPREPLY=($(${FROMAGER_HOME}/bin/fromager_bash_completion "$COMP_CWORD" "${COMP_WORDS[@]}"))
 }
 
 # Register the completion function
