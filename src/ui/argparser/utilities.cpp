@@ -1,6 +1,8 @@
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
 
+#include "database/database.hpp"
+
 static argparse::ArgumentParser utilities_parser("utilities");
 static argparse::ArgumentParser util_add_parser("add");
 static argparse::ArgumentParser util_empty_parser("empty");
@@ -40,8 +42,32 @@ void execute_utilities_parser() {
             YAML::Node config          = YAML::LoadFile(target);
             std::string target_package = config["recipe"]["dependencies"][0].as<std::string>();
             query.pkg_name             = target_package;
+
+            bool version_set = false;
+            if (util_add_parser.is_used("--config")) {
+                std::vector<std::string> config_options =
+                    util_add_parser.get<std::vector<std::string>>("--config");
+                query.pkg_version =
+                    get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
+            }
+            if (!version_set) {
+                query.pkg_version = config["cheese"][query.pkg_name]["version"].as<std::string>();
+            }
         } else {
             query.pkg_name = target;
+
+            bool version_set = false;
+            if (util_add_parser.is_used("--config")) {
+                std::vector<std::string> config_options =
+                    util_add_parser.get<std::vector<std::string>>("--config");
+                query.pkg_version =
+                    get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
+            }
+            if (!version_set) {
+                YAML::Node pkg_config = get_db_config(query.pkg_name);
+                query.pkg_version =
+                    pkg_config["cheese"]["source"]["releases"][0]["version"].as<std::string>();
+            }
         }
         query.cellar_name            = "utilities";
         std::string utilities_cellar = get_cellar_path(query);
@@ -86,23 +112,44 @@ std::vector<std::string> get_utilities_suggestions(const int comp_cword,
             suggestions = {"--help", "-h"};
         }
 
+        bool suggest_read_option   = false;
+        bool suggest_config_option = false;
+
         if (exists_in(comp_words, "--read") || exists_in(comp_words, "-r")) {
             // If the last word is --read or -r, suggest config file names from the filesystem
             if (comp_cword > 3 &&
                 (comp_words[comp_cword - 1] == "--read" || comp_words[comp_cword - 1] == "-r")) {
                 suggestions = get_filesystem_suggestions(comp_cword, comp_words);
-            } else if (!exists_in(comp_words, "--config") && !exists_in(comp_words, "-c")) {
-                // If --config is not already present, suggest it instead
-                suggestions.push_back("--config");
-                suggestions.push_back("-c");
+                return suggestions;
             }
         } else {
+            suggest_read_option = true;
+        }
+
+        if (exists_in(comp_words, "--config") || exists_in(comp_words, "-c")) {
+            if (comp_cword > 2 &&
+                (comp_words[comp_cword - 1] == "--config" || comp_words[comp_cword - 1] == "-c")) {
+                // TODO: Smart suggestions based on the config options already present in the command line
+                // Do nothing for now
+                return suggestions;
+            }
+        } else {
+            suggest_config_option = true;
+        }
+
+        if (suggest_read_option) {
+            suggestions.push_back("--read");
+            suggestions.push_back("-r");
+
             // If --read is not already present, suggest utility names from the database as well as the --read option
             std::vector<std::string> database_packages = get_database_suggestions();
             suggestions.insert(suggestions.end(), database_packages.begin(),
                                database_packages.end());
-            suggestions.push_back("--read");
-            suggestions.push_back("-r");
+        }
+
+        if (suggest_config_option) {
+            suggestions.push_back("--config");
+            suggestions.push_back("-c");
         }
 
         return suggestions;

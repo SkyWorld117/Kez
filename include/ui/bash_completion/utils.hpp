@@ -80,3 +80,15 @@ inline std::vector<std::string> get_filesystem_suggestions(
     }
     return suggestions;
 }
+
+inline std::string get_version_from_cmdline_config(const std::string& target,
+                                                   const std::vector<std::string>& config_options,
+                                                   bool& version_set) {
+    for (const std::string& option : config_options) {
+        if (option.rfind(target + ".version=", 0) == 0) {
+            version_set = true;
+            return option.substr((target + ".version=").length());
+        }
+    }
+    return "";
+}
