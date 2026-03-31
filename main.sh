@@ -16,6 +16,12 @@
 # These commands will return bash instructions that will be evaluated by this wrapper script to change the current shell environment.
 
 fgr () {
+    if [ ! -f "${FROMAGER_HOME}/bin/fromager" ] && [ "${1:-}" == "init" ]; then
+        echo "[W]: Fromager is not initialized. Running initialization process..."
+        ${FROMAGER_HOME}/bin/fromager_init
+        return
+    fi
+
     local intercept=0
     
     if [[ "${1:-}" == "cellar" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
