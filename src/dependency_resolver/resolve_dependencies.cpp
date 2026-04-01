@@ -67,7 +67,7 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
             return;  // Already processed
         }
 
-        config = get_db_config(concrete_pkg_name);
+        config.reset(get_db_config(concrete_pkg_name));
     } else {
         concrete_pkg_name = pkg_name;  // Use the original package name for non-abstract packages
     }

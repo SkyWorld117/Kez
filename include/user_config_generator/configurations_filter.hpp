@@ -8,4 +8,5 @@
 #include <vector>
 
 YAML::Node filtered_configurations(const YAML::Node& config_node,
-                                   const std::vector<std::string>& all_dependencies);
+                                   const std::vector<std::string>& all_dependencies,
+                                   const YAML::Node& abstract_packages);
