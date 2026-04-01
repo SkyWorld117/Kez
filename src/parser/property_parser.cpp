@@ -1,4 +1,5 @@
-#include "property_parser.h"
+#include <global_config.hpp>
+#include <parser/property_parser.hpp>
 
 std::string parse_property(const std::string& property_name,
                            std::unordered_map<std::string, std::string>& template_map,
@@ -17,72 +18,27 @@ std::string parse_property(const std::string& property_name,
         exit(EXIT_FAILURE);
     }
 
+    std::string pkg_type = pkg_config_node["cheese"]["type"].as<std::string>();
+
     if (property == "prefix") {
-        if (pkg_config_node["cheese"]["type"].as<std::string>() == "mpi") {
-            // For MPI packages, we need to handle the prefix differently
-            // The goal is to share MPI libraries across the environments
-            std::string mpi_version =
-                user_config["cheese"][package_name]["version"].as<std::string>();
-            std::string compiler_spec =
-                user_config["cheese"][package_name]["compiler"].as<std::string>();
-            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
-            std::filesystem::path prefix_path;
-            if (compiler_spec == "system") {
-                prefix_path =
-                    fromager_env / "mpis" / (package_name + "-" + mpi_version + "-system");
-            } else {
-                std::string compiler_name    = compiler_spec.substr(0, compiler_spec.find('@'));
-                std::string compiler_version = compiler_spec.substr(compiler_spec.find('@') + 1);
-                prefix_path                  = fromager_env / "mpis" /
-                              (package_name + "-" + mpi_version + "-" + compiler_name + "-" +
-                               compiler_version);
-            }
-            if (!std::filesystem::exists(prefix_path)) {
-                WARNING("MPI prefix path does not exist: " + prefix_path.string());
-            }
-            return prefix_path.string();
-        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "system") {
-            // For system packages, we can use the FROMAGER_ENV variable
-            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
-            std::filesystem::path prefix_path = fromager_env / "system";
-            return prefix_path.string();
-        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "vendor") {
-            // Some vendor packages are submodules of other vendor packages
-            // We need to handle the prefix differently
-            if (pkg_config_node["cheese"]["properties"] &&
-                pkg_config_node["cheese"]["properties"]["prefix"]) {
-                std::cout << "Using user-defined prefix for vendor package: " << package_name
-                          << std::endl;
-                return parse_scalar(
-                    pkg_config_node["cheese"]["properties"]["prefix"].as<std::string>(),
-                    template_map, user_config, user_config_pkg, build_mode, env_path);
-            }
-            // We share vendor packages across the environments
-            std::string pkg_version =
-                user_config["cheese"][package_name]["version"].as<std::string>();
-            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
-            std::filesystem::path vendor_prefix_path =
-                fromager_env / "vendors" / (package_name + "-" + pkg_version);
-            return vendor_prefix_path.string();
-        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "external") {
-            // Information about external packages is stored in the `config.yaml` file
-            std::filesystem::path fromager_workdir(getenv("FROMAGER_WORKDIR"));
-            std::filesystem::path config_path = fromager_workdir / "config.yaml";
-            YAML::Node config_node            = YAML::LoadFile(config_path.string());
-            if (config_node["fromager"]["external"] &&
-                config_node["fromager"]["external"][package_name]) {
-                if (!config_node["fromager"]["external"][package_name]["prefix"].IsNull()) {
-                    return config_node["fromager"]["external"][package_name]["prefix"]
-                        .as<std::string>();
-                } else {
-                    ERROR("External package '" + package_name +
-                          "' does not have a prefix defined in config.yaml.");
-                    exit(EXIT_FAILURE);
-                }
-            } else {
-                ERROR("External package '" + package_name + "' not found in config.yaml.");
-                exit(EXIT_FAILURE);
-            }
+        if (pkg_type == "system") {
+            return global_config::get_path("system");
+        }
+
+        CellarPathQuery query;
+        query.pkg_name = package_name;
+        if (pkg_type == "external") {
+            query.pkg_version = global_config::get_external_package_version(package_name);
+        } else {
+            query.pkg_version = user_config["cheese"][package_name]["version"].as<std::string>();
+        }
+        if (user_config["cheese"][package_name]["compiler"]) {
+            query.compiler_spec = user_config["cheese"][package_name]["compiler"].as<std::string>();
+        }
+
+        // Special packages
+        if (pkg_type != "package") {
+            return get_cellar_path(query);
         }
 
         // Regular packages
@@ -97,10 +53,10 @@ std::string parse_property(const std::string& property_name,
             exit(EXIT_FAILURE);
         }
     } else if (property == "version") {
-        if (pkg_config_node["cheese"]["type"].as<std::string>() == "system") {
-            std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
-            std::filesystem::path state_path = fromager_env / "system" / "state.yaml";
-            YAML::Node state_node            = YAML::LoadFile(state_path.string());
+        if (pkg_type == "system") {
+            std::filesystem::path state_path =
+                std::filesystem::path(global_config::get_path("system")) / "state.yaml";
+            YAML::Node state_node = YAML::LoadFile(state_path.string());
             if (state_node["cheese"] && state_node["cheese"][package_name] &&
                 state_node["cheese"][package_name]["version"]) {
                 return state_node["cheese"][package_name]["version"].as<std::string>();
@@ -108,20 +64,8 @@ std::string parse_property(const std::string& property_name,
                 ERROR("Package '" + package_name + "' version not found in state.yaml.");
                 exit(EXIT_FAILURE);
             }
-        } else if (pkg_config_node["cheese"]["type"].as<std::string>() == "external") {
-            // For external packages, we can use the FROMAGER_ENV variable
-            std::filesystem::path fromager_workdir(getenv("FROMAGER_WORKDIR"));
-            std::filesystem::path config_path = fromager_workdir / "config.yaml";
-            YAML::Node config_node            = YAML::LoadFile(config_path.string());
-            if (config_node["fromager"]["external"] &&
-                config_node["fromager"]["external"][package_name] &&
-                config_node["fromager"]["external"][package_name]["version"]) {
-                return config_node["fromager"]["external"][package_name]["version"]
-                    .as<std::string>();
-            } else {
-                ERROR("External package '" + package_name + "' version not found in config.yaml.");
-                exit(EXIT_FAILURE);
-            }
+        } else if (pkg_type == "external") {
+            return global_config::get_external_package_version(package_name);
         } else {
             if (user_config["cheese"][package_name]["version"]) {
                 return user_config["cheese"][package_name]["version"].as<std::string>();

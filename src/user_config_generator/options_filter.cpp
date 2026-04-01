@@ -1,4 +1,4 @@
-#include "options_filter.h"
+#include <user_config_generator/options_filter.hpp>
 
 YAML::Node filtered_options(const YAML::Node& options_node,
                             const std::vector<std::string>& all_dependencies) {

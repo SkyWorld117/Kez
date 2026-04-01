@@ -1,4 +1,4 @@
-#include "colored_io.h"
+#include <colors/colored_io.hpp>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {

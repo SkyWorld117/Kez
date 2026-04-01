@@ -1,4 +1,4 @@
-#include "factory_parser.h"
+#include <rt_profile_config_parser/factory_parser.hpp>
 
 YAML::Node parse_factory_config(const YAML::Node& factory_config) {
     if (!factory_config.IsMap()) {

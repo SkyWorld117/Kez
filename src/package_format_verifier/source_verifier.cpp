@@ -1,4 +1,4 @@
-#include "source_verifier.h"
+#include <package_format_verifier/source_verifier.hpp>
 
 bool verify_source(const YAML::Node& node) {
     if (!node.IsMap()) {

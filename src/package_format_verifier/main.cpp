@@ -1,6 +1,7 @@
-#include "../colors/colored_io.h"
-#include "cheese_verifier.h"
-#include "yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
+
+#include <colors/colored_io.hpp>
+#include <package_format_verifier/cheese_verifier.hpp>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {

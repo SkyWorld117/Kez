@@ -1,4 +1,4 @@
-#include "cellar_parser.h"
+#include <rt_profile_config_parser/cellar_parser.hpp>
 
 YAML::Node parse_cellar_config(const YAML::Node& factory_config, const YAML::Node& cellar_config) {
     if (!cellar_config.IsMap()) {

@@ -1,4 +1,4 @@
-#include "configurations_filter.h"
+#include <user_config_generator/configurations_filter.hpp>
 
 YAML::Node filtered_configurations(const YAML::Node& config_node,
                                    const std::vector<std::string>& all_dependencies) {

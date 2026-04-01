@@ -1,10 +1,8 @@
-#include "parser.h"
+#include <parser/parser.hpp>
 
 YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
                  const std::string& env_path) {
     std::unordered_map<std::string, std::string> template_map;
-
-    std::filesystem::path db_path(getenv("FROMAGER_DB"));
 
     // Solve abstract linking:
     // 1. Load involved abstract packages and fetch their implementations

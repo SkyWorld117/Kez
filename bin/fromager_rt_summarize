@@ -2,6 +2,8 @@
 
 set -Eeuo pipefail
 
+export PATH=${FROMAGER_HOME}/bin:${PATH}
+
 factory_dir="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}"
 ins_yaml="${factory_dir}/tasting_rooms/ins.yaml"
 

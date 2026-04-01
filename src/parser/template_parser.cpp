@@ -1,4 +1,6 @@
-#include "template_parser.h"
+#include <global_config.hpp>
+#include <parser/template_parser.hpp>
+#include <string>
 
 std::string parse_template(const std::string& template_str,
                            std::unordered_map<std::string, std::string>& template_map,
@@ -32,17 +34,9 @@ std::string parse_template(const std::string& template_str,
 
     if (template_str.find("compiler.") == 0) {
         // Compiler templates are context dependent
-        std::string compiler_name;
         std::string compiler_property = template_str.substr(9);  // Remove "compiler."
         if (user_config_pkg["compiler"]) {
             std::string compiler_spec = user_config_pkg["compiler"].as<std::string>();
-            if (compiler_spec == "system") {
-                compiler_name = "gcc";  // Default to gcc for system compiler
-            } else {
-                compiler_name = compiler_spec.substr(
-                    0, compiler_spec.find(
-                           '@'));  // Extract compiler name before '@', format is "compiler@version"
-            }
             if (compiler_property.find("config.") == 0 || compiler_property.find("env.") == 0) {
                 ERROR("Compiler properties cannot be used in templates: " + template_str);
                 exit(EXIT_FAILURE);
@@ -51,20 +45,15 @@ std::string parse_template(const std::string& template_str,
             // The reason for this is that a building environment may require multiple compilers, and the prefix is not always the same.
             // So the same name is mapped to different prefixes, thus we cannot use `template_map` to resolve it.
             // This requires using `${compiler.prefix}` in the template of the compiler configuration files.
+            std::pair<std::string, std::string> compiler_name_version =
+                parse_compiler_spec(compiler_spec);
+            std::string compiler_name    = compiler_name_version.first;
+            std::string compiler_version = compiler_name_version.second;
             if (compiler_property == "prefix") {
-                std::filesystem::path fromager_env(getenv("FROMAGER_ENV"));
-                std::filesystem::path prefix_path;
-                if (compiler_spec == "system") {
-                    prefix_path = fromager_env / "system";
-                } else {
-                    prefix_path =
-                        fromager_env / "compilers" /
-                        (compiler_name + "-" + compiler_spec.substr(compiler_spec.find('@') + 1));
-                }
-                if (!std::filesystem::exists(prefix_path)) {
-                    WARNING("Compiler prefix path does not exist: " + prefix_path.string());
-                }
-                return prefix_path.string();
+                CellarPathQuery query;
+                query.pkg_name    = compiler_name;
+                query.pkg_version = compiler_version;
+                return get_cellar_path(query);
             }
             // For other compiler properties, we can resolve them using the parse_property function
             return parse_property(compiler_name + "." + compiler_property, template_map,

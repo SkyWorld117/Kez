@@ -1,5 +1,5 @@
-#include "../colors/colored_io.h"
-#include "../dependency_resolver/resolve_dependencies.h"
+#include <colors/colored_io.hpp>
+#include <dependency_resolver/resolve_dependencies.hpp>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {

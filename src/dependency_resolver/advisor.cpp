@@ -1,4 +1,4 @@
-#include "advisor.h"
+#include <dependency_resolver/advisor.hpp>
 
 std::string advise(const std::string& abstract_pkg) {
     // This function is just a lookup table

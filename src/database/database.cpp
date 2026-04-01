@@ -1,4 +1,4 @@
-#include "database.h"
+#include <database/database.hpp>
 
 std::unordered_map<std::string, YAML::Node> db_cache;
 std::filesystem::path db_path(getenv("FROMAGER_DB"));
