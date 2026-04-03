@@ -5,22 +5,29 @@ static argparse::ArgumentParser template_parser("template");
 static argparse::ArgumentParser template_parse_parser("parse");
 
 argparse::ArgumentParser& get_template_parser() {
-    template_parser.add_description("Fetch a template for an application");
+    template_parser.add_description("Fetch a template for an application, or parse a config");
 
-    template_parse_parser.add_description("Parse a user configuration file into instructions");
-    template_parse_parser.add_argument("file");
+    // We do not add the subparser to template_parser directly, because p-ranav/argparse
+    // cannot distinguish between a positional argument and a subparser without strict separation.
+    // Instead we use nargs::any and manually route the control flow.
+    template_parser.add_argument("args")
+        .help("For fetching: <package>\nFor parsing: parse <file>")
+        .nargs(argparse::nargs_pattern::any);
 
-    template_parser.add_argument("package").help("Package for template generation").nargs(1);
     template_parser.add_argument("-s", "--save").help("Save the configuration template").nargs(1);
-
-    template_parser.add_subparser(template_parse_parser);
 
     return template_parser;
 }
 
 void execute_template_parser() {
-    if (template_parser.is_subcommand_used("parse")) {
-        std::string file  = template_parse_parser.get<std::string>("file");
+    auto args = template_parser.get<std::vector<std::string>>("args");
+
+    if (!args.empty() && args[0] == "parse") {
+        if (args.size() < 2) {
+            ERROR("Missing file argument for 'parse' subcommand.");
+            exit(EXIT_FAILURE);
+        }
+        std::string file  = args[1];
         YAML::Node config = YAML::LoadFile(file);
 
         std::filesystem::path tmp_path = std::filesystem::path(getenv("FROMAGER_WORKDIR")) / ".tmp";
@@ -41,7 +48,11 @@ void execute_template_parser() {
 
         exit(EXIT_SUCCESS);
     } else {
-        std::string package = template_parser.get<std::string>("package");
+        if (args.empty()) {
+            ERROR("Missing package argument for template fetching.");
+            exit(EXIT_FAILURE);
+        }
+        std::string package = args[0];
         bool save_template  = template_parser.is_used("--save");
 
         YAML::Node user_config = gen_user_config(package, save_template);
