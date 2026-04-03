@@ -22,6 +22,18 @@ std::string parse_options(const YAML::Node &opts_node,
             for (const auto &dep : opt["requires"]) {
                 if (std::find(all_dependencies.begin(), all_dependencies.end(),
                               dep.as<std::string>()) == all_dependencies.end()) {
+                    // Check if the required dependency is an abstract package and if any of its concrete implementations are present
+                    std::string dep_name = dep.as<std::string>();
+                    std::string dep_type =
+                        get_db_config(dep_name)["cheese"]["type"].as<std::string>();
+                    if (dep_type == "abstract") {
+                        if (user_config["recipe"]["abstract_packages"][dep_name] &&
+                            std::find(all_dependencies.begin(), all_dependencies.end(),
+                                      user_config["recipe"]["abstract_packages"][dep_name]
+                                          .as<std::string>()) != all_dependencies.end()) {
+                            continue;
+                        }
+                    }
                     is_required = false;
                     break;
                 }
