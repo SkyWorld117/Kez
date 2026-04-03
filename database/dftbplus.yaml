@@ -1,0 +1,129 @@
+cheese:
+  name: dftbplus
+  description: DFTB+ - Density Functional Tight Binding molecular dynamics
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 25.1
+        url: https://github.com/dftbplus/dftbplus/releases/download/25.1/dftbplus-25.1.tar.xz
+
+  dependencies:
+    - mpi
+    - lapack
+    - scalapack
+    - elsi
+
+  build:
+    configurations:
+      options:
+        - name: CMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${dftbplus.prefix}
+
+        - name: CMAKE_C_COMPILER
+          description: C compiler (use MPI wrapper)
+          enabled_value:
+            default: ${mpi.c}
+
+        - name: CMAKE_Fortran_COMPILER
+          description: Fortran compiler (use MPI wrapper)
+          enabled_value:
+            default: ${mpi.fort}
+
+        - name: CMAKE_CXX_COMPILER
+          description: C++ compiler (use MPI wrapper)
+          enabled_value:
+            default: ${mpi.cxx}
+
+        - name: CMAKE_C_FLAGS
+          description: C compiler optimization flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CMAKE_Fortran_FLAGS
+          description: Fortran compiler optimization flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CMAKE_CXX_FLAGS
+          description: C++ compiler optimization flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        # MPI support (required for ISC26)
+        - name: WITH_MPI
+          description: Build with MPI support
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_format: ON
+          disabled_format: OFF
+
+        # ELSI for eigenvalue solvers (uses ScaLAPACK + ELPA)
+        - name: WITH_ELSI
+          description: Build with ELSI eigenvalue interface
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_format: ON
+          disabled_format: OFF
+          requires: [elsi]
+
+        - name: ELSI_INCLUDE_DIR
+          description: Path to ELSI include directory
+          conditions:
+            - condition: ${dftbplus.config.WITH_ELSI} true
+              value: true
+            - condition: ${dftbplus.config.WITH_ELSI} false
+              value: false
+          enabled_value:
+            default: ${elsi.includes}
+          requires: [elsi]
+
+        - name: ELSI_LIBRARY
+          description: Path to ELSI library
+          conditions:
+            - condition: ${dftbplus.config.WITH_ELSI} true
+              value: true
+            - condition: ${dftbplus.config.WITH_ELSI} false
+              value: false
+          enabled_value:
+            default: ${elsi.libs}
+          requires: [elsi]
+
+        # ScaLAPACK for linear algebra
+        - name: CMAKE_PREFIX_PATH
+          description: Search path for CMake modules and libraries
+          enabled_value:
+            default: ${scalapack.prefix}:${lapack.prefix}
+            conditions:
+              - condition: ${dftbplus.config.WITH_ELSI} true
+                action: append
+                value: ${elsi.prefix}
+
+        - name: WITH_PLUMED
+          description: Enable PLUMED metadynamics support
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: ON
+          disabled_format: OFF
+
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${dftbplus.prefix}/lib -Wl,-rpath,${dftbplus.prefix}/lib
+    libs:
+      default: -ldftbplus
+    includes:
+      default: -I${dftbplus.prefix}/include

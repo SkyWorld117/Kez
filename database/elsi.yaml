@@ -1,0 +1,113 @@
+cheese:
+  name: elsi
+  description: ELSI - EigenvaLue SIver (unified interface for eigensolvers)
+  type: package
+  toolchain: cmake
+
+  source:
+    type: tarball
+    releases:
+      - version: 2.12.0
+        url: https://github.com/ElectronicStructureLibrary/elsi-interface/releases/download/v2.12.0/elsi-2.12.0.tar.gz
+
+  dependencies:
+    - mpi
+    - lapack
+    - scalapack
+    - elpa
+
+  build:
+    configurations:
+      options:
+        - name: CMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${elsi.prefix}
+
+        - name: CMAKE_C_COMPILER
+          description: C compiler (use MPI wrapper)
+          enabled_value:
+            default: ${mpi.c}
+
+        - name: CMAKE_Fortran_COMPILER
+          description: Fortran compiler (use MPI wrapper)
+          enabled_value:
+            default: ${mpi.fort}
+
+        - name: CMAKE_CXX_COMPILER
+          description: C++ compiler (use MPI wrapper)
+          enabled_value:
+            default: ${mpi.cxx}
+
+        - name: CMAKE_C_FLAGS
+          description: C compiler optimization flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CMAKE_Fortran_FLAGS
+          description: Fortran compiler optimization flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CMAKE_CXX_FLAGS
+          description: C++ compiler optimization flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        # ELSI uses integer sizes that match LAPACK/BLAS
+        - name: ENABLE_EXTERNAL_ELPA
+          description: Use external ELPA library (not bundled)
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_format: ON
+          disabled_format: OFF
+
+        - name: ELPA_INCLUDE_DIR
+          description: Path to ELPA include directory
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_value:
+            default: ${elpa.includes}
+
+        - name: ELPA_LIBRARY
+          description: Path to ELPA library
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_value:
+            default: ${elpa.libs}
+
+        # Optional: OMNI (eigenvalue solver interface layer) for more flexibility
+        - name: ENABLE_OMNI
+          description: Enable OMNI interface for eigenvalue solvers
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: ON
+          disabled_format: OFF
+
+        # Precision: double by default (required for DFTB+)
+        - name: ELSI_PRECISION
+          description: Floating point precision (single or double)
+          user_configurable: true
+          enabled:
+            default: true
+          enabled_value:
+            default: double
+
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${elsi.prefix}/lib -Wl,-rpath,${elsi.prefix}/lib
+    libs:
+      default: -lelsi
+    includes:
+      default: -I${elsi.prefix}/include

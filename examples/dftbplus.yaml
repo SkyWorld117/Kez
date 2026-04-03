@@ -1,0 +1,93 @@
+cheese:
+  dftbplus:
+    description: DFTB+ - Density Functional Tight Binding molecular dynamics
+    version: 25.1
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: CMAKE_C_FLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+          - name: CMAKE_CXX_FLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+          - name: CMAKE_Fortran_FLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3
+          - name: LDFLAGS
+            enabled: false
+
+          - name: WITH_MPI
+            enabled: true
+          - name: WITH_ELSI
+            enabled: true
+          
+          - name: WITH_PLUMED
+            enabled: false
+  
+  elsi:
+    description: ELSI - ELectronic Structure Infrastructure for Solvers and Interoperability
+    version: 2.12.0
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: CMAKE_C_FLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+          - name: CMAKE_CXX_FLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+          - name: CMAKE_Fortran_FLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3
+          - name: LDFLAGS
+            enabled: false
+
+          - name: ENABLE_EXTERNAL_ELPA
+            enabled: true
+
+  intel-oneapi-mkl:
+    build:
+      configurations:
+        options:
+          - name: fortran_format
+            enabled: true
+            enabled_value: gf
+          - name: integer_size
+            enabled: true
+            enabled_value: lp64
+          - name: multithreaded
+            enabled: true
+            enabled_value: ~
+          - name: multithreading_library
+            enabled: true
+            enabled_value: gnu
+          - name: mpi-family
+            enabled: true
+            enabled_value: openmpi
+
+  intel-oneapi:
+    version: 2025.1.0.666
+
+  nvhpc:
+    version: 25.7-x86_64
+
+  openmpi:
+    description: Open Source Implementation of the Message Passing Interface
+    version: 5.0.9
+    compiler: system
+
+recipe:
+  abstract_packages:
+    blas: intel-oneapi-mkl
+    lapack: intel-oneapi-mkl
+    scalapack: intel-oneapi-mkl
+    mpi: openmpi
+  dependencies:
+    - dftbplus
+    - elsi
+    - intel-oneapi
+    - intel-oneapi-mkl
+    - openmpi
