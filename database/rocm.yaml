@@ -1,0 +1,4 @@
+cheese:
+  name: rocm
+  description: ROCm is a software stack for GPU computing on AMD hardware.
+  type: system
