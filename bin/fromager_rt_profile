@@ -2,6 +2,8 @@
 
 set -Eeuo pipefail
 
+export PATH=${FROMAGER_HOME}/bin:${PATH}
+
 _fgr_eval() {
     local cellar_idx=$1
     local run_config_idx=$2

@@ -1,4 +1,4 @@
-#include "unbuilt_dependencies.h"
+#include <rt_dependency_resolver/unbuilt_dependencies.hpp>
 
 std::vector<std::string> get_unbuilt_dependencies(
     const YAML::Node& user_config, const YAML::Node& ins_yaml,

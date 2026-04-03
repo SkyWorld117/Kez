@@ -1,4 +1,4 @@
-#include "optional_dependencies.h"
+#include <dependency_resolver/optional_dependencies.hpp>
 
 std::vector<std::string> get_optional_dependencies(const YAML::Node& node) {
     std::vector<std::string> optional_deps;

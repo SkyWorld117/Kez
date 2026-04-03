@@ -1,4 +1,4 @@
-#include "configuration_parser.h"
+#include <parser/configuration_parser.hpp>
 
 std::pair<std::vector<std::string>, std::string> parse_configuration(
     YAML::Node& config, std::unordered_map<std::string, std::string>& template_map,

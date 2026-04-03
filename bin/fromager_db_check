@@ -4,6 +4,8 @@ set -Eeuo pipefail
 
 # This script uses the `bin/fromager_config_verifier` to check the database correctness file by file.
 
+export PATH=${FROMAGER_HOME}/bin:${PATH}
+
 fromager_info "Starting database check..."
 
 file_list=$(find "${FROMAGER_DB}" -type f -name "*.yaml" | sort)

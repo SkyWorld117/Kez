@@ -1,4 +1,4 @@
-#include "scalar_parser.h"
+#include <parser/scalar_parser.hpp>
 
 std::string parse_scalar(const std::string& scalar_str,
                          std::unordered_map<std::string, std::string>& template_map,

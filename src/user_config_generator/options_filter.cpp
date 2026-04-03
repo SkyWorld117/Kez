@@ -1,7 +1,8 @@
-#include "options_filter.h"
+#include <user_config_generator/options_filter.hpp>
 
 YAML::Node filtered_options(const YAML::Node& options_node,
-                            const std::vector<std::string>& all_dependencies) {
+                            const std::vector<std::string>& all_dependencies,
+                            const YAML::Node& abstract_packages) {
     YAML::Node opts = YAML::Node(YAML::NodeType::Sequence);
     for (const auto& opt : options_node) {
         if (opt["user_configurable"] && opt["user_configurable"].as<bool>()) {
@@ -11,6 +12,18 @@ YAML::Node filtered_options(const YAML::Node& options_node,
                 for (const auto& dep : opt["requires"]) {
                     if (std::find(all_dependencies.begin(), all_dependencies.end(),
                                   dep.as<std::string>()) == all_dependencies.end()) {
+                        // Check if the required dependency is an abstract package and if any of its concrete implementations are present
+                        std::string dep_name = dep.as<std::string>();
+                        std::string dep_type =
+                            get_db_config(dep_name)["cheese"]["type"].as<std::string>();
+                        if (dep_type == "abstract") {
+                            if (abstract_packages[dep_name] &&
+                                std::find(all_dependencies.begin(), all_dependencies.end(),
+                                          abstract_packages[dep_name].as<std::string>()) !=
+                                    all_dependencies.end()) {
+                                continue;
+                            }
+                        }
                         all_deps_present = false;
                         break;
                     }

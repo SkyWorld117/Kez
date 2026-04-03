@@ -10,6 +10,8 @@ cheese:
       - version: 44.2.0
         url: https://github.com/acts-project/acts/releases/download/v44.2.0/acts-v44.2.0.tar.gz
 
+  # Due to the dependency on Intel oneAPI TBB, it is not recommended to build ACTS on AARCH64 systems.
+  # The dependency on Intel oneAPI MKL is not mandatory, but since we are x86_64, we use it for better performance (of Eigen).
   dependencies:
     - boost
     - xerces-c

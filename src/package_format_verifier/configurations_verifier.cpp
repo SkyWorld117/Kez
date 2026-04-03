@@ -1,4 +1,4 @@
-#include "configurations_verifier.h"
+#include <package_format_verifier/configurations_verifier.hpp>
 
 bool verify_configurations(const YAML::Node& node) {
     if (!node.IsMap()) {

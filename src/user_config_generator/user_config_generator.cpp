@@ -1,8 +1,7 @@
-#include "user_config_generator.h"
+#include <user_config_generator/user_config_generator.hpp>
 
-YAML::Node config = YAML::Node(YAML::NodeType::Map);
-
-void config_per_pkg(const YAML::Node& db_pkg_node) {
+void config_per_pkg(YAML::Node& config, const YAML::Node& db_pkg_node,
+                    const YAML::Node& abstract_packages) {
     std::string pkg_name = db_pkg_node["cheese"]["name"].as<std::string>();
 
     config["cheese"][pkg_name] = YAML::Node(YAML::NodeType::Map);
@@ -28,8 +27,9 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
     if (db_pkg_node["cheese"]["build"] && pkg_is_target) {
         if (db_pkg_node["cheese"]["build"]["configurations"]) {
             if (db_pkg_node["cheese"]["build"]["configurations"]) {
-                YAML::Node filtered_config = filtered_configurations(
-                    db_pkg_node["cheese"]["build"]["configurations"], all_dependencies);
+                YAML::Node filtered_config =
+                    filtered_configurations(db_pkg_node["cheese"]["build"]["configurations"],
+                                            all_dependencies, abstract_packages);
                 if (!filtered_config.IsNull() && !(filtered_config.size() == 0)) {
                     if (!config["cheese"][pkg_name]["build"]) {
                         config["cheese"][pkg_name]["build"] = YAML::Node(YAML::NodeType::Map);
@@ -39,8 +39,8 @@ void config_per_pkg(const YAML::Node& db_pkg_node) {
             }
         }
         if (db_pkg_node["cheese"]["build"]["stages"]) {
-            YAML::Node filtered_stages_node =
-                filtered_stages(db_pkg_node["cheese"]["build"]["stages"], all_dependencies);
+            YAML::Node filtered_stages_node = filtered_stages(
+                db_pkg_node["cheese"]["build"]["stages"], all_dependencies, abstract_packages);
             if (!filtered_stages_node.IsNull() && !(filtered_stages_node.size() == 0)) {
                 if (!config["cheese"][pkg_name]["build"]) {
                     config["cheese"][pkg_name]["build"] = YAML::Node(YAML::NodeType::Map);
@@ -64,7 +64,8 @@ YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
         exit(EXIT_FAILURE);
     }
 
-    config["cheese"] = YAML::Node(YAML::NodeType::Map);
+    YAML::Node config = YAML::Node(YAML::NodeType::Map);
+    config["cheese"]  = YAML::Node(YAML::NodeType::Map);
 
     // Additional section to store abstract package selections
     config["recipe"]                      = YAML::Node(YAML::NodeType::Map);
@@ -81,7 +82,7 @@ YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
     std::filesystem::path db_path(getenv("FROMAGER_DB"));
     for (const auto& dep : dependencies) {
         YAML::Node db_pkg_node = get_db_config(dep);
-        config_per_pkg(db_pkg_node);
+        config_per_pkg(config, db_pkg_node, config["recipe"]["abstract_packages"]);
     }
 
     return config;

@@ -1,7 +1,8 @@
-#include "configurations_filter.h"
+#include <user_config_generator/configurations_filter.hpp>
 
 YAML::Node filtered_configurations(const YAML::Node& config_node,
-                                   const std::vector<std::string>& all_dependencies) {
+                                   const std::vector<std::string>& all_dependencies,
+                                   const YAML::Node& abstract_packages) {
     YAML::Node configs = YAML::Node(YAML::NodeType::Map);
     if (config_node["environment"]) {
         YAML::Node env = filtered_environment(config_node["environment"], all_dependencies);
@@ -10,7 +11,8 @@ YAML::Node filtered_configurations(const YAML::Node& config_node,
         }
     }
     if (config_node["options"]) {
-        YAML::Node opts = filtered_options(config_node["options"], all_dependencies);
+        YAML::Node opts =
+            filtered_options(config_node["options"], all_dependencies, abstract_packages);
         if (!opts.IsNull() && !(opts.size() == 0)) {
             configs["options"] = opts;
         }

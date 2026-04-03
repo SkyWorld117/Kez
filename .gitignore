@@ -11,6 +11,8 @@ bin/fromager_parser
 bin/fromager_cmdline_parser
 bin/fromager_rt_profile_config_parser
 bin/fromager_rt_resolve_dependencies
+bin/fromager
+bin/fromager_bash_completion
 # Colored IO
 bin/fromager_info
 bin/fromager_warning
