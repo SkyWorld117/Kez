@@ -26,7 +26,7 @@ cheese:
             requires: [cuda]
           - name: --with-hcoll
             description: Build with HCOLL support
-            enabled: false
+            enabled: true
             enabled_value: ${hcoll.prefix}
             requires: [hcoll]
           - name: CFLAGS
