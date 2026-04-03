@@ -21,9 +21,8 @@ std::vector<std::string> parse_package(const std::string& package_name,
     }
 
     // Build vendor packages only if they are not already built
-    if (pkg_config["cheese"]["type"].as<std::string>() == "vendor" &&
-        user_config_context["version"]) {
-        std::string version = user_config_context["version"].as<std::string>();
+    if (pkg_config["cheese"]["type"].as<std::string>() == "vendor" && user_config_pkg["version"]) {
+        std::string version = user_config_pkg["version"].as<std::string>();
         std::filesystem::path vendor_path =
             std::filesystem::path(global_config::get_path("vendors")) /
             (package_name + "-" + version);
@@ -90,8 +89,9 @@ std::vector<std::string> parse_package(const std::string& package_name,
                     // When not present, we assume the developer calls a script from `bin` at the preprocessing or postprocessing stage (no need to handle this case)
                     // Else, we download the script
                     std::string script_url = release["url"].as<std::string>();
-                    instructions.push_back(
-                        "wget --quiet --show-progress --output-document=source " + script_url);
+                    instructions.push_back("wget --quiet --show-progress --no-check-certificate "
+                                           "--output-document=source " +
+                                           script_url);
                 } else {
                     // Handle unknown source types
                     ERROR("Unknown source type for package: " + package_name);
