@@ -16,7 +16,7 @@ void config_per_pkg(YAML::Node& config, const YAML::Node& db_pkg_node,
     }
     if (db_pkg_node["cheese"]["type"].as<std::string>() != "vendor" &&
         db_pkg_node["cheese"]["type"].as<std::string>() != "external") {
-        config["cheese"][pkg_name]["compiler"] = "system";  // default to system compiler
+        config["cheese"][pkg_name]["compiler"] = global_config::get_default_compiler();
     }
     // MPI needs to be handled separately
     std::vector<std::string> all_dependencies =

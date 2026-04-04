@@ -21,7 +21,7 @@
 | Not Started | Allow saving a template of multiple packages. | - |
 | Not Started | Allow templating multiple packages at once. | - |
 | Not Started | Document the command line interface. | - |
-| WIP | Allow setting a default compiler in `config.yaml`. | Yi |
+| Done | Allow setting a default compiler in `config.yaml`. | Yi |
 | Not Started | Add toolchain based parsing and templating (e.g. `prefix` will be automatically set to `CMAKE_PREFIX_PATH` if the package is being built with CMake). | - |
 | Not Started | Add an option to initialize Fromager with a scheduler (e.g. Slurm). | - |
 | Done | Allow overriding a user config with command line options. | Yi |
