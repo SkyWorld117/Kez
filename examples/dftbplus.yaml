@@ -1,51 +1,106 @@
 cheese:
   dftbplus:
-    description: DFTB+ - Density Functional Tight Binding molecular dynamics
     version: 25.1
-    compiler: system
+    compiler: gcc@14.3.0
     build:
       configurations:
         options:
-          - name: CMAKE_C_FLAGS
+          - name: -DCMAKE_C_FLAGS
             enabled: true
             enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
-          - name: CMAKE_CXX_FLAGS
+          - name: -DCMAKE_CXX_FLAGS
             enabled: true
             enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
-          - name: CMAKE_Fortran_FLAGS
+          - name: -DCMAKE_Fortran_FLAGS
             enabled: true
             enabled_value: -O3 -march=znver3 -mtune=znver3
-          - name: LDFLAGS
-            enabled: false
-
-          - name: WITH_MPI
+          - name: -DWITH_MPI
             enabled: true
-          - name: WITH_ELSI
+          - name: -DWITH_OMP
             enabled: true
-          
-          - name: WITH_PLUMED
-            enabled: false
-  
+          - name: -DWITH_ELSI
+            enabled: true
+          - name: -DWITH_GPU
+            enabled: true
+          - name: -DCMAKE_EXE_LINKER_FLAGS
+            enabled: true
+            enabled_value: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+          - name: -DCMAKE_SHARED_LINKER_FLAGS
+            enabled: true
+            enabled_value: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
   elsi:
-    description: ELSI - ELectronic Structure Infrastructure for Solvers and Interoperability
     version: 2.12.0
-    compiler: system
+    compiler: gcc@14.3.0
     build:
       configurations:
         options:
-          - name: CMAKE_C_FLAGS
+          - name: -DCMAKE_C_FLAGS
             enabled: true
             enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
-          - name: CMAKE_CXX_FLAGS
+          - name: -DCMAKE_CXX_FLAGS
             enabled: true
             enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
-          - name: CMAKE_Fortran_FLAGS
+          - name: -DCMAKE_Fortran_FLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch
+          - name: elpa
+            enabled: true
+
+  elpa:
+    version: 2026.02.001
+    compiler: gcc@14.3.0
+    build:
+      configurations:
+        options:
+          - name: CFLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+          - name: CXXFLAGS
+            enabled: true
+            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+          - name: FCFLAGS
             enabled: true
             enabled_value: -O3 -march=znver3 -mtune=znver3
           - name: LDFLAGS
             enabled: false
+          - name: mpi
+            enabled: true
+          - name: openmp
+            enabled: false
 
-          - name: ENABLE_EXTERNAL_ELPA
+          - name: disable-generic-kernels
+            enabled: true
+          - name: disable-sse-kernels
+            enabled: true
+          - name: disable-sse-assembly-kernels
+            enabled: true
+          - name: disable-avx-kernels
+            enabled: true
+          - name: disable-avx2-kernels
+            enabled: false
+          - name: disable-avx512-kernels
+            enabled: true
+
+          - name: enable-nvidia-gpu-kernels
+            enabled: true
+          - name: --with-NVIDIA-GPU-compute-capability
+            enabled: true
+            enabled_value: sm_80
+          - name: enable-nvidia-sm80-gpu-kernels
+            enabled: true
+          - name: enable-cuda-aware-mpi
+            enabled: false
+          - name: enable-gpu-ccl
+            enabled: true
+          - name: --with-nccl-path
+            enabled: true
+            enabled_value: ${nvhpc.nccl_prefix}
+
+          - name: disable-single-precision
+            enabled: true
+          - name: disable-autotuning
+            enabled: false
+          - name: disable-timings
             enabled: true
 
   intel-oneapi-mkl:
@@ -75,19 +130,22 @@ cheese:
     version: 25.7-x86_64
 
   openmpi:
-    description: Open Source Implementation of the Message Passing Interface
     version: 5.0.9
-    compiler: system
+    compiler: gcc@14.3.0
 
 recipe:
   abstract_packages:
+    mpi: openmpi
     blas: intel-oneapi-mkl
     lapack: intel-oneapi-mkl
     scalapack: intel-oneapi-mkl
-    mpi: openmpi
   dependencies:
     - dftbplus
     - elsi
+    - elpa
+    - cuda
+    - nvhpc
     - intel-oneapi
     - intel-oneapi-mkl
     - openmpi
+

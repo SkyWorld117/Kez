@@ -12,6 +12,7 @@ cheese:
 
   dependencies:
     - mpi
+    - blas
     - lapack
     - scalapack
     - elsi
@@ -19,102 +20,91 @@ cheese:
   build:
     configurations:
       options:
-        - name: CMAKE_INSTALL_PREFIX
-          description: Installation prefix
+        - name: -DCMAKE_INSTALL_PREFIX
           enabled_value:
             default: ${dftbplus.prefix}
 
-        - name: CMAKE_C_COMPILER
-          description: C compiler (use MPI wrapper)
+        - name: -DCMAKE_BUILD_TYPE
+          enabled_value:
+            default: Release
+
+        - name: -DCMAKE_C_COMPILER
           enabled_value:
             default: ${mpi.c}
 
-        - name: CMAKE_Fortran_COMPILER
-          description: Fortran compiler (use MPI wrapper)
-          enabled_value:
-            default: ${mpi.fort}
-
-        - name: CMAKE_CXX_COMPILER
-          description: C++ compiler (use MPI wrapper)
+        - name: -DCMAKE_CXX_COMPILER
           enabled_value:
             default: ${mpi.cxx}
 
-        - name: CMAKE_C_FLAGS
-          description: C compiler optimization flags
+        - name: -DCMAKE_Fortran_COMPILER
+          enabled_value:
+            default: ${mpi.fort}
+
+        - name: -DCMAKE_C_FLAGS
           user_configurable: true
           enabled_value:
             default: -O3
 
-        - name: CMAKE_Fortran_FLAGS
-          description: Fortran compiler optimization flags
+        - name: -DCMAKE_CXX_FLAGS
           user_configurable: true
           enabled_value:
             default: -O3
 
-        - name: CMAKE_CXX_FLAGS
-          description: C++ compiler optimization flags
+        - name: -DCMAKE_Fortran_FLAGS
           user_configurable: true
           enabled_value:
             default: -O3
 
-        # MPI support (required for ISC26)
-        - name: WITH_MPI
-          description: Build with MPI support
+        - name: -DCMAKE_PREFIX_PATH
+          enabled_value:
+            default: ${elsi.prefix};${elpa.prefix}
+
+        - name: -DWITH_MPI
           user_configurable: true
-          enabled:
-            default: true
-          enabled_format: ON
-          disabled_format: OFF
+          enabled_format: -DWITH_MPI=ON
+          disabled_format: -DWITH_MPI=OFF
+          requires: [mpi]
 
-        # ELSI for eigenvalue solvers (uses ScaLAPACK + ELPA)
-        - name: WITH_ELSI
-          description: Build with ELSI eigenvalue interface
+        - name: -DWITH_OMP
           user_configurable: true
-          enabled:
-            default: true
-          enabled_format: ON
-          disabled_format: OFF
+          enabled_format: -DWITH_OMP=ON
+          disabled_format: -DWITH_OMP=OFF
+
+        - name: -DWITH_ELSI
+          user_configurable: true
+          enabled_format: -DWITH_ELSI=ON
+          disabled_format: -DWITH_ELSI=OFF
           requires: [elsi]
 
-        - name: ELSI_INCLUDE_DIR
-          description: Path to ELSI include directory
-          conditions:
-            - condition: ${dftbplus.config.WITH_ELSI} true
-              value: true
-            - condition: ${dftbplus.config.WITH_ELSI} false
-              value: false
-          enabled_value:
-            default: ${elsi.includes}
-          requires: [elsi]
-
-        - name: ELSI_LIBRARY
-          description: Path to ELSI library
-          conditions:
-            - condition: ${dftbplus.config.WITH_ELSI} true
-              value: true
-            - condition: ${dftbplus.config.WITH_ELSI} false
-              value: false
-          enabled_value:
-            default: ${elsi.libs}
-          requires: [elsi]
-
-        # ScaLAPACK for linear algebra
-        - name: CMAKE_PREFIX_PATH
-          description: Search path for CMake modules and libraries
-          enabled_value:
-            default: ${scalapack.prefix}:${lapack.prefix}
-            conditions:
-              - condition: ${dftbplus.config.WITH_ELSI} true
-                action: append
-                value: ${elsi.prefix}
-
-        - name: WITH_PLUMED
-          description: Enable PLUMED metadynamics support
+        - name: -DWITH_GPU
           user_configurable: true
           enabled:
             default: false
-          enabled_format: ON
-          disabled_format: OFF
+          enabled_format: -DWITH_GPU=ON
+          disabled_format: -DWITH_GPU=OFF
+          requires: [cuda]
+
+        - name: -DBLAS_LIBRARY
+          enabled_value:
+            default: ${blas.ldflags} ${blas.libs}
+
+        - name: -DLAPACK_LIBRARY
+          enabled_value:
+            default: ${lapack.ldflags} ${lapack.libs}
+
+        - name: -DSCALAPACK_LIBRARY
+          enabled_value:
+            default: ${scalapack.ldflags} ${scalapack.libs}
+
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          user_configurable: true
+          enabled_value:
+            default: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+
+        - name: -DCMAKE_SHARED_LINKER_FLAGS
+          user_configurable: true
+          enabled_value:
+            default: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
 
     stages:
       - target: ~

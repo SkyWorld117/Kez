@@ -12,3 +12,15 @@ cheese:
     postprocessing: >
       mkdir -p ${nvhpc.prefix} &&
       NVHPC_SILENT=true NVHPC_INSTALL_DIR=${nvhpc.prefix} ${source}/install
+
+  properties:
+    nccl_ldflags:
+      default: -L${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nccl/lib -Wl,-rpath,${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nccl/lib
+    nccl_libs:
+      default: -lnccl
+    nccl_prefix:
+      default: ${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nccl
+    nvshmem_ldflags:
+      default: -L${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nvshmem/lib -Wl,-rpath,${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nvshmem/lib
+    nvshmem_libs:
+      default: -lnvshmem

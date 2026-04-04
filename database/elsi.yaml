@@ -8,7 +8,7 @@ cheese:
     type: tarball
     releases:
       - version: 2.12.0
-        url: https://github.com/ElectronicStructureLibrary/elsi-interface/releases/download/v2.12.0/elsi-2.12.0.tar.gz
+        url: https://gitlab.com/elsi_project/elsi_interface/-/archive/v2.12.0/elsi_interface-v2.12.0.tar.gz
 
   dependencies:
     - mpi
@@ -19,86 +19,89 @@ cheese:
   build:
     configurations:
       options:
-        - name: CMAKE_INSTALL_PREFIX
+        - name: -DCMAKE_INSTALL_PREFIX
           description: Installation prefix
           enabled_value:
             default: ${elsi.prefix}
 
-        - name: CMAKE_C_COMPILER
+        - name: -DCMAKE_C_COMPILER
           description: C compiler (use MPI wrapper)
           enabled_value:
             default: ${mpi.c}
 
-        - name: CMAKE_Fortran_COMPILER
+        - name: -DCMAKE_Fortran_COMPILER
           description: Fortran compiler (use MPI wrapper)
           enabled_value:
             default: ${mpi.fort}
 
-        - name: CMAKE_CXX_COMPILER
+        - name: -DCMAKE_CXX_COMPILER
           description: C++ compiler (use MPI wrapper)
           enabled_value:
             default: ${mpi.cxx}
 
-        - name: CMAKE_C_FLAGS
+        - name: -DCMAKE_C_FLAGS
           description: C compiler optimization flags
           user_configurable: true
           enabled_value:
             default: -O3
 
-        - name: CMAKE_Fortran_FLAGS
+        - name: -DCMAKE_Fortran_FLAGS
           description: Fortran compiler optimization flags
           user_configurable: true
           enabled_value:
             default: -O3
 
-        - name: CMAKE_CXX_FLAGS
+        - name: -DCMAKE_CXX_FLAGS
           description: C++ compiler optimization flags
           user_configurable: true
           enabled_value:
             default: -O3
 
-        # ELSI uses integer sizes that match LAPACK/BLAS
-        - name: ENABLE_EXTERNAL_ELPA
-          description: Use external ELPA library (not bundled)
-          user_configurable: true
-          enabled:
-            default: true
-          enabled_format: ON
-          disabled_format: OFF
-
-        - name: ELPA_INCLUDE_DIR
-          description: Path to ELPA include directory
-          user_configurable: true
-          enabled:
-            default: true
-          enabled_value:
-            default: ${elpa.includes}
-
-        - name: ELPA_LIBRARY
-          description: Path to ELPA library
-          user_configurable: true
-          enabled:
-            default: true
-          enabled_value:
-            default: ${elpa.libs}
-
-        # Optional: OMNI (eigenvalue solver interface layer) for more flexibility
-        - name: ENABLE_OMNI
-          description: Enable OMNI interface for eigenvalue solvers
+        - name: elpa
+          description: Use external ELPA library
           user_configurable: true
           enabled:
             default: false
-          enabled_format: ON
-          disabled_format: OFF
+          enabled_format: -DUSE_EXTERNAL_ELPA=ON
+          disabled_format: -DUSE_EXTERNAL_ELPA=OFF
 
-        # Precision: double by default (required for DFTB+)
-        - name: ELSI_PRECISION
-          description: Floating point precision (single or double)
-          user_configurable: true
+        - name: -DINC_PATHS
           enabled:
-            default: true
+            conditions:
+              - condition: ${elsi.config.elpa} true
+                value: true
+              - condition: ${elsi.config.elpa} false
+                value: false
           enabled_value:
-            default: double
+            default: ${elpa.prefix}/include/elpa-${elpa.version}/modules
+
+        - name: -DLIB_PATHS
+          enabled:
+            conditions:
+              - condition: ${elsi.config.elpa} true
+                value: true
+              - condition: ${elsi.config.elpa} false
+                value: false
+          enabled_value:
+            default: ${elpa.prefix}/lib
+
+        - name: -DLIBS
+          enabled:
+            conditions:
+              - condition: ${elsi.config.elpa} true
+                value: true
+              - condition: ${elsi.config.elpa} false
+                value: false
+          enabled_value:
+            default: ${elpa.libs}
+
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          enabled_value:
+            default: ${scalapack.ldflags} ${scalapack.libs}
+
+        - name: -DCMAKE_SHARED_LINKER_FLAGS
+          enabled_value:
+            default: ${scalapack.ldflags} ${scalapack.libs}
 
     stages:
       - target: ~
