@@ -18,7 +18,7 @@
 | Not Started | Add mkdocs integration. | - |
 | Not Started | Improve templating documentation. | Nick |
 | Not Started | Allow rebuilding the whole cellar with a specific flag. | - |
-| WIP | Allow saving a template of multiple packages. | Yi |
+| Done | Allow saving a template of multiple packages. | Yi |
 | Not Started | Allow templating multiple packages at once. | - |
 | Not Started | Document the command line interface. | - |
 | Done | Allow setting a default compiler in `config.yaml`. | Yi |
