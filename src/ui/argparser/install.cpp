@@ -26,7 +26,6 @@ argparse::ArgumentParser& get_install_parser() {
 
 void execute_install_parser() {
     bool is_config_file = install_parser.get<bool>("--read");
-    // std::string target  = install_parser.get<std::string>("pkg_or_file");
     std::vector<std::string> pkg_or_file =
         install_parser.get<std::vector<std::string>>("pkg_or_file");
 
