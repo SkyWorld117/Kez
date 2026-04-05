@@ -17,4 +17,4 @@
 
 std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>,
           std::unordered_map<std::string, std::string>>
-    resolve_dependencies(const std::string& pkg_name, bool interactive);
+    resolve_dependencies(const std::vector<std::string>& pkg_names, bool interactive);
