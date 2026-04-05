@@ -203,3 +203,5 @@ recipe:
     - intel-oneapi-mkl
     - intel-oneapi
     - json
+  targets:
+    - acts

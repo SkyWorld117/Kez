@@ -140,3 +140,5 @@ recipe:
     - hdf5
     - python
     - openmpi
+  targets:
+    - sst-elements

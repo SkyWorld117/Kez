@@ -75,3 +75,5 @@ recipe:
     - openmpi
     - intel-oneapi-mkl
     - intel-oneapi
+  targets:
+    - conquest

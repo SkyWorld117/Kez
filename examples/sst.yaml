@@ -52,4 +52,5 @@ recipe:
     - sst-core
     - python
     - openmpi
-
+  targets:
+    - sst-elements
