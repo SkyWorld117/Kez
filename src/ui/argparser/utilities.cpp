@@ -40,17 +40,18 @@ void execute_utilities_parser() {
             // TODO: Remember to change this part once we figure out how to handle multiple target packages in a single user config file.
             YAML::Node config          = YAML::LoadFile(target);
             std::string target_package = config["recipe"]["dependencies"][0].as<std::string>();
-            query.pkg_name             = target_package;
+            query.pkg_name             = {target_package};
 
             bool version_set = false;
             if (util_add_parser.is_used("--config")) {
                 std::vector<std::string> config_options =
                     util_add_parser.get<std::vector<std::string>>("--config");
                 query.pkg_version =
-                    get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
+                    get_version_from_cmdline_config(query.pkg_name[0], config_options, version_set);
             }
             if (!version_set) {
-                query.pkg_version = config["cheese"][query.pkg_name]["version"].as<std::string>();
+                query.pkg_version =
+                    config["cheese"][query.pkg_name[0]]["version"].as<std::string>();
             }
 
             bool compiler_spec_set = false;
@@ -58,26 +59,26 @@ void execute_utilities_parser() {
                 std::vector<std::string> config_options =
                     util_add_parser.get<std::vector<std::string>>("--config");
                 query.compiler_spec = get_compiler_spec_from_cmdline_config(
-                    query.pkg_name, config_options, compiler_spec_set);
+                    query.pkg_name[0], config_options, compiler_spec_set);
             }
-            if (!compiler_spec_set && config["cheese"][query.pkg_name]["compiler"]) {
+            if (!compiler_spec_set && config["cheese"][query.pkg_name[0]]["compiler"]) {
                 query.compiler_spec =
-                    config["cheese"][query.pkg_name]["compiler"].as<std::string>();
+                    config["cheese"][query.pkg_name[0]]["compiler"].as<std::string>();
             } else {
                 query.compiler_spec = global_config::get_default_compiler();
             }
         } else {
-            query.pkg_name = target;
+            query.pkg_name = {target};
 
             bool version_set = false;
             if (util_add_parser.is_used("--config")) {
                 std::vector<std::string> config_options =
                     util_add_parser.get<std::vector<std::string>>("--config");
                 query.pkg_version =
-                    get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
+                    get_version_from_cmdline_config(query.pkg_name[0], config_options, version_set);
             }
             if (!version_set) {
-                YAML::Node pkg_config = get_db_config(query.pkg_name);
+                YAML::Node pkg_config = get_db_config(query.pkg_name[0]);
                 query.pkg_version =
                     pkg_config["cheese"]["source"]["releases"][0]["version"].as<std::string>();
             }
@@ -87,7 +88,7 @@ void execute_utilities_parser() {
                 std::vector<std::string> config_options =
                     util_add_parser.get<std::vector<std::string>>("--config");
                 query.compiler_spec = get_compiler_spec_from_cmdline_config(
-                    query.pkg_name, config_options, compiler_spec_set);
+                    query.pkg_name[0], config_options, compiler_spec_set);
             }
             if (!compiler_spec_set) {
                 query.compiler_spec = global_config::get_default_compiler();
@@ -99,9 +100,17 @@ void execute_utilities_parser() {
         if (util_add_parser.is_used("--config")) {
             std::vector<std::string> config_options =
                 util_add_parser.get<std::vector<std::string>>("--config");
-            parse_cmdline(target, is_config_file, utilities_cellar, config_options);
+            if (is_config_file) {
+                parse_cmdline(target, utilities_cellar, config_options);
+            } else {
+                parse_cmdline(std::vector<std::string> {target}, utilities_cellar, config_options);
+            }
         } else {
-            parse_cmdline(target, is_config_file, utilities_cellar);
+            if (is_config_file) {
+                parse_cmdline(target, utilities_cellar, {});
+            } else {
+                parse_cmdline(std::vector<std::string> {target}, utilities_cellar, {});
+            }
         }
 
         EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + utilities_cellar);

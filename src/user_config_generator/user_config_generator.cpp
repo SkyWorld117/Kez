@@ -51,7 +51,7 @@ void config_per_pkg(YAML::Node& config, const YAML::Node& db_pkg_node,
     }
 }
 
-YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
+YAML::Node gen_user_config(const std::vector<std::string>& pkg_name, bool interactive) {
     std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>,
               std::unordered_map<std::string, std::string>>
         result                                = resolve_dependencies(pkg_name, interactive);
@@ -60,7 +60,12 @@ YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
     std::unordered_map<std::string, std::string> abstract_packages = result.second;
     if (dependencies.empty()) {
         // This makes sense because at least the package itself should be included
-        ERROR("No dependencies found for package: " + pkg_name);
+        std::string pkg_names_str = "";
+        for (const std::string& pkg : pkg_name) {
+            pkg_names_str += pkg + " ";
+        }
+        pkg_names_str = pkg_names_str.substr(0, pkg_names_str.size() - 1);  // Remove trailing space
+        ERROR("No dependencies found for packages: " + pkg_names_str);
         exit(EXIT_FAILURE);
     }
 
@@ -77,6 +82,11 @@ YAML::Node gen_user_config(const std::string& pkg_name, bool interactive) {
     config["recipe"]["dependencies"] = YAML::Node(YAML::NodeType::Sequence);
     for (const auto& dep : all_dependencies) {
         config["recipe"]["dependencies"].push_back(dep);
+    }
+    // Add a list of target packages (the ones explicitly requested by the user)
+    config["recipe"]["targets"] = YAML::Node(YAML::NodeType::Sequence);
+    for (const auto& target : pkg_name) {
+        config["recipe"]["targets"].push_back(target);
     }
 
     std::filesystem::path db_path(getenv("FROMAGER_DB"));

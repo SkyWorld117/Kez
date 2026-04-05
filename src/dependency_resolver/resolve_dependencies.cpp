@@ -5,8 +5,8 @@ std::vector<std::string> system_packages;
 std::unordered_map<std::string, std::string> abstract_packages;
 std::unordered_map<std::string, bool> use_optional_packages;
 
-void build_adjacency_list(const std::string& pkg_name, const std::string& target_pkg_name,
-                          bool interactive) {
+void build_adjacency_list(const std::string& pkg_name,
+                          const std::vector<std::string>& target_pkg_names, bool interactive) {
     if (adjacency_list.find(pkg_name) != adjacency_list.end()) {
         return;  // Already processed
     }
@@ -78,7 +78,8 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
         return;  // Skip system packages
     } else if ((config["cheese"]["type"].as<std::string>() == "compiler" ||
                 config["cheese"]["type"].as<std::string>() == "mpi") &&
-               concrete_pkg_name != target_pkg_name) {
+               std::find(target_pkg_names.begin(), target_pkg_names.end(), concrete_pkg_name) ==
+                   target_pkg_names.end()) {
         adjacency_list[concrete_pkg_name] =
             {};  // Skip compiler and MPI packages that are not the target
         return;
@@ -121,15 +122,17 @@ void build_adjacency_list(const std::string& pkg_name, const std::string& target
     adjacency_list[concrete_pkg_name] = essential_deps;
 
     for (const auto& dep : essential_deps) {
-        build_adjacency_list(dep, target_pkg_name, interactive);
+        build_adjacency_list(dep, target_pkg_names, interactive);
     }
 }
 
 // Return: ((full list of dependencies, filtered list of dependencies), abstract packages)
 std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>,
           std::unordered_map<std::string, std::string>>
-    resolve_dependencies(const std::string& pkg_name, bool interactive) {
-    build_adjacency_list(pkg_name, pkg_name, interactive);
+    resolve_dependencies(const std::vector<std::string>& pkg_names, bool interactive) {
+    for (const auto& pkg_name : pkg_names) {
+        build_adjacency_list(pkg_name, pkg_names, interactive);
+    }
 
     // Unify the adjacency list to ensure all abstract packages are resolved to their selected implementations
     std::unordered_map<std::string, std::vector<std::string>> unified_adjacency_list;

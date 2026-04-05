@@ -74,12 +74,37 @@ namespace global_config {
 }  // namespace global_config
 
 void filter(const std::set<std::string>& type_filters, const std::string& pkg_type,
-            const std::string& pkg_name) {
+            const std::string& pkg_names) {
     if (!type_filters.empty() && type_filters.find(pkg_type) != type_filters.end()) {
-        ERROR("Package '" + pkg_name + "' is of type '" + pkg_type +
+        ERROR("Packages '" + pkg_names + "' are of type '" + pkg_type +
               "', which is not allowed by the type filters.");
         exit(EXIT_FAILURE);
     }
+}
+
+std::string get_pkg_type(const std::vector<std::string>& pkg_names) {
+    std::string pkg_type = "";
+    for (const std::string& pkg_name : pkg_names) {
+        YAML::Node pkg_config        = get_db_config(pkg_name);
+        std::string current_pkg_type = pkg_config["cheese"]["type"].as<std::string>();
+        if (pkg_type.empty()) {
+            pkg_type = current_pkg_type;
+        } else if (pkg_type != current_pkg_type) {
+            ERROR("All packages in the query should be of the same type. Package '" + pkg_name +
+                  "' is of type '" + current_pkg_type +
+                  "', which is different from the previous packages of type '" + pkg_type + "'.");
+            exit(EXIT_FAILURE);
+        }
+    }
+    if (pkg_type == "compiler" || pkg_type == "mpi" || pkg_type == "vendor" ||
+        pkg_type == "external") {
+        if (pkg_names.size() > 1) {
+            ERROR("There should be at most one package of type '" + pkg_type +
+                  "' in the query due to the way cellar paths are structured for these types.");
+            exit(EXIT_FAILURE);
+        }
+    }
+    return pkg_type;
 }
 
 std::string get_cellar_path(CellarPathQuery query) {
@@ -98,25 +123,32 @@ std::string get_cellar_path(CellarPathQuery query) {
             return global_config::get_path("cellars") + "/" + query.cellar_name;
         }
     } else {
-        YAML::Node pkg_config = get_db_config(query.pkg_name);
-        std::string pkg_type  = pkg_config["cheese"]["type"].as<std::string>();
-        filter(query.type_filters, pkg_type, query.pkg_name);
+        // When package names are provided, we need to identify if the query is legal
+        // - All packages in the query should have the same type
+        // - If the type is "compiler", "mpi", "vendor", or "external", there should be at most one package in the query. This is due to the fact that the cellar path for these types is uniquely determined by the package name, version, and (for mpi) compiler spec.
+        std::string pkg_type      = get_pkg_type(query.pkg_name);
+        std::string pkg_names_str = "";
+        for (const std::string& pkg_name : query.pkg_name) {
+            pkg_names_str += pkg_name + " ";
+        }
+        pkg_names_str = pkg_names_str.substr(0, pkg_names_str.size() - 1);  // Remove trailing space
+        filter(query.type_filters, pkg_type, pkg_names_str);
 
         if (pkg_type == "system") {
             if (!query.cellar_name.empty() && query.cellar_name != "system") {
-                ERROR("System package '" + query.pkg_name + "' should be in the 'system' cellar.");
+                ERROR("System package '" + pkg_names_str + "' should be in the 'system' cellar.");
                 exit(EXIT_FAILURE);
             }
             return global_config::get_path("system");
         } else if (pkg_type == "compiler" || pkg_type == "mpi" || pkg_type == "vendor") {
             std::string expected_cellar = pkg_type + "s";
             if (!query.cellar_name.empty() && query.cellar_name != expected_cellar) {
-                ERROR("Package '" + query.pkg_name + "' of type '" + pkg_type +
+                ERROR("Package '" + pkg_names_str + "' of type '" + pkg_type +
                       "' should be in the '" + expected_cellar + "' cellar.");
                 exit(EXIT_FAILURE);
             }
             if (query.pkg_version.empty()) {
-                ERROR("Version is required for package '" + query.pkg_name +
+                ERROR("Version is required for package '" + pkg_names_str +
                       "' to determine the cellar path.");
                 exit(EXIT_FAILURE);
             }
@@ -130,21 +162,20 @@ std::string get_cellar_path(CellarPathQuery query) {
                 if (query.compiler_spec.empty()) {
                     ERROR(
                         "Compiler specification (name and version) is required for MPI package '" +
-                        query.pkg_name + "' to determine the cellar path.");
+                        pkg_names_str + "' to determine the cellar path.");
                     exit(EXIT_FAILURE);
                 }
-                return global_config::get_path("mpis") + "/" + query.pkg_name + "-" +
+                return global_config::get_path("mpis") + "/" + query.pkg_name[0] + "-" +
                        query.pkg_version + "-" + compiler_spec_to_cellar_name(query.compiler_spec);
             } else {
-                return global_config::get_path(expected_cellar) + "/" + query.pkg_name + "-" +
+                return global_config::get_path(expected_cellar) + "/" + query.pkg_name[0] + "-" +
                        query.pkg_version;
             }
         } else if (pkg_type == "external") {
-            // TODO: Handle external packages that are not in the system cellar
-            return global_config::get_external_package_prefix(query.pkg_name);
+            return global_config::get_external_package_prefix(query.pkg_name[0]);
         } else {
             if (query.cellar_name.empty()) {
-                ERROR("Cellar name is required for package '" + query.pkg_name + "' of type '" +
+                ERROR("Cellar name is required for package '" + pkg_names_str + "' of type '" +
                       pkg_type + "'.");
                 exit(EXIT_FAILURE);
             }

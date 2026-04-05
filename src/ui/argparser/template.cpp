@@ -55,7 +55,7 @@ void execute_template_parser() {
         std::string package = args[0];
         bool save_template  = template_parser.is_used("--save");
 
-        YAML::Node user_config = gen_user_config(package, save_template);
+        YAML::Node user_config = gen_user_config({package}, save_template);
         YAML::Emitter out;
         out << user_config;
 
