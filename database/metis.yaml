@@ -22,7 +22,7 @@ cheese:
             - name: prefix
               description: Installation prefix
               enabled_value:
-                default: ${parmetis.prefix} 
+                default: ${metis.prefix} 
             - name: gklib_path
               description: GKlib installation path
               enabled_value:
