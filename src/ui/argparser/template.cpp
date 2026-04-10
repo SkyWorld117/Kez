@@ -30,10 +30,11 @@ void execute_template_parser() {
         std::string file  = args[1];
         YAML::Node config = YAML::LoadFile(file);
 
+        std::string fgr_workdir        = std::getenv("FROMAGER_WORKDIR");
         std::filesystem::path tmp_path = std::filesystem::path(getenv("FROMAGER_WORKDIR")) / ".tmp";
         std::filesystem::create_directories(tmp_path);
 
-        YAML::Node instructions_yaml = parse(config, "release", tmp_path.string());
+        YAML::Node instructions_yaml = parse(config, "release", fgr_workdir);
         YAML::Emitter out;
         out << instructions_yaml;
         std::ofstream ofs((tmp_path / "ins.yaml").string());
