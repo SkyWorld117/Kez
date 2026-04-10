@@ -184,6 +184,7 @@ void execute_rt_parser() {
                     exit(EXIT_FAILURE);
                 }
                 ofs << out.c_str();
+                ofs << std::endl;
                 ofs.close();
 
                 EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + target_cellar.string());
@@ -276,7 +277,7 @@ void execute_rt_parser() {
         std::filesystem::path tmp_path = target_cellar / ".tmp";
         std::filesystem::create_directories(tmp_path);
         YAML::Node config            = YAML::LoadFile(config_path);
-        YAML::Node instructions_yaml = parse(config, "debug", tmp_path.string());
+        YAML::Node instructions_yaml = parse(config, "debug", target_cellar.string());
 
         YAML::Emitter out;
         out << instructions_yaml;
@@ -286,6 +287,7 @@ void execute_rt_parser() {
             exit(EXIT_FAILURE);
         }
         ofs << out.c_str();
+        ofs << std::endl;
         ofs.close();
 
         EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_rt_install " + target_cellar.string() + " " +
