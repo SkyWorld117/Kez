@@ -8,25 +8,25 @@ cheese:
         options:
           - name: --with-dramsim3
             description: Enable DRAMSim3 support
-            enabled: false
+            enabled: true
             enabled_value: ${dramsim3.prefix}
             disabled_value: ~
             requires: [dramsim3]
           - name: --with-pin
             description: Enable Intel PIN support
-            enabled: false
+            enabled: true
             enabled_value: ${intelpin.prefix}
             disabled_value: ~
             requires: [intelpin]
           - name: --with-goblin-hmcsim
             description: Enable Goblin HMC Sim support
-            enabled: false
+            enabled: true
             enabled_value: ${goblinhmcsim.prefix}
             disabled_value: ~
             requires: [goblinhmcsim]
           - name: --with-ramulator2
             description: Enable Ramulator2 support
-            enabled: false
+            enabled: true
             enabled_value: ${ramulator2.prefix}
             disabled_value: ~
             requires: [ramulator2]
@@ -80,7 +80,7 @@ cheese:
         options:
           - name: --with-hdf5
             description: Use HDF5 statistics format
-            enabled: false
+            enabled: true
             enabled_value: ${hdf5.prefix}
             disabled_value: ~
             requires: [hdf5]
