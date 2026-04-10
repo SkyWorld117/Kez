@@ -11,5 +11,5 @@ cheese:
     c: ${nvhpc-compilers.prefix}/bin/nvc
     cxx: ${nvhpc-compilers.prefix}/bin/nvc++
     fort: ${nvhpc-compilers.prefix}/bin/nvfortran
-    omp_flag: -mp
+    omp_flags: -mp
 
