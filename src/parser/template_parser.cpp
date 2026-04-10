@@ -51,7 +51,7 @@ std::string parse_template(const std::string& template_str,
             std::string compiler_version = compiler_name_version.second;
             if (compiler_property == "prefix") {
                 CellarPathQuery query;
-                query.pkg_name    = compiler_name;
+                query.pkg_name    = {compiler_name};
                 query.pkg_version = compiler_version;
                 return get_cellar_path(query);
             }

@@ -12,7 +12,7 @@ argparse::ArgumentParser& get_install_parser() {
         .implicit_value(true);
     install_parser.add_argument("pkg_or_file")
         .help("Package name or config file if -r is used")
-        .nargs(1);
+        .nargs(argparse::nargs_pattern::at_least_one);
     install_parser.add_argument("-c", "--config")
         .help("Configs to install with")
         .nargs(argparse::nargs_pattern::at_least_one);
@@ -26,75 +26,80 @@ argparse::ArgumentParser& get_install_parser() {
 
 void execute_install_parser() {
     bool is_config_file = install_parser.get<bool>("--read");
-    std::string target  = install_parser.get<std::string>("pkg_or_file");
+    std::vector<std::string> pkg_or_file =
+        install_parser.get<std::vector<std::string>>("pkg_or_file");
 
     CellarPathQuery query;
     if (is_config_file) {
-        YAML::Node config          = YAML::LoadFile(target);
-        std::string target_package = config["recipe"]["dependencies"][0].as<std::string>();
-        query.pkg_name             = target_package;
-
-        bool version_set = false;
-        if (install_parser.is_used("--config")) {
-            std::vector<std::string> config_options =
-                install_parser.get<std::vector<std::string>>("--config");
-            query.pkg_version =
-                get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
-        }
-        if (!version_set) {
-            query.pkg_version = config["cheese"][query.pkg_name]["version"].as<std::string>();
-        }
-
-        bool compiler_spec_set = false;
-        if (install_parser.is_used("--config")) {
-            std::vector<std::string> config_options =
-                install_parser.get<std::vector<std::string>>("--config");
-            query.compiler_spec = get_compiler_spec_from_cmdline_config(
-                query.pkg_name, config_options, compiler_spec_set);
-        }
-        if (!compiler_spec_set && config["cheese"][query.pkg_name]["compiler"]) {
-            query.compiler_spec = config["cheese"][query.pkg_name]["compiler"].as<std::string>();
-        } else {
-            query.compiler_spec = global_config::get_default_compiler();
-        }
+        std::string target = pkg_or_file[0];
+        YAML::Node config  = YAML::LoadFile(target);
+        std::vector<std::string> target_packages =
+            config["recipe"]["targets"].as<std::vector<std::string>>();
+        query.pkg_name = target_packages;
     } else {
-        query.pkg_name = target;
+        query.pkg_name = pkg_or_file;
+    }
+    std::string pkg_type = get_pkg_type(query.pkg_name);
 
+    if (pkg_type == "compiler" || pkg_type == "mpi" || pkg_type == "vendor") {
         bool version_set = false;
         if (install_parser.is_used("--config")) {
             std::vector<std::string> config_options =
                 install_parser.get<std::vector<std::string>>("--config");
             query.pkg_version =
-                get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
-        }
-        if (!version_set) {
-            YAML::Node pkg_config = get_db_config(query.pkg_name);
-            query.pkg_version =
-                pkg_config["cheese"]["source"]["releases"][0]["version"].as<std::string>();
+                get_version_from_cmdline_config(query.pkg_name[0], config_options, version_set);
         }
 
-        bool compiler_spec_set = false;
-        if (install_parser.is_used("--config")) {
-            std::vector<std::string> config_options =
-                install_parser.get<std::vector<std::string>>("--config");
-            query.compiler_spec = get_compiler_spec_from_cmdline_config(
-                query.pkg_name, config_options, compiler_spec_set);
+        if (!version_set) {
+            if (is_config_file) {
+                YAML::Node config = YAML::LoadFile(pkg_or_file[0]);
+                query.pkg_version =
+                    config["cheese"][query.pkg_name[0]]["version"].as<std::string>();
+            } else {
+                YAML::Node pkg_config = get_db_config(query.pkg_name[0]);
+                query.pkg_version =
+                    pkg_config["cheese"]["source"]["releases"][0]["version"].as<std::string>();
+            }
         }
-        if (!compiler_spec_set) {
-            query.compiler_spec = global_config::get_default_compiler();
+
+        if (pkg_type == "mpi") {
+            bool compiler_spec_set = false;
+            if (install_parser.is_used("--config")) {
+                std::vector<std::string> config_options =
+                    install_parser.get<std::vector<std::string>>("--config");
+                query.compiler_spec = get_compiler_spec_from_cmdline_config(
+                    query.pkg_name[0], config_options, compiler_spec_set);
+            }
+
+            if (!compiler_spec_set) {
+                if (is_config_file) {
+                    YAML::Node config = YAML::LoadFile(pkg_or_file[0]);
+                    if (config["cheese"][query.pkg_name[0]]["compiler"]) {
+                        query.compiler_spec =
+                            config["cheese"][query.pkg_name[0]]["compiler"].as<std::string>();
+                    } else {
+                        query.compiler_spec = global_config::get_default_compiler();
+                    }
+                } else {
+                    query.compiler_spec = global_config::get_default_compiler();
+                }
+            }
         }
     }
+
     if (install_parser.is_used("--cellar")) {
         query.cellar_name = install_parser.get<std::string>("--cellar");
     }
     std::string target_cellar = get_cellar_path(query);
 
+    std::vector<std::string> config_options;
     if (install_parser.is_used("--config")) {
-        std::vector<std::string> config_options =
-            install_parser.get<std::vector<std::string>>("--config");
-        parse_cmdline(target, is_config_file, target_cellar, config_options);
+        config_options = install_parser.get<std::vector<std::string>>("--config");
+    }
+    if (is_config_file) {
+        parse_cmdline(pkg_or_file[0], target_cellar, config_options);
     } else {
-        parse_cmdline(target, is_config_file, target_cellar);
+        parse_cmdline(pkg_or_file, target_cellar, config_options);
     }
 
     EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + target_cellar);

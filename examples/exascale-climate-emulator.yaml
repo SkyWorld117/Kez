@@ -80,4 +80,6 @@ recipe:
     - intel-oneapi-mkl
     - intel-oneapi
     - openmpi
+  targets:
+    - exascale-climate-emulator
 

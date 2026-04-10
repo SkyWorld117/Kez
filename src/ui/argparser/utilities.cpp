@@ -15,7 +15,9 @@ argparse::ArgumentParser& get_utilities_parser() {
         .help("Read a configuration file")
         .default_value(false)
         .implicit_value(true);
-    util_mutex_group.add_argument("utility").help("Utility name").nargs(1);
+    util_mutex_group.add_argument("utility")
+        .help("Utility name")
+        .nargs(argparse::nargs_pattern::at_least_one);
     util_add_parser.add_argument("-c", "--config")
         .help("Additional configuration options for the utility in the format <option>=<value>")
         .nargs(argparse::nargs_pattern::at_least_one);
@@ -31,77 +33,39 @@ argparse::ArgumentParser& get_utilities_parser() {
 void execute_utilities_parser() {
     if (utilities_parser.is_subcommand_used("add")) {
         bool is_config_file = util_add_parser.get<bool>("--read");
-        std::string target  = util_add_parser.get<std::string>("utility");
+        std::vector<std::string> pkg_or_file =
+            util_add_parser.get<std::vector<std::string>>("utility");
 
         CellarPathQuery query;
         // Set the `pkg_name` in the query to trigger the correct parsing logic in `get_cellar_path`
         // This should prevent non-regular packages to be installed
         if (is_config_file) {
-            // TODO: Remember to change this part once we figure out how to handle multiple target packages in a single user config file.
-            YAML::Node config          = YAML::LoadFile(target);
-            std::string target_package = config["recipe"]["dependencies"][0].as<std::string>();
-            query.pkg_name             = target_package;
-
-            bool version_set = false;
-            if (util_add_parser.is_used("--config")) {
-                std::vector<std::string> config_options =
-                    util_add_parser.get<std::vector<std::string>>("--config");
-                query.pkg_version =
-                    get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
-            }
-            if (!version_set) {
-                query.pkg_version = config["cheese"][query.pkg_name]["version"].as<std::string>();
-            }
-
-            bool compiler_spec_set = false;
-            if (util_add_parser.is_used("--config")) {
-                std::vector<std::string> config_options =
-                    util_add_parser.get<std::vector<std::string>>("--config");
-                query.compiler_spec = get_compiler_spec_from_cmdline_config(
-                    query.pkg_name, config_options, compiler_spec_set);
-            }
-            if (!compiler_spec_set && config["cheese"][query.pkg_name]["compiler"]) {
-                query.compiler_spec =
-                    config["cheese"][query.pkg_name]["compiler"].as<std::string>();
-            } else {
-                query.compiler_spec = global_config::get_default_compiler();
-            }
+            YAML::Node config = YAML::LoadFile(pkg_or_file[0]);
+            std::vector<std::string> target_packages =
+                config["recipe"]["targets"].as<std::vector<std::string>>();
+            query.pkg_name = target_packages;
         } else {
-            query.pkg_name = target;
-
-            bool version_set = false;
-            if (util_add_parser.is_used("--config")) {
-                std::vector<std::string> config_options =
-                    util_add_parser.get<std::vector<std::string>>("--config");
-                query.pkg_version =
-                    get_version_from_cmdline_config(query.pkg_name, config_options, version_set);
-            }
-            if (!version_set) {
-                YAML::Node pkg_config = get_db_config(query.pkg_name);
-                query.pkg_version =
-                    pkg_config["cheese"]["source"]["releases"][0]["version"].as<std::string>();
-            }
-
-            bool compiler_spec_set = false;
-            if (util_add_parser.is_used("--config")) {
-                std::vector<std::string> config_options =
-                    util_add_parser.get<std::vector<std::string>>("--config");
-                query.compiler_spec = get_compiler_spec_from_cmdline_config(
-                    query.pkg_name, config_options, compiler_spec_set);
-            }
-            if (!compiler_spec_set) {
-                query.compiler_spec = global_config::get_default_compiler();
-            }
+            query.pkg_name = pkg_or_file;
         }
+        std::string pkg_type = get_pkg_type(query.pkg_name);
+
+        if (pkg_type == "compiler" || pkg_type == "mpi" || pkg_type == "vendor") {
+            ERROR("Cannot add package of type '" + pkg_type +
+                  "' to utilities cellar. Utilities cellar is meant for regular packages only.");
+            exit(EXIT_FAILURE);
+        }
+
         query.cellar_name            = "utilities";
         std::string utilities_cellar = get_cellar_path(query);
 
+        std::vector<std::string> config_options;
         if (util_add_parser.is_used("--config")) {
-            std::vector<std::string> config_options =
-                util_add_parser.get<std::vector<std::string>>("--config");
-            parse_cmdline(target, is_config_file, utilities_cellar, config_options);
+            config_options = util_add_parser.get<std::vector<std::string>>("--config");
+        }
+        if (is_config_file) {
+            parse_cmdline(pkg_or_file[0], utilities_cellar, config_options);
         } else {
-            parse_cmdline(target, is_config_file, utilities_cellar);
+            parse_cmdline(pkg_or_file, utilities_cellar, config_options);
         }
 
         EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + utilities_cellar);

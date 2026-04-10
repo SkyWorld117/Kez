@@ -20,7 +20,7 @@ argparse::ArgumentParser& get_template_parser() {
 }
 
 void execute_template_parser() {
-    auto args = template_parser.get<std::vector<std::string>>("args");
+    std::vector<std::string> args = template_parser.get<std::vector<std::string>>("args");
 
     if (!args.empty() && args[0] == "parse") {
         if (args.size() < 2) {
@@ -52,10 +52,10 @@ void execute_template_parser() {
             ERROR("Missing package argument for template fetching.");
             exit(EXIT_FAILURE);
         }
-        std::string package = args[0];
-        bool save_template  = template_parser.is_used("--save");
+        std::vector<std::string> packages = args;
+        bool save_template                = template_parser.is_used("--save");
 
-        YAML::Node user_config = gen_user_config(package, save_template);
+        YAML::Node user_config = gen_user_config(packages, save_template);
         YAML::Emitter out;
         out << user_config;
 

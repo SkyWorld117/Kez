@@ -24,3 +24,5 @@ recipe:
   dependencies:
     - osu
     - openmpi
+  targets:
+    - osu
