@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
     ofs << out.c_str();
+    ofs << std::endl;
     ofs.close();
 
     SUCCESS("Instructions written to: " + output_path.string());

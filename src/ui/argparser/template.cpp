@@ -43,6 +43,7 @@ void execute_template_parser() {
             exit(EXIT_FAILURE);
         }
         ofs << out.c_str();
+        ofs << std::endl;
         ofs.close();
 
         SUCCESS("Instructions written to: " + (tmp_path / "ins.yaml").string());

@@ -184,6 +184,7 @@ void execute_rt_parser() {
                     exit(EXIT_FAILURE);
                 }
                 ofs << out.c_str();
+                ofs << std::endl;
                 ofs.close();
 
                 EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + target_cellar.string());
@@ -286,6 +287,7 @@ void execute_rt_parser() {
             exit(EXIT_FAILURE);
         }
         ofs << out.c_str();
+        ofs << std::endl;
         ofs.close();
 
         EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_rt_install " + target_cellar.string() + " " +

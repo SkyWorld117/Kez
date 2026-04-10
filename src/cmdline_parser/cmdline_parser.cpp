@@ -52,6 +52,7 @@ void parse_cmdline(YAML::Node user_config, const std::string& cellar_path,
         exit(EXIT_FAILURE);
     }
     ofs << out.c_str();
+    ofs << std::endl;
     ofs.close();
 
     SUCCESS("Instructions written to: " + (tmp_path / "ins.yaml").string());
