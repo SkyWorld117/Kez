@@ -23,6 +23,6 @@ cheese:
       - target: ~
       - target: install
     postprocessing: >
-      cd ${GKlib.prefix} && mkdir lib &&
-      cp lib64/libGKlib.a lib
+      mkdir -p ${GKlib.prefix}/lib &&
+      cp ${GKlib.prefix}/lib64/libGKlib.a ${GKlib.prefix}/lib
 
