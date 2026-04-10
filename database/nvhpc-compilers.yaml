@@ -1,0 +1,15 @@
+cheese:
+  name: nvhpc-compilers
+  description: NVIDIA HPC compiler suite
+  type: vendor
+
+  dependencies: 
+    - nvhpc
+
+  properties:
+    prefix: ${nvhpc.prefix}/Linux_x86_64/${nvhpc.version}/compilers
+    c: ${nvhpc-compilers.prefix}/bin/nvc
+    cxx: ${nvhpc-compilers.prefix}/bin/nvc++
+    fort: ${nvhpc-compilers.prefix}/bin/nvfortran
+    omp_flag: -mp
+
