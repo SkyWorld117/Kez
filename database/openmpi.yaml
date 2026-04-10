@@ -197,8 +197,11 @@ cheese:
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
-            default: ${compiler.ldflags} ${libevent.ldflags} ${hwloc.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} ${hcoll.ldflags} ${numactl.ldflags}
+            default: ${compiler.ldflags} ${libevent.ldflags} ${hwloc.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} ${numactl.ldflags}
             conditions:
+              - condition: ${openmpi.config.--with-hcoll} true
+                action: append
+                value: ${hcoll.ldflags}
               - condition: ${openmpi.config.--with-cuda} true
                 action: append
                 value: ${cuda.ldflags}

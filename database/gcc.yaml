@@ -26,6 +26,8 @@ cheese:
     - zstd
 
   build:
+    postprocessing: $FROMAGER_HOME/patches/gcc_patch_linking.sh ${gcc.prefix}
+
     configurations:
       options:
         - name: --prefix

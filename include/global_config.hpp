@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <string>
+#include <vector>
 
 namespace global_config {
 
@@ -16,16 +17,17 @@ namespace global_config {
 }  // namespace global_config
 
 struct CellarPathQuery {
-    std::string pkg_name      = "";
-    std::string pkg_version   = "";
-    std::string cellar_name   = "";
-    std::string compiler_spec = "";  // Used for MPI packages
+    std::vector<std::string> pkg_name = {};
+    std::string pkg_version           = "";
+    std::string cellar_name           = "";
+    std::string compiler_spec         = "";  // Used for MPI packages
     // Any package type in this set will trigger an error
     // This will be ignored if `pkg_name` is not provided
     std::set<std::string> type_filters = {};
 };
 
 std::string get_cellar_path(CellarPathQuery query);
+std::string get_pkg_type(const std::vector<std::string>& pkg_names);
 
 std::pair<std::string, std::string> parse_compiler_spec(const std::string& compiler_spec);
 std::string compiler_spec_to_cellar_name(const std::string& compiler_spec);

@@ -1,19 +1,22 @@
 #include <cmdline_parser/cmdline_parser.hpp>
 #include <unordered_map>
 
-void parse_cmdline(const std::string& target, bool is_config_file, const std::string& cellar_path) {
-    parse_cmdline(target, is_config_file, cellar_path, {});
+#include "yaml-cpp/node/node.h"
+
+void parse_cmdline(const std::string& file, const std::string& cellar_path,
+                   const std::vector<std::string>& config_options) {
+    YAML::Node user_config = YAML::LoadFile(file);
+    parse_cmdline(user_config, cellar_path, config_options);
 }
 
-void parse_cmdline(const std::string& target, bool is_config_file, const std::string& cellar_path,
+void parse_cmdline(const std::vector<std::string>& target, const std::string& cellar_path,
                    const std::vector<std::string>& config_options) {
-    YAML::Node user_config;
-    if (is_config_file) {
-        user_config = YAML::LoadFile(target);
-    } else {
-        user_config = gen_user_config(target, false);
-    }
+    YAML::Node user_config = gen_user_config(target, false);
+    parse_cmdline(user_config, cellar_path, config_options);
+}
 
+void parse_cmdline(YAML::Node user_config, const std::string& cellar_path,
+                   const std::vector<std::string>& config_options) {
     // Parse config options
     std::unordered_map<std::string, std::string> config_map;
     for (const auto& option : config_options) {

@@ -187,3 +187,5 @@ recipe:
     - libpciaccess
     - lz4
     - zlib
+  targets:
+    - openmpi

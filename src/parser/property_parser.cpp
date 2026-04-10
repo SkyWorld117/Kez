@@ -26,7 +26,7 @@ std::string parse_property(const std::string& property_name,
         }
 
         CellarPathQuery query;
-        query.pkg_name = package_name;
+        query.pkg_name = {package_name};
         if (pkg_type == "external") {
             query.pkg_version = global_config::get_external_package_version(package_name);
         } else {

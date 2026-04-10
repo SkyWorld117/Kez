@@ -8,6 +8,7 @@ cheese:
     - xorgproto
     - xcb-proto
     - libxau
+    - libxdmcp
     - util-macros
 
   source:
