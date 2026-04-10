@@ -31,7 +31,7 @@ cheese:
             enabled_value: -O3
   python:
     description: Python Programming Language
-    version: 3.10.19
+    version: 3.13.9
     compiler: system
     build:
       configurations:
@@ -42,7 +42,7 @@ cheese:
             enabled_value: -O3
   openmpi:
     description: Open Source Implementation of the Message Passing Interface
-    version: 5.0.8
+    version: 5.0.9
     compiler: system
 recipe:
   abstract_packages:

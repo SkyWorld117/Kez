@@ -1,32 +1,32 @@
 cheese:
   sst-elements:
     description: Structural Simulation Toolkit Elements
-    version: latest
+    version: scc25
     compiler: system
     build:
       configurations:
         options:
           - name: --with-dramsim3
             description: Enable DRAMSim3 support
-            enabled: true
+            enabled: false
             enabled_value: ${dramsim3.prefix}
             disabled_value: ~
             requires: [dramsim3]
           - name: --with-pin
             description: Enable Intel PIN support
-            enabled: true
+            enabled: false
             enabled_value: ${intelpin.prefix}
             disabled_value: ~
             requires: [intelpin]
           - name: --with-goblin-hmcsim
             description: Enable Goblin HMC Sim support
-            enabled: true
+            enabled: false
             enabled_value: ${goblinhmcsim.prefix}
             disabled_value: ~
             requires: [goblinhmcsim]
           - name: --with-ramulator2
             description: Enable Ramulator2 support
-            enabled: true
+            enabled: false
             enabled_value: ${ramulator2.prefix}
             disabled_value: ~
             requires: [ramulator2]
@@ -73,14 +73,14 @@ cheese:
             enabled_value: -O3
   sst-core:
     description: Structural Simulation Toolkit Core
-    version: latest
+    version: scc25
     compiler: system
     build:
       configurations:
         options:
           - name: --with-hdf5
             description: Use HDF5 statistics format
-            enabled: true
+            enabled: false
             enabled_value: ${hdf5.prefix}
             disabled_value: ~
             requires: [hdf5]
@@ -99,11 +99,15 @@ cheese:
     build:
       configurations:
         options:
-          - name: enable-cxx
+          - name: --enable-cxx
             description: Compile the C++ interface
+            enabled: false
+            enabled_value: ~
+          - name: --enable-parallel
+            description: Search for MPI-IO and MPI support
             enabled: true
             enabled_value: ~
-            disabled_value: ~
+            requires: [mpi]
           - name: CFLAGS
             description: C compiler flags
             enabled: true
@@ -125,7 +129,7 @@ cheese:
             enabled_value: -O3
   openmpi:
     description: Open Source Implementation of the Message Passing Interface
-    version: 5.0.8
+    version: 5.0.9
     compiler: system
 recipe:
   abstract_packages:
