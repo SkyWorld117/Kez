@@ -23,6 +23,10 @@ std::string parse_property(const std::string& property_name,
     if (property == "prefix") {
         if (pkg_type == "system") {
             return global_config::get_path("system");
+        } else if (pkg_type == "vendor" && pkg_config_node["cheese"]["properties"] &&
+                   pkg_config_node["cheese"]["properties"]["prefix"]) {
+            return parse_scalar(pkg_config_node["cheese"]["properties"]["prefix"].as<std::string>(),
+                                template_map, user_config, user_config_pkg, build_mode, env_path);
         }
 
         CellarPathQuery query;
