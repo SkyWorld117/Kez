@@ -22,13 +22,13 @@ cheese:
           description: Compile the C++ interface
           user_configurable: true
           enabled:
-            default: true
+            default: false
 
         - name: --enable-parallel
           description: Search for MPI-IO and MPI support
           user_configurable: true
           enabled:
-            default: false
+            default: true
           requires: [mpi]
 
         - name: CC
@@ -74,12 +74,12 @@ cheese:
       - target: ~
       - target: install
 
-    properties:
-      ldflags:
-        default: -L${hdf5.prefix}/lib -Wl,-rpath,${hdf5.prefix}/lib
-      libs:
-        default: -lhdf5
-      includes:
-        default: -I${hdf5.prefix}/include
+  properties:
+    ldflags:
+      default: -L${hdf5.prefix}/lib -Wl,-rpath,${hdf5.prefix}/lib
+    libs:
+      default: -lhdf5
+    includes:
+      default: -I${hdf5.prefix}/include
 
 
