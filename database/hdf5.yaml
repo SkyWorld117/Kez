@@ -14,31 +14,32 @@ cheese:
     configurations:
       options:
         - name: --prefix
-          descriptoin: Installation prefix
+          description: Installation prefix
           enabled_value: 
             default: ${hdf5.prefix}
 
-        - name: enable-cxx
+        - name: --enable-cxx
           description: Compile the C++ interface
           user_configurable: true
           enabled:
-            default: true
-          enabled_format: --enable-cxx
-          disabled_format: --disable-cxx
+            default: false
 
-        - name: enable-parallel
+        - name: --enable-parallel
           description: Search for MPI-IO and MPI support
           user_configurable: true
           enabled:
-            default: false
-          enabled_format: --enable-parallel
-          disabled_format: --disable-parallel
+            default: true
           requires: [mpi]
 
         - name: CC
           description: C compiler
           enabled_value:
             default: ${compiler.c}
+            conditions:
+              - condition: ${hdf5.config.--enable-parallel} true
+                action: set
+                value: ${mpi.c}
+
 
         - name: CFLAGS
           description: C compiler flags
@@ -50,6 +51,10 @@ cheese:
           description: C++ compiler
           enabled_value:
             default: ${compiler.cxx}
+            conditions:
+              - condition: ${hdf5.config.--enable-parallel} true
+                action: set
+                value: ${mpi.cxx}
 
         - name: CXXFLAGS
           description: C++ compiler flags
@@ -61,19 +66,20 @@ cheese:
           description: Linker flags
           enabled_value:
             default: ${compiler.ldflags}
-          conditions:
-            - condition: ${hdf5.config.enable-parallel} true
-              value: ${mpi.ldflags}
+            conditions:
+              - condition: ${hdf5.config.--enable-parallel} true
+                action: append
+                value: ${mpi.ldflags}
     stages:
       - target: ~
       - target: install
 
-    properties:
-      ldflags:
-        default: -L${hdf5.prefix}/lib -Wl,-rpath,${hdf5.prefix}/lib
-      libs:
-        default: -lhdf5
-      includes:
-        default: -I${hdf5.prefix}/include
+  properties:
+    ldflags:
+      default: -L${hdf5.prefix}/lib -Wl,-rpath,${hdf5.prefix}/lib
+    libs:
+      default: -lhdf5
+    includes:
+      default: -I${hdf5.prefix}/include
 
 

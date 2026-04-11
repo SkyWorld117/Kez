@@ -1,0 +1,28 @@
+cheese:
+  name: GKlib
+  description: A library of various helper routines and frameworks used by many of the lab's software
+  type: package
+  toolchain: make
+
+  source:
+    type: git
+    url: https://github.com/KarypisLab/GKlib
+    releases:
+      - version: master
+        tag: master
+
+  build:
+    stages:
+      - target: config
+        configurations:
+          options:
+            - name: prefix
+              description: Installation prefix
+              enabled_value:
+                default: ${GKlib.prefix}
+      - target: ~
+      - target: install
+    postprocessing: >
+      mkdir -p ${GKlib.prefix}/lib &&
+      cp ${GKlib.prefix}/lib64/libGKlib.a ${GKlib.prefix}/lib
+

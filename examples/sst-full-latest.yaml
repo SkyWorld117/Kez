@@ -1,7 +1,7 @@
 cheese:
   sst-elements:
     description: Structural Simulation Toolkit Elements
-    version: latest
+    version: scc25
     compiler: system
     build:
       configurations:
@@ -73,7 +73,7 @@ cheese:
             enabled_value: -O3
   sst-core:
     description: Structural Simulation Toolkit Core
-    version: latest
+    version: scc25
     compiler: system
     build:
       configurations:
@@ -99,11 +99,15 @@ cheese:
     build:
       configurations:
         options:
-          - name: enable-cxx
+          - name: --enable-cxx
             description: Compile the C++ interface
+            enabled: false
+            enabled_value: ~
+          - name: --enable-parallel
+            description: Search for MPI-IO and MPI support
             enabled: true
             enabled_value: ~
-            disabled_value: ~
+            requires: [mpi]
           - name: CFLAGS
             description: C compiler flags
             enabled: true
@@ -125,7 +129,7 @@ cheese:
             enabled_value: -O3
   openmpi:
     description: Open Source Implementation of the Message Passing Interface
-    version: 5.0.8
+    version: 5.0.9
     compiler: system
 recipe:
   abstract_packages:

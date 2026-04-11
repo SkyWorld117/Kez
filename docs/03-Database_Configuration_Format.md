@@ -144,6 +144,7 @@ condition =
 
 ```yaml
 properties:
+  parent: <parent_package>    # Optional, useful if it is a submodule of a vendor package
   prefix: <prefix>            # Optional, useful if it is a submodule of a vendor package
   c: <c_compiler>             # If compiler or mpi
   cxx: <cxx_compiler>         # If compiler or mpi
@@ -175,8 +176,6 @@ properties:
       - ...
   ... # More if needed
 ```
-
-
 
 ## Configuration Guidelines
 

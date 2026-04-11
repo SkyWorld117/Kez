@@ -1,0 +1,45 @@
+cheese:
+  name: parmetis
+  description: ParMETIS is an MPI-based library for partitioning graphs, partitioning finite element meshes, and producing fill reducing orderings for sparse matrices.
+  type: package
+  toolchain: make
+
+  source:
+    type: git
+    url: https://github.com/KarypisLab/ParMETIS
+    releases:
+      - version: main
+        tag: main
+
+  dependencies:
+    - mpi
+    - GKlib
+    - metis
+
+  build:
+    preprocessing: >
+      sed -i 's|cd $(BUILDDIR) && cmake $(CURDIR) $(CONFIG_FLAGS)|cd $(BUILDDIR) \&\& cmake $(CURDIR) $(CONFIG_FLAGS) -DCMAKE_POLICY_VERSION_MINIMUM=3.5|' Makefile
+    stages: 
+      - target: config
+        configurations:
+          options:
+            - name: prefix
+              description: Installation prefix
+              enabled_value:
+                default: ${parmetis.prefix} 
+            - name: gklib_path
+              description: GKlib installation path
+              enabled_value:
+                default: ${GKlib.prefix}
+            - name: metis_path
+              description: Metis installation path
+              enabled_value:
+                default: ${metis.prefix}
+            - name: cc
+              description: C compiler
+              enabled_value:
+                default: ${mpi.c}
+
+      - target: install
+
+    
