@@ -7,9 +7,11 @@ cheese:
     - nvhpc
 
   properties:
-    prefix: ${nvhpc.prefix}/Linux_x86_64/${nvhpc.version}/compilers
-    c: ${nvhpc-compilers.prefix}/bin/nvc
-    cxx: ${nvhpc-compilers.prefix}/bin/nvc++
-    fort: ${nvhpc-compilers.prefix}/bin/nvfortran
+    parent: nvhpc
+    prefix: ${nvhpc.prefix}/Linux_x86_64/${nvhpc.version}/compilers #TODO: Sophia parse the architecture dynamically
+    c: ${compiler.prefix}/bin/nvc
+    cxx: ${compiler.prefix}/bin/nvc++
+    fort: ${compiler.prefix}/bin/nvfortran
     omp_flags: -mp
-
+    ldflags:
+      default: -L${compiler.prefix}/lib -Wl,-rpath,${compiler.prefix}/lib

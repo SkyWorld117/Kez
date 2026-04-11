@@ -2,6 +2,7 @@
 #include <database/database.hpp>
 #include <filesystem>
 #include <global_config.hpp>
+#include <parser/scalar_parser.hpp>
 #include <string>
 
 std::filesystem::path prefix_path = std::filesystem::path(getenv("FROMAGER_WORKDIR"));
@@ -141,6 +142,49 @@ std::string get_cellar_path(CellarPathQuery query) {
             }
             return global_config::get_path("system");
         } else if (pkg_type == "compiler" || pkg_type == "mpi" || pkg_type == "vendor") {
+            if (pkg_type == "vendor") {
+                YAML::Node pkg_config = get_db_config(query.pkg_name[0]);
+                if (pkg_config["cheese"]["properties"] &&
+                    pkg_config["cheese"]["properties"]["prefix"]) {
+                    // This means it is a submodule of another vendor package
+                    CellarPathQuery prefix_query;
+                    if (pkg_config["cheese"]["properties"]["parent"]) {
+                        prefix_query.pkg_name = {
+                            pkg_config["cheese"]["properties"]["parent"].as<std::string>()};
+                    } else {
+                        ERROR("Vendor package '" + query.pkg_name[0] +
+                              "' has a prefix property but no parent property to indicate which "
+                              "package it belongs to.");
+                        exit(EXIT_FAILURE);
+                    }
+                    prefix_query.pkg_version = query.pkg_version;
+
+                    std::string parent_prefix = get_cellar_path(prefix_query);
+
+                    // Possible patterns to substitute in the prefix property:
+                    // - ${parent_pkg.version}: the version of the current package
+                    // - ${parent_pkg.prefix}: the prefix of the parent package
+                    // TODO: Sophia parse architecture here :)
+                    std::string prefix_template =
+                        pkg_config["cheese"]["properties"]["prefix"].as<std::string>();
+                    std::string template_parent_pkg_version =
+                        "${" + prefix_query.pkg_name[0] + ".version}";
+                    std::string template_parent_pkg_prefix =
+                        "${" + prefix_query.pkg_name[0] + ".prefix}";
+                    if (prefix_template.find(template_parent_pkg_version) != std::string::npos) {
+                        prefix_template.replace(prefix_template.find(template_parent_pkg_version),
+                                                template_parent_pkg_version.size(),
+                                                query.pkg_version);
+                    }
+                    if (prefix_template.find(template_parent_pkg_prefix) != std::string::npos) {
+                        prefix_template.replace(prefix_template.find(template_parent_pkg_prefix),
+                                                template_parent_pkg_prefix.size(), parent_prefix);
+                    }
+
+                    return prefix_template;
+                }
+            }
+
             std::string expected_cellar = pkg_type + "s";
             if (!query.cellar_name.empty() && query.cellar_name != expected_cellar) {
                 ERROR("Package '" + pkg_names_str + "' of type '" + pkg_type +
