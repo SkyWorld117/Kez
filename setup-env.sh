@@ -19,6 +19,10 @@ elif [ ! -f "${FROMAGER_WORKDIR}/config.yaml" ]; then
 else
 
     # Check if yq is available, if not, it will be installed in the FROMAGER_WORKDIR/bin directory
+    if [[ ":$PATH:" != *":${FROMAGER_WORKDIR}/bin:"* ]]; then
+        export PATH="${FROMAGER_WORKDIR}/bin:${PATH}"
+    fi
+
     if ! command -v yq &> /dev/null; then
         echo "[I]: yq is not installed. It will be installed in ${FROMAGER_WORKDIR}/bin."
         mkdir -p "${FROMAGER_WORKDIR}/bin"
@@ -28,10 +32,6 @@ else
             wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
         fi
         chmod +x "${FROMAGER_WORKDIR}/bin/yq"
-
-        if [[ ":$PATH:" != *":${FROMAGER_WORKDIR}/bin:"* ]]; then
-            export PATH="${FROMAGER_WORKDIR}/bin:${PATH}"
-        fi
     fi
 
     export FROMAGER_HOME="${SCRIPT_DIR}"
