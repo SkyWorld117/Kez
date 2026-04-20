@@ -13,7 +13,7 @@ elif [ ! -f "${FROMAGER_WORKDIR}/config.yaml" ]; then
 
     mkdir -p "${FROMAGER_WORKDIR}"
     cp "${SCRIPT_DIR}/configs/config.yaml" "${FROMAGER_WORKDIR}/config.yaml"
-    echo "[I]: `config.yaml` was not found in ${FROMAGER_WORKDIR}. A default config file has been copied from the script directory. Please review and customize it as needed."
+    echo "[I]: \`config.yaml\` was not found in ${FROMAGER_WORKDIR}. A default config file has been copied from the script directory. Please review and customize it as needed."
     echo "[I]: After setting up the configuration, please re-run this script to initialize the environment variables and load the necessary functions."
 
 else
