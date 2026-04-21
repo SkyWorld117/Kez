@@ -247,7 +247,7 @@ fi
 # gcc 11.5.0 (for compatibility)
 if check_installation "gcc"; then
     echo "Installing gcc 11.5.0..."
-    wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/gcc-11.5.0.tar.xz" "https://ftpmirror.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
+    wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/gcc-11.5.0.tar.xz" "https://ftp.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
     tar -xf "${FROMAGER_SYSTEM_TMP}/gcc-11.5.0.tar.xz" && cd "${FROMAGER_SYSTEM_TMP}/gcc-11.5.0"
     ./configure \
         --prefix="${FROMAGER_SYSTEM}" \
