@@ -248,6 +248,10 @@ fi
 if check_installation "gcc"; then
     echo "Installing gcc 11.5.0..."
     wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/gcc-11.5.0.tar.xz" "https://ftp.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
+    if [ ! -f "${FROMAGER_SYSTEM_TMP}/gcc-11.5.0.tar.xz" ]; then
+        echo >&2 "Failed to download gcc 11.5.0 from https://ftp.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.xz"
+        exit 1
+    fi
     tar -xf "${FROMAGER_SYSTEM_TMP}/gcc-11.5.0.tar.xz" && cd "${FROMAGER_SYSTEM_TMP}/gcc-11.5.0"
     ./configure \
         --prefix="${FROMAGER_SYSTEM}" \
