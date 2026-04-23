@@ -78,6 +78,7 @@ GLOBAL_CONFIG_OBJS = \
 UI_ARGPARSER_OBJS = \
 	$(OBJ_DIR)/ui/argparser/init.o \
 	$(OBJ_DIR)/ui/argparser/selfcheck.o \
+	$(OBJ_DIR)/ui/argparser/update.o \
 	$(OBJ_DIR)/ui/argparser/utilities.o \
 	$(OBJ_DIR)/ui/argparser/cellar.o \
 	$(OBJ_DIR)/ui/argparser/compiler_mpi.o \
