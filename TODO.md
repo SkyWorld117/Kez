@@ -2,7 +2,6 @@
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
 | Started | Add caching system to store source files, reduce redundant downloads and rebuild without internet connection. | Nick |
-| Not Started | Add `state.yaml` for compilers and MPIs to indicate which compilers and MPIs are available. | - |
 | Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
 | Done | Better source file handling (e.g. support for different source file name patterns). | Yi |
 | Done | Fix CMake multithreading. (Use `cmake --build . --parallel` instead of `make -j`). | Nick |
