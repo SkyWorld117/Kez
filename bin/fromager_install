@@ -6,6 +6,11 @@ export PATH=${FROMAGER_HOME}/bin:${PATH}
 
 target_cellar=$1
 
+force=false
+if [ -n "$2" ] && [ "$2" == "--force" ]; then
+    force=true
+fi
+
 rm -rf source/ source*
 
 # Process each package and its instructions
@@ -20,8 +25,8 @@ for ((i=0; i<package_count; i++)); do
     # Extract package name
     package_name=$(yq -r ".[$i].package" "$target_cellar/.tmp/ins.yaml")
 
-    # Skip if package is already installed
-    if $(grep -q "  - $package_name" "$target_cellar/state.yaml"); then
+    # Skip if package is already installed (unless --force is used)
+    if $(grep -q "  - $package_name" "$target_cellar/state.yaml") && [ "$force" == false ]; then
         fromager_warning "Package $package_name is already installed. Skipping."
         continue
     fi
