@@ -3,10 +3,14 @@
 #include <utils/colors.h>
 
 #define INFO(message)    print_info(message)
-#define DEBUG(message)   print_debug(message)
 #define WARNING(message) print_warning(message)
 #define ERROR(message)   print_error(message)
 #define SUCCESS(message) print_success(message)
+#ifdef DDEBUG
+    #define DEBUG(message) print_debug(message)
+#else
+    #define DEBUG(message) do {} while(0)
+#endif
 
 #include <unistd.h>  // for isatty and STDOUT_FILENO
 
@@ -22,13 +26,11 @@ inline void print_info(const std::string& message) {
 }
 
 inline void print_debug(const std::string& message) {
-#ifdef DDEBUG
     if (isatty(STDOUT_FILENO)) {
         std::cout << DEBUG_COLOR << "[D]: " << message << COLOR_RESET << std::endl;
     } else {
         std::cout << "[D]: " << message << std::endl;
     }
-#endif // DEBUG
 }
 
 inline void print_warning(const std::string& message) {
