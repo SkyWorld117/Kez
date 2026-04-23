@@ -70,6 +70,13 @@ else
     # Load configuration settings
     export FROMAGER_NPROC=$(yq -r '.fromager.n_proc_for_build' "${FROMAGER_WORKDIR}/config.yaml")
 
+    # Add Fromager work directory to MODULEPATH for module system integration
+    modulefiles_dir=${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.modulefiles' "${FROMAGER_WORKDIR}/config.yaml")
+    mkdir -p "$modulefiles_dir"
+    if [[ ":$MODULEPATH:" != *":${modulefiles_dir}:"* ]]; then
+        export MODULEPATH="${modulefiles_dir}:${MODULEPATH:-}"
+    fi
+
     set +Euo pipefail
 
 fi
