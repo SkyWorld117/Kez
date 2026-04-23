@@ -11,6 +11,7 @@ fromager:
     mpis: cellars/mpis
     vendors: cellars/vendors
     factories: factories
+    modulefiles: modulefiles
 
   external:
     rdma-core:
