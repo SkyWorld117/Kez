@@ -20,6 +20,10 @@ argparse::ArgumentParser& get_install_parser() {
         .help("Target cellar (only used when installing a package that is not a "
               "compiler/MPI/vendor type)")
         .nargs(1);
+    install_parser.add_argument("-f", "--force")
+        .help("Force reinstallation even if the package is already installed")
+        .default_value(false)
+        .implicit_value(true);
 
     return install_parser;
 }
@@ -102,6 +106,9 @@ void execute_install_parser() {
         parse_cmdline(pkg_or_file, target_cellar, config_options);
     }
 
+    if (install_parser.get<bool>("--force")) {
+        target_cellar += " --force";
+    }
     EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + target_cellar);
 
     exit(EXIT_SUCCESS);
@@ -150,6 +157,11 @@ std::vector<std::string> get_install_suggestions(const int comp_cword,
         }
     } else {
         suggest_cellar_option = true;
+    }
+
+    if (!exists_in(comp_words, "--force") && !exists_in(comp_words, "-f")) {
+        suggestions.push_back("--force");
+        suggestions.push_back("-f");
     }
 
     if (suggest_read_option) {
