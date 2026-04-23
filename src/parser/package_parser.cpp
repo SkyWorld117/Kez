@@ -78,20 +78,25 @@ std::vector<std::string> parse_package(const std::string& package_name,
         if (user_config_context["build"] && user_config_context["build"]["configurations"]) {
             user_config_context_config = user_config_context["build"]["configurations"];
         }
+
+        std::string toolchain = "";
+        if (pkg_config["cheese"]["toolchain"]) {
+            toolchain = pkg_config["cheese"]["toolchain"].as<std::string>();
+        }
+
         std::pair<std::vector<std::string>, std::string> parsed_configurations =
             parse_configuration(configurations, template_map, user_config, user_config_pkg,
-                                user_config_context_config, pkg_config, build_mode, env_path);
+                                user_config_context_config, pkg_config, build_mode, env_path,
+                                toolchain);
         std::vector<std::string> env_config = parsed_configurations.first;
         std::string opts_config             = parsed_configurations.second;
         std::string cmd;
         if (pkg_config["cheese"]["build"]["configurations"]["command"]) {
             cmd = pkg_config["cheese"]["build"]["configurations"]["command"].as<std::string>();
         } else {
-            if (pkg_config["cheese"]["toolchain"] &&
-                pkg_config["cheese"]["toolchain"].as<std::string>() == "autotools") {
+            if (toolchain == "autotools") {
                 cmd = "./configure";
-            } else if (pkg_config["cheese"]["toolchain"] &&
-                       pkg_config["cheese"]["toolchain"].as<std::string>() == "cmake") {
+            } else if (toolchain == "cmake") {
                 instructions.push_back("mkdir -p build && cd build");
                 cmd = "cmake ../";
             } else {
@@ -198,7 +203,7 @@ std::vector<std::string> parse_package(const std::string& package_name,
                 std::pair<std::vector<std::string>, std::string> parsed_stage_configurations =
                     parse_configuration(stage_configurations, template_map, user_config,
                                         user_config_pkg, user_config_context_config, pkg_config,
-                                        build_mode, env_path);
+                                        build_mode, env_path, "");
                 std::vector<std::string> stage_env_config = parsed_stage_configurations.first;
                 std::reverse(stage_env_config.begin(), stage_env_config.end());
                 for (const auto& env : stage_env_config) {
