@@ -1,4 +1,5 @@
 #include <global_config.hpp>
+#include <parser/source_parser.hpp>
 #include <parser/template_parser.hpp>
 #include <string>
 
@@ -27,9 +28,7 @@ std::string parse_template(const std::string& template_str,
     // 3. properties of abstract packages, need to redirect to the selected implementation
 
     if (template_str == "source") {
-        std::filesystem::path env_path_fs(env_path);
-        std::filesystem::path source_path = env_path_fs / ".tmp" / "source";
-        return source_path.string();
+        return get_source_path(env_path);
     }
 
     if (template_str.find("compiler.") == 0) {
