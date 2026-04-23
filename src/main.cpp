@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
     argparse::ArgumentParser& install_parser   = get_install_parser();
     argparse::ArgumentParser& template_parser  = get_template_parser();
     argparse::ArgumentParser& rt_parser        = get_rt_parser();
+    argparse::ArgumentParser& update_parser    = get_update_parser();
 
     // Register all subparsers
     program.add_subparser(init_parser);
@@ -39,6 +40,7 @@ int main(int argc, char* argv[]) {
     program.add_subparser(install_parser);
     program.add_subparser(template_parser);
     program.add_subparser(rt_parser);
+    program.add_subparser(update_parser);
 
     try {
         program.parse_args(argc, argv);
@@ -52,17 +54,18 @@ int main(int argc, char* argv[]) {
     // Handle subcommands and options
     // ----------------------------------------------------------
 
-    // --- Handle init ---
     if (program.is_subcommand_used("init")) {
         execute_init_parser();
     }
 
-    // --- Handle selfcheck ---
     if (program.is_subcommand_used("selfcheck")) {
         execute_selfcheck_parser();
     }
 
-    // --- Handle utilities ---
+    if (program.is_subcommand_used("update")) {
+        execute_update_parser();
+    }
+
     if (program.is_subcommand_used("utilities")) {
         execute_utilities_parser();
     }

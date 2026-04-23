@@ -29,6 +29,11 @@ void execute_utilities_parser();
 std::vector<std::string> get_utilities_suggestions(const int comp_cword,
                                                    const std::vector<std::string>& comp_words);
 
+argparse::ArgumentParser& get_update_parser();
+void execute_update_parser();
+std::vector<std::string> get_update_suggestions(const int comp_cword,
+                                                const std::vector<std::string>& comp_words);
+
 argparse::ArgumentParser& get_cellar_parser();
 void execute_cellar_parser();
 std::vector<std::string> get_cellar_suggestions(const int comp_cword,
