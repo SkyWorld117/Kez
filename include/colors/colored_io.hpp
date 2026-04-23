@@ -30,7 +30,7 @@ inline void print_warning(const std::string& message) {
 
 inline void print_error(const std::string& message) {
     if (isatty(STDERR_FILENO)) {
-        std::cerr << ERROR_COLOR << "[E]: " << message << COLOR_RESET << std::endl;
+                                    std::cerr << ERROR_COLOR << "[E]: " << message << COLOR_RESET << std::endl;
     } else {
         std::cerr << "[E]: " << message << std::endl;
     }
@@ -40,6 +40,6 @@ inline void print_success(const std::string& message) {
     if (isatty(STDOUT_FILENO)) {
         std::cout << SUCCESS_COLOR << "[S]: " << message << COLOR_RESET << std::endl;
     } else {
-        std::cout << "[S]: " << message << std::endl;
+                        std::cout << "[S]: " << message << std::endl;
     }
 }
