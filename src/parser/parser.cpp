@@ -1,6 +1,6 @@
 #include <parser/parser.hpp>
 
-#include "parser/scalar_parser.hpp"
+#include <parser/scalar_parser.hpp>
 
 YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
                  const std::string& env_path) {
