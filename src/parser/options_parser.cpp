@@ -4,7 +4,8 @@ std::string parse_options(const YAML::Node &opts_node,
                           std::unordered_map<std::string, std::string> &template_map,
                           const YAML::Node &user_config, const YAML::Node &user_config_pkg,
                           const YAML::Node &user_config_context, const YAML::Node &pkg_config,
-                          const std::string &build_mode, const std::string &env_path) {
+                          const std::string &build_mode, const std::string &env_path,
+                          const std::string &toolchain) {
     std::string pkg_name = pkg_config["cheese"]["name"].as<std::string>();
     std::string options;
 
@@ -150,6 +151,23 @@ std::string parse_options(const YAML::Node &opts_node,
         template_map[pkg_name + ".config." + opt_name] =
             final_enabled + "." +
             (final_enabled == "true" ? final_enabled_value : final_disabled_value);
+    }
+
+    // Handle toolchain specific default options
+    if (toolchain == "autotools") {
+        if (options.find("--prefix") == std::string::npos) {
+            options += "--prefix=" + env_path + " ";
+        }
+        template_map[pkg_name + ".config.--prefix"] = env_path;
+    } else if (toolchain == "cmake") {
+        if (options.find("-DCMAKE_PREFIX_PATH") == std::string::npos) {
+            options += "-DCMAKE_PREFIX_PATH=" + env_path + " ";
+        }
+        template_map[pkg_name + ".config.-DCMAKE_PREFIX_PATH"] = env_path;
+        if (options.find("-DCMAKE_BUILD_TYPE") == std::string::npos) {
+            options += "-DCMAKE_BUILD_TYPE=Release ";
+        }
+        template_map[pkg_name + ".config.-DCMAKE_BUILD_TYPE"] = "Release";
     }
 
     // Remove trailing whitespace
