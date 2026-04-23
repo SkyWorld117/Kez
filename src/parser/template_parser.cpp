@@ -70,6 +70,10 @@ std::string parse_template(const std::string& template_str,
             template_map[template_str] = arch;  // Cache the resolved architecture
             return arch;
         }
+
+        ERROR("Unknown fromager-wide template '" + template_str +
+              "'. Supported fromager.* templates: fromager.arch");
+        exit(EXIT_FAILURE);
     }
 
     std::vector<std::string> abstract_packages;
