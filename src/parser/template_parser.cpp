@@ -63,6 +63,15 @@ std::string parse_template(const std::string& template_str,
         }
     }
 
+    // Handle fromager wide templates
+    if (template_str.find("fromager.") == 0) {
+        if (template_str == "fromager.arch") {
+            std::string arch           = global_config::get_architecture();
+            template_map[template_str] = arch;  // Cache the resolved architecture
+            return arch;
+        }
+    }
+
     std::vector<std::string> abstract_packages;
     for (const auto& item : user_config["recipe"]["abstract_packages"]) {
         std::string abstract_pkg_name = item.first.as<std::string>();

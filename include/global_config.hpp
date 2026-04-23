@@ -11,6 +11,7 @@ namespace global_config {
     std::string get_num_proc();
     std::string get_default_compiler();
     std::string get_default_mpi();
+    std::string get_architecture();
     std::string get_external_package_prefix(const std::string& package_name);
     std::string get_external_package_version(const std::string& package_name);
 

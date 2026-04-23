@@ -1,0 +1,14 @@
+cheese:
+  name: cmake
+  description: CMake Build System
+  type: package
+
+  source:
+    type: script
+    releases:
+      - version: 3.31.12
+        url: https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-${fromager.arch}.sh
+
+  build:
+    postprocessing: bash ${source} --skip-license --prefix=${cmake.prefix}
+  

@@ -3,6 +3,7 @@
 #include <utils/colors.h>
 
 #define INFO(message)    print_info(message)
+#define DEBUG(message)   print_debug(message)
 #define WARNING(message) print_warning(message)
 #define ERROR(message)   print_error(message)
 #define SUCCESS(message) print_success(message)
@@ -18,6 +19,16 @@ inline void print_info(const std::string& message) {
     } else {
         std::cout << "[I]: " << message << std::endl;
     }
+}
+
+inline void print_debug(const std::string& message) {
+#ifdef DDEBUG
+    if (isatty(STDOUT_FILENO)) {
+        std::cout << DEBUG_COLOR << "[D]: " << message << COLOR_RESET << std::endl;
+    } else {
+        std::cout << "[D]: " << message << std::endl;
+    }
+#endif // DEBUG
 }
 
 inline void print_warning(const std::string& message) {

@@ -50,6 +50,17 @@ namespace global_config {
         }
     }
 
+    std::string get_architecture() {
+        if (!config["architecture"]) {
+        #if defined(__x86_64__) || defined(_M_X64)
+            config["architecture"] = "x86_64";
+        #elif defined(__aarch64__) || defined(_M_ARM64)
+            config["architecture"] = "aarch64";
+        #endif
+        }
+        return config["architecture"].as<std::string>();
+    }
+
     std::string get_external_package_prefix(const std::string& package_name) {
         if (!config["external"] || !config["external"][package_name] ||
             !config["external"][package_name]["prefix"]) {
@@ -164,7 +175,6 @@ std::string get_cellar_path(CellarPathQuery query) {
                     // Possible patterns to substitute in the prefix property:
                     // - ${parent_pkg.version}: the version of the current package
                     // - ${parent_pkg.prefix}: the prefix of the parent package
-                    // TODO: Sophia parse architecture here :)
                     std::string prefix_template =
                         pkg_config["cheese"]["properties"]["prefix"].as<std::string>();
                     std::string template_parent_pkg_version =

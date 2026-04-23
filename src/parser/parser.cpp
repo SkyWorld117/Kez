@@ -1,5 +1,7 @@
 #include <parser/parser.hpp>
 
+#include "parser/scalar_parser.hpp"
+
 YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
                  const std::string& env_path) {
     std::unordered_map<std::string, std::string> template_map;
@@ -27,6 +29,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
     std::unordered_map<std::string, std::vector<std::string>> package_instructions;
 
     for (const auto& item : user_config["cheese"]) {
+        DEBUG("Processing package: " + item.first.as<std::string>());
         if (build_mode == "debug") {
             INFO("Processing package: " + item.first.as<std::string>());
         }
@@ -41,6 +44,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
             INFO("Loading configuration for package: " + pkg_name);
         }
         YAML::Node pkg_config = get_db_config(pkg_name);
+        DEBUG("Configuration for package '" + pkg_name + "':\n" + YAML::Dump(pkg_config));
 
         // Parse the package configuration
         if (build_mode == "debug") {
@@ -66,6 +70,8 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
             instruction =
                 parse_properties_in_scalar(instruction, template_map, user_config,
                                            user_config["cheese"][pkg_name], build_mode, env_path);
+            instruction = parse_scalar(instruction, template_map, user_config,
+                                       user_config["cheese"][pkg_name], build_mode, env_path);
             filter(instruction);  // Filter the instruction
         }
     }

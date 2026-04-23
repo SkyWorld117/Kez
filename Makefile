@@ -1,6 +1,8 @@
 # Compiler and flags
 CXX ?= g++
 CXXFLAGS ?= -O3 -flto -std=c++17
+#add debug flags to CXXFLAGS if you want to build with debug symbols
+CXX_DEBUG_FLAGS = -DDDEBUG -g -gz=none -O0
 INCLUDES = -I$(FROMAGER_ENV)/system/include -I$(FROMAGER_HOME)/include
 LDFLAGS += -L$(FROMAGER_ENV)/system/lib -L$(FROMAGER_ENV)/system/lib64
 LDFLAGS += -lyaml-cpp
