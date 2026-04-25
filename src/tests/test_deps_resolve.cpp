@@ -1,4 +1,4 @@
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
 
 int main(int argc, char* argv[]) {

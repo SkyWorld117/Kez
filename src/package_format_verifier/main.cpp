@@ -1,6 +1,6 @@
 #include <yaml-cpp/yaml.h>
 
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <package_format_verifier/cheese_verifier.hpp>
 
 int main(int argc, char* argv[]) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <colors/colors.h>
+#include <utils/colors.h>
 
 #define INFO(message)    print_info(message)
 #define WARNING(message) print_warning(message)

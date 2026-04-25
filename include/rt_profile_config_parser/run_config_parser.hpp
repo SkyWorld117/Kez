@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <rt_profile_config_parser/resource_manager.hpp>
 #include <string>
 #include <utility>
