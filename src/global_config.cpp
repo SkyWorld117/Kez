@@ -50,15 +50,16 @@ namespace global_config {
         }
     }
 
-    std::string get_architecture() {
-        if (!config["architecture"]) {
-        #if defined(__x86_64__) || defined(_M_X64)
-            config["architecture"] = "x86_64";
-        #elif defined(__aarch64__) || defined(_M_ARM64)
-            config["architecture"] = "aarch64";
-        #endif
+    std::string get_architecture(std::string& arch_variant) {
+        YAML::Node architecture_config = get_db_config("architecture")["architecture"]; //TODO: find a nicer location? but I want it to be editable by users
+        if (!architecture_config[arch_variant]) {
+            WARNING("Architecture for package '" + arch_variant +
+                    "' is not specified in the configuration. Using default values. If this is not "
+                    "intended, please modify the \"architecture.yaml\" file.");
+            arch_variant = "default";
         }
-        return config["architecture"].as<std::string>();
+        std::string arch = getenv("FROMAGER_ARCH");
+        return architecture_config[arch_variant][arch].as<std::string>();
     }
 
     std::string get_external_package_prefix(const std::string& package_name) {
