@@ -105,7 +105,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/cmdline_parser
 	mkdir -p $(OBJ_DIR)/rt_profile_config_parser
 	mkdir -p $(OBJ_DIR)/rt_dependency_resolver
-	mkdir -p $(OBJ_DIR)/colors
+	mkdir -p $(OBJ_DIR)/utils
 	mkdir -p $(OBJ_DIR)/database
 	mkdir -p $(OBJ_DIR)/tests
 	mkdir -p $(OBJ_DIR)/ui/argparser
@@ -139,8 +139,8 @@ $(OBJ_DIR)/rt_profile_config_parser/%.o: $(SRC_DIR)/rt_profile_config_parser/%.c
 $(OBJ_DIR)/rt_dependency_resolver/%.o: $(SRC_DIR)/rt_dependency_resolver/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Object file rules for colors (with prefixed names to avoid conflicts)
-$(OBJ_DIR)/colors/%.o: $(SRC_DIR)/colors/%.cpp | $(OBJ_DIR)
+# Object file rules for utils (with prefixed names to avoid conflicts)
+$(OBJ_DIR)/utils/%.o: $(SRC_DIR)/utils/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for database
@@ -180,7 +180,7 @@ $(BIN_DIR)/fromager_rt_profile_config_parser: $(RT_PROFILE_PARSER_OBJS) | $(BIN_
 $(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_%: $(OBJ_DIR)/colors/%.o | $(BIN_DIR)
+$(BIN_DIR)/fromager_%: $(OBJ_DIR)/utils/%.o | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_bash_completion: $(OBJ_DIR)/ui/bash_completion/main.o $(UI_ARGPARSER_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)

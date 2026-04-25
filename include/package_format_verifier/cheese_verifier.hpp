@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <iostream>
 #include <package_format_verifier/build_verifier.hpp>
 #include <package_format_verifier/dependencies_verifier.hpp>
