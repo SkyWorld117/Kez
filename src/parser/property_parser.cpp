@@ -137,9 +137,13 @@ std::string parse_properties_in_scalar(const std::string& command,
             exit(EXIT_FAILURE);
         }
         std::string property_name     = result.substr(pos + 2, end_pos - pos - 2);
-        std::string resolved_property = parse_template(
-            property_name, template_map, user_config, user_config_pkg, build_mode, env_path);
-        DEBUG("Found property template: " + property_name + " -> Resolved value: " + resolved_property);
+        std::string resolved_property = parse_template(property_name, template_map, user_config,
+                                                       user_config_pkg, build_mode, env_path);
+        DEBUG("Found property template: " + property_name +
+              " -> Resolved value: " + resolved_property);
+        if (resolved_property.empty())
+            resolved_property = parse_complex_property(property_name, template_map, user_config,
+                                                       user_config_pkg, build_mode, env_path);
         result.replace(pos, end_pos - pos + 1, resolved_property);
         pos += resolved_property.length();  // Move past the resolved property
     }

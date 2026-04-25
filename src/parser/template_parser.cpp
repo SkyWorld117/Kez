@@ -65,8 +65,12 @@ std::string parse_template(const std::string& template_str,
 
     // Handle fromager wide templates
     if (template_str.find("fromager.") == 0) {
-        if (template_str == "fromager.arch") {
-            std::string arch           = global_config::get_architecture();
+        if (template_str.find("fromager.arch") == 0) {
+            std::string arch_variant = template_str.substr(13);  // Remove "fromager.arch"
+            if (arch_variant.empty()) {
+                arch_variant = "default";
+            }
+            std::string arch           = global_config::get_architecture(arch_variant);
             template_map[template_str] = arch;  // Cache the resolved architecture
             return arch;
         }

@@ -1,0 +1,7 @@
+architecture:
+  llvm:
+    x86_64: "X64"
+    arm64: "ARM64"
+  default:
+    x86_64: "x86_64"
+    arm64: "aarch64"
