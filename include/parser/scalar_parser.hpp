@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <iostream>
 #include <parser/template_parser.hpp>
 #include <string>

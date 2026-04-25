@@ -1,7 +1,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <cmdline_parser/traverse.hpp>
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <database/database.hpp>
 #include <parser/parser.hpp>
 #include <string>

@@ -2,7 +2,7 @@
 
 #include <argparse/argparse.hpp>
 #include <cmdline_parser/cmdline_parser.hpp>
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <global_config.hpp>
 #include <string>
 

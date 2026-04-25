@@ -3,7 +3,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <iostream>
 #include <parser/environment_parser.hpp>
 #include <parser/options_parser.hpp>

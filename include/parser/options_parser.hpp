@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <colors/colored_io.hpp>
+#include <utils/colored_io.hpp>
 #include <iostream>
 #include <parser/conditions_parser.hpp>
 #include <parser/scalar_parser.hpp>
