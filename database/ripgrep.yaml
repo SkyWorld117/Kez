@@ -1,0 +1,13 @@
+cheese:
+  name: ripgrep
+  description: ripgrep - a line-oriented search tool that recursively searches the current directory for a regex pattern
+  type: package
+
+  source:
+    type: tarball
+    releases:
+      - version: 15.1.0
+        url: https://github.com/BurntSushi/ripgrep/releases/download/15.1.0/ripgrep-15.1.0-${fromager.arch.ripgrep}.tar.gz
+
+  build:
+    postprocessing: cp rg ${ripgrep.prefix}/bin/

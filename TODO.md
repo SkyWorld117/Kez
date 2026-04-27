@@ -37,7 +37,7 @@
 | Not Started | Allow installing multiple versions of CUDA (and ROCm if ever). | - |
 | Not Started | Fix `acts` bad isolation. | - |
 | Not Started | Update `exascale-climate-emulator` to the public GitHub version, possibly remove the sketchy `patchelf` logic. | - |
-| Not Started | Add `neovim` package. | - |
+| Done | Add `neovim` package. | Yi |
 | Done | Add `cmake` package. | Sophia |
 | Not Started | Add `bear - build ear` package | Sophia |
 | Done | Fix `gcc` wrong `stdc++` dynamic linking. | Yi |

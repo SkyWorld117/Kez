@@ -1,0 +1,31 @@
+cheese:
+  name: lua
+  description: Lua - a lightweight, embeddable scripting language
+  type: package
+  toolchain: makefile
+
+  source:
+    type: tarball
+    releases:
+      - version: 5.5.0
+        url: https://www.lua.org/ftp/lua-5.5.0.tar.gz
+
+  dependencies:
+    - lua
+
+  build:
+    stages:
+      - target: ~
+        configurations:
+          options:
+            - name: INSTALL_TOP
+              description: Installation prefix
+              enabled_value:
+                default: ${lua.prefix}
+      - target: install
+        configurations:
+          options:
+            - name: INSTALL_TOP
+              description: Installation prefix
+              enabled_value:
+                default: ${lua.prefix}
