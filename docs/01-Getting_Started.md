@@ -19,7 +19,7 @@ Since Fromager is an HPC-focused package manager, it is designed to work seamles
 You can download Fromager from the [GitHub repository](https://github.com/SkyWorld117/Fromager).
 
 ```bash
-git clone -c feature.manyFiles=true https://github.com/SkyWorld117/Fromager.git
+git clone -c feature.manyFiles=true git@github.com:SkyWorld117/Fromager.git
 ```
 
 After cloning the repository, you can place it anywhere you like, including your home directory. The whole project is not large and can be easily managed. However, it does contain many files since the whole database is included. If your cluster has a quota limit of the number of files, you may need to clone the repository elsewhere.
