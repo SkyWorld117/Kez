@@ -1,7 +1,7 @@
-#include <utils/colored_io.hpp>
 #include <filesystem>
 #include <parser/source_parser.hpp>
 #include <string>
+#include <utils/colored_io.hpp>
 
 void download_source(const YAML::Node pkg_config, const YAML::Node release,
                      const std::string package_name, const std::string source_type,
@@ -19,7 +19,8 @@ void download_source(const YAML::Node pkg_config, const YAML::Node release,
                                "--output-document=source" +
                                ext + " " + url);
         instructions.push_back("mkdir -p source");
-        instructions.push_back("tar -xf source" + ext + " -C source --strip-components=1");
+        instructions.push_back("bash $FROMAGER_HOME/patches/fgr_patch_source_structure.sh source" +
+                               ext + " source");
         instructions.push_back("rm source" + ext);
         instructions.push_back("cd source");
     } else if (source_type == "git") {
