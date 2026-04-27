@@ -13,7 +13,7 @@ cheese:
 
   dependencies:
     - mpi
-    - GKlib
+    - gklib
     - metis
 
   build:
@@ -30,7 +30,7 @@ cheese:
             - name: gklib_path
               description: GKlib installation path
               enabled_value:
-                default: ${GKlib.prefix}
+                default: ${gklib.prefix}
             - name: metis_path
               description: Metis installation path
               enabled_value:
