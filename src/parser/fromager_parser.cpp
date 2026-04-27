@@ -1,6 +1,15 @@
 #include <parser/fromager_parser.hpp>
 
-std::string parse_fromager_template(const std::string& command) {
+std::string parse_fromager_template(const std::string& template_str) {
+    if (template_str == "fromager.arch" || template_str.find("fromager.arch.") == 0) {
+        return parse_fromager_arch(template_str);
+    } else {
+        ERROR("Unknown Fromager template '" + template_str + "'.");
+        exit(EXIT_FAILURE);
+    }
+}
+
+std::string parse_fromager_template_in_scalar(const std::string& command) {
     std::string result = command;
     size_t pos         = 0;
     while ((pos = result.find("${fromager.", pos)) != std::string::npos) {
@@ -10,7 +19,7 @@ std::string parse_fromager_template(const std::string& command) {
             exit(EXIT_FAILURE);
         }
         std::string template_str = result.substr(
-            pos + 2 + 9, end_pos - pos - 2 - 9);  // Extract the template name after "${fromager."
+            pos + 2, end_pos - pos - 2);  // Extract the template name after "${" and before "}"
         if (template_str.empty()) {
             ERROR("Invalid Fromager template: " + result +
                   ". The correct format should be '${fromager.<template_name>}'.");
@@ -19,7 +28,7 @@ std::string parse_fromager_template(const std::string& command) {
 
         std::string resolved_template;
 
-        if (template_str.find("arch") == 0) {
+        if (template_str.find("fromager.arch") == 0) {
             resolved_template = parse_fromager_arch(template_str);
         } else {
             ERROR("Unknown Fromager template '" + template_str + "' in string: " + result);
@@ -33,7 +42,7 @@ std::string parse_fromager_template(const std::string& command) {
 }
 
 std::string parse_fromager_arch(const std::string& template_str) {
-    std::string arch_variant = template_str.substr(4);  // Remove "arch"
+    std::string arch_variant = template_str.substr(13);  // Remove "fromager.arch"
     if (arch_variant.empty()) {
         arch_variant = "default";
     } else if (arch_variant[0] == '.') {

@@ -1,4 +1,5 @@
 #include <global_config.hpp>
+#include <parser/fromager_parser.hpp>
 #include <parser/source_parser.hpp>
 #include <parser/template_parser.hpp>
 #include <string>
@@ -29,6 +30,10 @@ std::string parse_template(const std::string& template_str,
 
     if (template_str == "source") {
         return get_source_path(env_path);
+    }
+
+    if (template_str.find("fromager.") == 0) {
+        return parse_fromager_template(template_str);
     }
 
     if (template_str.find("compiler.") == 0) {

@@ -65,8 +65,6 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
             continue;  // Skip if no instructions found
         }
         for (auto& instruction : package_instructions[pkg_name]) {
-            // Parse Fromager-wide templates in the instruction
-            instruction = parse_fromager_template(instruction);
             // Parse properties in the instruction
             instruction =
                 parse_properties_in_scalar(instruction, template_map, user_config,

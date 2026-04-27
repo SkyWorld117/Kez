@@ -8,5 +8,7 @@
 #include <string>
 #include <utils/colored_io.hpp>
 
-std::string parse_fromager_template(const std::string& command);
+std::string parse_fromager_template(const std::string& template_str);
+std::string parse_fromager_template_in_scalar(const std::string& command);
+
 std::string parse_fromager_arch(const std::string& template_str);
