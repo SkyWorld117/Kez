@@ -40,6 +40,21 @@ void download_source(const YAML::Node pkg_config, const YAML::Node release,
         instructions.push_back("wget --quiet --show-progress --no-check-certificate "
                                "--output-document=source " +
                                script_url);
+    } else if (source_type == "zip") {
+        // Case 4: Zip
+        // Zip has `url` entry
+        std::string url = release["url"].as<std::string>();
+        if (url.find(".zip") == std::string::npos) {
+            ERROR("Invalid zip URL for package: " + package_name);
+            exit(EXIT_FAILURE);
+        }
+        instructions.push_back("wget --quiet --show-progress --no-check-certificate "
+                               "--output-document=source.zip " +
+                               url);
+        instructions.push_back("mkdir -p source");
+        instructions.push_back("unzip -q source.zip -d source");
+        instructions.push_back("rm source.zip");
+        instructions.push_back("cd source");
     } else {
         // Handle unknown source types
         ERROR("Unknown source type for package: " + package_name);
