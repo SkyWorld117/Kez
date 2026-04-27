@@ -1,52 +1,79 @@
 # Fromager
 
-Fromager is an HPC-focused package manager for GNU/Linux systems.
-
-Everything is at its very early stage, use with caution.
-
-You can find more information in the [documentation](docs/01-Getting_Started.md).
+Fromager is a user-space HPC package manager for GNU/Linux. It lets you build and install multiple versions and configurations of scientific software side-by-side without root access, without interfering with the system environment, and without fighting a container runtime.
 
 ## Why Fromager?
 
-Traditional package managers often struggle with the complexities of HPC environments, where multiple versions of libraries and tools need to coexist. Cluster administrators often leave the users to manage these complexities themselves, creating the demand of a user-site package manager that can handle such complexities.
+Traditional package managers (apt, yum) don't let you have two versions of HDF5 for two different applications. Tools like Spack or EasyBuild solve this but at the cost of steep learning curves and complex recipes. Fromager's goals are:
 
-Although there are existing solutions such as Spack and EasyBuild, they miss one or more key features below:
+- **Simple configuration**: one YAML file per package in the database; one YAML file per install
+- **Precise environment control**: shell environment is only modified when you explicitly ask (`fgr cellar enter`, `fgr compiler load`)
+- **HPC-native**: built-in support for MPI implementations, compilers, and vendor toolchains (NVHPC, Intel oneAPI)
+- **Fast C++ backend**: the parser and dependency resolver are compiled, not interpreted
 
-- User-friendly configuration
-- High maintainability for package developers
-- High performance
-- Precise shell (bash) environment management
+## Quick Start
 
-Fromager achieves the points above by using a C++ backend, a database of YAML files that are easy to modify and extend, and a novel environment structure to achieve both efficiency and isolation.
+```bash
+# 1. Clone the repo
+git clone -c feature.manyFiles=true https://github.com/SkyWorld117/Fromager.git
+cd Fromager
+
+# 2. Point Fromager at a work directory with ample space
+export FROMAGER_WORKDIR=/scratch/${USER}/.fromager
+
+# 3. Source the environment (run this once per shell session; add to .bashrc)
+source setup-env.sh
+
+# 4. Bootstrap the internal toolchain (takes ~30-60 min; run on a compute node)
+fgr init
+
+# 5. Install a package from an example configuration
+fgr install -r examples/openmpi.yaml
+```
+
+After `fgr init` completes, Fromager is fully self-contained — it uses its own GCC, CMake, and build tools regardless of what is installed on the cluster.
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [01 — Getting Started](docs/01-Getting_Started.md) | Installation, initialization, basic usage |
+| [02 — Developer Overview](docs/02-Developer_Overview.md) | Source code structure and architecture |
+| [03 — Database Configuration Format](docs/03-Database_Configuration_Format.md) | Full reference for `database/*.yaml` package entries |
+| [04 — Abstract Configuration Format](docs/04-Abstract_Configuration_Format.md) | Interface packages like `mpi`, `blas` |
+| [05 — Templating](docs/05-Templating.md) | Template variable syntax (`${pkg.prefix}` etc.) |
+| [06 — User Configuration Format](docs/06-User_Configuration_Format.md) | The per-install YAML files you write and edit |
+| [07 — Factories](docs/07-Factories.md) | Batch builds and benchmarking with `fgr rt` |
+| [08 — CLI Reference](docs/08-CLI_Reference.md) | Every `fgr` command with examples |
+| [09 — Adding a Package](docs/09-Adding_a_Package.md) | Step-by-step guide to adding a new package to the database |
 
 ## Known Issues
 
-- No actual AMD GPU support (ROCm etc.) as I do not have access to such hardware for testing. 
-- Dependencies currently have no version constraints, but we may just leave it to the user to ensure compatibility. 
-- No Python package support yet, but it is planned for the future.
+- No AMD GPU / ROCm support yet (no test hardware available)
+- Dependencies have no version constraints — compatibility is the user's responsibility
+- No Python package support (planned)
 
 ## Development Setup
 
-To contribute code to Fromager, you'll need to set up pre-commit hooks for code formatting:
+Fromager uses `clang-format` via pre-commit hooks for consistent C++ style.
 
 ```bash
-# Install pre-commit
 pip install pre-commit
-
-# Install the git hooks
 pre-commit install
-
-# (Optional) Run on all existing files
+# Optional: format all existing files
 pre-commit run --all-files
 ```
-Once set up, all C++ code will be automatically checked and formatted before each commit.
-If your code doesn't match the formatting rules, the hook will format it for you. 
-You'll then need to stage the formatted changes with 'git add' and commit again.
 
-## How to Contribute
+Build the C++ backend manually (requires yaml-cpp and argparse from `cellars/system`):
 
-At the moment, the repository is mainly maintained by Team RACKlette. If you want to contribute, please feel free to open an issue or a pull request.
+```bash
+make          # release build
+make all      # release + test tools
+make clean
+```
 
-For RACKlette members, please refer to the [TODO list](TODO.md) for the current tasks and their status. If you want to take on a task, please contact me (@SkyWorld117) first then update the TODO list accordingly to avoid duplicated work. The `main` branch is protected, any form of update or contribution should be done through pull requests.
+## Contributing
 
-A pull request can only be merged if it passes at least the `test-01.sh` check, which is the only test we have at the moment. Contributors are asked to perform the test on their site before pushing the code. This will likely never be automated as a CI check because of the intensive compilation and the distributed MPI tests.
+The project is maintained by Team RACKlette. See [TODO.md](TODO.md) for open tasks. All changes go through pull requests against the `main` branch. A PR must pass `test-01.sh` before merging.
+
+If you want to take on a task, open an issue or contact @SkyWorld117 first to avoid duplicated work.

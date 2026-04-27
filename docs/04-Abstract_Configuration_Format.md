@@ -6,7 +6,7 @@ However, for the ease of use and configuration, there are more specific parsing 
 
 ## Structure of Abstract Configuration
 
-In addition to the general structure defined in the [General Configuration Format](general_config_format.md), there is an entry `implementations` that specifies the concrete packages that implement the abstract package. The structure is as follows:
+In addition to the general structure defined in the [Database Configuration Format](03-Database_Configuration_Format.md), there is an entry `implementations` that specifies the concrete packages that implement the abstract package. The structure is as follows:
 
 ```yaml
 cheese:

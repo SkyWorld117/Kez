@@ -40,7 +40,7 @@ cd Fromager
 source setup-env.sh
 ```
 
-For the first time you run `setup-env.sh`, you will be asked to configure the configuration file listed in the next section. After that, you can simply run `source setup-env.sh` again to load the Fromager environment variables and functions.
+For the first time you run `setup-env.sh`, you will be asked to configure the configuration file listed in the next section. After that, you can simply run `source setup-env.sh` again to load the Fromager environment variables and functions. You can find example configuration ready to be copied to your `config.yaml` in Fromager/configs/
 
 It is recommended to add both of the commands to your `.bashrc`. 
 
@@ -138,7 +138,46 @@ We first introduce the non-conventional terminologies:
 - Cellar, an isolated folder that contains the target packages
 - Cheese, a configuration file for a package, appears as the header in user configuration files and database configuration files
 
-In HPC workflow, we would like to achieve coexistence of multiple versions and configurations of one single application, thus it is 
+In HPC workflows it is common to need multiple versions or build configurations of the same application side by side. Fromager achieves this by placing each application and its dependencies into an isolated directory called a **cellar**. Cellars act like self-contained prefixes — similar to Python virtual environments — so different applications never interfere with each other.
+
+## Basic Usage
+
+The typical workflow for installing an application is:
+
+```bash
+# 1. Generate a user configuration template for the package
+fgr template conquest --cellar myapp
+
+# 2. Edit the generated YAML to select versions and options, then install
+fgr install -r examples/conquest.yaml --cellar myapp
+
+# 3. Enter the cellar to use the installed application
+fgr cellar enter myapp
+
+# 4. Run your application
+conquest ...
+
+# 5. Exit the cellar when done
+fgr cellar exit
+```
+
+For compilers and MPI implementations, you install them to their shared cellars (no `--cellar` flag needed) and then load them into your shell:
+
+```bash
+# Install GCC 13.2.0
+fgr install gcc --config version=13.2.0
+
+# Load it into the current shell
+fgr compiler load gcc-13.2.0
+
+# Install OpenMPI against the loaded compiler
+fgr install -r examples/openmpi.yaml
+
+# Load it
+fgr mpi load openmpi-5.0.9-gcc-13.2.0
+```
+
+See [CLI Reference](08-CLI_Reference.md) for the full command documentation.
 
 ## Uninstalling and Reinstalling Fromager
 
