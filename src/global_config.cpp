@@ -1,9 +1,9 @@
-#include <utils/colored_io.hpp>
 #include <database/database.hpp>
 #include <filesystem>
 #include <global_config.hpp>
 #include <parser/scalar_parser.hpp>
 #include <string>
+#include <utils/colored_io.hpp>
 
 std::filesystem::path prefix_path = std::filesystem::path(getenv("FROMAGER_WORKDIR"));
 std::filesystem::path config_path = prefix_path / "config.yaml";
@@ -48,18 +48,6 @@ namespace global_config {
         } else {
             return config["default_mpi"].as<std::string>();
         }
-    }
-
-    std::string get_architecture(std::string& arch_variant) {
-        YAML::Node architecture_config = get_db_config("architecture")["architecture"]; //TODO: find a nicer location? but I want it to be editable by users
-        if (!architecture_config[arch_variant]) {
-            WARNING("Architecture for package '" + arch_variant +
-                    "' is not specified in the configuration. Using default values. If this is not "
-                    "intended, please modify the \"architecture.yaml\" file.");
-            arch_variant = "default";
-        }
-        std::string arch = getenv("FROMAGER_ARCH");
-        return architecture_config[arch_variant][arch].as<std::string>();
     }
 
     std::string get_external_package_prefix(const std::string& package_name) {

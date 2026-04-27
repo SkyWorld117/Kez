@@ -63,22 +63,28 @@ std::string parse_template(const std::string& template_str,
         }
     }
 
-    // Handle fromager wide templates
-    if (template_str.find("fromager.") == 0) {
-        if (template_str.find("fromager.arch") == 0) {
-            std::string arch_variant = template_str.substr(13);  // Remove "fromager.arch"
-            if (arch_variant.empty()) {
-                arch_variant = "default";
-            }
-            std::string arch           = global_config::get_architecture(arch_variant);
-            template_map[template_str] = arch;  // Cache the resolved architecture
-            return arch;
-        }
+    // // Handle fromager wide templates
+    // if (template_str.find("fromager.") == 0) {
+    //     if (template_str.find("fromager.arch") == 0) {
+    //         std::string arch_variant = template_str.substr(13);  // Remove "fromager.arch"
+    //         if (arch_variant.empty()) {
+    //             arch_variant = "default";
+    //         } else if (arch_variant[0] == '.') {
+    //             arch_variant = arch_variant.substr(1);  // Remove the leading dot
+    //         } else {
+    //             ERROR("Invalid architecture template: " + template_str +
+    //                   ". The correct format should be 'fromager.arch' or 'fromager.arch.<arch_variant>'.");
+    //             exit(EXIT_FAILURE);
+    //         }
+    //         std::string arch           = global_config::get_architecture(arch_variant);
+    //         template_map[template_str] = arch;  // Cache the resolved architecture
+    //         return arch;
+    //     }
 
-        ERROR("Unknown fromager-wide template '" + template_str +
-              "'. Supported fromager.* templates: fromager.arch");
-        exit(EXIT_FAILURE);
-    }
+    //     ERROR("Unknown fromager-wide template '" + template_str +
+    //           "'. Supported fromager.* templates: fromager.arch");
+    //     exit(EXIT_FAILURE);
+    // }
 
     std::vector<std::string> abstract_packages;
     for (const auto& item : user_config["recipe"]["abstract_packages"]) {

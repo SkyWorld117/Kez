@@ -1,6 +1,5 @@
+#include <parser/fromager_parser.hpp>
 #include <parser/parser.hpp>
-
-#include <parser/scalar_parser.hpp>
 
 YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
                  const std::string& env_path) {
@@ -66,12 +65,12 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
             continue;  // Skip if no instructions found
         }
         for (auto& instruction : package_instructions[pkg_name]) {
+            // Parse Fromager-wide templates in the instruction
+            instruction = parse_fromager_template(instruction);
             // Parse properties in the instruction
             instruction =
                 parse_properties_in_scalar(instruction, template_map, user_config,
                                            user_config["cheese"][pkg_name], build_mode, env_path);
-            instruction = parse_scalar(instruction, template_map, user_config,
-                                       user_config["cheese"][pkg_name], build_mode, env_path);
             filter(instruction);  // Filter the instruction
         }
     }
