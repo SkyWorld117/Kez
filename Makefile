@@ -54,7 +54,8 @@ PARSER_OBJS = \
 	$(OBJ_DIR)/parser/property_parser.o \
 	$(OBJ_DIR)/parser/scalar_parser.o \
 	$(OBJ_DIR)/parser/template_parser.o \
-	$(OBJ_DIR)/parser/source_parser.o
+	$(OBJ_DIR)/parser/source_parser.o \
+	$(OBJ_DIR)/parser/fromager_parser.o
 
 CMDLINE_PARSER_OBJS = \
 	$(OBJ_DIR)/cmdline_parser/traverse.o \
