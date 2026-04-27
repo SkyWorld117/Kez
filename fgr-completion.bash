@@ -11,4 +11,4 @@ _fgr_complete() {
 }
 
 # Register the completion function
-complete -o filenames -F _fgr_complete fgr
+complete -F _fgr_complete fgr
