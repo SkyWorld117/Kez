@@ -95,3 +95,22 @@ std::string parse_template(const std::string& template_str,
         return result;
     }
 }
+
+std::string resolve_templates_in_scalar(const std::string& input,
+                                        std::function<std::string(const std::string&)> resolver,
+                                        const std::string& error_context) {
+    std::string result = input;
+    size_t pos         = 0;
+    while ((pos = result.find("${", pos)) != std::string::npos) {
+        size_t end_pos = result.find('}', pos);
+        if (end_pos == std::string::npos) {
+            ERROR("Unclosed " + error_context + " template in string: " + result);
+            exit(EXIT_FAILURE);
+        }
+        std::string template_name     = result.substr(pos + 2, end_pos - pos - 2);
+        std::string resolved_template = resolver(template_name);
+        result.replace(pos, end_pos - pos + 1, resolved_template);
+        pos += resolved_template.length();
+    }
+    return result;
+}

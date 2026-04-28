@@ -10,6 +10,25 @@ std::string parse_fromager_template(const std::string& template_str) {
 }
 
 std::string parse_fromager_template_in_scalar(const std::string& command) {
+    auto resolver = [&](const std::string& template_str) {
+        if (template_str.empty() || template_str.find("fromager.") != 0) {
+            ERROR("Invalid Fromager template. The correct format should be "
+                  "'fromager.<template_name>'.");
+            exit(EXIT_FAILURE);
+        }
+        if (template_str.find("fromager.arch") == 0) {
+            return parse_fromager_arch(template_str);
+        } else {
+            ERROR("Unknown Fromager template '" + template_str + "'");
+            exit(EXIT_FAILURE);
+        }
+    };
+    // The prefix searched needs to match general ${ and we validate it in the resolver
+    // but the original code specifically searched for ${fromager.
+    // We can just use the generic one, and it will resolve *any* ${...} templates
+    // that are fromager templates, which is correct for parse_fromager_template_in_scalar
+    // Wait, if there are non-fromager templates, they would fail in the resolver.
+
     std::string result = command;
     size_t pos         = 0;
     while ((pos = result.find("${fromager.", pos)) != std::string::npos) {
@@ -18,26 +37,11 @@ std::string parse_fromager_template_in_scalar(const std::string& command) {
             ERROR("Unclosed Fromager template in string: " + result);
             exit(EXIT_FAILURE);
         }
-        std::string template_str = result.substr(
-            pos + 2, end_pos - pos - 2);  // Extract the template name after "${" and before "}"
-        if (template_str.empty()) {
-            ERROR("Invalid Fromager template: " + result +
-                  ". The correct format should be '${fromager.<template_name>}'.");
-            exit(EXIT_FAILURE);
-        }
-
-        std::string resolved_template;
-
-        if (template_str.find("fromager.arch") == 0) {
-            resolved_template = parse_fromager_arch(template_str);
-        } else {
-            ERROR("Unknown Fromager template '" + template_str + "' in string: " + result);
-            exit(EXIT_FAILURE);
-        }
-
+        std::string template_str      = result.substr(pos + 2, end_pos - pos - 2);
+        std::string resolved_template = resolver(template_str);
         result.replace(pos, end_pos - pos + 1, resolved_template);
+        // Do not add length since we might want to continue searching. But wait, it's standard replacement.
     }
-
     return result;
 }
 

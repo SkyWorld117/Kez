@@ -128,20 +128,9 @@ std::string parse_properties_in_scalar(const std::string& command,
                                        const YAML::Node& user_config,
                                        const YAML::Node& user_config_pkg,
                                        const std::string& build_mode, const std::string& env_path) {
-    std::string result = command;
-    size_t pos         = 0;
-    while ((pos = result.find("${", pos)) != std::string::npos) {
-        size_t end_pos = result.find('}', pos);
-        if (end_pos == std::string::npos) {
-            ERROR("Unclosed property template in string: " + result);
-            exit(EXIT_FAILURE);
-        }
-        std::string property_name     = result.substr(pos + 2, end_pos - pos - 2);
-        std::string resolved_property = parse_complex_property(
-            property_name, template_map, user_config, user_config_pkg, build_mode, env_path);
-        result.replace(pos, end_pos - pos + 1, resolved_property);
-        pos += resolved_property.length();  // Move past the resolved property
-    }
-
-    return result;
+    auto resolver = [&](const std::string& property_name) {
+        return parse_complex_property(property_name, template_map, user_config, user_config_pkg,
+                                      build_mode, env_path);
+    };
+    return resolve_templates_in_scalar(command, resolver, "property");
 }
