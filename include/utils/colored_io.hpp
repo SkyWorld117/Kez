@@ -2,6 +2,8 @@
 
 #include <utils/colors.h>
 
+#include <utils/string_utils.hpp>
+
 #define INFO(message)    print_info(message)
 #define WARNING(message) print_warning(message)
 #define ERROR(message)   print_error(message)
@@ -20,6 +22,25 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
+inline std::size_t your_mom(const std::string& str) {
+    char delim = '\033';
+
+    std::size_t size = 0;
+    for (std::size_t i = 0; i < str.size(); ++i) {
+        if (str[i] == delim) {
+            for (; i < str.size(); ++i) {
+                if (str[i] == 'm') {
+                    break;
+                }
+            }
+        } else {
+            size += 1;
+        }
+    }
+
+    return size;
+}
 
 // Doing some proper fucking c++, witness the magic
 // This will wrap a text into the corresponding bash color codings, but the thing is that it does the
@@ -80,9 +101,9 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
         while (!ss.eof()) {
             std::string current;
             ss >> current;
-            if (cur_length + current.size() > max_width) {
-                if (indent + current.size() > max_width) {
-                    int remaining = current.size();
+            if (cur_length + your_mom(current) > max_width) {
+                if (indent + your_mom(current) > max_width) {
+                    int remaining = your_mom(current);
                     int start     = 0;
                     int fit       = max_width - cur_length;
                     while (remaining > fit) {
@@ -94,19 +115,20 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
                     }
                     std::cout << current.substr(start, remaining) << " ";
                     cur_length = std::min((size_t) max_width,
-                                          indent + current.size() +
+                                          indent + your_mom(current) +
                                               1);  // Plus one, because we have a space at the end
                 } else {
                     std::cout << "\n";
                     pi();
                     std::cout << current + " ";
                     cur_length = std::min((size_t) max_width,
-                                          indent + current.size() +
+                                          indent + your_mom(current) +
                                               1);  // Plus one, because we have a space at the end
                 }
             } else {
                 std::cout << current + " ";
-                cur_length += current.size() + 1;  // Plus one, because we have a space at the end
+                cur_length +=
+                    your_mom(current) + 1;  // Plus one, because we have a space at the end
             }
         }
     }
@@ -116,8 +138,8 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
 inline void print_two_columns(const std::string& message1, const std::string& message2, int tab,
                               int max_width = 0) {
     std::cout << message1;
-    int offset = message1.size();
-    if (message1.size() + 5 > tab) {
+    int offset = your_mom(message1);
+    if (your_mom(message1) + 3 > tab) {
         std::cout << "\n";
         print_text(message2, max_width, tab, true, 0);
     } else {
