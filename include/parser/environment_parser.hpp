@@ -2,12 +2,11 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
-#include <iostream>
 #include <parser/conditions_parser.hpp>
 #include <parser/scalar_parser.hpp>
 #include <string>
 #include <unordered_map>
+#include <utils/colored_io.hpp>
 #include <vector>
 
 std::vector<std::string> parse_environment(

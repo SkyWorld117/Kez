@@ -1,4 +1,5 @@
 #include <database/database.hpp>
+#include <filesystem>
 
 std::unordered_map<std::string, YAML::Node> db_cache;
 

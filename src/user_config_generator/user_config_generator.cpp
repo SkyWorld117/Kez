@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <user_config_generator/user_config_generator.hpp>
 
 void config_per_pkg(YAML::Node& config, const YAML::Node& db_pkg_node,

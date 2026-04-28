@@ -1,4 +1,5 @@
 #include <dependency_resolver/toposort.hpp>
+#include <functional>
 
 std::vector<std::string> topological_sort(
     const std::unordered_map<std::string, std::vector<std::string>>& adjacency_list) {

@@ -2,14 +2,11 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <filesystem>
 #include <functional>
-#include <iostream>
 #include <parser/property_parser.hpp>
 #include <string>
 #include <unordered_map>
 #include <utils/colored_io.hpp>
-#include <vector>
 
 std::string parse_template(const std::string& template_str,
                            std::unordered_map<std::string, std::string>& template_map,

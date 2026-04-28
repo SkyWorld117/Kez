@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <parser/fromager_parser.hpp>
 
 std::string parse_fromager_template(const std::string& template_str) {

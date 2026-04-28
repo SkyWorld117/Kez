@@ -2,13 +2,11 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <algorithm>
-#include <utils/colored_io.hpp>
-#include <iostream>
 #include <parser/environment_parser.hpp>
 #include <parser/options_parser.hpp>
 #include <string>
 #include <unordered_map>
+#include <utils/colored_io.hpp>
 #include <vector>
 
 // First string is the environment configuration
