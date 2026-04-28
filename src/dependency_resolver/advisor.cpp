@@ -1,21 +1,19 @@
 #include <dependency_resolver/advisor.hpp>
+#include <filesystem>
+
+#include "yaml-cpp/yaml.h"
 
 std::string advise(const std::string& abstract_pkg) {
-    // This function is just a lookup table
-    bool arm64 = getenv("FROMAGER_ARCH") == "arm64";
+    std::filesystem::path config_path =
+        std::filesystem::path(getenv("FROMAGER_HOME")) / "heuristics" / "advice.yaml";
+    YAML::Node config = YAML::LoadFile(config_path)["advice"];
 
-    if (abstract_pkg == "blas") {
-        return arm64 ? "nvpl" : "intel-oneapi-mkl";
-    } else if (abstract_pkg == "fftw3-api") {
-        return arm64 ? "armpl" : "intel-oneapi-mkl";
-    } else if (abstract_pkg == "lapack") {
-        return arm64 ? "nvpl" : "intel-oneapi-mkl";
-    } else if (abstract_pkg == "mpi") {
-        return "openmpi";
-    } else if (abstract_pkg == "scalapack") {
-        return arm64 ? "nvpl" : "intel-oneapi-mkl";
+    std::string arch = getenv("FROMAGER_ARCH");
+
+    if (config[abstract_pkg] && config[abstract_pkg][arch]) {
+        return config[abstract_pkg][arch].as<std::string>();
     }
 
-    ERROR("No advice available for abstract package: " + abstract_pkg);
+    ERROR("No advice available for package: " + abstract_pkg + " on architecture: " + arch);
     exit(EXIT_FAILURE);
 }
