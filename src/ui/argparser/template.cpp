@@ -1,3 +1,4 @@
+#include <fstream>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
 

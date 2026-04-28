@@ -2,12 +2,10 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
 #include <database/database.hpp>
-#include <iostream>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <utils/colored_io.hpp>
 
 std::string parse_conditions(const std::string& base_value, const YAML::Node& conditions_node,
                              const std::unordered_map<std::string, std::string>& template_map,

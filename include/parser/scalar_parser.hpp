@@ -2,12 +2,10 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
-#include <iostream>
 #include <parser/template_parser.hpp>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <utils/colored_io.hpp>
 
 std::string parse_scalar(const std::string& scalar_str,
                          std::unordered_map<std::string, std::string>& template_map,

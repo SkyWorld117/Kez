@@ -2,15 +2,12 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
 #include <database/database.hpp>
-#include <filesystem>
-#include <iostream>
 #include <parser/conditions_parser.hpp>
 #include <parser/scalar_parser.hpp>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <utils/colored_io.hpp>
 
 std::string parse_property(const std::string& property_name,
                            std::unordered_map<std::string, std::string>& template_map,
