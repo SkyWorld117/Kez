@@ -1,0 +1,137 @@
+cheese:
+  name: hemelb-gpu
+  description: HemePure-GPU LBM blood flow solver (UCL-CCS); CUDA backend; same 2-stage bundled-dep build as CPU version
+  type: package
+  toolchain: cmake
+
+  source:
+    type: git
+    url: https://github.com/UCL-CCS/HemePure-GPU
+    releases:
+      - version: master
+        tag: master
+
+  dependencies:
+    - mpi
+    - cuda
+
+  build:
+    # Stage 1: build bundled deps (tinyxml2, ctemplate, parmetis) in dep/build/.
+    # /usr/bin/cmake is prepended so older bundled cmake_minimum_required calls don't
+    # trip up on cmake 4.x.  CUDA bin is added so CMake's FindCUDA locates nvcc.
+    # libtirpc is built from the tarball bundled in dep/src/ (same as the CPU dep build
+    # does via ExternalProject_Add) and installed to dep/install/; a symlink
+    # dep/install/include/rpc -> tirpc/rpc makes #include <rpc/xdr.h> resolve without
+    # any cmake changes, since dep/install/include is already on the include path.
+    # MPI headers are copied into dep/install/include so nvcc (which uses -ccbin g++,
+    # not mpicxx) can find mpi.h when compiling CUDA translation units.
+    # Preprocessing ends in src/ so Fromager's cmake toolchain runs mkdir build && cmake ../ there.
+    preprocessing: export PATH="/usr/bin:${cuda.prefix}/bin:$(dirname ${mpi.c}):$PATH" && rm -rf ${source}/dep/build && mkdir -p ${source}/dep/build && cd ${source}/dep/build && cmake -DCMAKE_C_COMPILER=${mpi.c} -DCMAKE_CXX_COMPILER=${mpi.cxx} -DHEMELB_SUBPROJECT_MAKE_JOBS=8 -DCMAKE_BUILD_TYPE=Release .. && make -j && cd ${source}/dep/src && ([ -f libtirpc-1.2.6.tar.bz2 ] || curl -sSL -o libtirpc-1.2.6.tar.bz2 https://sourceforge.net/projects/libtirpc/files/libtirpc/1.2.6/libtirpc-1.2.6.tar.bz2/download) && rm -rf libtirpc-1.2.6 && tar xjf libtirpc-1.2.6.tar.bz2 && cd libtirpc-1.2.6 && ./configure --prefix=${source}/dep/install --disable-static --disable-gssapi && make -j && make install && ln -snf tirpc/rpc ${source}/dep/install/include/rpc && ln -snf tirpc/netconfig.h ${source}/dep/install/include/netconfig.h && cp -rn "$(dirname ${mpi.c})/../include/." ${source}/dep/install/include/ && cd ${source}/src
+
+    configurations:
+      options:
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler — MPI wrapper
+          enabled_value:
+            default: ${mpi.c}
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler — MPI wrapper
+          enabled_value:
+            default: ${mpi.cxx}
+
+        - name: -DCMAKE_CUDA_COMPILER
+          description: Path to nvcc
+          enabled_value:
+            default: ${cuda.prefix}/bin/nvcc
+
+        - name: -DCUDA_TOOLKIT_ROOT_DIR
+          description: CUDA toolkit root — required for FindCUDA to locate nvcc and runtime libs
+          enabled_value:
+            default: ${cuda.prefix}
+
+        - name: -DHEMELB_GPU_BACKEND
+          description: GPU backend (CUDA / HIP_CUDA / HIP_ROCM)
+          user_configurable: true
+          enabled_value:
+            default: CUDA
+
+        - name: -DCMAKE_CUDA_ARCHITECTURES
+          description: CUDA compute capability (80 = A100, 70 = V100)
+          user_configurable: true
+          enabled_value:
+            default: "80"
+
+        - name: -DHEMELB_CUDA_AWARE_MPI
+          description: Enable CUDA-aware MPI (requires CUDA-aware OpenMPI)
+          user_configurable: true
+          enabled_value:
+            default: ON
+
+        - name: -DHEMELB_USE_MPI_PARALLEL_IO
+          description: Use MPI parallel I/O for reading geometry files
+          user_configurable: true
+          enabled_value:
+            default: ON
+
+        - name: -DHEMELB_USE_SSE3
+          description: SSE3 intrinsics (not useful for GPU builds)
+          enabled_value:
+            default: OFF
+
+        - name: -DHEMELB_USE_VELOCITY_WEIGHTS_FILE
+          description: "Inlet BC mode: OFF = pressure-pressure, ON = velocity-pressure"
+          user_configurable: true
+          enabled_value:
+            default: OFF
+
+        - name: -DHEMELB_INLET_BOUNDARY
+          description: Inlet boundary condition type
+          user_configurable: true
+          enabled_value:
+            default: NASHZEROTHORDERPRESSUREIOLET
+
+        - name: -DHEMELB_WALL_INLET_BOUNDARY
+          description: Wall-inlet corner boundary condition
+          user_configurable: true
+          enabled_value:
+            default: NASHZEROTHORDERPRESSURESBB
+
+        - name: -DHEMELB_OUTLET_BOUNDARY
+          description: Outlet boundary condition type
+          user_configurable: true
+          enabled_value:
+            default: NASHZEROTHORDERPRESSUREIOLET
+
+        - name: -DHEMELB_WALL_OUTLET_BOUNDARY
+          description: Wall-outlet corner boundary condition
+          user_configurable: true
+          enabled_value:
+            default: NASHZEROTHORDERPRESSURESBB
+
+        - name: -DHEMELB_USE_GMYPLUS
+          description: GMY+ geometry format (not needed for benchmark)
+          enabled_value:
+            default: OFF
+
+        - name: -DHEMELB_USE_MPI_WIN
+          description: MPI window-based communication
+          enabled_value:
+            default: OFF
+
+        - name: -DCTEMPLATE_LIBRARY
+          description: Static ctemplate library from bundled dep build
+          enabled_value:
+            default: ${source}/dep/install/lib/libctemplate.a
+
+        - name: -DCMAKE_EXE_LINKER_FLAGS
+          description: Link libtirpc (GPU CMakeLists.txt omits it unlike the CPU version; XDR functions were in glibc on old RHEL, now in libtirpc)
+          enabled_value:
+            default: ${source}/dep/install/lib/libtirpc.so
+
+    stages:
+      - target: ~
+
+    postprocessing: mkdir -p ${hemelb-gpu.prefix}/bin && cp ${source}/src/build/hemepure_gpu ${hemelb-gpu.prefix}/bin/hemepure_gpu
+
+  properties: ~
