@@ -12,6 +12,7 @@ LDFLAGS += -Wl,-rpath=$(FROMAGER_ENV)/system/lib -Wl,-rpath=$(FROMAGER_ENV)/syst
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
+TEST_DIR = $(SRC_DIR)/tests
 
 # Object files for different components
 PACKAGE_FORMAT_VERIFIER_OBJS = \
@@ -150,10 +151,6 @@ $(OBJ_DIR)/utils/%.o: $(SRC_DIR)/utils/%.cpp | $(OBJ_DIR)
 $(OBJ_DIR)/database/%.o: $(SRC_DIR)/database/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Special rules for main executables
-$(OBJ_DIR)/tests/test_deps_resolve.o: $(SRC_DIR)/tests/test_deps_resolve.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
-
 # Object file rule for global config
 $(OBJ_DIR)/global_config.o: $(SRC_DIR)/global_config.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
@@ -172,9 +169,6 @@ $(OBJ_DIR)/main.o: $(SRC_DIR)/main.cpp | $(OBJ_DIR)
 
 # Executables
 $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
-
-$(BIN_DIR)/test_deps_resolve: $(OBJ_DIR)/tests/test_deps_resolve.o $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_rt_profile_config_parser: $(RT_PROFILE_PARSER_OBJS) | $(BIN_DIR)
@@ -213,9 +207,12 @@ release: \
 	$(BIN_DIR)/fromager \
 	$(BIN_DIR)/fromager_bash_completion
 
+# Include unit test build rules
+include src/tests/Makefile
+
 all: \
 	release \
-	$(BIN_DIR)/test_deps_resolve
+	test
 
 help:
 	@echo "Available targets:"
