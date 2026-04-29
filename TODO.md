@@ -1,6 +1,7 @@
 # Core
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
+| Not Started | Add more detailed unit tests for the C++ backend. | - |
 | Not Started | Decide, document and unify the passes over the cheeses. | - |
 | Started | Add caching system to store source files, reduce redundant downloads and rebuild without internet connection. | Nick |
 | Done | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
