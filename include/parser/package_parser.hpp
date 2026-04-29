@@ -3,16 +3,10 @@
 #include <yaml-cpp/yaml.h>
 
 #include <parser/configuration_parser.hpp>
+#include <parser/context.hpp>
 #include <parser/scalar_parser.hpp>
 #include <string>
-#include <unordered_map>
 #include <utils/colored_io.hpp>
 #include <vector>
 
-std::vector<std::string> parse_package(const std::string& package_name,
-                                       std::unordered_map<std::string, std::string>& template_map,
-                                       const YAML::Node& user_config,
-                                       const YAML::Node& user_config_pkg,
-                                       const YAML::Node& user_config_context,
-                                       const YAML::Node& pkg_config, const std::string& build_mode,
-                                       const std::string& env_path);
+std::vector<std::string> parse_package(ParserContext& context);

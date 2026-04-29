@@ -24,7 +24,7 @@
 | Done | Add an option to initialize Fromager with a scheduler (e.g. Slurm). | Yi |
 | Done | Allow templating multiple packages at once. | Yi |
 | Done | Allow rebuilding the whole cellar with a specific flag. | Yi |
-| In progress | Clean up debug printing to use macros. | Sophia |
+| Done | Clean up debug printing to use macros. | Sophia & Yi |
 | Done | Allow saving a template of multiple packages. | Yi |
 | Done | Allow setting a default compiler in `config.yaml`. | Yi |
 | Done | Allow overriding a user config with command line options. | Yi |

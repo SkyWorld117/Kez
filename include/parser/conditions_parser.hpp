@@ -3,11 +3,9 @@
 #include <yaml-cpp/yaml.h>
 
 #include <database/database.hpp>
+#include <parser/context.hpp>
 #include <string>
-#include <unordered_map>
 #include <utils/colored_io.hpp>
 
 std::string parse_conditions(const std::string& base_value, const YAML::Node& conditions_node,
-                             const std::unordered_map<std::string, std::string>& template_map,
-                             const YAML::Node& user_config, const YAML::Node& pkg_config,
-                             const std::string& build_mode, const std::string& env_path);
+                             const ParserContext& context);
