@@ -3,7 +3,6 @@
 
 #include <argparse/argparse.hpp>
 #include <cmdline_parser/cmdline_parser.hpp>
-#include <utils/colored_io.hpp>
 #include <cstdlib>
 #include <global_config.hpp>
 #include <iostream>
@@ -11,6 +10,7 @@
 #include <string>
 #include <ui/argparser/argparser.hpp>
 #include <user_config_generator/user_config_generator.hpp>
+#include <utils/colored_io.hpp>
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser program("Fromager", "0.1.0");
@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
     argparse::ArgumentParser& template_parser  = get_template_parser();
     argparse::ArgumentParser& rt_parser        = get_rt_parser();
     argparse::ArgumentParser& update_parser    = get_update_parser();
+    argparse::ArgumentParser& info_parser      = get_info_parser();
 
     // Register all subparsers
     program.add_subparser(init_parser);
@@ -41,6 +42,7 @@ int main(int argc, char* argv[]) {
     program.add_subparser(template_parser);
     program.add_subparser(rt_parser);
     program.add_subparser(update_parser);
+    program.add_subparser(info_parser);
 
     try {
         program.parse_args(argc, argv);
@@ -92,6 +94,10 @@ int main(int argc, char* argv[]) {
 
     if (program.is_subcommand_used("rt")) {
         execute_rt_parser();
+    }
+
+    if (program.is_subcommand_used("info")) {
+        execute_info_parser();
     }
 
     return 0;
