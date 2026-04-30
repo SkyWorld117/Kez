@@ -73,7 +73,7 @@ else
     # Add Fromager work directory to MODULEPATH for module system integration
     modulefiles_dir=${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.modulefiles' "${FROMAGER_WORKDIR}/config.yaml")
     mkdir -p "$modulefiles_dir"
-    if [[ ":$MODULEPATH:" != *":${modulefiles_dir}:"* ]]; then
+    if [[ ":${MODULEPATH:-}:" != *":${modulefiles_dir}:"* ]]; then
         export MODULEPATH="${modulefiles_dir}:${MODULEPATH:-}"
     fi
 
