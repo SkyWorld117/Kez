@@ -19,7 +19,6 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
     return tokens;
 }
 
-/*
 std::size_t get_length_without_color(const std::string& str) {
     char delim = '\033';
 
@@ -38,4 +37,3 @@ std::size_t get_length_without_color(const std::string& str) {
 
     return size;
 }
-    */

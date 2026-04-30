@@ -90,7 +90,10 @@ UI_ARGPARSER_OBJS = \
 	$(OBJ_DIR)/ui/argparser/install.o \
 	$(OBJ_DIR)/ui/argparser/template.o \
 	$(OBJ_DIR)/ui/argparser/rt.o \
-	$(OBJ_DIR)/ui/argparser/info.o 
+	$(OBJ_DIR)/ui/argparser/info.o
+
+UTILS_OBJS = \
+	$(OBJ_DIR)/utils/string_utils.o
 
 # Library versions (without main.o files)
 PACKAGE_FORMAT_VERIFIER_LIB_OBJS = $(filter-out $(OBJ_DIR)/package_format_verifier/main.o, $(PACKAGE_FORMAT_VERIFIER_OBJS))
@@ -184,7 +187,7 @@ $(BIN_DIR)/fromager_%: $(OBJ_DIR)/utils/%.o | $(BIN_DIR)
 $(BIN_DIR)/fromager_bash_completion: $(OBJ_DIR)/ui/bash_completion/main.o $(UI_ARGPARSER_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager: $(OBJ_DIR)/main.o $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(USER_CONFIG_GENERATOR_OBJS) $(PARSER_OBJS) $(CMDLINE_PARSER_OBJS) $(RT_PROFILE_PARSER_LIB_OBJS) $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UI_ARGPARSER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager: $(OBJ_DIR)/main.o $(UTILS_OBJS) $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(USER_CONFIG_GENERATOR_OBJS) $(PARSER_OBJS) $(CMDLINE_PARSER_OBJS) $(RT_PROFILE_PARSER_LIB_OBJS) $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UI_ARGPARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Create bin directory
