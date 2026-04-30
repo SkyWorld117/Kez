@@ -89,7 +89,8 @@ UI_ARGPARSER_OBJS = \
 	$(OBJ_DIR)/ui/argparser/compiler_mpi.o \
 	$(OBJ_DIR)/ui/argparser/install.o \
 	$(OBJ_DIR)/ui/argparser/template.o \
-	$(OBJ_DIR)/ui/argparser/rt.o
+	$(OBJ_DIR)/ui/argparser/rt.o \
+	$(OBJ_DIR)/ui/argparser/info.o 
 
 # Library versions (without main.o files)
 PACKAGE_FORMAT_VERIFIER_LIB_OBJS = $(filter-out $(OBJ_DIR)/package_format_verifier/main.o, $(PACKAGE_FORMAT_VERIFIER_OBJS))
