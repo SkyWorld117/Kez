@@ -23,25 +23,6 @@
 #include <sstream>
 #include <string>
 
-inline std::size_t your_mom(const std::string& str) {
-    char delim = '\033';
-
-    std::size_t size = 0;
-    for (std::size_t i = 0; i < str.size(); ++i) {
-        if (str[i] == delim) {
-            for (; i < str.size(); ++i) {
-                if (str[i] == 'm') {
-                    break;
-                }
-            }
-        } else {
-            size += 1;
-        }
-    }
-
-    return size;
-}
-
 // Doing some proper fucking c++, witness the magic
 // This will wrap a text into the corresponding bash color codings, but the thing is that it does the
 // entire string creation during compile time (this is somewhat dependent on the c++ version you are using).
@@ -81,19 +62,19 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
                        bool indent_first_line = true, int start_offset = 0) {
     assert(!max_width || indent < max_width);
 
-    auto pi = [=] {
+    auto print_indent = [=] {
         for (int i = 0; i < indent; ++i) {
             std::cout << " ";
         }
     };
     if (!max_width) {
         if (indent_first_line) {
-            pi();
+            print_indent();
         }
         std::cout << message;
     } else {
         if (indent_first_line) {
-            pi();
+            print_indent();
         }
         std::stringstream ss;
         ss << message;
@@ -101,34 +82,34 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
         while (!ss.eof()) {
             std::string current;
             ss >> current;
-            if (cur_length + your_mom(current) > max_width) {
-                if (indent + your_mom(current) > max_width) {
-                    int remaining = your_mom(current);
+            if (cur_length + get_length_without_color(current) > max_width) {
+                if (indent + get_length_without_color(current) > max_width) {
+                    int remaining = get_length_without_color(current);
                     int start     = 0;
                     int fit       = max_width - cur_length;
                     while (remaining > fit) {
                         std::cout << current.substr(start, fit) << "\n";
-                        pi();
+                        print_indent();
                         remaining -= fit;
                         start += fit;
                         fit = max_width - indent;
                     }
                     std::cout << current.substr(start, remaining) << " ";
                     cur_length = std::min((size_t) max_width,
-                                          indent + your_mom(current) +
+                                          indent + get_length_without_color(current) +
                                               1);  // Plus one, because we have a space at the end
                 } else {
                     std::cout << "\n";
-                    pi();
+                    print_indent();
                     std::cout << current + " ";
                     cur_length = std::min((size_t) max_width,
-                                          indent + your_mom(current) +
+                                          indent + get_length_without_color(current) +
                                               1);  // Plus one, because we have a space at the end
                 }
             } else {
                 std::cout << current + " ";
-                cur_length +=
-                    your_mom(current) + 1;  // Plus one, because we have a space at the end
+                cur_length += get_length_without_color(current) +
+                              1;  // Plus one, because we have a space at the end
             }
         }
     }
@@ -138,8 +119,8 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
 inline void print_two_columns(const std::string& message1, const std::string& message2, int tab,
                               int max_width = 0) {
     std::cout << message1;
-    int offset = your_mom(message1);
-    if (your_mom(message1) + 3 > tab) {
+    int offset = get_length_without_color(message1);
+    if (get_length_without_color(message1) + 3 > tab) {
         std::cout << "\n";
         print_text(message2, max_width, tab, true, 0);
     } else {
