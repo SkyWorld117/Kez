@@ -20,6 +20,7 @@ cheese:
   build:
     stages:
       - target: ~
+        multithreaded: false
         configurations:
           options:
             - name: CMAKE_BUILD_TYPE
@@ -31,6 +32,7 @@ cheese:
               enabled_value:
                 default: ${neovim.prefix}
       - target: install
+        multithreaded: false
         configurations:
           options:
             - name: CMAKE_INSTALL_PREFIX
