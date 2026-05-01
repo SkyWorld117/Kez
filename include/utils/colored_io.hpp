@@ -39,7 +39,7 @@ template <int Last, int... Ts> inline std::string color(const std::string& text)
 }
 
 inline void print_debug(const std::string& message) {
-    std::cout << color < Color::DEBUG("[D]: " + message) << std::endl;
+    std::cout << color<Color::DEBUG>("[D]: " + message) << std::endl;
 }
 
 inline void print_info(const std::string& message) {
