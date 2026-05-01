@@ -1,0 +1,47 @@
+cheese:
+  openfoam:
+    description: OpenFOAM is a free, open source CFD software package.
+    version: v2412
+    compiler: system
+    build:
+      configurations:
+        environment:
+          - name: WM_COMPILER
+            description: Compiler for OpenFOAM
+            value: Gcc
+          - name: WM_PRECISION_OPTION
+            description: Precision option for OpenFOAM [DP | SP | SPDP]
+            value: DP
+          - name: WM_LABEL_SIZE
+            description: Label size for OpenFOAM [32 | 64]
+            value: 64
+          - name: WM_COMPILE_OPTION
+            description: Compile option for OpenFOAM [Opt | Dbg | Debug | Prof]
+            value: Opt
+          - name: WM_MPLIB
+            description: Message Passing Library for OpenFOAM [OPENMPI | MPICH]
+            value: OPENMPI
+  openmpi:
+    description: Open Source Implementation of the Message Passing Interface
+    version: 5.0.9
+    compiler: system
+  flex:
+    description: Fast Lexical Analyzer Generator
+    version: 2.6.4
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: CFLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+recipe:
+  abstract_packages:
+    mpi: openmpi
+  dependencies:
+    - openfoam
+    - openmpi
+    - flex
+  targets:
+    - openfoam
