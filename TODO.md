@@ -20,6 +20,7 @@
 | Not Started | Improve templating documentation. | Nick |
 | Not Started | Document the command line interface. | - |
 | Not Started | Add a TUI interface for easier configuration and package management. | - |
+| Not Started | Add short description for `info`. | Alex P. |
 | Done | Add environment module interface to allow users to load the environment of a package with `module load <package>` after installation. | Yi |
 | Done | Add toolchain based parsing and templating (e.g. `prefix` will be automatically set to `CMAKE_PREFIX_PATH` if the package is being built with CMake). | Yi |
 | Done | Add an option to initialize Fromager with a scheduler (e.g. Slurm). | Yi |
