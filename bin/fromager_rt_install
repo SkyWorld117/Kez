@@ -8,7 +8,7 @@ target_cellar=$1
 user_config=$2
 target_package=$3
 
-rm -rf source/ source*
+rm -rf $target_cellar/.tmp/source $target_cellar/.tmp/source*
 
 fromager_rt_resolve_dependencies "$user_config" "$target_cellar" "$target_package"
 
