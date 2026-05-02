@@ -9,31 +9,23 @@ cheese:
   source:
     type: tarball
     releases:
+      - version: 13.2
+        url: https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux${fromager.arch}.run
       # - version: 13.0-x86_64
       #   url: https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux.run
       # - version: 13.0-arm64
       #   url: https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux_sbsa.run
       # Disabled for now, incompatible with OpenMPI
-      - version: 12.9-x86_64
-        url: https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
-      - version: 12.9-arm64
-        url: https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
-      - version: 12.8-x86_64
-        url: https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda_12.8.1_570.124.06_linux.run
-      - version: 12.8-arm64
-        url: https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda_12.8.1_570.124.06_linux_sbsa.run
-      - version: 12.6-x86_64
-        url: https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_560.35.05_linux.run
-      - version: 12.6-arm64
-        url: https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_560.35.05_linux_sbsa.run
-      - version: 12.5-x86_64
-        url: https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.42.06_linux.run
-      - version: 12.5-arm64
-        url: https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.42.06_linux_sbsa.run
-      - version: 12.4-x86_64
-        url: https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux.run
-      - version: 12.4-arm64
-        url: https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux_sbsa.run
+      - version: 12.9
+        url: https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux${fromager.arch}.run
+      - version: 12.8
+        url: https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda_12.8.1_570.124.06_linux${fromager.arch}.run
+      - version: 12.6
+        url: https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_560.35.05_linux${fromager.arch}.run
+      - version: 12.5
+        url: https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.42.06_linux${fromager.arch}.run
+      - version: 12.4
+        url: https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux${fromager.arch}.run
 
   properties:
     ldflags:
