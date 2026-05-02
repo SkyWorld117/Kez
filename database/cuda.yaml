@@ -11,11 +11,6 @@ cheese:
     releases:
       - version: 13.2
         url: https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux${fromager.arch}.run
-      # - version: 13.0-x86_64
-      #   url: https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux.run
-      # - version: 13.0-arm64
-      #   url: https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux_sbsa.run
-      # Disabled for now, incompatible with OpenMPI
       - version: 12.9
         url: https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux${fromager.arch}.run
       - version: 12.8
