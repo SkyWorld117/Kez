@@ -517,25 +517,15 @@ if check_installation "cuda"; then
         # Get CUDA version
         # Format `CUDA Version        : 12.4`
         cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
-        version="${cuda_version}"
-        if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-            cuda_version="${cuda_version}-x86_64"
-        elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-            cuda_version="${cuda_version}-arm64"
-        else
-            echo >&2 "Unsupported architecture: $(uname -m)"
-            exit 1
-        fi
-        cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml")
+        cuda_arch_suffix=$(yq -r ".architecture.cuda.${FROMAGER_ARCH}" "${FROMAGER_HOME}/heuristics/architecture.yaml")
+        cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch}/${cuda_arch_suffix}/")
         if [ -z "${cuda_runfile_link}" ] || [ "${cuda_runfile_link}" = "null" ]; then
             # Fallback to the first release if specific version not found
             echo "Specific CUDA version not found in database, using the latest available version."
-            if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-                cuda_runfile_link=$(yq -r ".cheese.source.releases[0].url" "${FROMAGER_DB}/cuda.yaml")
-            elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-                cuda_runfile_link=$(yq -r ".cheese.source.releases[1].url" "${FROMAGER_DB}/cuda.yaml")
-            fi
+            cuda_runfile_link=$(yq -r ".cheese.source.releases[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch}/${cuda_arch_suffix}/")
+            cuda_version=$(yq -r ".cheese.source.releases[0].version" "${FROMAGER_DB}/cuda.yaml")
         fi
+        echo "Installing CUDA ${cuda_version} from ${cuda_runfile_link}..."
         wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/cuda.run" "${cuda_runfile_link}"
         bash "${FROMAGER_SYSTEM_TMP}/cuda.run" --silent --toolkit --override --toolkitpath="${FROMAGER_SYSTEM}" --installpath="${FROMAGER_SYSTEM}" --no-drm --tmpdir="${FROMAGER_SYSTEM_TMP}"
         # Remove /tmp/cuda-installer.log if exists
@@ -550,7 +540,7 @@ if check_installation "cuda"; then
         fi
         rm -f "${FROMAGER_SYSTEM_TMP}/cuda.run"
         rm -f /tmp/cuda-installer.log
-        echo -e "  cuda:\n    version: ${version}" >> "${FROMAGER_SYSTEM}/state.yaml"
+        echo -e "  cuda:\n    version: ${cuda_version}" >> "${FROMAGER_SYSTEM}/state.yaml"
     else
         echo "No NVIDIA GPU detected, skipping CUDA installation."
     fi
