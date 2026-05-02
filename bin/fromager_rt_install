@@ -20,22 +20,27 @@ if [ ! -f "$target_cellar/state.yaml" ] || ! $(yq -r ". | has(\"cheese\")" "$tar
     echo "cheese:" > "$target_cellar/state.yaml"
 fi
 
-for ((i=0; i<package_count; i++)); do
+for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
     # Extract package name
-    package_name=$(yq -r ".[$i].package" "$target_cellar/.tmp/filtered_ins.yaml")
+    package_name=$(yq -r ".[$pkg_idx].package" "$target_cellar/.tmp/filtered_ins.yaml")
 
     fromager_info "Processing package: $package_name"
     cd "$target_cellar/.tmp"
 
     # Get number of instructions for this package
-    instruction_count=$(yq -r ".[$i].instructions | length" "$target_cellar/.tmp/filtered_ins.yaml")
+    instruction_count=$(yq -r ".[$pkg_idx].instructions | length" "$target_cellar/.tmp/filtered_ins.yaml")
     
     # Execute each instruction
-    for ((j=0; j<instruction_count; j++)); do
-        instruction=$(yq -r ".[$i].instructions[$j]" "$target_cellar/.tmp/filtered_ins.yaml")
+    for ((instr_idx=0; instr_idx<instruction_count; instr_idx++)); do
+        instruction=$(yq -r ".[$pkg_idx].instructions[$instr_idx]" "$target_cellar/.tmp/filtered_ins.yaml")
         fromager_info "Executing: $instruction"
+        saved_pkg_idx=$pkg_idx
+        saved_instr_idx=$instr_idx
         eval "$instruction"
-        if [ $? -ne 0 ]; then
+        instruction_status=$?
+        pkg_idx=$saved_pkg_idx
+        instr_idx=$saved_instr_idx
+        if [ $instruction_status -ne 0 ]; then
             fromager_error "Failed to execute: $instruction"
             exit 1
         fi
