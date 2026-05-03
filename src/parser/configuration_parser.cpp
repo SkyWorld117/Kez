@@ -4,7 +4,7 @@ std::pair<std::vector<std::string>, std::string> parse_configuration(YAML::Node&
                                                                      const std::string& toolchain,
                                                                      ParserContext& context) {
     // Unpack context
-    const YAML::Node& user_config_context = context.user_config_context;
+    const YAML::Node user_config_context = context.user_config_context;
 
     std::vector<std::string> env_config;
     if (config["environment"]) {
