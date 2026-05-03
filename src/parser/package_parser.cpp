@@ -8,9 +8,9 @@ std::vector<std::string> parse_package(ParserContext& context) {
 
     // Unpack context
     const std::string& package_name       = context.package_name;
-    const YAML::Node& user_config_pkg     = context.user_config_pkg;
-    const YAML::Node& user_config_context = context.user_config_context;
-    const YAML::Node& pkg_config          = context.pkg_config;
+    const YAML::Node user_config_pkg     = context.user_config_pkg;
+    const YAML::Node user_config_context = context.user_config_context;
+    const YAML::Node pkg_config          = context.pkg_config;
 
     if (!pkg_config["cheese"]["build"]) {
         return instructions;  // No build instructions available
@@ -155,6 +155,8 @@ std::vector<std::string> parse_package(ParserContext& context) {
                 ERROR("Invalid target type in stage: " + stage["target"].Type());
                 exit(EXIT_FAILURE);
             }
+
+            DEBUG("Stage target: '" + stage_target + "'");
 
             bool multithreaded;
             if (stage["multithreaded"] && stage["multithreaded"].IsScalar()) {
