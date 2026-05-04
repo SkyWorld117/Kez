@@ -1,17 +1,17 @@
 #include <parser/environment_parser.hpp>
 
-std::vector<std::string> parse_environment(
-    const YAML::Node& env_node, std::unordered_map<std::string, std::string>& template_map,
-    const YAML::Node& user_config, const YAML::Node& user_config_pkg,
-    const YAML::Node& user_config_context, const YAML::Node& pkg_config,
-    const std::string& build_mode, const std::string& env_path) {
+std::vector<std::string> parse_environment(const YAML::Node& env_node, ParserContext& context) {
+    // Unpack context
+    const YAML::Node& user_config                              = context.user_config;
+    const YAML::Node& user_config_context                      = context.user_config_context;
+    const YAML::Node& pkg_config                               = context.pkg_config;
+    std::unordered_map<std::string, std::string>& template_map = context.template_map;
+
     std::string pkg_name = pkg_config["cheese"]["name"].as<std::string>();
     std::vector<std::string> env_vars;
 
     for (YAML::Node var : env_node) {
-        if (build_mode == "debug") {
-            INFO("  - Parsing environment variable: " + var["name"].as<std::string>());
-        }
+        DEBUG("  - Parsing environment variable: " + var["name"].as<std::string>());
         std::string var_name = var["name"].as<std::string>();
         std::string base_value;
 
@@ -50,16 +50,14 @@ std::vector<std::string> parse_environment(
 
         std::string value;
         if (var["conditions"]) {
-            value = parse_conditions(base_value, var["conditions"], template_map, user_config,
-                                     pkg_config, build_mode, env_path);
+            value = parse_conditions(base_value, var["conditions"], context);
         } else {
             value = base_value;
         }
 
         if (!value.empty()) {
             // Resolve templates in the value
-            value = parse_scalar(value, template_map, user_config, user_config_pkg, build_mode,
-                                 env_path);
+            value = parse_scalar(value, context);
             env_vars.push_back(var_name + "=\"" + value + "\"");
         }
 

@@ -1,8 +1,11 @@
 # Core
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
+| Not Started | Fix parsing regular environment variables (e.g. `PATH`, `LD_LIBRARY_PATH`) in the configuration. | - |
+| Not Started | Add more detailed unit tests for the C++ backend. | - |
+| Not Started | Decide, document and unify the passes over the cheeses. | - |
 | Started | Add caching system to store source files, reduce redundant downloads and rebuild without internet connection. | Nick |
-| Not Started | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
+| Done | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
 | Done | Better source file handling (e.g. support for different source file name patterns). | Yi |
 | Done | Fix CMake multithreading. (Use `cmake --build . --parallel` instead of `make -j`). | Nick |
 | Done | Unify the path finding logic by using a C++ executable/header that can be called from both the CLI and the C++ backend. | Yi |
@@ -18,11 +21,13 @@
 | Not Started | Improve templating documentation. | Nick |
 | Not Started | Document the command line interface. | - |
 | Not Started | Add a TUI interface for easier configuration and package management. | - |
+| Not Started | Add short description for `info`. | Alex P. |
 | Done | Add environment module interface to allow users to load the environment of a package with `module load <package>` after installation. | Yi |
 | Done | Add toolchain based parsing and templating (e.g. `prefix` will be automatically set to `CMAKE_PREFIX_PATH` if the package is being built with CMake). | Yi |
 | Done | Add an option to initialize Fromager with a scheduler (e.g. Slurm). | Yi |
 | Done | Allow templating multiple packages at once. | Yi |
 | Done | Allow rebuilding the whole cellar with a specific flag. | Yi |
+| Done | Clean up debug printing to use macros. | Sophia & Yi |
 | Done | Allow saving a template of multiple packages. | Yi |
 | Done | Allow setting a default compiler in `config.yaml`. | Yi |
 | Done | Allow overriding a user config with command line options. | Yi |
@@ -35,7 +40,8 @@
 | Not Started | Allow installing multiple versions of CUDA (and ROCm if ever). | - |
 | Not Started | Fix `acts` bad isolation. | - |
 | Not Started | Update `exascale-climate-emulator` to the public GitHub version, possibly remove the sketchy `patchelf` logic. | - |
-| Not Started | Add `neovim` package. | - |
+| Done | Add `neovim` package. | Yi |
+| Done | Add `cmake` package. | Sophia |
 | Not Started | Add `bear - build ear` package | Sophia |
 | Done | Fix `gcc` wrong `stdc++` dynamic linking. | Yi |
 

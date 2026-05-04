@@ -1,0 +1,13 @@
+cheese:
+  name: nodejs
+  description: Node.js - a JavaScript runtime built on Chrome's V8 JavaScript engine
+  type: package
+
+  source:
+    type: tarball
+    releases:
+      - version: 24.15.0
+        url: https://nodejs.org/dist/v24.15.0/node-v24.15.0-linux-${fromager.arch.nodejs}.tar.xz
+
+  build:
+    postprocessing: cp -r ${source}/* ${nodejs.prefix}/

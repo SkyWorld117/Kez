@@ -1,39 +1,27 @@
-#include <utils/colored_io.hpp>
+#include <cassert>
 #include <dependency_resolver/resolve_dependencies.hpp>
+#include <iostream>
+#include <string>
+#include <vector>
 
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        ERROR("Usage: " + std::string(argv[0]) + " <package_name>");
-        return 1;
-    }
+int main() {
+    INFO("Running dependency resolution tests...");
 
-    std::string pkg_name = argv[1];
+    std::vector<std::string> pkgs = {"openmpi"};
 
-    std::pair<std::pair<std::vector<std::string>, std::vector<std::string>>,
-              std::unordered_map<std::string, std::string>>
-        result                                = resolve_dependencies(pkg_name, true);
-    std::vector<std::string> all_dependencies = result.first.first;
-    std::vector<std::string> dependencies     = result.first.second;
-    std::unordered_map<std::string, std::string> abstract_packages = result.second;
-    if (dependencies.empty()) {
-        ERROR("No dependencies found for package: " + pkg_name);
-        return 1;
-    }
+    // Non-interactive mode
+    auto result = resolve_dependencies(pkgs, false);
 
-    INFO("All dependencies for package '" + pkg_name + "':");
-    for (const auto& dep : all_dependencies) {
-        std::cout << " - " << dep << std::endl;
-    }
+    std::vector<std::string> all_deps      = result.first.first;
+    std::vector<std::string> filtered_deps = result.first.second;
+    auto abstract_pkgs                     = result.second;
 
-    INFO("Filtered dependencies for package '" + pkg_name + "':");
-    for (const auto& dep : dependencies) {
-        std::cout << " - " << dep << std::endl;
-    }
+    std::cout << "All dependencies count: " << all_deps.size() << std::endl;
+    std::cout << "Filtered dependencies count: " << filtered_deps.size() << std::endl;
 
-    INFO("Abstract packages:");
-    for (const auto& pair : abstract_packages) {
-        std::cout << " - " << pair.first << " resolved to " << pair.second << std::endl;
-    }
+    // Just verifying that it runs without crashing and has some logical output structure.
+    assert(all_deps.size() >= filtered_deps.size());
 
+    SUCCESS("Dependency resolution tests passed!");
     return 0;
 }

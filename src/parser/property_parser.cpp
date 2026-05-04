@@ -1,10 +1,15 @@
+#include <filesystem>
 #include <global_config.hpp>
 #include <parser/property_parser.hpp>
 
-std::string parse_property(const std::string& property_name,
-                           std::unordered_map<std::string, std::string>& template_map,
-                           const YAML::Node& user_config, const YAML::Node& user_config_pkg,
-                           const std::string& build_mode, const std::string& env_path) {
+std::string parse_property(const std::string& property_name, ParserContext& context) {
+    // Unpack context
+    std::unordered_map<std::string, std::string>& template_map = context.template_map;
+    const YAML::Node& user_config                              = context.user_config;
+    const YAML::Node& user_config_pkg                          = context.user_config_pkg;
+    const std::string& build_mode                              = context.build_mode;
+    const std::string& env_path                                = context.env_path;
+
     std::string package_name = property_name.substr(0, property_name.find('.'));
     std::string property     = property_name.substr(property_name.find('.') + 1);
 
@@ -26,7 +31,7 @@ std::string parse_property(const std::string& property_name,
         } else if (pkg_type == "vendor" && pkg_config_node["cheese"]["properties"] &&
                    pkg_config_node["cheese"]["properties"]["prefix"]) {
             return parse_scalar(pkg_config_node["cheese"]["properties"]["prefix"].as<std::string>(),
-                                template_map, user_config, user_config_pkg, build_mode, env_path);
+                                context);
         }
 
         CellarPathQuery query;
@@ -81,8 +86,7 @@ std::string parse_property(const std::string& property_name,
     } else if (property == "c" or property == "cxx" or property == "fort" or
                property == "omp_flags") {
         std::string result = pkg_config_node["cheese"]["properties"][property].as<std::string>();
-        std::string resolved_value =
-            parse_scalar(result, template_map, user_config, user_config_pkg, build_mode, env_path);
+        std::string resolved_value  = parse_scalar(result, context);
         template_map[property_name] = resolved_value;
         return resolved_value;
     } else {
@@ -92,10 +96,7 @@ std::string parse_property(const std::string& property_name,
     }
 }
 
-std::string parse_complex_property(const std::string& template_str,
-                                   std::unordered_map<std::string, std::string>& template_map,
-                                   const YAML::Node& user_config, const YAML::Node& user_config_pkg,
-                                   const std::string& build_mode, const std::string& env_path) {
+std::string parse_complex_property(const std::string& template_str, ParserContext& context) {
     // Handle the special cases
     std::string package_name  = template_str.substr(0, template_str.find('.'));
     std::string property_name = template_str.substr(template_str.find('.') + 1);
@@ -110,38 +111,23 @@ std::string parse_complex_property(const std::string& template_str,
     if (pkg_config_node["cheese"]["properties"][property_name]["conditions"]) {
         final_value = parse_conditions(
             base_value, pkg_config_node["cheese"]["properties"][property_name]["conditions"],
-            template_map, user_config, pkg_config_node, build_mode, env_path);
+            context);
     } else {
         final_value = base_value;
     }
     if (!final_value.empty()) {
         // Resolve templates in the value
-        final_value = parse_scalar(final_value, template_map, user_config, user_config_pkg,
-                                   build_mode, env_path);
+        // final_value = parse_scalar(final_value, template_map, user_config, user_config_pkg,
+        //                            build_mode, env_path);
+        final_value = parse_scalar(final_value, context);
     }
-    template_map[template_str] = final_value;  // Cache the resolved template
+    context.template_map[template_str] = final_value;  // Cache the resolved template
     return final_value;
 }
 
-std::string parse_properties_in_scalar(const std::string& command,
-                                       std::unordered_map<std::string, std::string>& template_map,
-                                       const YAML::Node& user_config,
-                                       const YAML::Node& user_config_pkg,
-                                       const std::string& build_mode, const std::string& env_path) {
-    std::string result = command;
-    size_t pos         = 0;
-    while ((pos = result.find("${", pos)) != std::string::npos) {
-        size_t end_pos = result.find('}', pos);
-        if (end_pos == std::string::npos) {
-            ERROR("Unclosed property template in string: " + result);
-            exit(EXIT_FAILURE);
-        }
-        std::string property_name     = result.substr(pos + 2, end_pos - pos - 2);
-        std::string resolved_property = parse_complex_property(
-            property_name, template_map, user_config, user_config_pkg, build_mode, env_path);
-        result.replace(pos, end_pos - pos + 1, resolved_property);
-        pos += resolved_property.length();  // Move past the resolved property
-    }
-
-    return result;
+std::string parse_properties_in_scalar(const std::string& command, ParserContext& context) {
+    auto resolver = [&](const std::string& property_name) {
+        return parse_complex_property(property_name, context);
+    };
+    return resolve_templates_in_scalar(command, resolver, "property");
 }

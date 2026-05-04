@@ -1,14 +1,15 @@
 #pragma once
 
-#define COLOR_RED     "\033[31m"
-#define COLOR_GREEN   "\033[32m"
-#define COLOR_YELLOW  "\033[33m"
-#define COLOR_BLUE    "\033[34m"
-#define COLOR_MAGENTA "\033[35m"
-#define COLOR_CYAN    "\033[36m"
-#define COLOR_RESET   "\033[0m"
+struct Color {
+    enum Default : int { RED = 31, GREEN = 32, YELLOW = 33, BLUE = 34, MAGENTA = 35, CYAN = 36 };
 
-#define INFO_COLOR    COLOR_BLUE
-#define WARNING_COLOR COLOR_YELLOW
-#define ERROR_COLOR   COLOR_RED
-#define SUCCESS_COLOR COLOR_GREEN
+    enum Modifier : int { BOLD = 1, HIGHLIGHT = 2, UNDERLINE = 4, BLINK = 5 };
+
+    enum SpecialColor : int {
+        INFO    = Color::BLUE,
+        DEBUG   = Color::CYAN,
+        WARNING = Color::YELLOW,
+        ERROR   = Color::RED,
+        SUCCESS = Color::GREEN
+    };
+};

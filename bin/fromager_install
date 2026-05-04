@@ -11,7 +11,7 @@ if [ -n "${2:-}" ] && [ "$2" == "--force" ]; then
     force=true
 fi
 
-rm -rf source/ source*
+rm -rf $target_cellar/.tmp/source $target_cellar/.tmp/source*
 
 # Process each package and its instructions
 package_count=$(yq -r '. | length' "$target_cellar/.tmp/ins.yaml")

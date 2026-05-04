@@ -34,8 +34,8 @@ int main(int argc, char** argv) {
     std::string subsubcmd    = comp_words.size() > 3 ? comp_words[3] : "";
 
     std::set<std::string> main_commands = {
-        "init", "selfcheck", "update",   "utilities", "cellar", "install", "template",
-        "rt",   "mpi",       "compiler", "-h",        "--help", "-v",      "--version"};
+        "init", "selfcheck", "update", "utilities", "cellar", "install",   "template", "rt",
+        "mpi",  "compiler",  "-h",     "--help",    "-v",     "--version", "info"};
 
     if (comp_cword == 1) {
         suggest(current_word, std::vector<std::string>(main_commands.begin(), main_commands.end()));
@@ -62,6 +62,8 @@ int main(int argc, char** argv) {
         suggest(current_word, get_template_suggestions(comp_cword, comp_words));
     } else if (cmd == "rt") {
         suggest(current_word, get_rt_suggestions(comp_cword, comp_words));
+    } else if (cmd == "info") {
+        suggest(current_word, get_info_suggestions(comp_cword, comp_words));
     }
 
     return 0;
