@@ -32,3 +32,5 @@ cheese:
   properties:
     ldflags:
       default: -L${metis.prefix}/lib64 -Wl,-rpath
+    includes:
+      default: -I${metis.prefix}/include
