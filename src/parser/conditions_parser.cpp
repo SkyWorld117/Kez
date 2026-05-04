@@ -36,7 +36,7 @@ std::vector<std::string> tokenizer(const std::string& str) {
 bool evaluate_condition(const std::vector<std::string>& tokens, const ParserContext& context) {
     // Unpack context
     const std::unordered_map<std::string, std::string>& template_map = context.template_map;
-    const YAML::Node& user_config                                    = context.user_config;
+    const YAML::Node user_config                                    = context.user_config;
 
     if (tokens.empty()) {
         ERROR("Condition cannot be empty.");

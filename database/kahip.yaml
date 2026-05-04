@@ -1,0 +1,87 @@
+cheese:
+  name: kahip
+  description: KaHIP is a Karlsruhe High Quality Partitioning software package.
+  type: package
+  toolchain: cmake
+
+  source:
+    type: git
+    url: https://github.com/KaHIP/KaHIP.git
+    releases:
+      - version: 3.25
+        tag: v3.25
+
+  dependencies:
+    - mpi
+    - metis
+
+  build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${kahip.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: CMake build type
+          enabled_value:
+            default: Release
+
+        - name: -DLIB_METIS
+          description: Path to METIS library
+          enabled_value:
+            default: ${metis.prefix}/lib/libmetis.a
+
+        - name: -DMPI_C_COMPILER
+          description: MPI C compiler
+          enabled_value:
+            default: ${mpi.c}
+
+        - name: -DMPI_CXX_COMPILER
+          description: MPI C++ compiler
+          enabled_value:
+            default: ${mpi.cxx}
+
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: -DCMAKE_BUILD_RPATH
+          description: RPATH for built libraries
+          enabled_value:
+            default: ${kahip.prefix}/lib
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: RPATH for installed libraries
+          enabled_value:
+            default: ${kahip.prefix}/lib
+
+        - name: -DCMAKE_C_FLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3 ${metis.includes}
+
+        - name: -DCMAKE_CXX_FLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3 ${metis.includes}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${kahip.prefix}/lib -Wl,-rpath,${kahip.prefix}/lib
+    libs:
+      default: -lkahip
+    includes:
+      default: -I${kahip.prefix}/include

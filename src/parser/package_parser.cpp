@@ -8,9 +8,9 @@ std::vector<std::string> parse_package(ParserContext& context) {
 
     // Unpack context
     const std::string& package_name       = context.package_name;
-    const YAML::Node& user_config_pkg     = context.user_config_pkg;
-    const YAML::Node& user_config_context = context.user_config_context;
-    const YAML::Node& pkg_config          = context.pkg_config;
+    const YAML::Node user_config_pkg     = context.user_config_pkg;
+    const YAML::Node user_config_context = context.user_config_context;
+    const YAML::Node pkg_config          = context.pkg_config;
 
     if (!pkg_config["cheese"]["build"]) {
         return instructions;  // No build instructions available
@@ -104,26 +104,30 @@ std::vector<std::string> parse_package(ParserContext& context) {
         } else {
             opts_config = cmd;
         }
-        // if (opts_config.empty()) {
-        //     for (const auto& env : env_config) {
-        //         instructions.push_back("export " + env);
-        //     }
-        // } else {
-        //     std::string command = opts_config;
-        //     std::reverse(env_config.begin(), env_config.end());
-        //     for (const auto& env : env_config) {
-        //         command = env + " " + command;
-        //     }
-        //     instructions.push_back(command);
-        // }
+
+        std::unordered_map<std::string, std::string> env_map;
         for (const auto& env : env_config) {
+            std::string key = env.substr(0, env.find('='));
+            std::string value = getenv(key.c_str()) ? getenv(key.c_str()) : "";
+            env_map[key] = value;
             instructions.push_back("export " + env);
+
+            // Specially handle PATH to add Fromager's bin directory
+            if (key == "PATH") {
+                std::string fromager_bin = std::string(getenv("FROMAGER_HOME")) + "/bin";
+                env_map[key] = fromager_bin + ":" + env_map[key];
+            }
         }
         if (!opts_config.empty()) {
             instructions.push_back(opts_config);
         }
         for (const auto& env : env_config) {
-            instructions.push_back("unset " + env.substr(0, env.find('=')));
+            std::string key = env.substr(0, env.find('='));
+            if (env_map[key].empty()) {
+                instructions.push_back("unset " + key);
+            } else {
+                instructions.push_back("export " + key + "=" + env_map[key]);
+            }
         }
     }
 
@@ -151,6 +155,8 @@ std::vector<std::string> parse_package(ParserContext& context) {
                 ERROR("Invalid target type in stage: " + stage["target"].Type());
                 exit(EXIT_FAILURE);
             }
+
+            DEBUG("Stage target: '" + stage_target + "'");
 
             bool multithreaded;
             if (stage["multithreaded"] && stage["multithreaded"].IsScalar()) {
