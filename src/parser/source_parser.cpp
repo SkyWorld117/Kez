@@ -21,7 +21,6 @@ void download_source(const YAML::Node pkg_config, const YAML::Node release,
         instructions.push_back("wget --quiet --show-progress --no-check-certificate "
                                "--output-document=source" +
                                ext + " " + url);
-        instructions.push_back("mkdir -p source");
         instructions.push_back("bash $FROMAGER_HOME/patches/fgr_patch_source_structure.sh source" +
                                ext + " source");
         instructions.push_back("rm source" + ext);
@@ -60,8 +59,7 @@ void download_source(const YAML::Node pkg_config, const YAML::Node release,
         instructions.push_back("wget --quiet --show-progress --no-check-certificate "
                                "--output-document=source.zip " +
                                url);
-        instructions.push_back("mkdir -p source");
-        instructions.push_back("unzip -q source.zip -d source");
+        instructions.push_back("bash $FROMAGER_HOME/patches/fgr_patch_source_structure.sh source.zip source");
         instructions.push_back("rm source.zip");
         instructions.push_back("cd source");
     } else {
