@@ -190,4 +190,4 @@ cheese:
     libs:
       default: -lActsCore -lActsExamples -lActsPluginsGeant4 -lActsPluginsPythia8 -lActsPluginsRoot -lActsPluginsDD4hep
     includes:
-      default: ${acts.prefix}/include
+      default: -I${acts.prefix}/include

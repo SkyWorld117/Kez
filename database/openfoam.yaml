@@ -3,10 +3,6 @@ cheese:
   description: OpenFOAM is a free, open source CFD software package.
   type: package
 
-  dependencies:
-    - flex
-    - mpi
-
   source:
     type: git
     url: https://gitlab.com/openfoam/core/openfoam.git
@@ -14,35 +10,45 @@ cheese:
       - version: v2412
         tag: OpenFOAM-v2412
 
+  dependencies:
+    - flex
+    - openmpi
+    - adios2
+    - boost
+    - cgal
+    - fftw3-api
+    - kahip
+    - metis
+    - scotch6
+
   build:
+    preprocessing: >
+      set +Eeuo pipefail;
+      bin/tools/foamConfigurePaths \
+        -adios-path ${adios2.prefix} \
+        -boost-path ${boost.prefix} \
+        -cgal-path ${cgal.prefix} \
+        -fftw-path ${fftw3-api.prefix} \
+        -kahip-path ${kahip.prefix} \
+        -metis-path ${metis.prefix} \
+        -scotch-path ${scotch6.prefix};
+      set -Eeuo pipefail
+
     configurations:
       command: >
         set +Eeuo pipefail;
         source etc/config.sh/setup && ./Allwmake -j;
-        RET=$?;
         set -Eeuo pipefail;
-        exit $RET
+        exit
 
       environment:
-        - name: OMPI_CC
-          description: C compiler for OpenMPI
-          default: ${mpi.c}
-
-        - name: OMPI_CXX
-          description: C++ compiler for OpenMPI
-          default: ${mpi.cxx}
-
-        - name: OMPI_FC
-          description: Fortran compiler for OpenMPI
-          default: ${mpi.fort}
-
         - name: WM_PROJECT_VERSION
           description: Version of the OpenFOAM project
           default: ${openfoam.version}
 
         - name: WM_COMPILER_TYPE
           description: Compiler type for OpenFOAM
-          default: ThirdParty
+          default: system
 
         - name: WM_COMPILER
           description: Compiler for OpenFOAM
@@ -66,7 +72,6 @@ cheese:
 
         - name: WM_MPLIB
           description: Message Passing Library for OpenFOAM [OPENMPI | MPICH]
-          user_configurable: true
           default: SYSTEMOPENMPI
 
         - name: WM_PROJECT
@@ -77,22 +82,39 @@ cheese:
           description: Directory of the OpenFOAM project
           default: ${source}
 
+        - name: MPI_ARCH_PATH
+          description: Path to MPI architecture-specific files for OpenFOAM
+          default: ${openmpi.prefix}
+
         - name: PATH
           description: PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/bin:${compiler.prefix}/bin:${mpi.prefix}/bin:$PATH
+          default: ${flex.prefix}/bin:${compiler.prefix}/bin:${openmpi.prefix}/bin:$PATH
 
         - name: LIBRARY_PATH
           description: LIBRARY_PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/lib:${compiler.prefix}/lib:${mpi.prefix}/lib
+          default: ${flex.prefix}/lib:${compiler.prefix}/lib:${openmpi.prefix}/lib
 
         - name: C_INCLUDE_PATH
           description: C_INCLUDE_PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/include:${compiler.prefix}/include:${mpi.prefix}/include
+          default: ${flex.prefix}/include:${compiler.prefix}/include:${openmpi.prefix}/include
 
         - name: CPLUS_INCLUDE_PATH
           description: CPLUS_INCLUDE_PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/include:${compiler.prefix}/include:${mpi.prefix}/include
+          default: ${flex.prefix}/include:${compiler.prefix}/include:${openmpi.prefix}/include
 
-        - name: LDFLAGS
-          description: Linker flags for OpenFOAM
-          default: ${flex.ldflags} ${flex.libs} ${mpi.ldflags} ${mpi.libs}
+        - name: FOAM_EXTRA_CFLAGS
+          description: Extra compiler flags for OpenFOAM to bake RPATH
+          user_configurable: true
+          default: -O3 ${flex.ldflags} ${openfoam.ldflags}
+
+        - name: FOAM_EXTRA_CXXFLAGS
+          description: Extra C++ compiler flags for OpenFOAM to bake RPATH
+          user_configurable: true
+          default: -O3 ${flex.ldflags} ${openfoam.ldflags}
+
+    # postprocessing: >
+    #   cp -r ${source}/platforms/linux*/* ${openfoam.prefix}/
+
+  properties:
+    ldflags:
+      default: -L${openfoam.prefix}/lib -Wl,-rpath,${openfoam.prefix}/lib

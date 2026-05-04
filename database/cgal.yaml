@@ -1,0 +1,23 @@
+cheese:
+  name: cgal
+  description: CGAL is a software library that provides easy access to efficient and reliable geometric algorithms in the form of a C++ library.
+  type: package
+
+  source:
+    type: tarball
+    releases:
+      - version: 6.1.1
+        url: https://github.com/CGAL/cgal/releases/download/v6.1.1/CGAL-6.1.1.tar.xz
+
+  build:
+    # Starting with CGAL 5.0, CGAL is a header-only library
+    # There are only a few cmake files in `lib` that we need to install
+    postprocessing: >
+      mkdir -p ${cgal.prefix}/include &&
+      cp -r ${source}/include/* ${cgal.prefix}/include/ &&
+      mkdir -p ${cgal.prefix}/lib/ &&
+      cp -r ${source}/lib/* ${cgal.prefix}/lib/
+
+  properties:
+    includes:
+      default: -I${cgal.prefix}/include
