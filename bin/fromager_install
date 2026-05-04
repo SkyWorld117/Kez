@@ -6,7 +6,12 @@ export PATH=${FROMAGER_HOME}/bin:${PATH}
 
 target_cellar=$1
 
-rm -rf source/ source*
+force=false
+if [ -n "${2:-}" ] && [ "$2" == "--force" ]; then
+    force=true
+fi
+
+rm -rf $target_cellar/.tmp/source $target_cellar/.tmp/source*
 
 # Process each package and its instructions
 package_count=$(yq -r '. | length' "$target_cellar/.tmp/ins.yaml")
@@ -20,8 +25,8 @@ for ((i=0; i<package_count; i++)); do
     # Extract package name
     package_name=$(yq -r ".[$i].package" "$target_cellar/.tmp/ins.yaml")
 
-    # Skip if package is already installed
-    if $(grep -q "  - $package_name" "$target_cellar/state.yaml"); then
+    # Skip if package is already installed (unless --force is used)
+    if $(grep -q "  - $package_name" "$target_cellar/state.yaml") && [ "$force" == false ]; then
         fromager_warning "Package $package_name is already installed. Skipping."
         continue
     fi
@@ -50,5 +55,23 @@ for ((i=0; i<package_count; i++)); do
 
     rm -rf "$target_cellar/.tmp/source"
 done
+
+# If a module file is not created in the modulefiles directory, create a module file for the cellar
+modulefiles_dir=${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.modulefiles' "${FROMAGER_WORKDIR}/config.yaml")
+if [ ! -f "$modulefiles_dir/$(basename $target_cellar)" ]; then
+    fromager_info "Creating module file for cellar: $target_cellar in $modulefiles_dir"
+    cat <<EOF > "$modulefiles_dir/$(basename $target_cellar)"
+#%Module1.0
+proc ModulesHelp { } {
+    puts stderr "This module loads the $(basename $target_cellar) cellar environment."
+}
+module-whatis "Loads the $(basename $target_cellar) cellar environment"
+setenv FROMAGER_CELLAR "$(basename $target_cellar)"
+prepend-path PATH "$target_cellar/bin"
+EOF
+    fromager_success "Module file created for cellar: $target_cellar in $modulefiles_dir"
+else
+    fromager_info "Module file already exists for cellar: $target_cellar in $modulefiles_dir. Skipping creation."
+fi
 
 set +Eeuo pipefail

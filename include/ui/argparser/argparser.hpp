@@ -2,9 +2,9 @@
 
 #include <argparse/argparse.hpp>
 #include <cmdline_parser/cmdline_parser.hpp>
-#include <colors/colored_io.hpp>
 #include <global_config.hpp>
 #include <string>
+#include <utils/colored_io.hpp>
 
 inline void EXE_AND_CHECK(const std::string& cmd) {
     int ret = system(cmd.c_str());
@@ -28,6 +28,11 @@ argparse::ArgumentParser& get_utilities_parser();
 void execute_utilities_parser();
 std::vector<std::string> get_utilities_suggestions(const int comp_cword,
                                                    const std::vector<std::string>& comp_words);
+
+argparse::ArgumentParser& get_update_parser();
+void execute_update_parser();
+std::vector<std::string> get_update_suggestions(const int comp_cword,
+                                                const std::vector<std::string>& comp_words);
 
 argparse::ArgumentParser& get_cellar_parser();
 void execute_cellar_parser();
@@ -58,3 +63,8 @@ argparse::ArgumentParser& get_rt_parser();
 void execute_rt_parser();
 std::vector<std::string> get_rt_suggestions(const int comp_cword,
                                             const std::vector<std::string>& comp_words);
+
+argparse::ArgumentParser& get_info_parser();
+void execute_info_parser();
+std::vector<std::string> get_info_suggestions(const int comp_cword,
+                                              const std::vector<std::string>& comp_words);

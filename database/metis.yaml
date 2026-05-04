@@ -12,7 +12,7 @@ cheese:
         tag: master
 
   dependencies:
-    - GKlib
+    - gklib
 
   build:
     stages:
@@ -26,7 +26,7 @@ cheese:
             - name: gklib_path
               description: GKlib installation path
               enabled_value:
-                default: ${GKlib.prefix}
+                default: ${gklib.prefix}
       - target: install
 
   properties:

@@ -1,0 +1,41 @@
+cheese:
+  name: neovim
+  description: Neovim - hyperextensible Vim-based text editor
+  type: package
+  toolchain: makefile
+
+  source:
+    type: tarball
+    releases:
+      - version: 0.12.2
+        url: https://github.com/neovim/neovim/archive/refs/tags/v0.12.2.tar.gz
+
+  dependencies:
+    - fd
+    - ripgrep
+    - luarocks
+    - tree-sitter
+    - nodejs
+
+  build:
+    stages:
+      - target: ~
+        multithreaded: false
+        configurations:
+          options:
+            - name: CMAKE_BUILD_TYPE
+              description: Build type
+              enabled_value:
+                default: Release
+            - name: CMAKE_INSTALL_PREFIX
+              description: Installation prefix
+              enabled_value:
+                default: ${neovim.prefix}
+      - target: install
+        multithreaded: false
+        configurations:
+          options:
+            - name: CMAKE_INSTALL_PREFIX
+              description: Installation prefix
+              enabled_value:
+                default: ${neovim.prefix}

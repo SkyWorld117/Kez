@@ -2,7 +2,6 @@
 
 #include <dependency_resolver/essential_dependencies.hpp>
 #include <dependency_resolver/optional_dependencies.hpp>
-#include <filesystem>
 #include <string>
 #include <vector>
 

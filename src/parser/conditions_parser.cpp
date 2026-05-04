@@ -1,4 +1,5 @@
 #include <parser/conditions_parser.hpp>
+#include <string>
 
 std::vector<std::string> tokenizer(const std::string& str) {
     std::vector<std::string> tokens;
@@ -32,10 +33,11 @@ std::vector<std::string> tokenizer(const std::string& str) {
     return tokens;
 }
 
-bool evaluate_condition(const std::vector<std::string>& tokens,
-                        const std::unordered_map<std::string, std::string>& template_map,
-                        const YAML::Node& user_config, const YAML::Node& pkg_config,
-                        const std::string& build_mode, const std::string& env_path) {
+bool evaluate_condition(const std::vector<std::string>& tokens, const ParserContext& context) {
+    // Unpack context
+    const std::unordered_map<std::string, std::string>& template_map = context.template_map;
+    const YAML::Node& user_config                                    = context.user_config;
+
     if (tokens.empty()) {
         ERROR("Condition cannot be empty.");
         exit(EXIT_FAILURE);
@@ -64,8 +66,7 @@ bool evaluate_condition(const std::vector<std::string>& tokens,
         }
         if (closing_pos == tokens.size() - 1) {
             std::vector<std::string> inner_tokens(tokens.begin() + 1, tokens.end() - 1);
-            return evaluate_condition(inner_tokens, template_map, user_config, pkg_config,
-                                      build_mode, env_path);
+            return evaluate_condition(inner_tokens, context);
         } else {
             ERROR("Mismatched parentheses in condition.");
             exit(EXIT_FAILURE);
@@ -87,10 +88,8 @@ bool evaluate_condition(const std::vector<std::string>& tokens,
             if (paren_count == 0) {
                 std::vector<std::string> left_tokens(tokens.begin(), tokens.begin() + i);
                 std::vector<std::string> right_tokens(tokens.begin() + i + 1, tokens.end());
-                bool left_result  = evaluate_condition(left_tokens, template_map, user_config,
-                                                       pkg_config, build_mode, env_path);
-                bool right_result = evaluate_condition(right_tokens, template_map, user_config,
-                                                       pkg_config, build_mode, env_path);
+                bool left_result  = evaluate_condition(left_tokens, context);
+                bool right_result = evaluate_condition(right_tokens, context);
                 if (tokens[i] == "&&") {
                     return left_result && right_result;
                 } else if (tokens[i] == "||") {
@@ -107,8 +106,7 @@ bool evaluate_condition(const std::vector<std::string>& tokens,
             exit(EXIT_FAILURE);
         }
         std::vector<std::string> remaining_tokens(tokens.begin() + 1, tokens.end());
-        return !evaluate_condition(remaining_tokens, template_map, user_config, pkg_config,
-                                   build_mode, env_path);
+        return !evaluate_condition(remaining_tokens, context);
     }
 
     // Handle "environment" condition
@@ -191,16 +189,13 @@ bool evaluate_condition(const std::vector<std::string>& tokens,
 }
 
 std::string parse_conditions(const std::string& base_value, const YAML::Node& conditions_node,
-                             const std::unordered_map<std::string, std::string>& template_map,
-                             const YAML::Node& user_config, const YAML::Node& pkg_config,
-                             const std::string& build_mode, const std::string& env_path) {
+                             const ParserContext& context) {
     std::string result = base_value;
 
     for (const auto& condition : conditions_node) {
         std::string condition_str       = condition["condition"].as<std::string>();
         std::vector<std::string> tokens = tokenizer(condition_str);
-        bool condition_result =
-            evaluate_condition(tokens, template_map, user_config, pkg_config, build_mode, env_path);
+        bool condition_result           = evaluate_condition(tokens, context);
         if (condition_result) {
             if (condition["action"]) {
                 std::string action = condition["action"].as<std::string>();

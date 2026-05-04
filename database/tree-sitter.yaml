@@ -1,0 +1,13 @@
+cheese:
+  name: tree-sitter
+  description: tree-sitter - a parser generator tool and an incremental parsing library
+  type: package
+
+  source:
+    type: zip
+    releases:
+      - version: 0.26.8
+        url: https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.8/tree-sitter-cli-linux-${fromager.arch.tree-sitter}.zip
+
+  build:
+    postprocessing: cp tree-sitter* ${tree-sitter.prefix}/bin/

@@ -33,14 +33,14 @@ For example, it can be a good choice to set it to a directory with ample space, 
 export FROMAGER_WORKDIR=/scratch/${USER}/.fromager
 ```
 
-If not specified, Fromager will use the default directory `~/.fromager`.
-
 After setting the `FROMAGER_WORKDIR`, you can initialize the Fromager environment by running the following command:
 
 ```bash
 cd Fromager
 source setup-env.sh
 ```
+
+For the first time you run `setup-env.sh`, you will be asked to configure the configuration file listed in the next section. After that, you can simply run `source setup-env.sh` again to load the Fromager environment variables and functions.
 
 It is recommended to add both of the commands to your `.bashrc`. 
 
@@ -54,6 +54,17 @@ It looks like this by default:
 fromager:
   n_proc_for_build: 4
 
+  default_compiler: system
+
+  paths:
+    cellars: cellars
+    system: cellars/system
+    utilities: cellars/utilities
+    compilers: cellars/compilers
+    mpis: cellars/mpis
+    vendors: cellars/vendors
+    factories: factories
+
   external:
     rdma-core:
       prefix: ~
@@ -64,9 +75,16 @@ fromager:
     gdrcopy:
       prefix: ~
       version: ~
+    slurm:
+      prefix: ~
+      version: ~
 ```
 
 `n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes. We will talk about this more in the [`stages`](03-Database_Configuration_Format.md#stages) section. 
+
+`default_compiler` specifies the default compiler to use when building packages. It can be set to `system` or a specific compiler in the `compilers` cellar in the format of `<vendor>@<version>`. For example, if you have a GCC 11.4.0 installed in the `compilers` cellar, you can set it to `gcc@11.4.0`.
+
+`paths` specifies the directory structure of the cellar. They are relative paths to the `FROMAGER_WORKDIR`. You can change them if you want.
 
 `external` contains a list of external dependencies that Fromager is supposed to use. These are usually libraries that are not supposed to be built by the users of a cluster, as they may cause ABI incompatibilities if the package versions mismatch the driver versions. Fromager will not use them if the entries are left as `~`, which means "null". 
 
@@ -121,3 +139,16 @@ We first introduce the non-conventional terminologies:
 - Cheese, a configuration file for a package, appears as the header in user configuration files and database configuration files
 
 In HPC workflow, we would like to achieve coexistence of multiple versions and configurations of one single application, thus it is 
+
+## Uninstalling and Reinstalling Fromager
+
+To uninstall Fromager, you can simply remove the cloned repository and the `FROMAGER_WORKDIR`:
+
+```bash
+rm -rf Fromager
+rm -rf $FROMAGER_WORKDIR
+```
+
+You may want to reload the shell after that to remove the environment variables set by `setup-env.sh`.
+
+To reinstall Fromager, you can simply clone the repository again and run `setup-env.sh` again, following the instructions above.

@@ -21,6 +21,10 @@ argparse::ArgumentParser& get_utilities_parser() {
     util_add_parser.add_argument("-c", "--config")
         .help("Additional configuration options for the utility in the format <option>=<value>")
         .nargs(argparse::nargs_pattern::at_least_one);
+    util_add_parser.add_argument("-f", "--force")
+        .help("Force reinstallation even if the utility is already installed")
+        .default_value(false)
+        .implicit_value(true);
 
     util_empty_parser.add_description("Empty the utilities cellar");
 
@@ -68,6 +72,9 @@ void execute_utilities_parser() {
             parse_cmdline(pkg_or_file, utilities_cellar, config_options);
         }
 
+        if (util_add_parser.get<bool>("--force")) {
+            utilities_cellar += " --force";
+        }
         EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + utilities_cellar);
 
         exit(EXIT_SUCCESS);
@@ -123,6 +130,12 @@ std::vector<std::string> get_utilities_suggestions(const int comp_cword,
             }
         } else {
             suggest_config_option = true;
+        }
+
+        if (!exists_in(comp_words, "--force") && !exists_in(comp_words, "-f")) {
+            // Suggest --force if it is not already present
+            suggestions.push_back("--force");
+            suggestions.push_back("-f");
         }
 
         if (suggest_read_option) {

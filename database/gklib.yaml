@@ -1,5 +1,5 @@
 cheese:
-  name: GKlib
+  name: gklib
   description: A library of various helper routines and frameworks used by many of the lab's software
   type: package
   toolchain: make
@@ -19,10 +19,10 @@ cheese:
             - name: prefix
               description: Installation prefix
               enabled_value:
-                default: ${GKlib.prefix}
+                default: ${gklib.prefix}
       - target: ~
       - target: install
     postprocessing: >
-      mkdir -p ${GKlib.prefix}/lib &&
-      cp ${GKlib.prefix}/lib64/libGKlib.a ${GKlib.prefix}/lib
+      mkdir -p ${gklib.prefix}/lib &&
+      cp ${gklib.prefix}/lib64/libGKlib.a ${gklib.prefix}/lib
 

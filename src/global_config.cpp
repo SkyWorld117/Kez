@@ -1,9 +1,9 @@
-#include <colors/colored_io.hpp>
 #include <database/database.hpp>
 #include <filesystem>
 #include <global_config.hpp>
 #include <parser/scalar_parser.hpp>
 #include <string>
+#include <utils/colored_io.hpp>
 
 std::filesystem::path prefix_path = std::filesystem::path(getenv("FROMAGER_WORKDIR"));
 std::filesystem::path config_path = prefix_path / "config.yaml";
@@ -11,65 +11,57 @@ YAML::Node config                 = YAML::LoadFile(config_path.string())["fromag
 
 namespace global_config {
 
+    template <typename T>
+    T get_config_value(const std::vector<std::string>& keys, const std::string& error_msg) {
+        YAML::Node current = config;
+        for (const auto& key : keys) {
+            if (!current[key]) {
+                ERROR(error_msg);
+                exit(EXIT_FAILURE);
+            }
+            current.reset(current[key]);
+        }
+        return current.as<T>();
+    }
+
     std::string get_path(const std::string& target) {
         if (!config["paths"]) {
             ERROR("Illformed configuration: 'paths' section is missing");
             exit(EXIT_FAILURE);
-        } else if (!config["paths"][target]) {
-            ERROR("Illformed configuration: path for '" + target + "' is missing");
-            exit(EXIT_FAILURE);
-        } else {
-            return (prefix_path / config["paths"][target].as<std::string>()).string();
         }
+        return (prefix_path / get_config_value<std::string>(
+                                  {"paths", target},
+                                  "Illformed configuration: path for '" + target + "' is missing"))
+            .string();
     }
 
     std::string get_num_proc() {
-        if (!config["n_proc_for_build"]) {
-            ERROR("Illformed configuration: 'n_proc_for_build' is missing");
-            exit(EXIT_FAILURE);
-        } else {
-            return config["n_proc_for_build"].as<std::string>();
-        }
+        return get_config_value<std::string>(
+            {"n_proc_for_build"}, "Illformed configuration: 'n_proc_for_build' is missing");
     }
 
     std::string get_default_compiler() {
-        if (!config["default_compiler"]) {
-            ERROR("Illformed configuration: 'default_compiler' is missing");
-            exit(EXIT_FAILURE);
-        } else {
-            return config["default_compiler"].as<std::string>();
-        }
+        return get_config_value<std::string>(
+            {"default_compiler"}, "Illformed configuration: 'default_compiler' is missing");
     }
 
     std::string get_default_mpi() {
-        if (!config["default_mpi"]) {
-            ERROR("Illformed configuration: 'default_mpi' is missing");
-            exit(EXIT_FAILURE);
-        } else {
-            return config["default_mpi"].as<std::string>();
-        }
+        return get_config_value<std::string>({"default_mpi"},
+                                             "Illformed configuration: 'default_mpi' is missing");
     }
 
     std::string get_external_package_prefix(const std::string& package_name) {
-        if (!config["external"] || !config["external"][package_name] ||
-            !config["external"][package_name]["prefix"]) {
-            ERROR("Illformed configuration: prefix for external package '" + package_name +
-                  "' is missing");
-            exit(EXIT_FAILURE);
-        } else {
-            return config["external"][package_name]["prefix"].as<std::string>();
-        }
+        return get_config_value<std::string>(
+            {"external", package_name, "prefix"},
+            "Illformed configuration: prefix for external package '" + package_name +
+                "' is missing");
     }
 
     std::string get_external_package_version(const std::string& package_name) {
-        if (!config["external"] || !config["external"][package_name] ||
-            !config["external"][package_name]["version"]) {
-            ERROR("Illformed configuration: version for external package '" + package_name +
-                  "' is missing");
-            exit(EXIT_FAILURE);
-        } else {
-            return config["external"][package_name]["version"].as<std::string>();
-        }
+        return get_config_value<std::string>(
+            {"external", package_name, "version"},
+            "Illformed configuration: version for external package '" + package_name +
+                "' is missing");
     }
 
 }  // namespace global_config
@@ -127,12 +119,11 @@ std::string get_cellar_path(CellarPathQuery query) {
         // When package names are provided, we need to identify if the query is legal
         // - All packages in the query should have the same type
         // - If the type is "compiler", "mpi", "vendor", or "external", there should be at most one package in the query. This is due to the fact that the cellar path for these types is uniquely determined by the package name, version, and (for mpi) compiler spec.
-        std::string pkg_type      = get_pkg_type(query.pkg_name);
-        std::string pkg_names_str = "";
-        for (const std::string& pkg_name : query.pkg_name) {
-            pkg_names_str += pkg_name + " ";
+        std::string pkg_type = get_pkg_type(query.pkg_name);
+        std::string pkg_names_str;
+        for (size_t i = 0; i < query.pkg_name.size(); ++i) {
+            pkg_names_str += (i == 0 ? "" : " ") + query.pkg_name[i];
         }
-        pkg_names_str = pkg_names_str.substr(0, pkg_names_str.size() - 1);  // Remove trailing space
         filter(query.type_filters, pkg_type, pkg_names_str);
 
         if (pkg_type == "system") {
@@ -164,21 +155,22 @@ std::string get_cellar_path(CellarPathQuery query) {
                     // Possible patterns to substitute in the prefix property:
                     // - ${parent_pkg.version}: the version of the current package
                     // - ${parent_pkg.prefix}: the prefix of the parent package
-                    // TODO: Sophia parse architecture here :)
                     std::string prefix_template =
                         pkg_config["cheese"]["properties"]["prefix"].as<std::string>();
                     std::string template_parent_pkg_version =
                         "${" + prefix_query.pkg_name[0] + ".version}";
                     std::string template_parent_pkg_prefix =
                         "${" + prefix_query.pkg_name[0] + ".prefix}";
-                    if (prefix_template.find(template_parent_pkg_version) != std::string::npos) {
-                        prefix_template.replace(prefix_template.find(template_parent_pkg_version),
-                                                template_parent_pkg_version.size(),
+
+                    if (size_t pos = prefix_template.find(template_parent_pkg_version);
+                        pos != std::string::npos) {
+                        prefix_template.replace(pos, template_parent_pkg_version.size(),
                                                 query.pkg_version);
                     }
-                    if (prefix_template.find(template_parent_pkg_prefix) != std::string::npos) {
-                        prefix_template.replace(prefix_template.find(template_parent_pkg_prefix),
-                                                template_parent_pkg_prefix.size(), parent_prefix);
+                    if (size_t pos = prefix_template.find(template_parent_pkg_prefix);
+                        pos != std::string::npos) {
+                        prefix_template.replace(pos, template_parent_pkg_prefix.size(),
+                                                parent_prefix);
                     }
 
                     return prefix_template;

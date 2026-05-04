@@ -1,11 +1,13 @@
+#pragma once
+
 #include <yaml-cpp/yaml.h>
 
 #include <cmdline_parser/traverse.hpp>
-#include <colors/colored_io.hpp>
 #include <database/database.hpp>
 #include <parser/parser.hpp>
 #include <string>
 #include <user_config_generator/user_config_generator.hpp>
+#include <utils/colored_io.hpp>
 
 void parse_cmdline(const std::string& file, const std::string& cellar_path,
                    const std::vector<std::string>& config_options);

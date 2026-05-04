@@ -13,12 +13,16 @@ elif [ ! -f "${FROMAGER_WORKDIR}/config.yaml" ]; then
 
     mkdir -p "${FROMAGER_WORKDIR}"
     cp "${SCRIPT_DIR}/configs/config.yaml" "${FROMAGER_WORKDIR}/config.yaml"
-    echo "[I]: `config.yaml` was not found in ${FROMAGER_WORKDIR}. A default config file has been copied from the script directory. Please review and customize it as needed."
+    echo "[I]: \`config.yaml\` was not found in ${FROMAGER_WORKDIR}. A default config file has been copied from the script directory. Please review and customize it as needed."
     echo "[I]: After setting up the configuration, please re-run this script to initialize the environment variables and load the necessary functions."
 
 else
 
     # Check if yq is available, if not, it will be installed in the FROMAGER_WORKDIR/bin directory
+    if [[ ":$PATH:" != *":${FROMAGER_WORKDIR}/bin:"* ]]; then
+        export PATH="${FROMAGER_WORKDIR}/bin:${PATH}"
+    fi
+
     if ! command -v yq &> /dev/null; then
         echo "[I]: yq is not installed. It will be installed in ${FROMAGER_WORKDIR}/bin."
         mkdir -p "${FROMAGER_WORKDIR}/bin"
@@ -28,10 +32,6 @@ else
             wget --quiet --show-progress --output-document="${FROMAGER_WORKDIR}/bin/yq" https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
         fi
         chmod +x "${FROMAGER_WORKDIR}/bin/yq"
-
-        if [[ ":$PATH:" != *":${FROMAGER_WORKDIR}/bin:"* ]]; then
-            export PATH="${FROMAGER_WORKDIR}/bin:${PATH}"
-        fi
     fi
 
     export FROMAGER_HOME="${SCRIPT_DIR}"
@@ -69,6 +69,13 @@ else
 
     # Load configuration settings
     export FROMAGER_NPROC=$(yq -r '.fromager.n_proc_for_build' "${FROMAGER_WORKDIR}/config.yaml")
+
+    # Add Fromager work directory to MODULEPATH for module system integration
+    modulefiles_dir=${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.modulefiles' "${FROMAGER_WORKDIR}/config.yaml")
+    mkdir -p "$modulefiles_dir"
+    if [[ ":${MODULEPATH:-}:" != *":${modulefiles_dir}:"* ]]; then
+        export MODULEPATH="${modulefiles_dir}:${MODULEPATH:-}"
+    fi
 
     set +Euo pipefail
 

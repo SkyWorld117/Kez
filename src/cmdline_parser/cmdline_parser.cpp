@@ -1,7 +1,7 @@
 #include <cmdline_parser/cmdline_parser.hpp>
+#include <filesystem>
+#include <fstream>
 #include <unordered_map>
-
-#include "yaml-cpp/node/node.h"
 
 void parse_cmdline(const std::string& file, const std::string& cellar_path,
                    const std::vector<std::string>& config_options) {
@@ -33,10 +33,11 @@ void parse_cmdline(YAML::Node user_config, const std::string& cellar_path,
 
     // Modify user config based on command line options
     YAML::Node starting_node = user_config["cheese"];
+    DEBUG("Starting node before applying config options:\n" + YAML::Dump(starting_node));
     for (const auto& [key, value] : config_map) {
         traverse(key, value, starting_node);
     }
-
+    DEBUG("User config after applying config options:\n" + YAML::Dump(user_config));
     // Parse instructions
     YAML::Node instructions = parse(user_config, "release", cellar_path);
 

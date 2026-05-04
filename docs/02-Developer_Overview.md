@@ -19,7 +19,7 @@ The source code of Fromager is organized into several key directories:
 ```
 src/
  ├── cmdline_parser/
- ├── colors/
+ ├── utils/
  ├── database/
  ├── dependency_resolver/
  ├── package_format_verifier/
@@ -32,9 +32,9 @@ src/
 
 `cmdline_parser` is based on the `parser`. It offers commandline configuration parsing, making the buildsystem simple and efficient to use when no complicated options are required.
 
-#### `colors`
+#### `utils`
 
-`colors` contains the utilities for colored output in the terminal. It is not only used in other C++ programs in the format of header files, but also compiled into binaries and used by the bash scripts for consistent output formatting. They are designed to only output colored text in an interactive shell, and regular text if not (e.g. piped into a file).
+`utils` contains utility functions that are used across different modules. These functions can include file handling, string manipulation, logging, and other common tasks that are needed in various parts of the codebase.
 
 #### `database`
 
