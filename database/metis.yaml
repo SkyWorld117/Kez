@@ -4,17 +4,25 @@ cheese:
   type: package
   toolchain: make
 
+  # source:
+  #   type: git
+  #   url: https://github.com/KarypisLab/METIS
+  #   releases:
+  #     - version: 5.2.1
+  #       tag: v5.2.1
   source:
-    type: git
-    url: https://github.com/KarypisLab/METIS
+    type: tarball
     releases:
-      - version: master
-        tag: master
+      - version: 5.1.0
+        url: http://papers.karypis.org/glaros/files/sw/metis/metis-5.1.0.tar.gz
 
-  dependencies:
-    - gklib
+  # dependencies:
+  #   - gklib
 
   build:
+    # Edit the line containing cmake version check in the CMakeLists.txt
+    preprocessing: >
+      sed -i 's/cmake_minimum_required(VERSION 2.8)/cmake_minimum_required(VERSION 3.5)/g' ${source}/CMakeLists.txt
     stages:
       - target: config
         configurations:
@@ -23,14 +31,31 @@ cheese:
               description: Installation prefix
               enabled_value:
                 default: ${metis.prefix} 
-            - name: gklib_path
-              description: GKlib installation path
+            # - name: gklib_path
+            #   description: GKlib installation path
+            #   enabled_value:
+            #     default: ${gklib.prefix}
+            - name: shared
+              description: Build shared library
+              user_configurable: true
               enabled_value:
-                default: ${gklib.prefix}
+                default: "1"
+            - name: openmp
+              description: Enable OpenMP support
+              user_configurable: true
+              enabled_value:
+                default: "1"
+            - name: cc
+              description: C compiler
+              user_configurable: true
+              enabled_value:
+                default: ${compiler.c}
       - target: install
 
   properties:
     ldflags:
-      default: -L${metis.prefix}/lib64 -Wl,-rpath
+      default: -L${metis.prefix}/lib -Wl,-rpath,${metis.prefix}/lib
+    libs:
+      default: -lmetis -lGKlib
     includes:
       default: -I${metis.prefix}/include

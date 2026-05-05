@@ -77,7 +77,7 @@ cheese:
 
   properties:
     ldflags:
-      default: -L${mgard.prefix}/lib -Wl,-rpath,${mgard.prefix}/lib
+      default: -L${mgard.prefix}/lib64 -Wl,-rpath,${mgard.prefix}/lib64
     libs:
       default: -lmgard
     includes:
