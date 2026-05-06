@@ -1,6 +1,7 @@
 # Core
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
+| Not Started | Use a class to wrap the database configurations to provide better type safety, more flexible querying, more default values and better error handling. | - |
 | Not Started | Add more detailed unit tests for the C++ backend. | - |
 | Not Started | Decide, document and unify the passes over the cheeses. | - |
 | Started | Add caching system to store source files, reduce redundant downloads and rebuild without internet connection. | Nick |
