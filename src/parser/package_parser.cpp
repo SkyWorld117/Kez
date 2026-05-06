@@ -65,6 +65,10 @@ std::vector<std::string> parse_package(ParserContext& context) {
     }
 
     // Compiling
+    std::string toolchain;
+    if (pkg_config["cheese"]["toolchain"]) {
+        toolchain = pkg_config["cheese"]["toolchain"].as<std::string>();
+    }
 
     // Global configurations
     DEBUG("- Global configurations for package: " + package_name);
@@ -74,60 +78,22 @@ std::vector<std::string> parse_package(ParserContext& context) {
         if (user_config_context["build"] && user_config_context["build"]["configurations"]) {
             user_config_context_config = user_config_context["build"]["configurations"];
         }
-
-        std::string toolchain = "";
-        if (pkg_config["cheese"]["toolchain"]) {
-            toolchain = pkg_config["cheese"]["toolchain"].as<std::string>();
-        }
-
         context.user_config_context.reset(user_config_context_config);
-        std::pair<std::vector<std::string>, std::string> parsed_configurations =
-            parse_configuration(configurations, toolchain, context);
-        std::vector<std::string> env_config = parsed_configurations.first;
-        std::string opts_config             = parsed_configurations.second;
-        std::string cmd;
-        if (pkg_config["cheese"]["build"]["configurations"]["command"]) {
-            cmd = pkg_config["cheese"]["build"]["configurations"]["command"].as<std::string>();
+
+        std::string command;
+        if (configurations["command"]) {
+            command = configurations["command"].as<std::string>();
         } else {
             if (toolchain == "autotools") {
-                cmd = "./configure";
+                command = "./configure";
             } else if (toolchain == "cmake") {
-                cmd = "cmake -B build";
+                command = "cmake -B build";
             } else {
-                // Ignore the others for now and set to empty string
-                cmd = "";
+                // Ignore the others for now
             }
-        }
-        if (!opts_config.empty() && !cmd.empty()) {
-            opts_config = cmd + " " + opts_config;
-        } else {
-            opts_config = cmd;
         }
 
-        std::unordered_map<std::string, std::string> env_map;
-        for (const auto& env : env_config) {
-            std::string key = env.substr(0, env.find('='));
-            std::string value = getenv(key.c_str()) ? getenv(key.c_str()) : "";
-            env_map[key] = value;
-            instructions.push_back("export " + env);
-
-            // Specially handle PATH to add Fromager's bin directory
-            if (key == "PATH") {
-                std::string fromager_bin = std::string(getenv("FROMAGER_HOME")) + "/bin";
-                env_map[key] = fromager_bin + ":" + env_map[key];
-            }
-        }
-        if (!opts_config.empty()) {
-            instructions.push_back(opts_config);
-        }
-        for (const auto& env : env_config) {
-            std::string key = env.substr(0, env.find('='));
-            if (env_map[key].empty()) {
-                instructions.push_back("unset " + key);
-            } else {
-                instructions.push_back("export " + key + "=" + env_map[key]);
-            }
-        }
+        parse_configuration(instructions, command, configurations, toolchain, context);
     }
 
     // Reset user config context
@@ -136,10 +102,6 @@ std::vector<std::string> parse_package(ParserContext& context) {
     // Stages
     DEBUG("- Stages for package: " + package_name);
     std::string threads = global_config::get_num_proc();
-
-    std::string toolchain = "";
-    if (pkg_config["cheese"]["toolchain"])
-        toolchain = pkg_config["cheese"]["toolchain"].as<std::string>();
 
     if (pkg_config["cheese"]["build"]["stages"]) {
         YAML::Node stages = pkg_config["cheese"]["build"]["stages"];
@@ -166,25 +128,31 @@ std::vector<std::string> parse_package(ParserContext& context) {
 
             std::string stage_cmd;
 
-            if (toolchain == "cmake") {
-                stage_cmd = "cmake --build build";
-
-                if (multithreaded && !threads.empty()) {
-                    stage_cmd += " --parallel " + threads;
-                }
-
-                if (!stage_target.empty()) {
-                    stage_cmd += " --target " + stage_target;
-                }
+            if (stage["configurations"] && stage["configurations"]["command"]) {
+                stage_cmd = stage["configurations"]["command"].as<std::string>();
             } else {
-                stage_cmd = "make";
+                if (toolchain == "autotools" || toolchain == "makefile") {
+                    stage_cmd = "make";
 
-                if (multithreaded && !threads.empty()) {
-                    stage_cmd += " -j" + threads;
-                }
+                    if (multithreaded && !threads.empty()) {
+                        stage_cmd += " -j" + threads;
+                    }
 
-                if (!stage_target.empty()) {
-                    stage_cmd += " " + stage_target;
+                    if (!stage_target.empty()) {
+                        stage_cmd += " " + stage_target;
+                    }
+                } else if (toolchain == "cmake") {
+                    stage_cmd = "cmake --build build";
+
+                    if (multithreaded && !threads.empty()) {
+                        stage_cmd += " --parallel " + threads;
+                    }
+
+                    if (!stage_target.empty()) {
+                        stage_cmd += " --target " + stage_target;
+                    }
+                } else {
+                    // Ignore the others for now
                 }
             }
 
@@ -200,21 +168,12 @@ std::vector<std::string> parse_package(ParserContext& context) {
                         }
                     }
                 }
-
                 context.user_config_context.reset(user_config_context_config);
-                std::pair<std::vector<std::string>, std::string> parsed_stage_configurations =
-                    parse_configuration(stage_configurations, "", context);
-                std::vector<std::string> stage_env_config = parsed_stage_configurations.first;
-                std::reverse(stage_env_config.begin(), stage_env_config.end());
-                for (const auto& env : stage_env_config) {
-                    stage_cmd = env + " " + stage_cmd;
-                }
-                if (!parsed_stage_configurations.second.empty()) {
-                    stage_cmd += " " + parsed_stage_configurations.second;
-                }
-            }
 
-            instructions.push_back(stage_cmd);
+                parse_configuration(instructions, stage_cmd, stage_configurations, "", context);
+            } else {
+                instructions.push_back(stage_cmd);
+            }
         }
     }
 
