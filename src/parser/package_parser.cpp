@@ -92,8 +92,7 @@ std::vector<std::string> parse_package(ParserContext& context) {
             if (toolchain == "autotools") {
                 cmd = "./configure";
             } else if (toolchain == "cmake") {
-                instructions.push_back("mkdir -p build && cd build");
-                cmd = "cmake ../";
+                cmd = "cmake -B build";
             } else {
                 // Ignore the others for now and set to empty string
                 cmd = "";
@@ -168,7 +167,7 @@ std::vector<std::string> parse_package(ParserContext& context) {
             std::string stage_cmd;
 
             if (toolchain == "cmake") {
-                stage_cmd = "cmake --build .";
+                stage_cmd = "cmake --build build";
 
                 if (multithreaded && !threads.empty()) {
                     stage_cmd += " --parallel " + threads;
