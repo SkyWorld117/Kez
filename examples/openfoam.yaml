@@ -58,22 +58,24 @@ cheese:
     version: 5.1.0
     compiler: system
     build:
-      stages:
-        - target: config
-          configurations:
-            options:
-              - name: shared
-                description: Build shared library
-                enabled: true
-                enabled_value: 1
-              - name: openmp
-                description: Enable OpenMP support
-                enabled: true
-                enabled_value: 1
-              - name: cc
-                description: C compiler
-                enabled: true
-                enabled_value: ${compiler.c}
+      configurations:
+        options:
+          - name: -DOPENMP
+            description: Enable OpenMP support
+            enabled: true
+            enabled_value: 1
+          - name: -DSHARED
+            description: Build shared library
+            enabled: true
+            enabled_value: 1
+          - name: -DCMAKE_C_FLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+          - name: -DCMAKE_CXX_FLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
   fftw3:
     description: FFTW is a C library for computing the discrete Fourier transform in one or more dimensions, of arbitrary input size, and of both real and complex data.
     version: 3.3.11
