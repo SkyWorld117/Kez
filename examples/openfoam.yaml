@@ -265,11 +265,11 @@ cheese:
     build:
       configurations:
         options:
-          - name: CMAKE_C_FLAGS
+          - name: -DCMAKE_C_FLAGS
             description: C compiler flags
             enabled: true
             enabled_value: -O3
-          - name: CMAKE_CXX_FLAGS
+          - name: -DCMAKE_CXX_FLAGS
             description: C++ compiler flags
             enabled: true
             enabled_value: -O3
