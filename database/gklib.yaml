@@ -22,7 +22,7 @@ cheese:
                 default: ${gklib.prefix}
       - target: ~
       - target: install
-    postprocessing: >
-      mkdir -p ${gklib.prefix}/lib &&
-      cp ${gklib.prefix}/lib64/libGKlib.a ${gklib.prefix}/lib
+    postprocessing: |-
+      mkdir -p ${gklib.prefix}/lib
+      cp ${gklib.prefix}/lib64/libGKlib.a ${gklib.prefix}/lib/
 

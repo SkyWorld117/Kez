@@ -24,8 +24,8 @@ cheese:
     - mpfr
 
   build:
-    preprocessing: >
-      set +u;
+    preprocessing: |-
+      set +u
       bin/tools/foamConfigurePaths \
         -adios-path ${adios2.prefix} \
         -boost-path ${boost.prefix} \
@@ -33,13 +33,13 @@ cheese:
         -fftw-path ${fftw3-api.prefix} \
         -kahip-path ${kahip.prefix} \
         -metis-path ${metis.prefix} \
-        -scotch-path ${scotch6.prefix};
+        -scotch-path ${scotch6.prefix}
       set -u
 
     configurations:
-      command: >
-        set +u;
-        source etc/config.sh/setup && ./Allwmake -j $FROMAGER_NPROC;
+      command: |-
+        set +u
+        source etc/config.sh/setup && ./Allwmake -j $FROMAGER_NPROC
         set -u
 
       environment:
@@ -125,11 +125,11 @@ cheese:
           description: Extra linker flags for OpenFOAM to bake RPATH
           default: ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
 
-    postprocessing: >
-      cp -r ${source}/platforms/linux*/* ${openfoam.prefix}/ &&
-      cp -r ${source}/bin ${openfoam.prefix}/ &&
-      cp -r ${source}/etc ${openfoam.prefix}/ &&
-      cp -r ${source}/tutorials ${openfoam.prefix}/ &&
+    postprocessing: |-
+      cp -r ${source}/platforms/linux*/* ${openfoam.prefix}/
+      cp -r ${source}/bin ${openfoam.prefix}/
+      cp -r ${source}/etc ${openfoam.prefix}/
+      cp -r ${source}/tutorials ${openfoam.prefix}/
       bash $FROMAGER_HOME/patches/fgr_patch_rpath.sh ${openfoam.prefix}/lib/sys-openmpi/libptscotchDecomp.so ${openmpi.prefix}/lib
 
   properties:

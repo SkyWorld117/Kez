@@ -84,8 +84,8 @@ cheese:
             - target: libascot
               configurations: *ascot_configurations
 
-        postprocessing: >
-            cp -r ${source}/build/* ${ascot5.prefix}/bin/ &&
-            mkdir -p ${ascot5.prefix}/ascot5/             &&
+        postprocessing: |-
+            cp -r ${source}/build/* ${ascot5.prefix}/bin/
+            mkdir -p ${ascot5.prefix}/ascot5/
             cp -r ${source}/* ${ascot5.prefix}/ascot5/
 

@@ -17,8 +17,8 @@ cheese:
     - mpi
 
   build:
-    preprocessing: >
-      cp ${source}/src/Make.inc/Makefile.inc.x86-64_pc_linux2.shlib ${source}/src/Makefile.inc &&
+    preprocessing: |-
+      cp ${source}/src/Make.inc/Makefile.inc.x86-64_pc_linux2.shlib ${source}/src/Makefile.inc
       cd ${source}/src
 
     stages:

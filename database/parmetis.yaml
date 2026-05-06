@@ -17,7 +17,7 @@ cheese:
     - metis
 
   build:
-    preprocessing: >
+    preprocessing: |-
       sed -i 's|cd $(BUILDDIR) && cmake $(CURDIR) $(CONFIG_FLAGS)|cd $(BUILDDIR) \&\& cmake $(CURDIR) $(CONFIG_FLAGS) -DCMAKE_POLICY_VERSION_MINIMUM=3.5|' Makefile
     stages: 
       - target: config

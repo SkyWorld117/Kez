@@ -19,12 +19,12 @@ cheese:
 
   build:
     preprocessing: git submodule update --init --recursive
-    postprocessing: >
-      mkdir -p ${exascale-climate-emulator.prefix} &&
-      cp -r tests/* ${exascale-climate-emulator.prefix}/bin/ &&
-      old_rpath=$(patchelf --print-rpath ${exascale-climate-emulator.prefix}/bin/testing_climate_emulator) &&
-      new_rpath=$(echo "$old_rpath" | tr ':' '\n' | grep -v '/\.tmp/source' | tr '\n' ':') &&
-      new_rpath="$new_rpath:${exascale-climate-emulator.prefix}/lib:${exascale-climate-emulator.prefix}/lib64" &&
+    postprocessing: |-
+      mkdir -p ${exascale-climate-emulator.prefix}
+      cp -r tests/* ${exascale-climate-emulator.prefix}/bin/
+      old_rpath=$(patchelf --print-rpath ${exascale-climate-emulator.prefix}/bin/testing_climate_emulator)
+      new_rpath=$(echo "$old_rpath" | tr ':' '\n' | grep -v '/\.tmp/source' | tr '\n' ':')
+      new_rpath="$new_rpath:${exascale-climate-emulator.prefix}/lib:${exascale-climate-emulator.prefix}/lib64"
       patchelf --set-rpath "$new_rpath" ${exascale-climate-emulator.prefix}/bin/testing_climate_emulator
 
     configurations:
