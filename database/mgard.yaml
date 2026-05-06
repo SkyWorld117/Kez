@@ -59,12 +59,12 @@ cheese:
         - name: -DCMAKE_BUILD_RPATH
           description: RPATH for built libraries
           enabled_value:
-            default: ${mgard.prefix}/lib
+            default: ${mgard.prefix}/lib64
 
         - name: -DCMAKE_INSTALL_RPATH
           description: RPATH for installed libraries
           enabled_value:
-            default: ${mgard.prefix}/lib
+            default: ${mgard.prefix}/lib64
 
         - name: -DCMAKE_CXX_FLAGS
           description: C++ compiler flags
