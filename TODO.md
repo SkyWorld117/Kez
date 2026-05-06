@@ -48,3 +48,4 @@
 # Uncategorized
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
+| Not Started | Add bash and yaml formatter. | - |
