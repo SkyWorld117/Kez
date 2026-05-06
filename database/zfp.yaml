@@ -28,33 +28,33 @@ cheese:
           enabled_value:
             default: ON
 
-        - name: CMAKE_C_COMPILER
+        - name: -DCMAKE_C_COMPILER
           description: C compiler
           enabled_value:
             default: ${compiler.c}
 
-        - name: CMAKE_CXX_COMPILER
+        - name: -DCMAKE_CXX_COMPILER
           description: C++ compiler
           enabled_value:
             default: ${compiler.cxx}
 
-        - name: CMAKE_BUILD_RPATH
+        - name: -DCMAKE_BUILD_RPATH
           description: RPATH for built libraries
           enabled_value:
             default: ${zfp.prefix}/lib
 
-        - name: CMAKE_INSTALL_RPATH
+        - name: -DCMAKE_INSTALL_RPATH
           description: RPATH for installed libraries
           enabled_value:
             default: ${zfp.prefix}/lib
 
-        - name: CMAKE_C_FLAGS
+        - name: -DCMAKE_C_FLAGS
           description: C compiler flags
           user_configurable: true
           enabled_value:
             default: -O3
 
-        - name: CMAKE_CXX_FLAGS
+        - name: -DCMAKE_CXX_FLAGS
           description: C++ compiler flags
           user_configurable: true
           enabled_value:
