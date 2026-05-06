@@ -1,7 +1,7 @@
 cheese:
   openfoam:
     description: OpenFOAM is a free, open source CFD software package.
-    version: v2412
+    version: 2412
     compiler: system
     build:
       configurations:
@@ -36,7 +36,7 @@ cheese:
               - name: CFLAGS
                 description: C compiler flags
                 enabled: true
-                enabled_value: -O3 -fPIC -UCOMMON_FILE_COMPRESS -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_DETERMINISTIC -DSCOTCH_RENAME -DIDXSIZE64 -Drestrict=__restrict -DINTSIZE64
+                enabled_value: -O3 -fPIC ${scotch6.ldflags} -UCOMMON_FILE_COMPRESS -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_DETERMINISTIC -DSCOTCH_RENAME -DIDXSIZE64 -Drestrict=__restrict -DINTSIZE64
 
   kahip:
     description: KaHIP is a Karlsruhe High Quality Partitioning software package.

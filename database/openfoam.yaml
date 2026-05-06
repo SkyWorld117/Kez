@@ -7,7 +7,7 @@ cheese:
     type: git
     url: https://gitlab.com/openfoam/core/openfoam.git
     releases:
-      - version: v2412
+      - version: 2412
         tag: OpenFOAM-v2412
 
   dependencies:
@@ -25,7 +25,7 @@ cheese:
 
   build:
     preprocessing: >
-      set +Eeuo pipefail;
+      set +u;
       bin/tools/foamConfigurePaths \
         -adios-path ${adios2.prefix} \
         -boost-path ${boost.prefix} \
@@ -34,18 +34,18 @@ cheese:
         -kahip-path ${kahip.prefix} \
         -metis-path ${metis.prefix} \
         -scotch-path ${scotch6.prefix};
-      set -Eeuo pipefail
+      set -u
 
     configurations:
       command: >
-        set +Eeuo pipefail;
-        source etc/config.sh/setup && ./Allwmake -j;
-        set -Eeuo pipefail
+        set +u;
+        source etc/config.sh/setup && ./Allwmake -j $FROMAGER_NPROC;
+        set -u
 
       environment:
         - name: WM_PROJECT_VERSION
           description: Version of the OpenFOAM project
-          default: ${openfoam.version}
+          default: v${openfoam.version}
 
         - name: WM_COMPILER_TYPE
           description: Compiler type for OpenFOAM
