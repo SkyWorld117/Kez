@@ -1,6 +1,9 @@
 #include <fstream>
+#include <regex>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
+#include <utils/string_utils.hpp>
+#include "utils/colored_io.hpp"
 
 static argparse::ArgumentParser rt_parser("rt");
 static argparse::ArgumentParser rt_factory_parser("factory");
@@ -253,7 +256,74 @@ void execute_rt_parser() {
         }
         std::filesystem::path tasting_rooms_path = factory_path / "tasting_rooms";
 
-        EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_rt_summarize");
+        std::filesystem::path ins_yaml = tasting_rooms_path / "ins.yaml";
+        if (!std::filesystem::exists(ins_yaml)) {
+            ERROR("Tasting room instruction file not found: " + ins_yaml.string());
+            exit(EXIT_FAILURE);
+        }
+
+        YAML::Node instructions_yaml = YAML::LoadFile(ins_yaml.string());
+        int cellar_count = instructions_yaml.size();
+        for (int i = 0; i < cellar_count; ++i) {
+            std::string cellar_name = instructions_yaml[i]["name"].as<std::string>();
+            int run_configs_count = instructions_yaml[i]["profiles"].size();
+            for (int j = 0; j < run_configs_count; ++j) {
+                std::string run_config_name = instructions_yaml[i]["profiles"][j]["name"].as<std::string>();
+                std::filesystem::path fgr_stdout =
+                    factory_path / "tasting_rooms" / (cellar_name + "_" + run_config_name) / "fgr.out";
+                std::filesystem::path fgr_stderr =
+                    factory_path / "tasting_rooms" / (cellar_name + "_" + run_config_name) / "fgr.err";
+
+                if (!std::filesystem::exists(fgr_stdout) && !std::filesystem::exists(fgr_stderr)) {
+                    WARNING("No output files found for cellar: " + cellar_name + ", run config: " + run_config_name);
+                    continue;
+                }
+
+                std::string summary_regex = instructions_yaml[i]["profiles"][j]["summary_regex"].as<std::string>();
+                if (summary_regex.empty()) {
+                    WARNING("No summary regex defined for cellar: " + cellar_name + ", run config: " + run_config_name);
+                    continue;
+                }
+
+                INFO("Summary for cellar: " + cellar_name + ", run config: " + run_config_name);
+                bool stdout_has_match = false;
+                bool stderr_has_match = false;
+
+                if (std::filesystem::exists(fgr_stdout)) {
+                    std::string stdout_content = read_file(fgr_stdout.string());
+                    std::vector<std::string> stdout_lines = split(stdout_content, '\n');
+                    for (const std::string& line : stdout_lines) {
+                        if (std::regex_search(line, std::regex(summary_regex))) {
+                            INFO(line);
+                            stdout_has_match = true;
+                        }
+                    }
+                } else {
+                    WARNING("No stdout output file found for cellar: " + cellar_name + ", run config: " + run_config_name);
+                }
+
+                if (std::filesystem::exists(fgr_stderr)) {
+                    std::string stderr_content = read_file(fgr_stderr.string());
+                    std::vector<std::string> stderr_lines = split(stderr_content, '\n');
+                    for (const std::string& line : stderr_lines) {
+                        if (std::regex_search(line, std::regex(summary_regex))) {
+                            INFO(line);
+                            stderr_has_match = true;
+                        }
+                    }
+                } else {
+                    WARNING("No stderr output file found for cellar: " + cellar_name + ", run config: " + run_config_name);
+                }
+
+                if (!stdout_has_match) {
+                    WARNING("No matches found in stdout.");
+                }
+                if (!stderr_has_match) {
+                    WARNING("No matches found in stderr.");
+                }
+            }
+        }
+
         SUCCESS("Tasting summary completed.");
     }
 

@@ -6,3 +6,5 @@
 std::vector<std::string> split(const std::string& str, char delimiter);
 
 std::size_t get_length_without_color(const std::string& str);
+
+std::string read_file(const std::string& path);

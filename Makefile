@@ -160,7 +160,7 @@ $(OBJ_DIR)/global_config.o: $(SRC_DIR)/global_config.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for UI argparser
-$(OBJ_DIR)/ui/argparser/%.o: $(SRC_DIR)/ui/argparser/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/ui/argparser/%.o: $(SRC_DIR)/ui/argparser/%.cpp | $(OBJ_DIR) $(UTILS_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for Bash completion
