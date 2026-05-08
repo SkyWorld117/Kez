@@ -6,7 +6,11 @@ _fgr_complete() {
         # Call the completion script and capture its output
         COMPREPLY=($("${FROMAGER_HOME}/bin/fromager_bash_completion" "$COMP_CWORD" "${COMP_WORDS[@]}"))
     else
-        COMPREPLY=()
+        if [[ ${COMP_CWORD} == 1 ]]; then
+            COMPREPLY=($(compgen -W "init" -- "${COMP_WORDS[COMP_CWORD]}"))
+        elif [[ ${COMP_WORDS[1]} == "init" ]]; then
+            COMPREPLY=($(compgen -W "--with-slurm --refresh" -- "${COMP_WORDS[COMP_CWORD]}"))
+        fi
     fi
 }
 
