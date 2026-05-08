@@ -45,12 +45,6 @@ void parse_configuration(std::vector<std::string>& instructions,
         std::string env_value = getenv(key.c_str()) ? getenv(key.c_str()) : "";
         env_map[key] = env_value;
         instructions.push_back("export " + key + "=\"" + value + "\"");
-
-        // Specially handle PATH to add Fromager's bin directory
-        if (key == "PATH") {
-            std::string fromager_bin = std::string(getenv("FROMAGER_HOME")) + "/bin";
-            env_map[key] = fromager_bin + ":" + env_map[key];
-        }
     }
 
     // Add command to instructions

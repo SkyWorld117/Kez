@@ -2,13 +2,16 @@
 
 set -Eeuo pipefail
 
-export PATH=${FROMAGER_HOME}/bin:${PATH}
+FGR_INFO=${FROMAGER_HOME}/bin/fromager_info
+FGR_WARNING=${FROMAGER_HOME}/bin/fromager_warning
+FGR_ERROR=${FROMAGER_HOME}/bin/fromager_error
+FGR_SUCCESS=${FROMAGER_HOME}/bin/fromager_success
 
 factory_dir="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}"
 ins_yaml="${factory_dir}/tasting_rooms/ins.yaml"
 
 if [ ! -f "${ins_yaml}" ]; then
-    fromager_error "RT instruction file not found: ${ins_yaml}"
+    ${FGR_ERROR} "RT instruction file not found: ${ins_yaml}"
     exit 1
 fi
 
@@ -23,20 +26,20 @@ for ((i=0; i<cellar_count; i++)); do
         fgr_stderr="${factory_dir}/tasting_rooms/${cellar_name}_${run_config_name}/fgr.err"
 
         if [ ! -f "${fgr_stdout}" ] && [ ! -f "${fgr_stderr}" ]; then
-            fromager_warning "No output files found for cellar: ${cellar_name}, run config: ${run_config_name}"
+            ${FGR_WARNING} "No output files found for cellar: ${cellar_name}, run config: ${run_config_name}"
             continue
         fi
 
         summary_regex=$(yq -r .[$i].profiles[$j].summary_regex "${ins_yaml}")
 
         if [ -z "${summary_regex}" ]; then
-            fromager_warning "No summary regex defined for cellar: ${cellar_name}, run config: ${run_config_name}"
+            ${FGR_WARNING} "No summary regex defined for cellar: ${cellar_name}, run config: ${run_config_name}"
             continue
         fi
 
-        fromager_info "Summary for cellar: ${cellar_name}, run config: ${run_config_name}"
-        fromager_info "$(grep -E "${summary_regex}" "${fgr_stdout}" || echo "No matches found in stdout.")"
-        fromager_info "$(grep -E "${summary_regex}" "${fgr_stderr}" || echo "No matches found in stderr.")"
+        ${FGR_INFO} "Summary for cellar: ${cellar_name}, run config: ${run_config_name}"
+        ${FGR_INFO} "$(grep -E "${summary_regex}" "${fgr_stdout}" || echo "No matches found in stdout.")"
+        ${FGR_INFO} "$(grep -E "${summary_regex}" "${fgr_stderr}" || echo "No matches found in stderr.")"
     done
 done
 

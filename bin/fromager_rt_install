@@ -2,7 +2,11 @@
 
 set -Eeuo pipefail
 
-export PATH=${FROMAGER_HOME}/bin:${PATH}
+FGR_INFO=${FROMAGER_HOME}/bin/fromager_info
+FGR_WARNING=${FROMAGER_HOME}/bin/fromager_warning
+FGR_ERROR=${FROMAGER_HOME}/bin/fromager_error
+FGR_SUCCESS=${FROMAGER_HOME}/bin/fromager_success
+FGR_RT_RESOLVE_DEPENDENCIES=${FROMAGER_HOME}/bin/fromager_rt_resolve_dependencies
 
 target_cellar=$1
 user_config=$2
@@ -10,7 +14,7 @@ target_package=$3
 
 rm -rf $target_cellar/.tmp/source $target_cellar/.tmp/source*
 
-fromager_rt_resolve_dependencies "$user_config" "$target_cellar" "$target_package"
+${FGR_RT_RESOLVE_DEPENDENCIES} "$user_config" "$target_cellar" "$target_package"
 
 # Process each package and its instructions
 package_count=$(yq -r '. | length' "$target_cellar/.tmp/filtered_ins.yaml")
@@ -24,7 +28,7 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
     # Extract package name
     package_name=$(yq -r ".[$pkg_idx].package" "$target_cellar/.tmp/filtered_ins.yaml")
 
-    fromager_info "Processing package: $package_name"
+    ${FGR_INFO} "Processing package: $package_name"
     cd "$target_cellar/.tmp"
 
     # Get number of instructions for this package
@@ -33,7 +37,7 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
     # Execute each instruction
     for ((instr_idx=0; instr_idx<instruction_count; instr_idx++)); do
         instruction=$(yq -r ".[$pkg_idx].instructions[$instr_idx]" "$target_cellar/.tmp/filtered_ins.yaml")
-        fromager_info "Executing: $instruction"
+        ${FGR_INFO} "Executing: $instruction"
         saved_pkg_idx=$pkg_idx
         saved_instr_idx=$instr_idx
         eval "$instruction"
@@ -41,7 +45,7 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
         pkg_idx=$saved_pkg_idx
         instr_idx=$saved_instr_idx
         if [ $instruction_status -ne 0 ]; then
-            fromager_error "Failed to execute: $instruction"
+            ${FGR_ERROR} "Failed to execute: $instruction"
             exit 1
         fi
     done
@@ -51,7 +55,7 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
         echo "  - $package_name" >> "$target_cellar/state.yaml"
     fi
 
-    fromager_success "Completed processing package: $package_name"
+    ${FGR_SUCCESS} "Completed processing package: $package_name"
 
     rm -rf "$target_cellar/.tmp/source"
 done
