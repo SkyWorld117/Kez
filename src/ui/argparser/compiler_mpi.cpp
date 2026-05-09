@@ -55,7 +55,8 @@ void execute_compiler_parser() {
 
     if (compiler_parser.is_subcommand_used("unload")) {
         // Print out the command to unset PATH for the unloaded compiler. The main shell script will evaluate this output and update the environment accordingly.
-        std::string compiler_name = get_env_var("FROMAGER_COMPILER", "No compiler is currently loaded");
+        std::string compiler_name =
+            get_env_var("FROMAGER_COMPILER", "No compiler is currently loaded");
         std::filesystem::path compiler_path =
             global_config::get_path("compilers") + "/" + compiler_name;
         std::cout << "export PATH=\"$(echo $PATH | sed -e 's;" + compiler_path.string() +
@@ -188,7 +189,8 @@ void execute_mpi_parser() {
 
     if (mpi_parser.is_subcommand_used("unload")) {
         // Print out the command to unset PATH for the unloaded MPI implementation. The main shell script will evaluate this output and update the environment accordingly.
-        std::string mpi_name = get_env_var("FROMAGER_MPI", "No MPI implementation is currently loaded");
+        std::string mpi_name =
+            get_env_var("FROMAGER_MPI", "No MPI implementation is currently loaded");
         std::filesystem::path mpi_path = global_config::get_path("mpis") + "/" + mpi_name;
         std::cout << "export PATH=\"$(echo $PATH | sed -e 's;" + mpi_path.string() +
                          "/bin:;;g')\"; unset FROMAGER_MPI"

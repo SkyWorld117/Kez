@@ -1,11 +1,8 @@
 #include <parser/configuration_parser.hpp>
 #include <utils/bash_utils.hpp>
 
-void parse_configuration(std::vector<std::string>& instructions,
-                         const std::string& command,
-                         YAML::Node& config,
-                         const std::string& toolchain,
-                         ParserContext& context) {
+void parse_configuration(std::vector<std::string>& instructions, const std::string& command,
+                         YAML::Node& config, const std::string& toolchain, ParserContext& context) {
     // Unpack context
     const YAML::Node user_config_context = context.user_config_context;
 
@@ -44,7 +41,7 @@ void parse_configuration(std::vector<std::string>& instructions,
     std::unordered_map<std::string, std::string> env_map;
     for (const auto& [key, value] : env_config) {
         std::string env_value = get_env_var_noerr(key);
-        env_map[key] = env_value;
+        env_map[key]          = env_value;
         instructions.push_back("export " + key + "=\"" + value + "\"");
     }
 

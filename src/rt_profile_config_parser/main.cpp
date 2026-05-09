@@ -1,10 +1,10 @@
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <rt_profile_config_parser/factory_parser.hpp>
+#include <utils/colored_io.hpp>
 
 int main(int argc, char* argv[]) {
     // Expected arguments:

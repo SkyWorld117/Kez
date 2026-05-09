@@ -6,8 +6,8 @@
 
 std::string parse_template(const std::string& template_str, ParserContext& context) {
     // Unpack context
-    const YAML::Node user_config                              = context.user_config;
-    const YAML::Node user_config_pkg                          = context.user_config_pkg;
+    const YAML::Node user_config                               = context.user_config;
+    const YAML::Node user_config_pkg                           = context.user_config_pkg;
     const std::string& env_path                                = context.env_path;
     std::unordered_map<std::string, std::string>& template_map = context.template_map;
 

@@ -1,5 +1,5 @@
-#include <utils/bash_utils.hpp>
 #include <string>
+#include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 
 std::string get_env_var(const std::string& var_name) {

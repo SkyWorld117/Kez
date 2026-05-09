@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <global_config.hpp>
 #include <string>
-#include <vector>
 #include <utils/bash_utils.hpp>
+#include <vector>
 
 inline bool exists_in(const std::vector<std::string>& comp_words, const std::string& option) {
     return std::find(comp_words.begin(), comp_words.end(), option) != comp_words.end();

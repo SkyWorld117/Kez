@@ -27,7 +27,8 @@ argparse::ArgumentParser& get_utilities_parser() {
         .default_value(false)
         .implicit_value(true);
     util_add_parser.add_argument("-S", "--with-slurm")
-        .help("Install the utility with Slurm support by wrapping the installation command with sbatch")
+        .help("Install the utility with Slurm support by wrapping the installation command with "
+              "sbatch")
         .default_value(false)
         .implicit_value(true);
 

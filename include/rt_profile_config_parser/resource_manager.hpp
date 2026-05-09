@@ -2,8 +2,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
 #include <string>
+#include <utils/colored_io.hpp>
 
 std::string wrap_with_resource_manager(
     const std::string& target, const std::string& launcher, const std::string& launcher_opts,

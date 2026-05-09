@@ -1,7 +1,8 @@
+#include <yaml-cpp/yaml.h>
+
 #include <dependency_resolver/advisor.hpp>
 #include <filesystem>
 #include <utils/bash_utils.hpp>
-#include <yaml-cpp/yaml.h>
 
 std::string advise(const std::string& abstract_pkg) {
     std::filesystem::path config_path =

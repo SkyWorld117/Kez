@@ -3,8 +3,8 @@
 #include <global_config.hpp>
 #include <parser/scalar_parser.hpp>
 #include <string>
-#include <utils/colored_io.hpp>
 #include <utils/bash_utils.hpp>
+#include <utils/colored_io.hpp>
 
 std::filesystem::path prefix_path = get_env_var("FROMAGER_WORKDIR");
 std::filesystem::path config_path = prefix_path / "config.yaml";

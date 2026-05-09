@@ -1,11 +1,12 @@
 #include <parser/environment_parser.hpp>
 #include <unordered_map>
 
-std::unordered_map<std::string, std::string> parse_environment(const YAML::Node& env_node, ParserContext& context) {
+std::unordered_map<std::string, std::string> parse_environment(const YAML::Node& env_node,
+                                                               ParserContext& context) {
     // Unpack context
-    const YAML::Node user_config                              = context.user_config;
-    const YAML::Node user_config_context                      = context.user_config_context;
-    const YAML::Node pkg_config                               = context.pkg_config;
+    const YAML::Node user_config                               = context.user_config;
+    const YAML::Node user_config_context                       = context.user_config_context;
+    const YAML::Node pkg_config                                = context.pkg_config;
     std::unordered_map<std::string, std::string>& template_map = context.template_map;
 
     std::string pkg_name = pkg_config["cheese"]["name"].as<std::string>();
@@ -58,7 +59,7 @@ std::unordered_map<std::string, std::string> parse_environment(const YAML::Node&
 
         if (!value.empty()) {
             // Resolve templates in the value
-            value = parse_scalar(value, context);
+            value              = parse_scalar(value, context);
             env_vars[var_name] = value;
         }
 

@@ -11,8 +11,5 @@
 
 // First string is the environment configuration
 // Second string is the options configuration
-void parse_configuration(std::vector<std::string>& instructions,
-                         const std::string& command,
-                         YAML::Node& config,
-                         const std::string& toolchain,
-                         ParserContext& context);
+void parse_configuration(std::vector<std::string>& instructions, const std::string& command,
+                         YAML::Node& config, const std::string& toolchain, ParserContext& context);

@@ -2,9 +2,9 @@
 #include <regex>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
-#include <utils/file_utils.hpp>
-#include <utils/colored_io.hpp>
 #include <utils/bash_utils.hpp>
+#include <utils/colored_io.hpp>
+#include <utils/file_utils.hpp>
 
 static argparse::ArgumentParser rt_parser("rt");
 static argparse::ArgumentParser rt_factory_parser("factory");
@@ -124,7 +124,8 @@ void execute_rt_parser() {
         }
 
         if (rt_factory_parser.is_subcommand_used("exit")) {
-            std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered");
+            std::string factory_name =
+                get_env_var("FROMAGER_FACTORY", "No factory is currently entered");
             std::cout << "unset FROMAGER_FACTORY" << std::endl;
         }
 
@@ -143,7 +144,9 @@ void execute_rt_parser() {
     if (rt_parser.is_subcommand_used("build")) {
         INFO("Starting rapid test build process...");
 
-        std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a factory to use its environment for building.");
+        std::string factory_name =
+            get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a "
+                                            "factory to use its environment for building.");
         std::filesystem::path factory_path =
             global_config::get_path("factories") + "/" + factory_name;
 
@@ -197,7 +200,9 @@ void execute_rt_parser() {
 
     if (rt_parser.is_subcommand_used("taste")) {
         INFO("Tasting the cheese...");
-        std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a factory to use its environment for tasting.");
+        std::string factory_name =
+            get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a "
+                                            "factory to use its environment for tasting.");
         std::filesystem::path factory_path =
             global_config::get_path("factories") + "/" + factory_name;
 
@@ -222,7 +227,9 @@ void execute_rt_parser() {
 
     if (rt_parser.is_subcommand_used("summarize")) {
         INFO("Summarizing the results...");
-        std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a factory to use its environment for summarizing.");
+        std::string factory_name =
+            get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a "
+                                            "factory to use its environment for summarizing.");
         std::filesystem::path factory_path =
             global_config::get_path("factories") + "/" + factory_name;
 
@@ -244,25 +251,31 @@ void execute_rt_parser() {
         }
 
         YAML::Node instructions_yaml = YAML::LoadFile(ins_yaml.string());
-        int cellar_count = instructions_yaml.size();
+        int cellar_count             = instructions_yaml.size();
         for (int i = 0; i < cellar_count; ++i) {
             std::string cellar_name = instructions_yaml[i]["name"].as<std::string>();
-            int run_configs_count = instructions_yaml[i]["profiles"].size();
+            int run_configs_count   = instructions_yaml[i]["profiles"].size();
             for (int j = 0; j < run_configs_count; ++j) {
-                std::string run_config_name = instructions_yaml[i]["profiles"][j]["name"].as<std::string>();
-                std::filesystem::path fgr_stdout =
-                    factory_path / "tasting_rooms" / (cellar_name + "_" + run_config_name) / "fgr.out";
-                std::filesystem::path fgr_stderr =
-                    factory_path / "tasting_rooms" / (cellar_name + "_" + run_config_name) / "fgr.err";
+                std::string run_config_name =
+                    instructions_yaml[i]["profiles"][j]["name"].as<std::string>();
+                std::filesystem::path fgr_stdout = factory_path / "tasting_rooms" /
+                                                   (cellar_name + "_" + run_config_name) /
+                                                   "fgr.out";
+                std::filesystem::path fgr_stderr = factory_path / "tasting_rooms" /
+                                                   (cellar_name + "_" + run_config_name) /
+                                                   "fgr.err";
 
                 if (!std::filesystem::exists(fgr_stdout) && !std::filesystem::exists(fgr_stderr)) {
-                    WARNING("No output files found for cellar: " + cellar_name + ", run config: " + run_config_name);
+                    WARNING("No output files found for cellar: " + cellar_name +
+                            ", run config: " + run_config_name);
                     continue;
                 }
 
-                std::string summary_regex = instructions_yaml[i]["profiles"][j]["summary_regex"].as<std::string>();
+                std::string summary_regex =
+                    instructions_yaml[i]["profiles"][j]["summary_regex"].as<std::string>();
                 if (summary_regex.empty()) {
-                    WARNING("No summary regex defined for cellar: " + cellar_name + ", run config: " + run_config_name);
+                    WARNING("No summary regex defined for cellar: " + cellar_name +
+                            ", run config: " + run_config_name);
                     continue;
                 }
 
@@ -271,7 +284,7 @@ void execute_rt_parser() {
                 bool stderr_has_match = false;
 
                 if (std::filesystem::exists(fgr_stdout)) {
-                    std::string stdout_content = read_file(fgr_stdout.string());
+                    std::string stdout_content            = read_file(fgr_stdout.string());
                     std::vector<std::string> stdout_lines = split(stdout_content, '\n');
                     for (const std::string& line : stdout_lines) {
                         if (std::regex_search(line, std::regex(summary_regex))) {
@@ -280,11 +293,12 @@ void execute_rt_parser() {
                         }
                     }
                 } else {
-                    WARNING("No stdout output file found for cellar: " + cellar_name + ", run config: " + run_config_name);
+                    WARNING("No stdout output file found for cellar: " + cellar_name +
+                            ", run config: " + run_config_name);
                 }
 
                 if (std::filesystem::exists(fgr_stderr)) {
-                    std::string stderr_content = read_file(fgr_stderr.string());
+                    std::string stderr_content            = read_file(fgr_stderr.string());
                     std::vector<std::string> stderr_lines = split(stderr_content, '\n');
                     for (const std::string& line : stderr_lines) {
                         if (std::regex_search(line, std::regex(summary_regex))) {
@@ -293,7 +307,8 @@ void execute_rt_parser() {
                         }
                     }
                 } else {
-                    WARNING("No stderr output file found for cellar: " + cellar_name + ", run config: " + run_config_name);
+                    WARNING("No stderr output file found for cellar: " + cellar_name +
+                            ", run config: " + run_config_name);
                 }
 
                 if (!stdout_has_match) {
@@ -309,7 +324,9 @@ void execute_rt_parser() {
     }
 
     if (rt_parser.is_subcommand_used("try")) {
-        std::string cellar_name = get_env_var("FROMAGER_CELLAR", "No cellar is currently entered. Please enter a cellar to use its environment for trying the configuration.");
+        std::string cellar_name =
+            get_env_var("FROMAGER_CELLAR", "No cellar is currently entered. Please enter a cellar "
+                                           "to use its environment for trying the configuration.");
 
         std::string config_path = rt_try_parser.get<std::string>("config");
         std::string package     = rt_try_parser.get<std::string>("package");

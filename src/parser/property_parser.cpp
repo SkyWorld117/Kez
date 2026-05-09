@@ -5,8 +5,8 @@
 std::string parse_property(const std::string& property_name, ParserContext& context) {
     // Unpack context
     std::unordered_map<std::string, std::string>& template_map = context.template_map;
-    const YAML::Node user_config                              = context.user_config;
-    const YAML::Node user_config_pkg                          = context.user_config_pkg;
+    const YAML::Node user_config                               = context.user_config;
+    const YAML::Node user_config_pkg                           = context.user_config_pkg;
     const std::string& build_mode                              = context.build_mode;
     const std::string& env_path                                = context.env_path;
 
