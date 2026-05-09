@@ -2,10 +2,10 @@
 
 set -Eeuo pipefail
 
-FGR_INFO=${FROMAGER_HOME}/bin/fromager_info
-FGR_WARNING=${FROMAGER_HOME}/bin/fromager_warning
-FGR_ERROR=${FROMAGER_HOME}/bin/fromager_error
-FGR_SUCCESS=${FROMAGER_HOME}/bin/fromager_success
+FGR_INFO=${FROMAGER_HOME}/bin/colored_io/fromager_info
+FGR_WARNING=${FROMAGER_HOME}/bin/colored_io/fromager_warning
+FGR_ERROR=${FROMAGER_HOME}/bin/colored_io/fromager_error
+FGR_SUCCESS=${FROMAGER_HOME}/bin/colored_io/fromager_success
 
 target_cellar=$1
 

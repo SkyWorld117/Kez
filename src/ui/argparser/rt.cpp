@@ -2,8 +2,9 @@
 #include <regex>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
-#include <utils/string_utils.hpp>
-#include "utils/colored_io.hpp"
+#include <utils/file_utils.hpp>
+#include <utils/colored_io.hpp>
+#include <utils/bash_utils.hpp>
 
 static argparse::ArgumentParser rt_parser("rt");
 static argparse::ArgumentParser rt_factory_parser("factory");
@@ -123,18 +124,12 @@ void execute_rt_parser() {
         }
 
         if (rt_factory_parser.is_subcommand_used("exit")) {
-            std::string factory_name =
-                std::getenv("FROMAGER_FACTORY") ? std::getenv("FROMAGER_FACTORY") : "";
-            if (factory_name.empty()) {
-                ERROR("No factory is currently entered.");
-                exit(EXIT_FAILURE);
-            }
+            std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered");
             std::cout << "unset FROMAGER_FACTORY" << std::endl;
         }
 
         if (rt_factory_parser.is_subcommand_used("which")) {
-            std::string factory_name =
-                std::getenv("FROMAGER_FACTORY") ? std::getenv("FROMAGER_FACTORY") : "";
+            std::string factory_name = get_env_var_noerr("FROMAGER_FACTORY");
             if (factory_name.empty()) {
                 INFO("Not currently in a factory.");
             } else {
@@ -147,12 +142,8 @@ void execute_rt_parser() {
 
     if (rt_parser.is_subcommand_used("build")) {
         INFO("Starting rapid test build process...");
-        if (std::getenv("FROMAGER_FACTORY") == nullptr) {
-            ERROR("No factory is currently entered. Please enter a factory to use its "
-                  "environment for building.");
-            exit(EXIT_FAILURE);
-        }
-        std::string factory_name = std::getenv("FROMAGER_FACTORY");
+
+        std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a factory to use its environment for building.");
         std::filesystem::path factory_path =
             global_config::get_path("factories") + "/" + factory_name;
 
@@ -206,12 +197,7 @@ void execute_rt_parser() {
 
     if (rt_parser.is_subcommand_used("taste")) {
         INFO("Tasting the cheese...");
-        if (std::getenv("FROMAGER_FACTORY") == nullptr) {
-            ERROR("No factory is currently entered. Please enter a factory to use its "
-                  "environment for tasting.");
-            exit(EXIT_FAILURE);
-        }
-        std::string factory_name = std::getenv("FROMAGER_FACTORY");
+        std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a factory to use its environment for tasting.");
         std::filesystem::path factory_path =
             global_config::get_path("factories") + "/" + factory_name;
 
@@ -236,12 +222,7 @@ void execute_rt_parser() {
 
     if (rt_parser.is_subcommand_used("summarize")) {
         INFO("Summarizing the results...");
-        if (std::getenv("FROMAGER_FACTORY") == nullptr) {
-            ERROR("No factory is currently entered. Please enter a factory to use its "
-                  "environment for summarizing.");
-            exit(EXIT_FAILURE);
-        }
-        std::string factory_name = std::getenv("FROMAGER_FACTORY");
+        std::string factory_name = get_env_var("FROMAGER_FACTORY", "No factory is currently entered. Please enter a factory to use its environment for summarizing.");
         std::filesystem::path factory_path =
             global_config::get_path("factories") + "/" + factory_name;
 
@@ -328,12 +309,7 @@ void execute_rt_parser() {
     }
 
     if (rt_parser.is_subcommand_used("try")) {
-        if (std::getenv("FROMAGER_CELLAR") == nullptr) {
-            ERROR("No cellar is currently entered. Please enter a cellar to use its "
-                  "environment for trying the configuration.");
-            exit(EXIT_FAILURE);
-        }
-        std::string cellar_name = std::getenv("FROMAGER_CELLAR");
+        std::string cellar_name = get_env_var("FROMAGER_CELLAR", "No cellar is currently entered. Please enter a cellar to use its environment for trying the configuration.");
 
         std::string config_path = rt_try_parser.get<std::string>("config");
         std::string package     = rt_try_parser.get<std::string>("package");

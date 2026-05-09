@@ -1,6 +1,7 @@
 #include <fstream>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
+#include <utils/bash_utils.hpp>
 
 static argparse::ArgumentParser template_parser("template");
 static argparse::ArgumentParser template_parse_parser("parse");
@@ -31,8 +32,8 @@ void execute_template_parser() {
         std::string file  = args[1];
         YAML::Node config = YAML::LoadFile(file);
 
-        std::string fgr_workdir        = std::getenv("FROMAGER_WORKDIR");
-        std::filesystem::path tmp_path = std::filesystem::path(getenv("FROMAGER_WORKDIR")) / ".tmp";
+        std::string fgr_workdir        = get_env_var("FROMAGER_WORKDIR");
+        std::filesystem::path tmp_path = std::filesystem::path(fgr_workdir) / ".tmp";
         std::filesystem::create_directories(tmp_path);
 
         YAML::Node instructions_yaml = parse(config, "release", fgr_workdir);

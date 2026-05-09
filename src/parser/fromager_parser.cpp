@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <parser/fromager_parser.hpp>
+#include <utils/bash_utils.hpp>
 
 std::string parse_fromager_template(const std::string& template_str) {
     if (template_str == "fromager.arch" || template_str.find("fromager.arch.") == 0) {
@@ -58,11 +59,11 @@ std::string parse_fromager_arch(const std::string& template_str) {
         exit(EXIT_FAILURE);
     }
 
-    std::filesystem::path fgr_home_path    = std::filesystem::path(getenv("FROMAGER_HOME"));
+    std::filesystem::path fgr_home_path    = std::filesystem::path(get_env_var("FROMAGER_HOME"));
     std::filesystem::path arch_config_path = fgr_home_path / "heuristics" / "architecture.yaml";
     YAML::Node architecture_config         = YAML::LoadFile(arch_config_path.string());
     architecture_config                    = architecture_config["architecture"];
-    std::string arch                       = getenv("FROMAGER_ARCH");
+    std::string arch                       = get_env_var("FROMAGER_ARCH");
 
     std::string arch_config;
     if (!architecture_config[arch_variant]) {

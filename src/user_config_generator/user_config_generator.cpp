@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <user_config_generator/user_config_generator.hpp>
+#include <utils/bash_utils.hpp>
 
 void config_per_pkg(YAML::Node& config, const YAML::Node& db_pkg_node,
                     const std::vector<std::string>& all_dependencies,
@@ -91,7 +92,7 @@ YAML::Node gen_user_config(const std::vector<std::string>& pkg_name, bool intera
         config["recipe"]["targets"].push_back(target);
     }
 
-    std::filesystem::path db_path(getenv("FROMAGER_DB"));
+    std::filesystem::path db_path(get_env_var("FROMAGER_DB"));
     for (const auto& dep : dependencies) {
         YAML::Node db_pkg_node = get_db_config(dep);
         config_per_pkg(config, db_pkg_node, all_dependencies, pkg_name);

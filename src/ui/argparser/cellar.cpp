@@ -1,5 +1,6 @@
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
+#include <utils/bash_utils.hpp>
 
 static argparse::ArgumentParser cellar_parser("cellar");
 static argparse::ArgumentParser cellar_create_parser("create");
@@ -124,12 +125,7 @@ void execute_cellar_parser() {
 
     if (cellar_parser.is_subcommand_used("exit")) {
         // Print out the command to unset PATH for the exited cellar. The main shell script will evaluate this output and update the environment accordingly.
-        std::string cellar_name =
-            std::getenv("FROMAGER_CELLAR") ? std::getenv("FROMAGER_CELLAR") : "";
-        if (cellar_name.empty()) {
-            ERROR("No cellar is currently entered.");
-            exit(EXIT_FAILURE);
-        }
+        std::string cellar_name = get_env_var("FROMAGER_CELLAR", "No cellar is currently entered");
         if (cellar_name == "system" || cellar_name == "compilers" || cellar_name == "mpis" ||
             cellar_name == "vendors" || cellar_name == "utilities") {
             ERROR("Cannot exit reserved cellar: " + cellar_name);
@@ -144,8 +140,7 @@ void execute_cellar_parser() {
     }
 
     if (cellar_parser.is_subcommand_used("which")) {
-        std::string cellar_name =
-            std::getenv("FROMAGER_CELLAR") ? std::getenv("FROMAGER_CELLAR") : "";
+        std::string cellar_name = get_env_var_noerr("FROMAGER_CELLAR");
         if (cellar_name.empty()) {
             INFO("Not currently in a cellar.");
         } else {

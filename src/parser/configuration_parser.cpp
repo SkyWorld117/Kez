@@ -1,4 +1,5 @@
 #include <parser/configuration_parser.hpp>
+#include <utils/bash_utils.hpp>
 
 void parse_configuration(std::vector<std::string>& instructions,
                          const std::string& command,
@@ -42,7 +43,7 @@ void parse_configuration(std::vector<std::string>& instructions,
     // Wrap with environment variables
     std::unordered_map<std::string, std::string> env_map;
     for (const auto& [key, value] : env_config) {
-        std::string env_value = getenv(key.c_str()) ? getenv(key.c_str()) : "";
+        std::string env_value = get_env_var_noerr(key);
         env_map[key] = env_value;
         instructions.push_back("export " + key + "=\"" + value + "\"");
     }

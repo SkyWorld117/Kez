@@ -93,7 +93,9 @@ UI_ARGPARSER_OBJS = \
 	$(OBJ_DIR)/ui/argparser/info.o
 
 UTILS_OBJS = \
-	$(OBJ_DIR)/utils/string_utils.o
+	$(OBJ_DIR)/utils/string_utils.o \
+	$(OBJ_DIR)/utils/file_utils.o \
+	$(OBJ_DIR)/utils/bash_utils.o
 
 # Library versions (without main.o files)
 PACKAGE_FORMAT_VERIFIER_LIB_OBJS = $(filter-out $(OBJ_DIR)/package_format_verifier/main.o, $(PACKAGE_FORMAT_VERIFIER_OBJS))
@@ -114,6 +116,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/rt_profile_config_parser
 	mkdir -p $(OBJ_DIR)/rt_dependency_resolver
 	mkdir -p $(OBJ_DIR)/utils
+	mkdir -p $(OBJ_DIR)/utils/colored_io
 	mkdir -p $(OBJ_DIR)/database
 	mkdir -p $(OBJ_DIR)/tests
 	mkdir -p $(OBJ_DIR)/ui/argparser
@@ -151,6 +154,10 @@ $(OBJ_DIR)/rt_dependency_resolver/%.o: $(SRC_DIR)/rt_dependency_resolver/%.cpp |
 $(OBJ_DIR)/utils/%.o: $(SRC_DIR)/utils/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+# Object file rules for colored_io utils
+$(OBJ_DIR)/utils/colored_io/%.o: $(SRC_DIR)/utils/colored_io/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
 # Object file rules for database
 $(OBJ_DIR)/database/%.o: $(SRC_DIR)/database/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
@@ -160,7 +167,7 @@ $(OBJ_DIR)/global_config.o: $(SRC_DIR)/global_config.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for UI argparser
-$(OBJ_DIR)/ui/argparser/%.o: $(SRC_DIR)/ui/argparser/%.cpp | $(OBJ_DIR) $(UTILS_OBJS)
+$(OBJ_DIR)/ui/argparser/%.o: $(SRC_DIR)/ui/argparser/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Object file rules for Bash completion
@@ -171,6 +178,12 @@ $(OBJ_DIR)/ui/bash_completion/%.o: $(SRC_DIR)/ui/bash_completion/%.cpp | $(OBJ_D
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+# Create bin directory
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+$(BIN_DIR)/colored_io: | $(BIN_DIR)
+	mkdir -p $(BIN_DIR)/colored_io
+
 # Executables
 $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
@@ -178,30 +191,26 @@ $(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR
 $(BIN_DIR)/fromager_rt_profile_config_parser: $(RT_PROFILE_PARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_%: $(OBJ_DIR)/utils/%.o | $(BIN_DIR)
+$(BIN_DIR)/colored_io/fromager_%: $(OBJ_DIR)/utils/colored_io/%.o | $(BIN_DIR)/colored_io
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_bash_completion: $(OBJ_DIR)/ui/bash_completion/main.o $(UI_ARGPARSER_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_bash_completion: $(OBJ_DIR)/ui/bash_completion/main.o $(UI_ARGPARSER_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager: $(OBJ_DIR)/main.o $(UTILS_OBJS) $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(USER_CONFIG_GENERATOR_OBJS) $(PARSER_OBJS) $(CMDLINE_PARSER_OBJS) $(RT_PROFILE_PARSER_LIB_OBJS) $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UI_ARGPARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-# Create bin directory
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
-
 # Phony targets
 .PHONY: fromager_colored_io all release clean help
 
 fromager_colored_io: \
-	$(BIN_DIR)/fromager_info \
-	$(BIN_DIR)/fromager_warning \
-	$(BIN_DIR)/fromager_error \
-	$(BIN_DIR)/fromager_success
+	$(BIN_DIR)/colored_io/fromager_info \
+	$(BIN_DIR)/colored_io/fromager_warning \
+	$(BIN_DIR)/colored_io/fromager_error \
+	$(BIN_DIR)/colored_io/fromager_success
 
 release: \
 	$(BIN_DIR)/fromager_config_verifier \
@@ -227,13 +236,9 @@ help:
 
 clean:
 	rm -rf $(OBJ_DIR)
+	rm -f $(BIN_DIR)/fromager
+	rm -f $(BIN_DIR)/fromager_bash_completion
 	rm -f $(BIN_DIR)/fromager_config_verifier
 	rm -f $(BIN_DIR)/fromager_rt_profile_config_parser
 	rm -f $(BIN_DIR)/fromager_rt_resolve_dependencies
-	rm -f $(BIN_DIR)/fromager_info
-	rm -f $(BIN_DIR)/fromager_warning
-	rm -f $(BIN_DIR)/fromager_error
-	rm -f $(BIN_DIR)/fromager_success
-	rm -f $(BIN_DIR)/test_deps_resolve
-	rm -f $(BIN_DIR)/fromager
-	rm -f $(BIN_DIR)/fromager_bash_completion
+	rm -rf $(BIN_DIR)/colored_io
