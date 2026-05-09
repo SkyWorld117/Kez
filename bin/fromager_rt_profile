@@ -6,7 +6,7 @@ FGR_INFO=${FROMAGER_HOME}/bin/colored_io/fromager_info
 FGR_WARNING=${FROMAGER_HOME}/bin/colored_io/fromager_warning
 FGR_ERROR=${FROMAGER_HOME}/bin/colored_io/fromager_error
 FGR_SUCCESS=${FROMAGER_HOME}/bin/colored_io/fromager_success
-FGR_RT_PROFILE_CONFIG_PARSER=${FROMAGER_HOME}/fromager_rt_profile_config_parser
+FGR_RT_PROFILE_CONFIG_PARSER=${FROMAGER_HOME}/bin/fromager_rt_profile_config_parser
 
 _fgr_eval() {
     local cellar_idx=$1
