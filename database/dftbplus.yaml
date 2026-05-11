@@ -15,7 +15,6 @@ cheese:
     - blas
     - lapack
     - scalapack
-    - elsi
 
   build:
     configurations:
@@ -55,10 +54,6 @@ cheese:
           enabled_value:
             default: -O3
 
-        - name: -DCMAKE_PREFIX_PATH
-          enabled_value:
-            default: ${elsi.prefix};${elpa.prefix}
-
         - name: -DWITH_MPI
           user_configurable: true
           enabled_format: -DWITH_MPI=ON
@@ -72,6 +67,8 @@ cheese:
 
         - name: -DWITH_ELSI
           user_configurable: true
+          enabled:
+            default: false
           enabled_format: -DWITH_ELSI=ON
           disabled_format: -DWITH_ELSI=OFF
           requires: [elsi]
@@ -99,12 +96,12 @@ cheese:
         - name: -DCMAKE_EXE_LINKER_FLAGS
           user_configurable: true
           enabled_value:
-            default: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+            default: ${scalapack.ldflags} ${scalapack.libs}
 
         - name: -DCMAKE_SHARED_LINKER_FLAGS
           user_configurable: true
           enabled_value:
-            default: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+            default: ${scalapack.ldflags} ${scalapack.libs}
 
     stages:
       - target: ~
@@ -117,3 +114,4 @@ cheese:
       default: -ldftbplus
     includes:
       default: -I${dftbplus.prefix}/include
+
