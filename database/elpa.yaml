@@ -50,19 +50,6 @@ cheese:
           enabled_value:
             default: -O3
 
-        - name: LDFLAGS
-          user_configurable: true
-          enabled_value:
-            default: ${compiler.ldflags}
-
-        - name: SCALAPACK_FCFLAGS
-          enabled_value:
-            default: ${scalapack.includes}
-
-        - name: SCALAPACK_LDFLAGS
-          enabled_value:
-            default: ${scalapack.ldflags} ${scalapack.libs}
-
         # ============ Core parallelization ============
         - name: mpi
           description: Enable MPI parallelization
@@ -167,7 +154,7 @@ cheese:
           requires: [cuda, nvhpc]
 
         - name: --with-nccl-path
-          description: Path to NCCL installation directory (contains lib/libnccl.so and include/nccl.h)
+          description: Path to NCCL installation directory
           user_configurable: true
           enabled:
             conditions:
@@ -265,6 +252,23 @@ cheese:
           enabled:
             default: false
           enabled_format: --enable-ifx-compiler
+
+        # =========== Linker ====================================
+        - name: LDFLAGS
+          enabled_value:
+            default: ${compiler.ldflags}
+            conditions:
+              - condition: ${elpa.config.enable-gpu-ccl} true
+                action: append
+                value: ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+
+        - name: SCALAPACK_FCFLAGS
+          enabled_value:
+            default: ${scalapack.includes}
+
+        - name: SCALAPACK_LDFLAGS
+          enabled_value:
+            default: ${scalapack.ldflags} ${scalapack.libs}
 
     stages:
       - target: ~

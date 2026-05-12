@@ -39,11 +39,6 @@ cheese:
           enabled_value:
             default: ${mpi.fort}
 
-        - name: -DCMAKE_C_FLAGS
-          user_configurable: true
-          enabled_value:
-            default: -O3
-
         - name: -DCMAKE_CXX_FLAGS
           user_configurable: true
           enabled_value:
@@ -81,27 +76,64 @@ cheese:
           disabled_format: -DWITH_GPU=OFF
           requires: [cuda]
 
+        - name: -DMAGMA_INCLUDE_DIRECTORY
+          enabled:
+            default: false
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_GPU} true && ${dftbplus.config.-DWITH_MPI} false
+                value: true
+          enabled_value:
+            default: ${magma.prefix}/include
+          requires: [magma]
+
         - name: -DBLAS_LIBRARY
           enabled_value:
-            default: ${blas.ldflags} ${blas.libs}
+            default: ${blas.ldflags};${blas.libs}
 
         - name: -DLAPACK_LIBRARY
           enabled_value:
-            default: ${lapack.ldflags} ${lapack.libs}
+            default: ${lapack.ldflags};${lapack.libs}
 
         - name: -DSCALAPACK_LIBRARY
+          enabled:
+            default: false
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_MPI} true
+                value: true
           enabled_value:
-            default: ${scalapack.ldflags} ${scalapack.libs}
+            default: ${scalapack.ldflags};${scalapack.libs}
+          requires: [scalapack]
+
+        - name: -DCMAKE_C_FLAGS
+          user_configurable: true
+          enabled_value:
+            default: -O3
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_GPU} true
+                action: append
+                value: -I${cuda.prefix}/targets/x86_64-linux/include
 
         - name: -DCMAKE_EXE_LINKER_FLAGS
-          user_configurable: true
           enabled_value:
-            default: ${scalapack.ldflags} ${scalapack.libs}
+            default: ~
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} false
+                value: ${scalapack.ldflags} ${scalapack.libs}
+              - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} true
+                value: ${scalapack.ldflags} ${scalapack.libs} ${elsi.ldflags} ${elsi.libs} ${elpa.ldflags}
+              - condition: ${dftbplus.config.-DWITH_MPI} false && ${dftbplus.config.-DWITH_GPU} true
+                value: ${magma.ldflags} ${magma.libs}
 
         - name: -DCMAKE_SHARED_LINKER_FLAGS
-          user_configurable: true
           enabled_value:
-            default: ${scalapack.ldflags} ${scalapack.libs}
+            default: ~
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} false
+                value: ${scalapack.ldflags} ${scalapack.libs}
+              - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} true
+                value: ${scalapack.ldflags} ${scalapack.libs} ${elsi.ldflags} ${elsi.libs} ${elpa.ldflags}
+              - condition: ${dftbplus.config.-DWITH_MPI} false && ${dftbplus.config.-DWITH_GPU} true
+                value: ${magma.ldflags} ${magma.libs}
 
     stages:
       - target: ~
@@ -114,4 +146,3 @@ cheese:
       default: -ldftbplus
     includes:
       default: -I${dftbplus.prefix}/include
-
