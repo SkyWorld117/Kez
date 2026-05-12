@@ -127,3 +127,10 @@ fetch_latest_perl() {
 
     echo $(fetch_latest_web "perl" "${url}" "${ext}")
 }
+
+fetch_latest_git() {
+    local url="https://www.kernel.org/pub/software/scm/git/"
+    local ext="${1:-tar.xz}"
+
+    echo $(fetch_latest_web "git" "${url}" "${ext}")
+}
