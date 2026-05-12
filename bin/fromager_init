@@ -442,6 +442,25 @@ else
     echo "perl is already installed, skipping..."
 fi
 
+# git
+folder_and_version=$(fetch_latest_git)
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing git..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_SYSTEM_TMP}/${folder}"
+    ./configure \
+        --prefix="${FROMAGER_SYSTEM}" \
+        CC="${FROMAGER_SYSTEM}/bin/gcc" \
+        CFLAGS="-O3"
+    make all -j"${FROMAGER_NPROC}"
+    make install -j"${FROMAGER_NPROC}"
+    cd "${FROMAGER_SYSTEM_TMP}" && rm -rf *
+    echo -e "  git:\n    version: ${version}" >> "${FROMAGER_SYSTEM}/state.yaml"
+else
+    echo "git is already installed, skipping..."
+fi
+
 
 # PHASE 5: Essential Tools for Fromager
 # ----------------------------------------------------
