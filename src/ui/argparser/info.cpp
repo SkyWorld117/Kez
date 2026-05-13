@@ -14,10 +14,7 @@ std::string strong_color(const std::string& txt) { return color<Color::BOLD, Col
 std::string normal_color(const std::string& txt) { return color<Color::MAGENTA>(txt); }
 
 void print_title(const YAML::Node& package) {
-    std::string large_delimiter = "";
-    for (int i = 0; i < max_width; ++i) {
-        large_delimiter += "=";
-    }
+    std::string large_delimiter(max_width, '=');
 
     print_text(strong_color(large_delimiter));
     print_text(strong_color(package["cheese"]["name"].as<std::string>()), max_width);
@@ -43,10 +40,8 @@ void print_title(const YAML::Node& package) {
 }
 
 void print_implements(const YAML::Node& package) {
-    std::string short_delimiter = "";
-    for (int i = 0; i < short_width; ++i) {
-        short_delimiter += "-";
-    }
+    std::string short_delimiter(short_width, '-');
+
     print_text("");
     print_text(strong_color(short_delimiter));
     print_text(strong_color("Implements:"));
@@ -71,10 +66,7 @@ void print_implements(const YAML::Node& package) {
 }
 
 void print_properties(const YAML::Node& package) {
-    std::string short_delimiter = "";
-    for (int i = 0; i < short_width; ++i) {
-        short_delimiter += "-";
-    }
+    std::string short_delimiter(short_width, '-');
 
     print_text("");
     print_text(strong_color(short_delimiter));
@@ -102,10 +94,7 @@ void print_properties(const YAML::Node& package) {
 }
 
 void print_releases(const YAML::Node& package) {
-    std::string short_delimiter = "";
-    for (int i = 0; i < short_width; ++i) {
-        short_delimiter += "-";
-    }
+    std::string short_delimiter(short_width, '-');
 
     print_text("");
     print_text(strong_color(short_delimiter));
@@ -140,10 +129,7 @@ void print_releases(const YAML::Node& package) {
 }
 
 void print_options(const YAML::Node& package) {
-    std::string short_delimiter = "";
-    for (int i = 0; i < short_width; ++i) {
-        short_delimiter += "-";
-    }
+    std::string short_delimiter(short_width, '-');
 
     print_text("");
     print_text(strong_color(short_delimiter));
@@ -199,10 +185,7 @@ void print_options(const YAML::Node& package) {
 }
 
 void print_dependencies(const YAML::Node& package) {
-    std::string short_delimiter = "";
-    for (int i = 0; i < short_width; ++i) {
-        short_delimiter += "-";
-    }
+    std::string short_delimiter(short_width, '-');
 
     print_text("");
     print_text(strong_color(short_delimiter));
