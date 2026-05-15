@@ -20,7 +20,7 @@ cheese:
               description: Toggle MPI
               user_configurable: true
               enabled:
-                  default: true
+                  default: false
               enabled_value:
                   default: 1
               requires: [mpi]
