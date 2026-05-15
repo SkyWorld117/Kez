@@ -168,8 +168,9 @@ void execute_rt_parser() {
             if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
                 std::string config_path = entry.path().string();
                 INFO("Installing from configuration: " + config_path);
-                YAML::Node config                   = YAML::LoadFile(config_path);
-                std::filesystem::path target_cellar = factory_path / "cellar" / entry.path().stem();
+                YAML::Node config = YAML::LoadFile(config_path);
+                std::filesystem::path target_cellar =
+                    factory_path / "cellars" / entry.path().stem();
 
                 YAML::Node instructions_yaml = parse(config, "release", target_cellar.string());
                 YAML::Emitter out;
