@@ -73,7 +73,7 @@ cheese:
               - condition: ${elsi.config.elpa} false
                 value: false
           enabled_value:
-            default: ${elpa.prefix}/include/elpa-${elpa.version}/modules
+            default: ${elpa.modules_dir}
 
         - name: -DLIB_PATHS
           enabled:

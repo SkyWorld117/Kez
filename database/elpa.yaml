@@ -279,6 +279,13 @@ cheese:
       default: -L${elpa.prefix}/lib -Wl,-rpath,${elpa.prefix}/lib
     libs:
       default: -lelpa
+      conditions:
+        - condition: ${elpa.config.openmp} true
+          value: -lelpa_openmp
     includes:
       default: -I${elpa.prefix}/include
-
+    modules_dir:
+      default: ${elpa.prefix}/include/elpa-${elpa.version}/modules
+      conditions:
+        - condition: ${elpa.config.openmp} true
+          value: ${elpa.prefix}/include/elpa_openmp-${elpa.version}/modules
