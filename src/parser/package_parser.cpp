@@ -50,9 +50,10 @@ std::vector<std::string> parse_package(ParserContext& context) {
             }
         }
         if (!found) {
-            ERROR("Version " + version +
-                  " not found in source releases for package: " + package_name);
-            exit(EXIT_FAILURE);
+            WARNING("Version " + version +
+                    " not found in source releases for package: " + package_name);
+            WARNING("Assuming the version is a path to a local source directory.");
+            instructions.push_back("cp -r " + version + " source");
         }
     }
 
