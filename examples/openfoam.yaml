@@ -1,7 +1,7 @@
 cheese:
   openfoam:
     description: OpenFOAM is a free, open source CFD software package.
-    version: v2412
+    version: 2412
     compiler: system
     build:
       configurations:
@@ -20,15 +20,24 @@ cheese:
             value: Opt
           - name: FOAM_EXTRA_CFLAGS
             description: Extra compiler flags for OpenFOAM to bake RPATH
-            value: -O3 ${flex.ldflags} ${openfoam.ldflags}
+            value: -O3 ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
           - name: FOAM_EXTRA_CXXFLAGS
             description: Extra C++ compiler flags for OpenFOAM to bake RPATH
-            value: -O3 ${flex.ldflags} ${openfoam.ldflags}
+            value: -O3 ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
   scotch6:
-    description: Scotch is a software package for graph and mesh partitioning, graph
-      clustering, and sparse matrix ordering.
+    description: Scotch is a software package for graph and mesh partitioning, graph clustering, and sparse matrix ordering.
     version: 6.1.3
     compiler: system
+    build:
+      stages:
+        - target: scotch ptscotch
+          configurations:
+            options:
+              - name: CFLAGS
+                description: C compiler flags
+                enabled: true
+                enabled_value: -O3 -fPIC ${scotch6.ldflags} -UCOMMON_FILE_COMPRESS -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_DETERMINISTIC -DSCOTCH_RENAME -DIDXSIZE64 -Drestrict=__restrict -DINTSIZE64
+
   kahip:
     description: KaHIP is a Karlsruhe High Quality Partitioning software package.
     version: 3.25
@@ -45,15 +54,30 @@ cheese:
             enabled: true
             enabled_value: -O3 ${metis.includes}
   metis:
-    description: METIS is a set of serial programs for partitioning graphs,
-      partitioning finite element meshes, and producing fill reducing orderings
-      for sparse matrices.
-    version: master
+    description: METIS is a set of serial programs for partitioning graphs, partitioning finite element meshes, and producing fill reducing orderings for sparse matrices.
+    version: 5.1.0
     compiler: system
+    build:
+      configurations:
+        options:
+          - name: -DOPENMP
+            description: Enable OpenMP support
+            enabled: true
+            enabled_value: 1
+          - name: -DSHARED
+            description: Build shared library
+            enabled: true
+            enabled_value: 1
+          - name: -DCMAKE_C_FLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+          - name: -DCMAKE_CXX_FLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
   fftw3:
-    description: FFTW is a C library for computing the discrete Fourier transform in
-      one or more dimensions, of arbitrary input size, and of both real and
-      complex data.
+    description: FFTW is a C library for computing the discrete Fourier transform in one or more dimensions, of arbitrary input size, and of both real and complex data.
     version: 3.3.11
     compiler: system
     build:
@@ -88,7 +112,7 @@ cheese:
             enabled: false
             enabled_value: ~
           - name: --enable-avx2
-            description: Build AVX2-optimized version of the library [x86_64]
+            description: Build AVX/AVX2-optimized version of the library [x86_64]
             enabled: true
             enabled_value: ~
           - name: --enable-avx512
@@ -123,10 +147,9 @@ cheese:
           - name: CFLAGS
             description: C compiler flags
             enabled: true
-            enabled_value: -O3
+            enabled_value: -O3 -fPIC
   cgal:
-    description: CGAL is a software library that provides easy access to efficient
-      and reliable geometric algorithms in the form of a C++ library.
+    description: CGAL is a software library that provides easy access to efficient and reliable geometric algorithms in the form of a C++ library.
     version: 6.1.1
     compiler: system
   boost:
@@ -182,9 +205,7 @@ cheese:
             enabled: true
             enabled_value: -O3
   bison:
-    description: Bison is a general-purpose parser generator that converts a grammar
-      description for an LALR(1) context-free grammar into a C program to parse
-      that grammar.
+    description: Bison is a general-purpose parser generator that converts a grammar description for an LALR(1) context-free grammar into a C program to parse that grammar.
     version: 3.8.2
     compiler: system
     build:
@@ -194,11 +215,6 @@ cheese:
             description: C compiler flags
             enabled: true
             enabled_value: -O3
-  gklib:
-    description: A library of various helper routines and frameworks used by many of
-      the lab's software
-    version: master
-    compiler: system
   sz3:
     description: SZ3 is a compressed floating-point array library.
     version: 3.3.2
@@ -249,11 +265,11 @@ cheese:
     build:
       configurations:
         options:
-          - name: CMAKE_C_FLAGS
+          - name: -DCMAKE_C_FLAGS
             description: C compiler flags
             enabled: true
             enabled_value: -O3
-          - name: CMAKE_CXX_FLAGS
+          - name: -DCMAKE_CXX_FLAGS
             description: C++ compiler flags
             enabled: true
             enabled_value: -O3
@@ -341,11 +357,12 @@ recipe:
     - libpng
     - flex
     - bison
-    - gklib
+    - gmp
     - sz3
     - hdf5
     - openmpi
     - zfp
+    - mpfr
     - ucx
     - rdma-core
     - bzip2
@@ -355,4 +372,3 @@ recipe:
     - zstd
   targets:
     - openfoam
-

@@ -40,9 +40,16 @@ cheese:
           enabled_value:
             default: -O3 -fPIC
 
+        - name: linkflags
+          description: Linker flags
+          enabled_value:
+            default: ${boost.ldflags}
+
         - name: install
           description: Install target
 
   properties:
+    ldflags:
+      default: -L${boost.prefix}/lib -Wl,-rpath,${boost.prefix}/lib
     includes:
       default: -I${boost.prefix}/include

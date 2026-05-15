@@ -2,7 +2,11 @@
 
 set -Eeuo pipefail
 
-export PATH=${FROMAGER_HOME}/bin:${PATH}
+FGR_INFO=${FROMAGER_HOME}/bin/colored_io/fromager_info
+FGR_WARNING=${FROMAGER_HOME}/bin/colored_io/fromager_warning
+FGR_ERROR=${FROMAGER_HOME}/bin/colored_io/fromager_error
+FGR_SUCCESS=${FROMAGER_HOME}/bin/colored_io/fromager_success
+FGR_RT_PROFILE_CONFIG_PARSER=${FROMAGER_HOME}/bin/fromager_rt_profile_config_parser
 
 _fgr_eval() {
     local cellar_idx=$1
@@ -20,10 +24,10 @@ _fgr_eval() {
     local instruction_count=$(yq -r ".[$cellar_idx].profiles[$run_config_idx].instructions | length" "${ins_yaml}")
     for ((k=0; k<instruction_count; k++)); do
         local instruction=$(yq -r ".[$cellar_idx].profiles[$run_config_idx].instructions[$k]" "${ins_yaml}")
-        fromager_info "Executing: $instruction"
+        ${FGR_INFO} "Executing: $instruction"
         eval "$instruction"
         if [ $? -ne 0 ]; then
-            fromager_error "Failed to execute: $instruction"
+            ${FGR_ERROR} "Failed to execute: $instruction"
             exit 1
         fi
     done
@@ -33,11 +37,11 @@ factory_dir="${FROMAGER_WORKDIR}/factories/${FROMAGER_FACTORY}"
 config_file="${factory_dir}/tasting_rooms/config.yaml"
 
 if [ ! -f "${config_file}" ]; then
-    fromager_error "RT profile config file not found: ${config_file}"
+    ${FGR_ERROR} "RT profile config file not found: ${config_file}"
     exit 1
 fi
 
-fromager_rt_profile_config_parser "${config_file}" "${factory_dir}/tasting_rooms"
+${FGR_RT_PROFILE_CONFIG_PARSER} "${config_file}" "${factory_dir}/tasting_rooms"
 ins_yaml="${factory_dir}/tasting_rooms/ins.yaml"
 
 cellar_count=$(yq -r '. | length' "${ins_yaml}")
@@ -47,11 +51,11 @@ for ((i=0; i<cellar_count; i++)); do
     run_configs_count=$(yq -r ".[$i].profiles | length" "${ins_yaml}")
     for ((j=0; j<run_configs_count; j++)); do
         run_config_name=$(yq -r ".[$i].profiles[$j].name" "${ins_yaml}")
-        fromager_info "Processing cellar: ${cellar_name}, run config: ${run_config_name}"
+        ${FGR_INFO} "Processing cellar: ${cellar_name}, run config: ${run_config_name}"
 
         ( _fgr_eval "$i" "$j" "${ins_yaml}" )
 
-        fromager_success "Completed processing for cellar: ${cellar_name}, run config: ${run_config_name}"
+        ${FGR_SUCCESS} "Completed processing for cellar: ${cellar_name}, run config: ${run_config_name}"
     done
 done
 

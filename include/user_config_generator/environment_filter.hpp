@@ -2,8 +2,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
 #include <string>
+#include <utils/colored_io.hpp>
 #include <vector>
 
 YAML::Node filtered_environment(const YAML::Node& env_node,

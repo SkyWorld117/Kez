@@ -1,3 +1,4 @@
+#include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
 
 std::vector<std::string> split(const std::string& str, char delimiter) {

@@ -18,6 +18,9 @@ cheese:
           enabled_value:
             default: ${fftw3.prefix}
 
+        - name: --enable-shared
+          description: Build shared library
+
         - name: --enable-float
           description: Build single-precision version of the library
           user_configurable: true
@@ -46,7 +49,7 @@ cheese:
           description: Build SSE-optimized version of the library [x86_64]
           user_configurable: true
           enabled:
-            default: true
+            default: false
 
         - name: --enable-sse2
           description: Build SSE/SSE2-optimized version of the library [x86_64]
@@ -58,10 +61,10 @@ cheese:
           description: Build AVX-optimized version of the library [x86_64]
           user_configurable: true
           enabled:
-            default: true
+            default: false
 
         - name: --enable-avx2
-          description: Build AVX2-optimized version of the library [x86_64]
+          description: Build AVX/AVX2-optimized version of the library [x86_64]
           user_configurable: true
           enabled:
             default: true
@@ -127,7 +130,7 @@ cheese:
           description: C compiler flags
           user_configurable: true
           enabled_value:
-            default: -O3
+            default: -O3 -fPIC
     stages:
       - target: ~
       - target: install

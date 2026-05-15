@@ -4,9 +4,9 @@ std::string parse_options(const YAML::Node& opts_node, const std::string& toolch
                           ParserContext& context) {
     // Unpack context
     const std::string& package_name                            = context.package_name;
-    const YAML::Node user_config                              = context.user_config;
-    const YAML::Node user_config_context                      = context.user_config_context;
-    const YAML::Node pkg_config                               = context.pkg_config;
+    const YAML::Node user_config                               = context.user_config;
+    const YAML::Node user_config_context                       = context.user_config_context;
+    const YAML::Node pkg_config                                = context.pkg_config;
     std::unordered_map<std::string, std::string>& template_map = context.template_map;
     const std::string& env_path                                = context.env_path;
 

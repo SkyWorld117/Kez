@@ -5,8 +5,8 @@
 std::string parse_property(const std::string& property_name, ParserContext& context) {
     // Unpack context
     std::unordered_map<std::string, std::string>& template_map = context.template_map;
-    const YAML::Node user_config                              = context.user_config;
-    const YAML::Node user_config_pkg                          = context.user_config_pkg;
+    const YAML::Node user_config                               = context.user_config;
+    const YAML::Node user_config_pkg                           = context.user_config_pkg;
     const std::string& build_mode                              = context.build_mode;
     const std::string& env_path                                = context.env_path;
 
@@ -97,6 +97,12 @@ std::string parse_property(const std::string& property_name, ParserContext& cont
 }
 
 std::string parse_complex_property(const std::string& template_str, ParserContext& context) {
+    // Return the original template string if it doesn't contain a dot (i.e., not in the form of package.property)
+    // This can likely happen when we are parsing a regular environment variable
+    if (template_str.find('.') == std::string::npos) {
+        return "${" + template_str + "}";
+    }
+
     // Handle the special cases
     std::string package_name  = template_str.substr(0, template_str.find('.'));
     std::string property_name = template_str.substr(template_str.find('.') + 1);

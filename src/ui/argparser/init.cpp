@@ -1,6 +1,7 @@
 #include <string>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
+#include <utils/slurm.hpp>
 
 static argparse::ArgumentParser init_parser("init");
 
@@ -31,8 +32,7 @@ void execute_init_parser() {
     }
 
     if (init_parser.get<bool>("--with-slurm")) {
-        cmd = "sbatch --ntasks=1 --cpus-per-task=${FROMAGER_NPROC} --time=01:00:00 --wrap=\"" +
-              cmd + "\"";
+        cmd = wrap_command_with_sbatch(cmd, "fromager_init", "01:00:00");
     }
 
     EXE_AND_CHECK(cmd);

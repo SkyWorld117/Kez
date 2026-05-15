@@ -56,12 +56,12 @@ cheese:
         - name: -DCMAKE_BUILD_RPATH
           description: RPATH for built libraries
           enabled_value:
-            default: ${kahip.prefix}/lib
+            default: ${kahip.prefix}/lib;${metis.prefix}/lib;${mpi.prefix}/lib
 
         - name: -DCMAKE_INSTALL_RPATH
           description: RPATH for installed libraries
           enabled_value:
-            default: ${kahip.prefix}/lib
+            default: ${kahip.prefix}/lib;${metis.prefix}/lib;${mpi.prefix}/lib
 
         - name: -DCMAKE_C_FLAGS
           description: C compiler flags

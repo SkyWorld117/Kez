@@ -38,31 +38,31 @@ $(BIN_DIR)/test_string_utils: $(OBJ_DIR)/tests/test_string_utils.o $(OBJ_DIR)/ut
 $(BIN_DIR)/test_toposort: $(OBJ_DIR)/tests/test_toposort.o $(OBJ_DIR)/dependency_resolver/toposort.o | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_database: $(OBJ_DIR)/tests/test_database.o $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_database: $(OBJ_DIR)/tests/test_database.o $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/test_cmdline_parser: $(OBJ_DIR)/tests/test_cmdline_parser.o $(CMDLINE_PARSER_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_package_format_verifier: $(OBJ_DIR)/tests/test_package_format_verifier.o $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_package_format_verifier: $(OBJ_DIR)/tests/test_package_format_verifier.o $(PACKAGE_FORMAT_VERIFIER_LIB_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_parser: $(OBJ_DIR)/tests/test_parser.o $(PARSER_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_parser: $(OBJ_DIR)/tests/test_parser.o $(PARSER_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_rt_dependency_resolver: $(OBJ_DIR)/tests/test_rt_dependency_resolver.o $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_rt_dependency_resolver: $(OBJ_DIR)/tests/test_rt_dependency_resolver.o $(RT_DEPENDENCY_RESOLVER_LIB_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_rt_profile_config_parser: $(OBJ_DIR)/tests/test_rt_profile_config_parser.o $(RT_PROFILE_PARSER_LIB_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_rt_profile_config_parser: $(OBJ_DIR)/tests/test_rt_profile_config_parser.o $(RT_PROFILE_PARSER_LIB_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_ui: $(OBJ_DIR)/tests/test_ui.o $(UI_ARGPARSER_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_ui: $(OBJ_DIR)/tests/test_ui.o $(UI_ARGPARSER_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_user_config_generator: $(OBJ_DIR)/tests/test_user_config_generator.o $(USER_CONFIG_GENERATOR_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_user_config_generator: $(OBJ_DIR)/tests/test_user_config_generator.o $(USER_CONFIG_GENERATOR_OBJS) $(DATABASE_OBJS) $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/test_global_config: $(OBJ_DIR)/tests/test_global_config.o $(GLOBAL_CONFIG_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/test_global_config: $(OBJ_DIR)/tests/test_global_config.o $(GLOBAL_CONFIG_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 

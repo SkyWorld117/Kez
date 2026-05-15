@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <global_config.hpp>
 #include <string>
+#include <utils/bash_utils.hpp>
 #include <vector>
 
 inline bool exists_in(const std::vector<std::string>& comp_words, const std::string& option) {
@@ -11,8 +12,7 @@ inline bool exists_in(const std::vector<std::string>& comp_words, const std::str
 
 inline std::vector<std::string> get_database_suggestions() {
     std::vector<std::string> packages;
-    const char* db_env  = std::getenv("FROMAGER_DB");
-    std::string db_path = db_env ? db_env : "database";
+    std::string db_path = get_env_var("FROMAGER_DB");
 
     if (std::filesystem::exists(db_path) && std::filesystem::is_directory(db_path)) {
         for (const auto& entry : std::filesystem::directory_iterator(db_path)) {

@@ -17,11 +17,12 @@ cheese:
     - mpi
 
   build:
-    preprocessing: >
-      cp ${source}/Make.inc/Makefile.inc.x86-64_pc_linux2 ${source}/Makefile.inc
+    preprocessing: |-
+      cp ${source}/src/Make.inc/Makefile.inc.x86-64_pc_linux2.shlib ${source}/src/Makefile.inc
+      cd ${source}/src
 
     stages:
-      - target: ~
+      - target: scotch ptscotch
         configurations:
           environment:
             - name: PATH
@@ -41,12 +42,20 @@ cheese:
             - name: CCD
               description: C compiler command (Debug)
               enabled_value:
-                default: ${compiler.c}
+                default: ${mpi.c}
 
             - name: CCP
               description: C compiler command (Parallel)
               enabled_value:
                 default: ${mpi.c}
+
+            - name: CFLAGS
+              description: C compiler flags
+              user_configurable: true
+              enabled:
+                default: false
+              enabled_value:
+                default: -O3 -fPIC ${scotch6.ldflags} -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -DSCOTCH_PTHREAD -Drestrict=__restrict -DIDXSIZE64
       - target: install
         configurations:
           options:

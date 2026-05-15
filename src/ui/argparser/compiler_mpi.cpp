@@ -1,4 +1,5 @@
 #include <ui/argparser/argparser.hpp>
+#include <utils/bash_utils.hpp>
 
 static argparse::ArgumentParser compiler_parser("compiler");
 static argparse::ArgumentParser compiler_load_parser("load");
@@ -55,11 +56,7 @@ void execute_compiler_parser() {
     if (compiler_parser.is_subcommand_used("unload")) {
         // Print out the command to unset PATH for the unloaded compiler. The main shell script will evaluate this output and update the environment accordingly.
         std::string compiler_name =
-            std::getenv("FROMAGER_COMPILER") ? std::getenv("FROMAGER_COMPILER") : "";
-        if (compiler_name.empty()) {
-            ERROR("No compiler is currently loaded.");
-            exit(EXIT_FAILURE);
-        }
+            get_env_var("FROMAGER_COMPILER", "No compiler is currently loaded");
         std::filesystem::path compiler_path =
             global_config::get_path("compilers") + "/" + compiler_name;
         std::cout << "export PATH=\"$(echo $PATH | sed -e 's;" + compiler_path.string() +
@@ -86,8 +83,7 @@ void execute_compiler_parser() {
     }
 
     if (compiler_parser.is_subcommand_used("which")) {
-        std::string compiler_name =
-            std::getenv("FROMAGER_COMPILER") ? std::getenv("FROMAGER_COMPILER") : "";
+        std::string compiler_name = get_env_var_noerr("FROMAGER_COMPILER");
         if (compiler_name.empty()) {
             INFO("No compiler is currently loaded.");
         } else {
@@ -193,11 +189,8 @@ void execute_mpi_parser() {
 
     if (mpi_parser.is_subcommand_used("unload")) {
         // Print out the command to unset PATH for the unloaded MPI implementation. The main shell script will evaluate this output and update the environment accordingly.
-        std::string mpi_name = std::getenv("FROMAGER_MPI") ? std::getenv("FROMAGER_MPI") : "";
-        if (mpi_name.empty()) {
-            ERROR("No MPI implementation is currently loaded.");
-            exit(EXIT_FAILURE);
-        }
+        std::string mpi_name =
+            get_env_var("FROMAGER_MPI", "No MPI implementation is currently loaded");
         std::filesystem::path mpi_path = global_config::get_path("mpis") + "/" + mpi_name;
         std::cout << "export PATH=\"$(echo $PATH | sed -e 's;" + mpi_path.string() +
                          "/bin:;;g')\"; unset FROMAGER_MPI"
@@ -223,7 +216,7 @@ void execute_mpi_parser() {
     }
 
     if (mpi_parser.is_subcommand_used("which")) {
-        std::string mpi_name = std::getenv("FROMAGER_MPI") ? std::getenv("FROMAGER_MPI") : "";
+        std::string mpi_name = get_env_var_noerr("FROMAGER_MPI");
         if (mpi_name.empty()) {
             INFO("No MPI implementation is currently loaded.");
         } else {

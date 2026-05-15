@@ -7,7 +7,7 @@ cheese:
     type: git
     url: https://gitlab.com/openfoam/core/openfoam.git
     releases:
-      - version: v2412
+      - version: 2412
         tag: OpenFOAM-v2412
 
   dependencies:
@@ -20,10 +20,12 @@ cheese:
     - kahip
     - metis
     - scotch6
+    - gmp
+    - mpfr
 
   build:
-    preprocessing: >
-      set +Eeuo pipefail;
+    preprocessing: |-
+      set +u
       bin/tools/foamConfigurePaths \
         -adios-path ${adios2.prefix} \
         -boost-path ${boost.prefix} \
@@ -31,20 +33,19 @@ cheese:
         -fftw-path ${fftw3-api.prefix} \
         -kahip-path ${kahip.prefix} \
         -metis-path ${metis.prefix} \
-        -scotch-path ${scotch6.prefix};
-      set -Eeuo pipefail
+        -scotch-path ${scotch6.prefix}
+      set -u
 
     configurations:
-      command: >
-        set +Eeuo pipefail;
-        source etc/config.sh/setup && ./Allwmake -j;
-        set -Eeuo pipefail;
-        exit
+      command: |-
+        set +u
+        source etc/config.sh/setup && ./Allwmake -j $FROMAGER_NPROC
+        set -u
 
       environment:
         - name: WM_PROJECT_VERSION
           description: Version of the OpenFOAM project
-          default: ${openfoam.version}
+          default: v${openfoam.version}
 
         - name: WM_COMPILER_TYPE
           description: Compiler type for OpenFOAM
@@ -86,6 +87,14 @@ cheese:
           description: Path to MPI architecture-specific files for OpenFOAM
           default: ${openmpi.prefix}
 
+        - name: GMP_ARCH_PATH
+          description: Path to GMP architecture-specific files for OpenFOAM
+          default: ${gmp.prefix}
+
+        - name: MPFR_ARCH_PATH
+          description: Path to MPFR architecture-specific files for OpenFOAM
+          default: ${mpfr.prefix}
+
         - name: PATH
           description: PATH environment variable for OpenFOAM
           default: ${flex.prefix}/bin:${compiler.prefix}/bin:${openmpi.prefix}/bin:$PATH
@@ -105,16 +114,24 @@ cheese:
         - name: FOAM_EXTRA_CFLAGS
           description: Extra compiler flags for OpenFOAM to bake RPATH
           user_configurable: true
-          default: -O3 ${flex.ldflags} ${openfoam.ldflags}
+          default: -O3 ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
 
         - name: FOAM_EXTRA_CXXFLAGS
           description: Extra C++ compiler flags for OpenFOAM to bake RPATH
           user_configurable: true
-          default: -O3 ${flex.ldflags} ${openfoam.ldflags}
+          default: -O3 ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
 
-    # postprocessing: >
-    #   cp -r ${source}/platforms/linux*/* ${openfoam.prefix}/
+        - name: FOAM_EXTRA_LDFLAGS
+          description: Extra linker flags for OpenFOAM to bake RPATH
+          default: ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
+
+    postprocessing: |-
+      cp -r ${source}/platforms/linux*/* ${openfoam.prefix}/
+      cp -r ${source}/bin ${openfoam.prefix}/
+      cp -r ${source}/etc ${openfoam.prefix}/
+      cp -r ${source}/tutorials ${openfoam.prefix}/
+      bash $FROMAGER_HOME/patches/fgr_patch_rpath.sh ${openfoam.prefix}/lib/sys-openmpi/libptscotchDecomp.so ${openmpi.prefix}/lib
 
   properties:
     ldflags:
-      default: -L${openfoam.prefix}/lib -Wl,-rpath,${openfoam.prefix}/lib
+      default: -L${openfoam.prefix}/lib -Wl,-rpath,${openfoam.prefix}/lib -L${openfoam.prefix}/lib/sys-openmpi -Wl,-rpath,${openfoam.prefix}/lib/sys-openmpi

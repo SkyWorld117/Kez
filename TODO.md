@@ -1,10 +1,11 @@
 # Core
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
-| Not Started | Fix parsing regular environment variables (e.g. `PATH`, `LD_LIBRARY_PATH`) in the configuration. | - |
+| Not Started | Use a class to wrap the database configurations to provide better type safety, more flexible querying, more default values and better error handling. | - |
 | Not Started | Add more detailed unit tests for the C++ backend. | - |
 | Not Started | Decide, document and unify the passes over the cheeses. | - |
 | Started | Add caching system to store source files, reduce redundant downloads and rebuild without internet connection. | Nick |
+| Done | Fix parsing regular environment variables (e.g. `PATH`, `LD_LIBRARY_PATH`) in the configuration. | Yi |
 | Done | Add better architecture handling logic, the architecture type should not be exposed to the user. | Sophia |
 | Done | Better source file handling (e.g. support for different source file name patterns). | Yi |
 | Done | Fix CMake multithreading. (Use `cmake --build . --parallel` instead of `make -j`). | Nick |
@@ -48,3 +49,4 @@
 # Uncategorized
 | Status | Task Description | <div style="width:70px">Developer</div> |
 |------------------|--------|-----------|
+| Not Started | Add bash and yaml formatter. | - |

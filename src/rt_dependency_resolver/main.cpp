@@ -1,12 +1,12 @@
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <rt_dependency_resolver/dependents.hpp>
 #include <rt_dependency_resolver/unbuilt_dependencies.hpp>
 #include <string>
+#include <utils/colored_io.hpp>
 #include <vector>
 
 int main(int argc, char* argv[]) {

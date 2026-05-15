@@ -2,7 +2,10 @@
 
 set -Eeuo pipefail
 
-export PATH=${FROMAGER_HOME}/bin:${PATH}
+FGR_INFO=${FROMAGER_HOME}/bin/colored_io/fromager_info
+FGR_WARNING=${FROMAGER_HOME}/bin/colored_io/fromager_warning
+FGR_ERROR=${FROMAGER_HOME}/bin/colored_io/fromager_error
+FGR_SUCCESS=${FROMAGER_HOME}/bin/colored_io/fromager_success
 
 target_cellar=$1
 
@@ -27,11 +30,11 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
 
     # Skip if package is already installed (unless --force is used)
     if $(grep -q "  - $package_name" "$target_cellar/state.yaml") && [ "$force" == false ]; then
-        fromager_warning "Package $package_name is already installed. Skipping."
+        ${FGR_WARNING} "Package $package_name is already installed. Skipping."
         continue
     fi
 
-    fromager_info "Processing package: $package_name"
+    ${FGR_INFO} "Processing package: $package_name"
     cd "$target_cellar/.tmp"
 
     # Get number of instructions for this package
@@ -40,7 +43,7 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
     # Execute each instruction
     for ((instr_idx=0; instr_idx<instruction_count; instr_idx++)); do
         instruction=$(yq -r ".[$pkg_idx].instructions[$instr_idx]" "$target_cellar/.tmp/ins.yaml")
-        fromager_info "Executing: $instruction"
+        ${FGR_INFO} "Executing: $instruction"
         saved_pkg_idx=$pkg_idx
         saved_instr_idx=$instr_idx
         eval "$instruction"
@@ -48,7 +51,7 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
         pkg_idx=$saved_pkg_idx
         instr_idx=$saved_instr_idx
         if [ $instruction_status -ne 0 ]; then
-            fromager_error "Failed to execute: $instruction"
+            ${FGR_ERROR} "Failed to execute: $instruction"
             exit 1
         fi
     done
@@ -56,7 +59,7 @@ for ((pkg_idx=0; pkg_idx<package_count; pkg_idx++)); do
     # Mark package as installed
     echo "  - $package_name" >> "$target_cellar/state.yaml"
     
-    fromager_success "Completed processing package: $package_name"
+    ${FGR_SUCCESS} "Completed processing package: $package_name"
 
     rm -rf "$target_cellar/.tmp/source"
 done
@@ -64,7 +67,7 @@ done
 # If a module file is not created in the modulefiles directory, create a module file for the cellar
 modulefiles_dir=${FROMAGER_WORKDIR}/$(yq -r '.fromager.paths.modulefiles' "${FROMAGER_WORKDIR}/config.yaml")
 if [ ! -f "$modulefiles_dir/$(basename $target_cellar)" ]; then
-    fromager_info "Creating module file for cellar: $target_cellar in $modulefiles_dir"
+    ${FGR_INFO} "Creating module file for cellar: $target_cellar in $modulefiles_dir"
     cat <<EOF > "$modulefiles_dir/$(basename $target_cellar)"
 #%Module1.0
 proc ModulesHelp { } {
@@ -74,9 +77,9 @@ module-whatis "Loads the $(basename $target_cellar) cellar environment"
 setenv FROMAGER_CELLAR "$(basename $target_cellar)"
 prepend-path PATH "$target_cellar/bin"
 EOF
-    fromager_success "Module file created for cellar: $target_cellar in $modulefiles_dir"
+    ${FGR_SUCCESS} "Module file created for cellar: $target_cellar in $modulefiles_dir"
 else
-    fromager_info "Module file already exists for cellar: $target_cellar in $modulefiles_dir. Skipping creation."
+    ${FGR_INFO} "Module file already exists for cellar: $target_cellar in $modulefiles_dir. Skipping creation."
 fi
 
 set +Eeuo pipefail

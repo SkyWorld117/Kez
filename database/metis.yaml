@@ -2,35 +2,96 @@ cheese:
   name: metis
   description: METIS is a set of serial programs for partitioning graphs, partitioning finite element meshes, and producing fill reducing orderings for sparse matrices.
   type: package
-  toolchain: make
+  toolchain: cmake
 
   source:
-    type: git
-    url: https://github.com/KarypisLab/METIS
+    type: tarball
     releases:
-      - version: master
-        tag: master
+      # Newer versions of METIS are neither stable nor much more performant
+      # We stick to version 5.1.0 which is the last stable release and works well for our use cases
+      - version: 5.1.0
+        url: http://papers.karypis.org/glaros/files/sw/metis/metis-5.1.0.tar.gz
 
-  dependencies:
-    - gklib
+  # GKlib is made as an external dependency of METIS starting from version 5.2.1
+  # Notice it is contained in the prior versions of METIS, so we don't need to install it separately
+
+  # dependencies:
+  #   - gklib
 
   build:
+    configurations:
+      options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${metis.prefix}
+
+        - name: -DCMAKE_BUILD_TYPE
+          description: CMake build type
+          enabled_value:
+            default: Release
+
+        - name: -DOPENMP
+          description: Enable OpenMP support
+          user_configurable: true
+          enabled_value:
+            default: "1"
+
+        - name: -DSHARED
+          description: Build shared library
+          user_configurable: true
+          enabled_value:
+            default: "1"
+
+        - name: -DGKLIB_PATH
+          description: Path to GKlib
+          enabled_value:
+            default: ${source}/GKlib
+
+        - name: -DCMAKE_C_COMPILER
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: -DCMAKE_CXX_COMPILER
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+
+        - name: -DCMAKE_BUILD_RPATH
+          description: RPATH for built libraries
+          enabled_value:
+            default: ${metis.prefix}/lib
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: RPATH for installed libraries
+          enabled_value:
+            default: ${metis.prefix}/lib
+
+        - name: -DCMAKE_C_FLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_CXX_FLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_POLICY_VERSION_MINIMUM
+          description: Minimum CMake policy version
+          enabled_value:
+            default: 3.5
     stages:
-      - target: config
-        configurations:
-          options:
-            - name: prefix
-              description: Installation prefix
-              enabled_value:
-                default: ${metis.prefix} 
-            - name: gklib_path
-              description: GKlib installation path
-              enabled_value:
-                default: ${gklib.prefix}
+      - target: ~
       - target: install
 
   properties:
     ldflags:
-      default: -L${metis.prefix}/lib64 -Wl,-rpath
+      default: -L${metis.prefix}/lib -Wl,-rpath,${metis.prefix}/lib
+    libs:
+      default: -lmetis -lGKlib
     includes:
       default: -I${metis.prefix}/include

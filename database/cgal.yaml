@@ -12,10 +12,10 @@ cheese:
   build:
     # Starting with CGAL 5.0, CGAL is a header-only library
     # There are only a few cmake files in `lib` that we need to install
-    postprocessing: >
-      mkdir -p ${cgal.prefix}/include &&
-      cp -r ${source}/include/* ${cgal.prefix}/include/ &&
-      mkdir -p ${cgal.prefix}/lib/ &&
+    postprocessing: |-
+      mkdir -p ${cgal.prefix}/include
+      cp -r ${source}/include/* ${cgal.prefix}/include/
+      mkdir -p ${cgal.prefix}/lib/
       cp -r ${source}/lib/* ${cgal.prefix}/lib/
 
   properties:

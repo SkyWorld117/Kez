@@ -1,6 +1,7 @@
 #include <database/database.hpp>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
+#include <utils/slurm.hpp>
 
 static argparse::ArgumentParser utilities_parser("utilities");
 static argparse::ArgumentParser util_add_parser("add");
@@ -23,6 +24,11 @@ argparse::ArgumentParser& get_utilities_parser() {
         .nargs(argparse::nargs_pattern::at_least_one);
     util_add_parser.add_argument("-f", "--force")
         .help("Force reinstallation even if the utility is already installed")
+        .default_value(false)
+        .implicit_value(true);
+    util_add_parser.add_argument("-S", "--with-slurm")
+        .help("Install the utility with Slurm support by wrapping the installation command with "
+              "sbatch")
         .default_value(false)
         .implicit_value(true);
 
@@ -72,10 +78,17 @@ void execute_utilities_parser() {
             parse_cmdline(pkg_or_file, utilities_cellar, config_options);
         }
 
+        std::string install_cmd = "${FROMAGER_HOME}/bin/fromager_install " + utilities_cellar;
+
         if (util_add_parser.get<bool>("--force")) {
-            utilities_cellar += " --force";
+            install_cmd += " --force";
         }
-        EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + utilities_cellar);
+
+        if (util_add_parser.get<bool>("--with-slurm")) {
+            install_cmd = wrap_command_with_sbatch(install_cmd, "fromager_install");
+        }
+
+        EXE_AND_CHECK(install_cmd);
 
         exit(EXIT_SUCCESS);
     }
@@ -136,6 +149,11 @@ std::vector<std::string> get_utilities_suggestions(const int comp_cword,
             // Suggest --force if it is not already present
             suggestions.push_back("--force");
             suggestions.push_back("-f");
+        }
+
+        if (!exists_in(comp_words, "--with-slurm") && !exists_in(comp_words, "-S")) {
+            suggestions.push_back("--with-slurm");
+            suggestions.push_back("-S");
         }
 
         if (suggest_read_option) {

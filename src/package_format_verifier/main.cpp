@@ -1,7 +1,7 @@
 #include <yaml-cpp/yaml.h>
 
-#include <utils/colored_io.hpp>
 #include <package_format_verifier/cheese_verifier.hpp>
+#include <utils/colored_io.hpp>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
