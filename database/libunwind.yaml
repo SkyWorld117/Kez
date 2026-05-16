@@ -1,0 +1,42 @@
+cheese:
+  name: libunwind
+  description: Event notification library
+  type: package
+  toolchain: autotools
+
+  source:
+    type: tarball
+    releases:
+      - version: 1.8.3
+        url: https://github.com/libunwind/libunwind/releases/download/v1.8.3/libunwind-1.8.3.tar.gz
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${libunwind.prefix}
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${libunwind.prefix}/lib -Wl,-rpath,${libunwind.prefix}/lib
+    libs:
+      default: -lunwind
+    includes:
+      default: -I${libunwind.prefix}/include
