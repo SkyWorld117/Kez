@@ -10,6 +10,8 @@ cheese:
     releases:
       - version: main
         tag: main
+      - version: isc26
+        tag: b83170f
 
   dependencies:
     - hdf5
@@ -50,6 +52,20 @@ cheese:
           default: 1
         requires: [nvhpc-compilers]
 
+      - name: NSIMD
+        description: SIMD vector length used for CPU vectorization
+        user_configurable: true
+        enabled:
+          default: false
+        enabled_value:
+          default: 8
+
+      - name: FLAGS
+        description: C flags
+        user_configurable: true
+        enabled_value:
+          default: -O2
+
       - name: CC
         description: C compiler
         enabled: 
@@ -72,6 +88,10 @@ cheese:
               value: ${mpi.c} ${hdf5.includes} ${hdf5.ldflags}
 
   build:
+    # Delete setting -O2 in the Makefile, to let the user set their own flag 
+    preprocessing: |-
+      sed -i '/CFLAGS+=-O2/d' ${source}/src/Makefile
+
     stages:
         - target: ascot5_main
           configurations: *ascot_configurations
