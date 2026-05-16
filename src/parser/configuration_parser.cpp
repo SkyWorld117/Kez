@@ -33,27 +33,31 @@ void parse_configuration(std::vector<std::string>& instructions, const std::stri
 
     // Construct command
     std::string cmd = command;
-    if (!opts_config.empty()) {
+    if (!opts_config.empty() && !cmd.empty()) {
         cmd += " " + opts_config;
     }
 
-    // Wrap with environment variables
-    std::unordered_map<std::string, std::string> env_map;
-    for (const auto& [key, value] : env_config) {
-        std::string env_value = get_env_var_noerr(key);
-        env_map[key]          = env_value;
-        instructions.push_back("export " + key + "=\"" + value + "\"");
-    }
-
-    // Add command to instructions
-    instructions.push_back(cmd);
-
-    // Unset environment variables after command
-    for (const auto& [key, value] : env_config) {
-        if (env_map[key].empty()) {
-            instructions.push_back("unset " + key);
-        } else {
-            instructions.push_back("export " + key + "=\"" + env_map[key] + "\"");
+    if (!cmd.empty()) {
+        // Wrap with environment variables
+        std::unordered_map<std::string, std::string> env_map;
+        for (const auto& [key, value] : env_config) {
+            std::string env_value = get_env_var_noerr(key);
+            env_map[key]          = env_value;
+            instructions.push_back("export " + key + "=\"" + value + "\"");
         }
+
+        // Add command to instructions
+        instructions.push_back(cmd);
+
+        // Unset environment variables after command
+        for (const auto& [key, value] : env_config) {
+            if (env_map[key].empty()) {
+                instructions.push_back("unset " + key);
+            } else {
+                instructions.push_back("export " + key + "=\"" + env_map[key] + "\"");
+            }
+        }
+    } else {
+        WARNING("Empty command. Skipping command execution (including environment variables).");
     }
 }
