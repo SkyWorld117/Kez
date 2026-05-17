@@ -42,3 +42,16 @@ recipe:
 ```
 
 Users are supposed to modify the values of the entries, but not to add/remove any entry.
+
+## Local Source Override
+For software developers, it is often desirable to test the installation of a package using a local source directory instead of fetching the source code from the remote repository. To achieve this, users can simply set the `version` entry to the absolute path of the local source directory. For example:
+
+```yaml
+cheese:
+  my_package:
+    description: My package description
+    version: /path/to/local/source/directory
+    build:
+      configurations: <configurations_list> # If exists in the original package
+      stages: <stages_list> # If exists in the original package AND the stages are configurable
+```
