@@ -198,6 +198,17 @@ cheese:
           enabled_format: --with-cusolver=yes
           requires: [cuda]
 
+        - name: enable-nvidia-cub
+          description: Use Nvidia CUB library for GPU kernels (yes by default when CUDA enabled)
+          enabled:
+            conditions:
+              - condition: ${elpa.config.enable-nvidia-gpu-kernels} true
+                value: true
+              - condition: ${elpa.config.enable-nvidia-gpu-kernels} false
+                value: false
+          enabled_format: --enable-nvidia-cub
+          requires: [cuda]
+
         # ============ AMD GPU support ============
 
         # - name: enable-amd-gpu
