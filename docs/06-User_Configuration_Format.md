@@ -50,7 +50,7 @@ For software developers, it is often desirable to test the installation of a pac
 cheese:
   my_package:
     description: My package description
-    version: /path/to/local/source/directory
+    version: name@/path/to/local/source/directory
     build:
       configurations: <configurations_list> # If exists in the original package
       stages: <stages_list> # If exists in the original package AND the stages are configurable
