@@ -53,6 +53,18 @@ std::vector<std::string> parse_package(ParserContext& context) {
             WARNING("Version " + version +
                     " not found in source releases for package: " + package_name);
             WARNING("Assuming the version is a path to a local source directory.");
+            // version: myname@/path/to/source
+            size_t colon_pos = version.find("@");
+            if (colon_pos == std::string::npos) {
+                ERROR("Invalid version format. Expected 'version:source_path' for local sources.");
+                exit(EXIT_FAILURE);
+            }
+            std::filesystem::path source_path = version.substr(colon_pos + 1);
+            if (!std::filesystem::exists(source_path)) {
+                ERROR("Source path does not exist: " + source_path.string());
+                exit(EXIT_FAILURE);
+            }
+            version = version.substr(0, colon_pos);  // Extract the version part before the colon
             instructions.push_back("cp -r " + version + " source");
             instructions.push_back("cd source");
         }
