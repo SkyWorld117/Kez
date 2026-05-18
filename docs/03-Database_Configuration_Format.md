@@ -133,7 +133,7 @@ condition =
     "environment" <variable> | 
     <option> <enabled> [<enabled_value>] | 
     <option> <disabled> [<disabled_value>] | 
-    "version" <version_range> |
+    "version" <self.version><op><version>[,<op><version>] |
     <condition> && <condition> | 
     <condition> || <condition> | 
     "not" <condition> | 
