@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
-
 # Remove some problematic environment variables that may interfere with the installation process
 unset CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
 unset LIBRARY_PATH LD_LIBRARY_PATH
 unset PKG_CONFIG_PATH
 unset CMAKE_PREFIX_PATH CMAKE_LIBRARY_PATH CMAKE_INCLUDE_PATH
+
+set -Eeuo pipefail
 
 # This script creates a nearly distribution-independent Fromager environment.
 # This environment offers the essential system utilities. 

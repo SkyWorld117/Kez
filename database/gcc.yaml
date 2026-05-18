@@ -88,7 +88,7 @@ cheese:
         - name: --with-boot-ldflags
           description: Linker flags for bootstrapping
           enabled_value:
-            default: ${gmp.ldflags} ${mpfr.ldflags} ${mpc.ldflags} ${isl.ldflags} ${zstd.ldflags} ${gcc.self_build_ldflags}
+            default: ${gmp.ldflags} ${mpfr.ldflags} ${mpc.ldflags} ${isl.ldflags} ${zstd.ldflags} ${gcc.self_build_ldflags} -static-libstdc++ -static-libgcc
 
         - name: CC
           description: C compiler
@@ -107,6 +107,9 @@ cheese:
               description: Runtime library search path
               user_configurable: false
               default: ${gcc.prefix}/lib:${gcc.prefix}/lib64
+            - name: LIBRARY_PATH
+              description: Library search path for build tools
+              default: ${source}/gcc
       - target: install
         configurations:
           environment:
@@ -114,6 +117,9 @@ cheese:
               description: Runtime library search path
               user_configurable: false
               default: ${gcc.prefix}/lib:${gcc.prefix}/lib64
+            - name: LIBRARY_PATH
+              description: Library search path for build tools
+              default: ${source}/gcc
 
   properties:
     c: ${compiler.prefix}/bin/gcc

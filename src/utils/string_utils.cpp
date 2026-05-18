@@ -3,19 +3,17 @@
 
 std::vector<std::string> split(const std::string& str, char delimiter) {
     std::vector<std::string> tokens;
-    std::string token;
-    for (char ch : str) {
-        if (ch == delimiter) {
-            if (!token.empty()) {
-                tokens.push_back(token);
-                token.clear();
-            }
-        } else {
-            token += ch;
+    size_t pos = 0;
+    size_t del_pos;
+    while ((del_pos = str.find(delimiter, pos)) != std::string::npos) {
+        std::string token = str.substr(pos, del_pos - pos);
+        if (!token.empty()) {
+            tokens.push_back(token);
         }
+        pos = del_pos + 1;  // Move past the delimiter
     }
-    if (!token.empty()) {
-        tokens.push_back(token);
+    if (!str.empty()) {
+        tokens.push_back(str.substr(pos));  // Add the last token
     }
     return tokens;
 }
