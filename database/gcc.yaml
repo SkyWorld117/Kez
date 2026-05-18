@@ -109,17 +109,10 @@ cheese:
               default: ${gcc.prefix}/lib:${gcc.prefix}/lib64
             - name: LIBRARY_PATH
               description: Library search path for build tools
-              default: ${source}/gcc
+              conditions:
+                - condition: version ${gcc.version}>=16.0.0
+                  value: ${source}/gcc
       - target: install
-        configurations:
-          environment:
-            - name: LD_RUN_PATH
-              description: Runtime library search path
-              user_configurable: false
-              default: ${gcc.prefix}/lib:${gcc.prefix}/lib64
-            - name: LIBRARY_PATH
-              description: Library search path for build tools
-              default: ${source}/gcc
 
   properties:
     c: ${compiler.prefix}/bin/gcc
