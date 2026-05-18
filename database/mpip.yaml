@@ -20,170 +20,271 @@ cheese:
       options:
         - name: --disable-option-checking
           description: ignore unrecognized --enable/--with options
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-api-only
           description: Only build the API library.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-mpi-io
           description: Disable MPI-I/O reporting.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-mpi-rma
           description: Disable MPI RMA reporting.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-mpi-nbc
           description: Disable MPI NONBLOCKINGCOLLECTIVES reporting.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-mpi-pcoll
           description: Disable MPI PERSISTENTCOLLECTIVES reporting.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-mpi-isendrecv
           description:  MPI ISENDRECV reporting.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-mpi-partitioned
           description: Disable MPI PARTITIONED reporting.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-bfd           
           description: Do not use GNU binutils libbfd for source lookup.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-libunwind     
           description: Do not use libunwind to generate stack traces.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-so-lookup     
           description: Disable functionality to attempt to find source info in shared objects.                  
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
         - name: --enable-setjmp         
           description: Use setjmp instead of glic backtrace() to generate stack traces.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --disable-fortranxlate  
           description: Disable translation of Fortran opaque objects.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-fortranweak    
           description: Generate weak symbols for additional Fortran symbol name styles.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-stackdepth     
           description: Specify maximum report stacktrace depth (default is 8).
+          user_configurable: true
+          enabled:
+            default: false
           enabled_value:
-            default: no
+            default: 8
+
         - name: --enable-internal-stackdepth 
           description: Specify number of internal stack frames (default is 3).
+          user_configurable: true
+          enabled:
+            default: false
           enabled_value:
-            default: no
+            default: 3
+
         - name: --enable-maxargs        
           description: Maximum number of command line arguments copied (default is 32).
+          user_configurable: true
+          enabled:
+            default: false
           enabled_value:
-            default: no
+            default: 32
+
         - name: --enable-dwarf          
           description: Use DWARF library for source lookup.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-getarg         
           description: Use getarg to get fortran command line args.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-demangling     
           description: Specify GNU, IBM, or Compaq demangling support.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-check-time     
           description: Enable AIX check for negative time values.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-collective-report-default
           description: Have mpiP default to low-memory-use collective report generation as opposed to collecting all data at a single task (see runtime flags -l and -s).
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-concise-report-default
           description: Have mpiP default to a concise summary report format. (see runtime flags -c and -v).
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --with-libunwind        
           description: Specify location of libunwind to merge.
+          enabled:
+            default: false
+            conditions: 
+              - condition: ${mpip.config.--disable-libunwind} false
+                action: set
+                value: true
           enabled_value:
             default: ${libunwind.prefix}
+
         - name: --with-bin-type-flag    
           description: Binary format for AIX ar operations.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --with-gettimeofday     
           description: Use gettimeofday for timing.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --with-wtime            
           description: Use MPI_Wtime for timing.
-          enabled_value:
-            default: yes
+          user_configurable: true
+          enabled:
+            default: true
+
         - name: --with-clock_gettime    
           description: Use clock_gettime for timing.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --with-rts_get_timebase 
           description: Use rts_get_timebase for timing on BG/L systems (default for BG/L).
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --with-read_real_time   
           description: Use read_real_time for timing on AIX systems (default for AIX).
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --with-rtc              
           description: Use _rtc for timing on CRAY X1 systems (default for X1).
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --with-dclock
           description: Use Catamount dclock for timing.
-          enabled_value:
-            default: no
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --prefix
           description: Installation prefix
           enabled_value:
             default: ${mpip.prefix}
+
         - name: CC
           description: C compiler
           enabled_value:
             default: ${mpi.c}
+
         - name: CXX
           description: C compiler
           enabled_value:
             default: ${mpi.cxx}
+
         - name: CFLAGS
           description: C compiler flags
           user_configurable: true
           enabled_value:
-            default: -O3 ${compiler.includes} ${mpi.includes} ${libunwind.includes}
+            default: -O3 ${compiler.includes} ${mpi.includes}
+            conditions:
+              - condition: ${mpip.config.--disable-libunwind} false
+                action: append
+                value: ${libunwind.includes}
+            
         - name: LDFLAGS
           description: linker flags, e.g. -L<lib dir> if you have libraries in a nonstandard directory <lib dir>
           enabled_value:
-            default: ${compiler.ldflags} ${mpi.ldflags} ${libunwind.ldflags}
+            default: ${compiler.ldflags} ${mpi.ldflags}
+            conditions:
+              - condition: ${mpip.config.--disable-libunwind} false
+                action: append
+                value: ${libunwind.ldflags}
+            
         - name: LIBS
           description: libraries to pass to the linker, e.g. -l<library>
+          enabled:
+            default: false
+            conditions: 
+              - condition: ${mpip.config.--disable-libunwind} false
+                action: set
+                value: true
           enabled_value:
             default: ${libunwind.libs}
+            
         - name: CPPFLAGS
           description: (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if you have headers in a nonstandard directory <include dir>
           enabled_value:
-            default: ${compiler.includes} ${mpi.includes} ${libunwind.includes}
+            default: ${compiler.includes} ${mpi.includes} 
+            conditions:
+              - condition: ${mpip.config.--disable-libunwind} false
+                action: append
+                value: ${libunwind.includes}
+            
         - name: F77
           description: Fortran 77 compiler command
           enabled_value:
             default: ${mpi.fort}
+
         - name: FFLAGS
           description: Fortran 77 compiler flags
           user_configurable: true
           enabled_value:
             default: -O3
+
     stages:
       - target: ~
       - target: install
