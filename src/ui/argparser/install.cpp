@@ -77,19 +77,19 @@ void execute_install_parser() {
                 }
                 if (!found) {
                     // version: myname@/path/to/source
-                    size_t colon_pos = query.pkg_version.find("@");
-                    if (colon_pos == std::string::npos) {
+                    size_t at_pos = query.pkg_version.find("@");
+                    if (at_pos == std::string::npos) {
                         ERROR("Invalid version format. Expected 'version@source_path' for local "
                               "sources.");
                         exit(EXIT_FAILURE);
                     }
-                    std::filesystem::path source_path = query.pkg_version.substr(colon_pos + 1);
+                    std::filesystem::path source_path = query.pkg_version.substr(at_pos + 1);
                     if (!std::filesystem::exists(source_path)) {
                         ERROR("Source path does not exist: " + source_path.string());
                         exit(EXIT_FAILURE);
                     }
                     query.pkg_version = query.pkg_version.substr(
-                        0, colon_pos);  // Extract the version part before the colon
+                        0, at_pos);  // Extract the version part before the at symbol
                 }
             } else {
                 YAML::Node pkg_config = get_db_config(query.pkg_name[0]);
