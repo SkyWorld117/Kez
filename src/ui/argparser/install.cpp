@@ -65,6 +65,32 @@ void execute_install_parser() {
                 YAML::Node config = YAML::LoadFile(pkg_or_file[0]);
                 query.pkg_version =
                     config["cheese"][query.pkg_name[0]]["version"].as<std::string>();
+
+                YAML::Node pkg_config = get_db_config(query.pkg_name[0]);
+                bool found            = false;
+                for (const auto& release : pkg_config["cheese"]["source"]["releases"]) {
+                    std::string release_version = release["version"].as<std::string>();
+                    if (release_version == query.pkg_version) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    // version: myname@/path/to/source
+                    size_t colon_pos = query.pkg_version.find("@");
+                    if (colon_pos == std::string::npos) {
+                        ERROR("Invalid version format. Expected 'version@source_path' for local "
+                              "sources.");
+                        exit(EXIT_FAILURE);
+                    }
+                    std::filesystem::path source_path = query.pkg_version.substr(colon_pos + 1);
+                    if (!std::filesystem::exists(source_path)) {
+                        ERROR("Source path does not exist: " + source_path.string());
+                        exit(EXIT_FAILURE);
+                    }
+                    query.pkg_version = query.pkg_version.substr(
+                        0, colon_pos);  // Extract the version part before the colon
+                }
             } else {
                 YAML::Node pkg_config = get_db_config(query.pkg_name[0]);
                 query.pkg_version =
