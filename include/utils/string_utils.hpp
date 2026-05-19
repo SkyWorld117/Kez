@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "dump.hpp"
+#include <utils/dump.hpp>
 
 std::vector<std::string> split(const std::string& str, char delimiter);
 std::vector<std::string> split(const std::string& str, const std::vector<char>& delimiters);
