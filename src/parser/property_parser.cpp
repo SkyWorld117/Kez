@@ -40,6 +40,30 @@ std::string parse_property(const std::string& property_name, ParserContext& cont
             query.pkg_version = global_config::get_external_package_version(package_name);
         } else {
             query.pkg_version = user_config["cheese"][package_name]["version"].as<std::string>();
+            bool found        = false;
+            for (const auto& release : pkg_config_node["cheese"]["source"]["releases"]) {
+                std::string release_version = release["version"].as<std::string>();
+                if (release_version == query.pkg_version) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // version: myname@/path/to/source
+                size_t at_pos = query.pkg_version.find("@");
+                if (at_pos == std::string::npos) {
+                    ERROR("Invalid version format. Expected 'version@source_path' for local "
+                          "sources.");
+                    exit(EXIT_FAILURE);
+                }
+                std::filesystem::path source_path = query.pkg_version.substr(at_pos + 1);
+                if (!std::filesystem::exists(source_path)) {
+                    ERROR("Source path does not exist: " + source_path.string());
+                    exit(EXIT_FAILURE);
+                }
+                query.pkg_version = query.pkg_version.substr(
+                    0, at_pos);  // Extract the version part before the at symbol
+            }
         }
         if (user_config["cheese"][package_name]["compiler"]) {
             query.compiler_spec = user_config["cheese"][package_name]["compiler"].as<std::string>();
