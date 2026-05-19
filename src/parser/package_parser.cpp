@@ -64,8 +64,8 @@ std::vector<std::string> parse_package(ParserContext& context) {
                 ERROR("Source path does not exist: " + source_path.string());
                 exit(EXIT_FAILURE);
             }
-            version = version.substr(0, at_pos);  // Extract the version part before the at symbol
-            instructions.push_back("cp -r " + version + " source");
+            version = version.substr(0, at_pos);  // Extract the version part before the colon
+            instructions.push_back("cp -r " + source_path.string() + " source");
             instructions.push_back("cd source");
         }
     }
