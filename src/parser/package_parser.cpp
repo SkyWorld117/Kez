@@ -65,7 +65,8 @@ std::vector<std::string> parse_package(ParserContext& context) {
                 exit(EXIT_FAILURE);
             }
             version = version.substr(0, at_pos);  // Extract the version part before the at symbol
-            instructions.push_back("cp -r " + source_path.string() + " source");
+            // Preserve timestamps to avoid triggering autoreconf tooling during builds.
+            instructions.push_back("cp -a " + source_path.string() + " source");
             instructions.push_back("cd source");
         }
     }
