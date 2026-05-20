@@ -1,0 +1,83 @@
+cheese:
+  name: h5hut
+  description: Parallel file format for storing particles, which is recognized by paraview.
+  type: package
+  toolchain: autotools
+
+  source:
+    type: git
+    url: https://github.com/eth-cscs/h5hut.git
+    releases:
+      - version: master
+        tag: master
+
+  dependencies:
+    - hdf5
+
+  build:
+    preprocessing: ./autogen.sh
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${h5hut.prefix}
+        
+        - name: --with-hdf5
+          description: Installation prefix
+          enabled_value:
+            default: ${hdf5.prefix}
+
+        - name: --enable-parallel
+          description: enable parallel io, needs to be true if we are using a parallel hdf5
+          user_configurable: true
+          enabled:
+            default: true
+          requires: [mpi]
+
+        - name: CC
+          description: C compiler
+          enabled_value:
+            default: ${compiler.c}
+            conditions:
+              - condition: ${h5hut.config.--enable-parallel} true
+                action: set
+                value: ${mpi.c}
+
+        - name: CXX
+          description: C++ compiler
+          enabled_value:
+            default: ${compiler.cxx}
+            conditions:
+              - condition: ${h5hut.config.--enable-parallel} true
+                action: set
+                value: ${mpi.cxx}
+
+        - name: CFLAGS
+          description: C compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: CXXFLAGS
+          description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: LDFLAGS
+          description: Linker flags
+          user_configurable: true
+          enabled_value:
+            default: ${hdf5.ldflags}
+    stages:
+      - target: ~
+      - target: install
+
+  properties:
+    ldflags:
+      default: -L${h5hut.prefix}/lib -Wl,-rpath,${h5hut.prefix}/lib
+    libs:
+      default: -lh5hut
+    includes:
+      default: -I${h5hut.prefix}/include
