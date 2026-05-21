@@ -71,6 +71,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
         }
     }
 
+#ifdef DDEBUG
     // Output the instructions for each package
     for (const auto& pkg : user_config["cheese"]) {
         INFO("Instructions for package: " + pkg.first.as<std::string>());
@@ -78,6 +79,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
             std::cout << "- " << instruction << std::endl;
         }
     }
+#endif
 
     // Convert package_instructions to YAML format
     YAML::Node instructions_yaml = YAML::Node(YAML::NodeType::Sequence);

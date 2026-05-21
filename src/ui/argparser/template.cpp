@@ -37,6 +37,13 @@ void execute_template_parser() {
         std::filesystem::create_directories(tmp_path);
 
         YAML::Node instructions_yaml = parse(config, "release", fgr_workdir);
+        for (const auto& pkg_instr : instructions_yaml) {
+            INFO("Instructions for package: " + pkg_instr["package"].as<std::string>());
+            for (const auto& instruction : pkg_instr["instructions"]) {
+                std::cout << "- " << instruction << std::endl;
+            }
+        }
+
         YAML::Emitter out;
         out << instructions_yaml;
         std::ofstream ofs((tmp_path / "ins.yaml").string());
