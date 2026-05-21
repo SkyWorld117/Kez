@@ -1,4 +1,3 @@
-#include <fstream>
 #include <regex>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
@@ -173,18 +172,8 @@ void execute_rt_parser() {
                     factory_path / "cellars" / entry.path().stem();
 
                 YAML::Node instructions_yaml = parse(config, "release", target_cellar.string());
-                YAML::Emitter out;
-                out << instructions_yaml;
-                std::filesystem::path tmp_path = target_cellar / ".tmp";
-                std::filesystem::create_directories(tmp_path);
-                std::ofstream ofs((tmp_path / "ins.yaml").string());
-                if (!ofs) {
-                    ERROR("Failed to create instruction file for config: " + config_path);
-                    exit(EXIT_FAILURE);
-                }
-                ofs << out.c_str();
-                ofs << std::endl;
-                ofs.close();
+                std::filesystem::path tmp_path = target_cellar / ".tmp" / "ins.yaml";
+                write_yaml(instructions_yaml, tmp_path.string());
 
                 EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_install " + target_cellar.string());
 
@@ -339,21 +328,18 @@ void execute_rt_parser() {
 
         std::filesystem::path target_cellar =
             global_config::get_path("cellars") + "/" + cellar_name;
-        std::filesystem::path tmp_path = target_cellar / ".tmp";
-        std::filesystem::create_directories(tmp_path);
         YAML::Node config            = YAML::LoadFile(config_path);
         YAML::Node instructions_yaml = parse(config, "debug", target_cellar.string());
 
-        YAML::Emitter out;
-        out << instructions_yaml;
-        std::ofstream ofs((tmp_path / "ins.yaml").string());
-        if (!ofs) {
-            ERROR("Failed to create instruction file for config: " + config_path);
-            exit(EXIT_FAILURE);
+        for (const auto& pkg_instr : instructions_yaml) {
+            INFO("Instructions for package: " + pkg_instr["package"].as<std::string>());
+            for (const auto& instruction : pkg_instr["instructions"]) {
+                std::cout << "- " << instruction << std::endl;
+            }
         }
-        ofs << out.c_str();
-        ofs << std::endl;
-        ofs.close();
+
+        std::filesystem::path ins_path = target_cellar / ".tmp" / "ins.yaml";
+        write_yaml(instructions_yaml, ins_path.string());
 
         EXE_AND_CHECK("${FROMAGER_HOME}/bin/fromager_rt_install " + target_cellar.string() + " " +
                       config_path + " " + package);

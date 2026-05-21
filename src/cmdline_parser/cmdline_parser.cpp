@@ -1,7 +1,7 @@
 #include <cmdline_parser/cmdline_parser.hpp>
 #include <filesystem>
-#include <fstream>
 #include <unordered_map>
+#include <utils/file_utils.hpp>
 
 void parse_cmdline(const std::string& file, const std::string& cellar_path,
                    const std::vector<std::string>& config_options) {
@@ -42,19 +42,6 @@ void parse_cmdline(YAML::Node user_config, const std::string& cellar_path,
     YAML::Node instructions = parse(user_config, "release", cellar_path);
 
     // Store instructions in the cellar
-    YAML::Emitter out;
-    out << instructions;
-
-    std::filesystem::path tmp_path = std::filesystem::path(cellar_path) / ".tmp";
-    std::filesystem::create_directories(tmp_path);
-    std::ofstream ofs((tmp_path / "ins.yaml").string());
-    if (!ofs) {
-        ERROR("Failed to create instruction file");
-        exit(EXIT_FAILURE);
-    }
-    ofs << out.c_str();
-    ofs << std::endl;
-    ofs.close();
-
-    SUCCESS("Instructions written to: " + (tmp_path / "ins.yaml").string());
+    std::filesystem::path ins_path = std::filesystem::path(cellar_path) / ".tmp" / "ins.yaml";
+    write_yaml(instructions, ins_path.string(), "Instructions written to: " + ins_path.string());
 }
