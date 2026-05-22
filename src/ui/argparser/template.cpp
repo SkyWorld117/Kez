@@ -1,7 +1,7 @@
-#include <fstream>
 #include <ui/argparser/argparser.hpp>
 #include <ui/bash_completion/utils.hpp>
 #include <utils/bash_utils.hpp>
+#include <utils/file_utils.hpp>
 
 static argparse::ArgumentParser template_parser("template");
 static argparse::ArgumentParser template_parse_parser("parse");
@@ -33,22 +33,17 @@ void execute_template_parser() {
         YAML::Node config = YAML::LoadFile(file);
 
         std::string fgr_workdir        = get_env_var("FROMAGER_WORKDIR");
-        std::filesystem::path tmp_path = std::filesystem::path(fgr_workdir) / ".tmp";
-        std::filesystem::create_directories(tmp_path);
-
         YAML::Node instructions_yaml = parse(config, "release", fgr_workdir);
-        YAML::Emitter out;
-        out << instructions_yaml;
-        std::ofstream ofs((tmp_path / "ins.yaml").string());
-        if (!ofs) {
-            ERROR("Failed to create instruction file");
-            exit(EXIT_FAILURE);
-        }
-        ofs << out.c_str();
-        ofs << std::endl;
-        ofs.close();
 
-        SUCCESS("Instructions written to: " + (tmp_path / "ins.yaml").string());
+        for (const auto& pkg_instr : instructions_yaml) {
+            INFO("Instructions for package: " + pkg_instr["package"].as<std::string>());
+            for (const auto& instruction : pkg_instr["instructions"]) {
+                std::cout << "- " << instruction << std::endl;
+            }
+        }
+
+        std::filesystem::path ins_path = std::filesystem::path(fgr_workdir) / ".tmp" / "ins.yaml";
+        write_yaml(instructions_yaml, ins_path.string(), "Instructions written to: " + ins_path.string());
 
         exit(EXIT_SUCCESS);
     } else {
@@ -67,14 +62,7 @@ void execute_template_parser() {
 
         if (save_template) {
             std::string output_file = template_parser.get<std::string>("--save");
-            std::ofstream ofs(output_file);
-            if (!ofs) {
-                ERROR("Could not open output file: " + output_file);
-                exit(EXIT_FAILURE);
-            }
-            ofs << out.c_str();
-            ofs.close();
-            SUCCESS("Configuration template written to: " + output_file);
+            write_yaml(user_config, output_file, "Configuration template written to: " + output_file);
         } else {
             SUCCESS("Configuration template output to stdout.");
         }

@@ -185,10 +185,10 @@ $(BIN_DIR)/colored_io: | $(BIN_DIR)
 	mkdir -p $(BIN_DIR)/colored_io
 
 # Executables
-$(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_config_verifier: $(PACKAGE_FORMAT_VERIFIER_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/fromager_rt_profile_config_parser: $(RT_PROFILE_PARSER_OBJS) | $(BIN_DIR)
+$(BIN_DIR)/fromager_rt_profile_config_parser: $(RT_PROFILE_PARSER_OBJS) $(UTILS_OBJS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/fromager_rt_resolve_dependencies: $(RT_DEPENDENCY_RESOLVER_OBJS) $(DEPENDENCY_RESOLVER_OBJS) $(DATABASE_OBJS) $(UTILS_OBJS) | $(BIN_DIR)

@@ -1,10 +1,9 @@
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <rt_profile_config_parser/factory_parser.hpp>
 #include <utils/colored_io.hpp>
+#include <utils/file_utils.hpp>
 
 int main(int argc, char* argv[]) {
     // Expected arguments:
@@ -28,21 +27,9 @@ int main(int argc, char* argv[]) {
     YAML::Node instructions_yaml = parse_factory_config(factory_config["factory"]);
 
     // Create the file to `factory_dir/ins.yaml`
-    YAML::Emitter out;
-    out << instructions_yaml;
-
     std::filesystem::path factory_path = std::filesystem::path(argv[2]);
-    std::filesystem::path output_path  = factory_path / "ins.yaml";
-    std::ofstream ofs(output_path.string());
-    if (!ofs) {
-        ERROR("Failed to create instruction file");
-        exit(EXIT_FAILURE);
-    }
-    ofs << out.c_str();
-    ofs << std::endl;
-    ofs.close();
-
-    SUCCESS("Instructions written to: " + output_path.string());
+    std::filesystem::path output_path = factory_path / "ins.yaml";
+    write_yaml(instructions_yaml, output_path.string(), "Instructions written to: " + output_path.string());
 
     return 0;
 }

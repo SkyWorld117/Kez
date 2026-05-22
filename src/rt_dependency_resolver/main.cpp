@@ -1,13 +1,12 @@
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <rt_dependency_resolver/dependents.hpp>
 #include <rt_dependency_resolver/unbuilt_dependencies.hpp>
 #include <string>
 #include <utils/colored_io.hpp>
 #include <vector>
+#include <utils/file_utils.hpp>
 
 int main(int argc, char* argv[]) {
     // Expected arguments:
@@ -81,19 +80,10 @@ int main(int argc, char* argv[]) {
     }
 
     // Output the filtered instructions as yaml
-    YAML::Emitter out;
-    out << filtered_instructions;
-
     std::filesystem::path filtered_ins_file =
-        std::filesystem::path(cellar_path) / ".tmp/filtered_ins.yaml";
-    std::ofstream ofs(filtered_ins_file.string());
-    if (!ofs) {
-        ERROR("Failed to create instruction file");
-        exit(EXIT_FAILURE);
-    }
-    ofs << out.c_str();
-    ofs.close();
+        std::filesystem::path(cellar_path) / ".tmp" / "filtered_ins.yaml";
+    write_yaml(filtered_instructions, filtered_ins_file.string(),
+               "Filtered instructions written to: " + filtered_ins_file.string());
 
-    SUCCESS("Filtered instructions written to: " + filtered_ins_file.string());
     return 0;
 }
