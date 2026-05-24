@@ -4,23 +4,37 @@
 cheese:
   name: cuda
   description: NVIDIA CUDA Toolkit
-  type: system
+  type: vendor
 
   source:
-    type: tarball
+    type: script
     releases:
       - version: 13.2
-        url: https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux${fromager.arch}.run
+        url: https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux${fromager.arch.cuda}.run
       - version: 12.9
-        url: https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux${fromager.arch}.run
+        url: https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux${fromager.arch.cuda}.run
       - version: 12.8
-        url: https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda_12.8.1_570.124.06_linux${fromager.arch}.run
+        url: https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda_12.8.1_570.124.06_linux${fromager.arch.cuda}.run
       - version: 12.6
-        url: https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_560.35.05_linux${fromager.arch}.run
+        url: https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_560.35.05_linux${fromager.arch.cuda}.run
       - version: 12.5
-        url: https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.42.06_linux${fromager.arch}.run
+        url: https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.42.06_linux${fromager.arch.cuda}.run
       - version: 12.4
-        url: https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux${fromager.arch}.run
+        url: https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux${fromager.arch.cuda}.run
+
+  build:
+    postprocessing: |-
+      rm -f /tmp/cuda-installer.log
+      mkdir -p ${cuda.prefix}/.tmp
+      bash ${source} --silent --toolkit --override --toolkitpath=${cuda.prefix} --no-drm --tmpdir=${cuda.prefix}/.tmp
+      rm -f /tmp/cuda-installer.log
+      if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+          cp -rsf "${cuda.prefix}/targets/x86_64-linux/include"/* "${cuda.prefix}/include/"
+          cp -rsf "${cuda.prefix}/targets/x86_64-linux/lib"/* "${cuda.prefix}/lib64/"
+      elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+          cp -rsf "${cuda.prefix}/targets/sbsa-linux/include"/* "${cuda.prefix}/include/"
+          cp -rsf "${cuda.prefix}/targets/sbsa-linux/lib"/* "${cuda.prefix}/lib64/"
+      fi
 
   properties:
     ldflags:
