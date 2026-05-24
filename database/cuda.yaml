@@ -4,7 +4,7 @@
 cheese:
   name: cuda
   description: NVIDIA CUDA Toolkit
-  type: vendor
+  type: system
 
   source:
     type: script
