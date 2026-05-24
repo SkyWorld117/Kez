@@ -35,6 +35,10 @@ std::string parse_template(const std::string& template_str, ParserContext& conte
         return get_source_path(env_path);
     }
 
+    if (template_str.find('.') == std::string::npos) {
+        return template_str;  // Not a template, return as is
+    }
+
     if (template_str.find("fromager.") == 0) {
         return parse_fromager_template(template_str);
     }
