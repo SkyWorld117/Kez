@@ -277,7 +277,7 @@ if check_installation "gcc"; then
     make install
     unset LD_RUN_PATH
 
-    ${FROMAGER_HOME}/patches/gcc_patch_linking.sh "${FROMAGER_SYSTEM}"
+    ${FROMAGER_HOME}/tools/gcc_patch_linking.sh "${FROMAGER_SYSTEM}"
 
     cd "${FROMAGER_SYSTEM_TMP}" && rm -rf *
     echo -e "  gcc:\n    version: 11.5.0" >> "${FROMAGER_SYSTEM}/state.yaml"

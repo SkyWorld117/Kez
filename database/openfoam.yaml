@@ -130,7 +130,7 @@ cheese:
       cp -r ${source}/bin ${openfoam.prefix}/
       cp -r ${source}/etc ${openfoam.prefix}/
       cp -r ${source}/tutorials ${openfoam.prefix}/
-      bash $FROMAGER_HOME/patches/fgr_patch_rpath.sh ${openfoam.prefix}/lib/sys-openmpi/libptscotchDecomp.so ${openmpi.prefix}/lib
+      bash $FROMAGER_HOME/tools/fgr_patch_rpath.sh ${openfoam.prefix}/lib/sys-openmpi/libptscotchDecomp.so ${openmpi.prefix}/lib
 
   properties:
     ldflags:

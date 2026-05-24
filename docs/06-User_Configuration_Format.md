@@ -10,6 +10,9 @@ cheese:
   <package_name>:
     description: <package_description>
     version: <package_version> # default is latest
+    patches: # Optional, if the original package has patches
+      - name: <patch_name>
+        enabled: <true/false> # default is false
     build:
       configurations: <configurations_list> # If exists in the original package
       stages: <stages_list> # If exists in the original package AND the stages are configurable
