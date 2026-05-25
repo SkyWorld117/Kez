@@ -1,0 +1,525 @@
+diff --git a/src/cuda_kernels_def_decl/cuda_params.cu b/src/cuda_kernels_def_decl/cuda_params.cu
+index 6fc75fd7..2eadbdc4 100755
+--- a/src/cuda_kernels_def_decl/cuda_params.cu
++++ b/src/cuda_kernels_def_decl/cuda_params.cu
+@@ -312,12 +312,17 @@ namespace hemelb
+ 	__constant__ double _iStressParameter;
+ 
+ 	__constant__ int _InvDirections_19[19];
++	__constant__ int _InvDirections_15[15];
+ 
+ 	__device__ __constant__ double _EQMWEIGHTS_19[19];
++	__device__ __constant__ double _EQMWEIGHTS_15[15];
+ 
+ 	__constant__ int _CX_19[19];
+ 	__constant__ int _CY_19[19];
+ 	__constant__ int _CZ_19[19];
++	__constant__ int _CX_15[15];
++	__constant__ int _CY_15[15];
++	__constant__ int _CZ_15[15];
+ 
+ 	__constant__ int _WriteStep = 100;
+ 	__constant__ int _Send_MacroVars_DtH = 100; // Writing MacroVariables to GPU global memory (Sending MacroVariables calculated during the collision-streaming kernels to the GPU Global mem).
+@@ -525,9 +530,9 @@ __global__ void GPU_WallMom_correction_File_Weights(int64_t *GMem_Coords_iolets,
+ 						double halfWay_y = y_coord;
+ 						double halfWay_z = z_coord;
+ 
+-						halfWay_x += 0.5 * _CX_19[LB_Dir];
+-						halfWay_y += 0.5 * _CY_19[LB_Dir];
+-						halfWay_z += 0.5 * _CZ_19[LB_Dir];
++						halfWay_x += 0.5 * CX(LB_Dir);
++						halfWay_y += 0.5 * CY(LB_Dir);
++						halfWay_z += 0.5 * CZ(LB_Dir);
+ 
+ 						//------------------------------------------------------------------
+ 						// B. Step: LatticeVelocity wallMom(iolet->GetVelocity(halfWay, bValues->GetTimeStep()));
+@@ -708,10 +713,10 @@ __global__ void GPU_WallMom_correction_File_Weights(int64_t *GMem_Coords_iolets,
+ 
+ 						//------------------------------------------------------------------
+ 						// C. Step: Evaluate the single correction term as
+-						correction = 2. * _EQMWEIGHTS_19[LB_Dir]
+-				                * (	wallMom_x * (double)_CX_19[LB_Dir] +
+-														wallMom_y * (double)_CY_19[LB_Dir] +
+-				                    wallMom_z * (double)_CZ_19[LB_Dir]) / _Cs2;
++						correction = 2. * EQMWEIGHT(LB_Dir)
++				                * (	wallMom_x * (double)CX(LB_Dir) +
++													wallMom_y * (double)CY(LB_Dir) +
++				                    wallMom_z * (double)CZ(LB_Dir)) / _Cs2;
+ 
+ 						// if (time_Step==1000 && correction!=0 && Ind==10065) printf("GPU - Fluid ID: %lld, LB-Dir: %d, vel_weight: %f, wallMom_x: %.5e, wallMom_y: %.5e, wallMom_z: %.5e, correction: %.5e \n", Ind, LB_Dir, vel_weight, wallMom_x, wallMom_y, wallMom_z, correction);
+ 
+@@ -988,10 +993,10 @@ __global__ void GPU_WallMom_correction_File_Weights_NoSearch(int64_t *GMem_Coord
+ 
+ 						//------------------------------------------------------------------
+ 						// C. Step: Evaluate the single correction term as
+-						correction = 2. * _EQMWEIGHTS_19[LB_Dir]
+-				                * (	wallMom_x * (double)_CX_19[LB_Dir] +
+-														wallMom_y * (double)_CY_19[LB_Dir] +
+-				                    wallMom_z * (double)_CZ_19[LB_Dir]) / _Cs2;
++						correction = 2. * EQMWEIGHT(LB_Dir)
++				                * (	wallMom_x * (double)CX(LB_Dir) +
++													wallMom_y * (double)CY(LB_Dir) +
++				                    wallMom_z * (double)CZ(LB_Dir)) / _Cs2;
+ 
+ 						// if (time_Step==1000 && correction!=0 && Ind==10065) printf("GPU - Fluid ID: %lld, LB-Dir: %d, vel_weight: %f, wallMom_x: %.5e, wallMom_y: %.5e, wallMom_z: %.5e, correction: %.5e \n", Ind, LB_Dir, vel_weight, wallMom_x, wallMom_y, wallMom_z, correction);
+ 
+@@ -1804,9 +1809,9 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 			nn += ff;
+ 
+ 			// Shows a lower number of registers per thread (51) compared to the the explicit method below!!!
+-			momentum_x += (double)_CX_19[direction] * ff;
+-			momentum_y += (double)_CY_19[direction] * ff;
+-			momentum_z += (double)_CZ_19[direction] * ff;
++			momentum_x += (double)CX(direction) * ff;
++			momentum_y += (double)CY(direction) * ff;
++			momentum_z += (double)CZ(direction) * ff;
+ 		}
+ 
+ 		/*
+@@ -1834,9 +1839,9 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ #pragma unroll 19
+ 			for (int i = 0; i < _NUMVECTORS; ++i)
+ 			{
+-				double mom_dot_ei = (double)_CX_19[i] * momentum_x
+-												+ (double)_CY_19[i] * momentum_y
+-												+ (double)_CZ_19[i] * momentum_z;
++				double mom_dot_ei = (double)CX(i) * momentum_x
++											+ (double)CY(i) * momentum_y
++											+ (double)CZ(i) * momentum_z;
+ 
+ 				/*
+ 						dev_fEq[i] = _EQMWEIGHTS_19[i]
+@@ -1844,7 +1849,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 														+ (9.0 / 2.0) * density_1 * mom_dot_ei * mom_dot_ei + 3.0 * mom_dot_ei);
+ 			 */
+ 
+-			  double dev_fEq = _EQMWEIGHTS_19[i]
++				double dev_fEq = EQMWEIGHT(i)
+ 										* (nn - (3.0 / 2.0) * momentumMagnitudeSquared * density_1
+ 														+ (9.0 / 2.0) * density_1 * mom_dot_ei * mom_dot_ei + 3.0 * mom_dot_ei);
+ 
+@@ -1856,9 +1861,9 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 			#pragma unroll 19
+ 			for (int i = 0; i < _NUMVECTORS; ++i)
+ 			{
+-				double mom_dot_ei = (double)_CX_19[i] * momentum_x
+-					+ (double)_CY_19[i] * momentum_y
+-					+ (double)_CZ_19[i] * momentum_z;
++				double mom_dot_ei = (double)CX(i) * momentum_x
++					+ (double)CY(i) * momentum_y
++					+ (double)CZ(i) * momentum_z;
+ 
+ 				/*
+ 					dev_fEq[i] = _EQMWEIGHTS_19[i]
+@@ -1866,7 +1871,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 						+ (9.0 / 2.0) * density_1 * mom_dot_ei * mom_dot_ei + 3.0 * mom_dot_ei);
+ 				*/
+ 
+-				double dev_fEq = _EQMWEIGHTS_19[i]
++				double dev_fEq = EQMWEIGHT(i)
+ 													* (nn - (3.0 / 2.0) * momentumMagnitudeSquared * density_1
+ 																	+ (9.0 / 2.0) * density_1 * mom_dot_ei * mom_dot_ei + 3.0 * mom_dot_ei);
+ 
+@@ -1912,7 +1917,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 				if(dev_NeighInd == index_wall) // Wall Link
+ 				{
+ 					// Simple Bounce Back case:
+-					GMem_dbl_fNew_b[(unsigned long long)_InvDirections_19[LB_Dir] * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
++					GMem_dbl_fNew_b[(unsigned long long)INV_DIRECTION(LB_Dir) * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
+ 				}
+ 				else{
+ 					GMem_dbl_fNew_b[dev_NeighInd] = dev_ff[LB_Dir]; 	// If neigh_d is selected
+@@ -1966,7 +1971,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 					if(dev_NeighInd == (nArr_dbl * _NUMVECTORS)) // Wall Link
+ 					{
+ 						// Simple Bounce Back case:
+-						GMem_dbl_fNew_b[(unsigned long long)_InvDirections_19[LB_Dir] * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
++						GMem_dbl_fNew_b[(unsigned long long)INV_DIRECTION(LB_Dir) * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
+ 					}
+ 					else{
+ 						GMem_dbl_fNew_b[dev_NeighInd] = dev_ff[LB_Dir]; 	// If neigh_d is selected
+@@ -2117,9 +2122,9 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 			nn += ff;
+ 
+ 			// Shows a lower number of registers per thread (51) compared to the the explicit method below!!!
+-			momentum_x += (double)_CX_19[direction] * ff;
+-			momentum_y += (double)_CY_19[direction] * ff;
+-			momentum_z += (double)_CZ_19[direction] * ff;
++			momentum_x += (double)CX(direction) * ff;
++			momentum_y += (double)CY(direction) * ff;
++			momentum_z += (double)CZ(direction) * ff;
+ 		}
+ 
+ 		/*
+@@ -2146,11 +2151,11 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 		#pragma unroll 19
+ 		for (int i = 0; i < _NUMVECTORS; ++i)
+ 		{
+-			double mom_dot_ei = (double)_CX_19[i] * momentum_x
+-												+ (double)_CY_19[i] * momentum_y
+-												+ (double)_CZ_19[i] * momentum_z;
++			double mom_dot_ei = (double)CX(i) * momentum_x
++									+ (double)CY(i) * momentum_y
++									+ (double)CZ(i) * momentum_z;
+ 
+-			double dev_fEq = _EQMWEIGHTS_19[i]
++			double dev_fEq = EQMWEIGHT(i)
+ 										* (nn - (3.0 / 2.0) * momentumMagnitudeSquared * density_1
+ 														+ (9.0 / 2.0) * density_1 * mom_dot_ei * mom_dot_ei + 3.0 * mom_dot_ei);
+ 
+@@ -2204,7 +2209,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 				if(dev_NeighInd == index_wall) // Wall Link
+ 				{
+ 					// Simple Bounce Back case:
+-					GMem_dbl_fNew_b[(unsigned long long)_InvDirections_19[LB_Dir] * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
++					GMem_dbl_fNew_b[(unsigned long long)INV_DIRECTION(LB_Dir) * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
+ 				}
+ 				else{
+ 					GMem_dbl_fNew_b[dev_NeighInd] = dev_ff[LB_Dir]; 	// If neigh_d is selected
+@@ -2258,7 +2263,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 					if(dev_NeighInd == (nArr_dbl * _NUMVECTORS)) // Wall Link
+ 					{
+ 						// Simple Bounce Back case:
+-						GMem_dbl_fNew_b[(unsigned long long)_InvDirections_19[LB_Dir] * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
++						GMem_dbl_fNew_b[(unsigned long long)INV_DIRECTION(LB_Dir) * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
+ 					}
+ 					else{
+ 						GMem_dbl_fNew_b[dev_NeighInd] = dev_ff[LB_Dir]; 	// If neigh_d is selected
+@@ -2391,9 +2396,9 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 			nn += ff;
+ 
+ 			// Shows a lower number of registers per thread (51) compared to the the explicit method below!!!
+-			momentum_x += (double)_CX_19[direction] * ff;
+-			momentum_y += (double)_CY_19[direction] * ff;
+-			momentum_z += (double)_CZ_19[direction] * ff;
++			momentum_x += (double)CX(direction) * ff;
++			momentum_y += (double)CY(direction) * ff;
++			momentum_z += (double)CZ(direction) * ff;
+ 		}
+ 
+ 		/*
+@@ -2422,16 +2427,16 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ #pragma unroll 19
+ 		for (int i = 0; i < _NUMVECTORS; ++i)
+ 		{
+-			double mom_dot_ei = (double)_CX_19[i] * momentum_x
+-									+ (double)_CY_19[i] * momentum_y
+-									+ (double)_CZ_19[i] * momentum_z;
++			double mom_dot_ei = (double)CX(i) * momentum_x
++								+ (double)CY(i) * momentum_y
++								+ (double)CZ(i) * momentum_z;
+ 
+ 			/*
+ 			dev_fEq[i] = _EQMWEIGHTS_19[i]
+ 							* (nn - (3.0 / 2.0) * momentumMagnitudeSquared * density_1
+ 											+ (9.0 / 2.0) * density_1 * mom_dot_ei * mom_dot_ei + 3.0 * mom_dot_ei);
+ 			*/
+-			double dev_fEq = _EQMWEIGHTS_19[i]
++			double dev_fEq = EQMWEIGHT(i)
+ 							* (nn - (3.0 / 2.0) * ( momentum_x * momentum_x + momentum_y * momentum_y + momentum_z * momentum_z ) * density_1
+ 											+ (9.0 / 2.0) * density_1 * mom_dot_ei * mom_dot_ei + 3.0 * mom_dot_ei);
+ 
+@@ -2491,7 +2496,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 				if(dev_NeighInd == index_wall) // Wall Link
+ 				{
+ 					// Simple Bounce Back case:
+-					GMem_dbl_fNew_b[(unsigned long long)_InvDirections_19[LB_Dir] * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
++					GMem_dbl_fNew_b[(unsigned long long)INV_DIRECTION(LB_Dir) * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
+ 				}
+ 				else{
+ 					GMem_dbl_fNew_b[dev_NeighInd] = dev_ff[LB_Dir]; 	// If neigh_d is selected
+@@ -2545,7 +2550,7 @@ __global__ void GPU_Check_Coordinates(int64_t *GMem_Coords_iolets,
+ 					if(dev_NeighInd == (nArr_dbl * _NUMVECTORS)) // Wall Link
+ 					{
+ 						// Simple Bounce Back case:
+-						GMem_dbl_fNew_b[(unsigned long long)_InvDirections_19[LB_Dir] * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
++						GMem_dbl_fNew_b[(unsigned long long)INV_DIRECTION(LB_Dir) * nArr_dbl + Ind]= dev_ff[LB_Dir]; // Bounce Back - Same fluid ID - Reverse LB_Dir
+ 					}
+ 					else{
+ 						GMem_dbl_fNew_b[dev_NeighInd] = dev_ff[LB_Dir]; 	// If neigh_d is selected
+diff --git a/src/cuda_kernels_def_decl/cuda_params.h b/src/cuda_kernels_def_decl/cuda_params.h
+index d0451260..3909707f 100755
+--- a/src/cuda_kernels_def_decl/cuda_params.h
++++ b/src/cuda_kernels_def_decl/cuda_params.h
+@@ -37,10 +37,15 @@ namespace hemelb
+ 	extern __constant__ double dev_tau;
+ 	extern __constant__ double dev_minusInvTau;
+ 	extern __constant__ int _InvDirections_19[19];
++	extern __constant__ int _InvDirections_15[15];
+ 	extern __device__ __constant__ double _EQMWEIGHTS_19[19];
++	extern __device__ __constant__ double _EQMWEIGHTS_15[15];
+ 	extern __constant__ int _CX_19[19];
+ 	extern __constant__ int _CY_19[19];
+ 	extern __constant__ int _CZ_19[19];
++	extern __constant__ int _CX_15[15];
++	extern __constant__ int _CY_15[15];
++	extern __constant__ int _CZ_15[15];
+ 	extern __constant__ double _Cs2;
+ 	extern __constant__ bool _useWeightsFromFile;
+ 	extern __constant__ double _iStressParameter;
+@@ -54,6 +59,26 @@ namespace hemelb
+ 	// Added for the Sponge Layer - LES implementation
+ 	extern __constant__ double dev_smag_cnst;
+ 
++	__device__ __forceinline__ int CX(const int i) {
++		return (_NUMVECTORS == 15) ? _CX_15[i] : _CX_19[i];
++	}
++
++	__device__ __forceinline__ int CY(const int i) {
++		return (_NUMVECTORS == 15) ? _CY_15[i] : _CY_19[i];
++	}
++
++	__device__ __forceinline__ int CZ(const int i) {
++		return (_NUMVECTORS == 15) ? _CZ_15[i] : _CZ_19[i];
++	}
++
++	__device__ __forceinline__ double EQMWEIGHT(const int i) {
++		return (_NUMVECTORS == 15) ? _EQMWEIGHTS_15[i] : _EQMWEIGHTS_19[i];
++	}
++
++	__device__ __forceinline__ int INV_DIRECTION(const int i) {
++		return (_NUMVECTORS == 15) ? _InvDirections_15[i] : _InvDirections_19[i];
++	}
++
+ 
+ 	inline void check_cuda_errors(const char *filename, const int line_number, int myProc);
+ 
+@@ -423,45 +448,45 @@ __device__ __forceinline__ struct structSecMomDistrFun _structCalculatePiTensor(
+ 
+ 	// Element (0,0)
+ 	ret_SecMomDistrFunc.arr[0] = 0.0;
+-	for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+-	{
+-		ret_SecMomDistrFunc.arr[0] += f[l] * _CX_19[l]* _CX_19[l];
+-	}
++		for (unsigned int l = 0; l < _NUMVECTORS; ++l)
++		{
++			ret_SecMomDistrFunc.arr[0] += f[l] * CX(l) * CX(l);
++		}
+ 
+ 	// Element (1,0)
+ 	ret_SecMomDistrFunc.arr[1] = 0.0;
+-	for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+-	{
+-		ret_SecMomDistrFunc.arr[1] += f[l] * _CY_19[l]* _CX_19[l];
+-	}
++		for (unsigned int l = 0; l < _NUMVECTORS; ++l)
++		{
++			ret_SecMomDistrFunc.arr[1] += f[l] * CY(l) * CX(l);
++		}
+ 
+ 	// Element (1,1)
+ 	ret_SecMomDistrFunc.arr[2] = 0.0;
+-	for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+-	{
+-		ret_SecMomDistrFunc.arr[2] += f[l] * _CY_19[l]* _CY_19[l];
+-	}
++		for (unsigned int l = 0; l < _NUMVECTORS; ++l)
++		{
++			ret_SecMomDistrFunc.arr[2] += f[l] * CY(l) * CY(l);
++		}
+ 
+ 	// Element (2,0)
+ 	ret_SecMomDistrFunc.arr[3] = 0.0;
+-	for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+-	{
+-		ret_SecMomDistrFunc.arr[3] += f[l] * _CZ_19[l]* _CX_19[l];
+-	}
++		for (unsigned int l = 0; l < _NUMVECTORS; ++l)
++		{
++			ret_SecMomDistrFunc.arr[3] += f[l] * CZ(l) * CX(l);
++		}
+ 
+ 	// Element (2,1)
+ 	ret_SecMomDistrFunc.arr[4] = 0.0;
+-	for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+-	{
+-		ret_SecMomDistrFunc.arr[4] += f[l] * _CZ_19[l]* _CY_19[l];
+-	}
++		for (unsigned int l = 0; l < _NUMVECTORS; ++l)
++		{
++			ret_SecMomDistrFunc.arr[4] += f[l] * CZ(l) * CY(l);
++		}
+ 
+ 	// Element (2,2)
+ 	ret_SecMomDistrFunc.arr[5] = 0.0;
+-	for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+-	{
+-		ret_SecMomDistrFunc.arr[5] += f[l] * _CZ_19[l]* _CZ_19[l];
+-	}
++		for (unsigned int l = 0; l < _NUMVECTORS; ++l)
++		{
++			ret_SecMomDistrFunc.arr[5] += f[l] * CZ(l) * CZ(l);
++		}
+ 
+ 	return ret_SecMomDistrFunc; //address of structure member returned
+ }
+@@ -506,42 +531,42 @@ __device__ __forceinline__ struct structSecMomDistrFun _structCalculatePiTensor(
+ 			ret_SecMomDistrFunc[0] = 0.0;
+ 			for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+ 			{
+-				ret_SecMomDistrFunc[0] += f[l] * _CX_19[l]* _CX_19[l];
++				ret_SecMomDistrFunc[0] += f[l] * CX(l) * CX(l);
+ 			}
+ 
+ 			// Element (1,0)
+ 			ret_SecMomDistrFunc[1] = 0.0;
+ 			for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+ 			{
+-				ret_SecMomDistrFunc[1] += f[l] * _CY_19[l]* _CX_19[l];
++				ret_SecMomDistrFunc[1] += f[l] * CY(l) * CX(l);
+ 			}
+ 
+ 			// Element (1,1)
+ 			ret_SecMomDistrFunc[2] = 0.0;
+ 			for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+ 			{
+-				ret_SecMomDistrFunc[2] += f[l] * _CY_19[l]* _CY_19[l];
++				ret_SecMomDistrFunc[2] += f[l] * CY(l) * CY(l);
+ 			}
+ 
+ 			// Element (2,0)
+ 			ret_SecMomDistrFunc[3] = 0.0;
+ 			for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+ 			{
+-				ret_SecMomDistrFunc[3] += f[l] * _CZ_19[l]* _CX_19[l];
++				ret_SecMomDistrFunc[3] += f[l] * CZ(l) * CX(l);
+ 			}
+ 
+ 			// Element (2,1)
+ 			ret_SecMomDistrFunc[4] = 0.0;
+ 			for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+ 			{
+-				ret_SecMomDistrFunc[4] += f[l] * _CZ_19[l]* _CY_19[l];
++				ret_SecMomDistrFunc[4] += f[l] * CZ(l) * CY(l);
+ 			}
+ 
+ 			// Element (2,2)
+ 			ret_SecMomDistrFunc[5] = 0.0;
+ 			for (unsigned int l = 0; l < _NUMVECTORS; ++l)
+ 			{
+-				ret_SecMomDistrFunc[5] += f[l] * _CZ_19[l]* _CZ_19[l];
++				ret_SecMomDistrFunc[5] += f[l] * CZ(l) * CZ(l);
+ 			}
+ 
+ 			return ret_SecMomDistrFunc;
+diff --git a/src/lb/lb.hpp b/src/lb/lb.hpp
+index 0c096298..e6ec05ab 100755
+--- a/src/lb/lb.hpp
++++ b/src/lb/lb.hpp
+@@ -5858,57 +5858,91 @@ template<class LatticeType>
+ 				//		g. useWeightsFromFile - Case of Vel BCs
+ 
+ 				// 2.a. Weight coefficients for the equilibrium distr. functions
+-				status = deviceMemcpyToSymbol(hemelb::_EQMWEIGHTS_19, LatticeType::EQMWEIGHTS, LatticeType::NUMVECTORS*sizeof(double), 0, memcpyHostToDevice);
++				static const unsigned int num_Vectors = LatticeType::NUMVECTORS;
++				if (num_Vectors == 15) {
++					status = deviceMemcpyToSymbol(hemelb::_EQMWEIGHTS_15, LatticeType::EQMWEIGHTS, num_Vectors * sizeof(double), 0, memcpyHostToDevice);
++					if (status) {
++						status = deviceMemcpyToSymbol(hemelb::_EQMWEIGHTS_19, LatticeType::EQMWEIGHTS, num_Vectors * sizeof(double), 0, memcpyHostToDevice);
++					}
++				} else if (num_Vectors == 19) {
++					status = deviceMemcpyToSymbol(hemelb::_EQMWEIGHTS_19, LatticeType::EQMWEIGHTS, num_Vectors * sizeof(double), 0, memcpyHostToDevice);
++				} else {
++					fprintf(stderr, "Unsupported lattice size for GPU constants: %u\n", num_Vectors);
++					initialise_GPU_res = false;
++					return initialise_GPU_res;
++				}
+ 				if (!status) {
+ 					fprintf(stderr, "GPU constant memory copy failed (1)\n");
+ 					initialise_GPU_res = false;
+ 					return initialise_GPU_res;
+-					//return false;
+-					//goto Error;
+ 				}
+ 
+ 				// 2.b. Number of vectors: LatticeType::NUMVECTORS
+-				static const unsigned int num_Vectors = LatticeType::NUMVECTORS;
+ 				status = deviceMemcpyToSymbol(&hemelb::_NUMVECTORS, &num_Vectors, sizeof(num_Vectors), 0, memcpyHostToDevice);
+ 				if (!status) {
+ 					fprintf(stderr, "GPU constant memory copy failed (2)\n");
+ 					initialise_GPU_res = false;
+ 					return initialise_GPU_res;
+-					//return false;
+-					//goto Error;
+ 				}
+ 
+ 				// 2.c. Inverse directions for the bounce back LatticeType::INVERSEDIRECTIONS[direction]
+-				status = deviceMemcpyToSymbol(hemelb::_InvDirections_19, LatticeType::INVERSEDIRECTIONS, LatticeType::NUMVECTORS*sizeof(int), 0, memcpyHostToDevice);
++				if (num_Vectors == 15) {
++					status = deviceMemcpyToSymbol(hemelb::_InvDirections_15, LatticeType::INVERSEDIRECTIONS, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					if (status) {
++						status = deviceMemcpyToSymbol(hemelb::_InvDirections_19, LatticeType::INVERSEDIRECTIONS, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					}
++				} else {
++					status = deviceMemcpyToSymbol(hemelb::_InvDirections_19, LatticeType::INVERSEDIRECTIONS, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++				}
+ 				if (!status) {
+ 					fprintf(stderr, "GPU constant memory copy failed (3)\n");
+ 					initialise_GPU_res = false;
+ 					return initialise_GPU_res;
+-					//return false;
+-					//goto Error;
+ 				}
+ 
+ 				// 2.d. Lattice Velocity directions CX[DmQn::NUMVECTORS], CY[DmQn::NUMVECTORS], CZ[DmQn::NUMVECTORS]
+-				status = deviceMemcpyToSymbol(hemelb::_CX_19, LatticeType::CX, LatticeType::NUMVECTORS*sizeof(int), 0, memcpyHostToDevice);
+-				if (!status) {
+-					fprintf(stderr, "GPU constant memory copy failed (4)\n");
+-					initialise_GPU_res = false;
+-					return initialise_GPU_res;
+-					//return false;
+-				}
+-				status = deviceMemcpyToSymbol(hemelb::_CY_19, LatticeType::CY, LatticeType::NUMVECTORS*sizeof(int), 0, memcpyHostToDevice);
+-				if (!status) {
+-					fprintf(stderr, "GPU constant memory copy failed (5)\n");
+-					initialise_GPU_res = false;
+-					return initialise_GPU_res;
+-					//return false;
++				if (num_Vectors == 15) {
++					status = deviceMemcpyToSymbol(hemelb::_CX_15, LatticeType::CX, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					if (!status) {
++						fprintf(stderr, "GPU constant memory copy failed (4)\n");
++						initialise_GPU_res = false;
++						return initialise_GPU_res;
++					}
++					status = deviceMemcpyToSymbol(hemelb::_CY_15, LatticeType::CY, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					if (!status) {
++						fprintf(stderr, "GPU constant memory copy failed (5)\n");
++						initialise_GPU_res = false;
++						return initialise_GPU_res;
++					}
++					status = deviceMemcpyToSymbol(hemelb::_CZ_15, LatticeType::CZ, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					if (status) {
++						status = deviceMemcpyToSymbol(hemelb::_CX_19, LatticeType::CX, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					}
++					if (status) {
++						status = deviceMemcpyToSymbol(hemelb::_CY_19, LatticeType::CY, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					}
++					if (status) {
++						status = deviceMemcpyToSymbol(hemelb::_CZ_19, LatticeType::CZ, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					}
++				} else {
++					status = deviceMemcpyToSymbol(hemelb::_CX_19, LatticeType::CX, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					if (!status) {
++						fprintf(stderr, "GPU constant memory copy failed (4)\n");
++						initialise_GPU_res = false;
++						return initialise_GPU_res;
++					}
++					status = deviceMemcpyToSymbol(hemelb::_CY_19, LatticeType::CY, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
++					if (!status) {
++						fprintf(stderr, "GPU constant memory copy failed (5)\n");
++						initialise_GPU_res = false;
++						return initialise_GPU_res;
++					}
++					status = deviceMemcpyToSymbol(hemelb::_CZ_19, LatticeType::CZ, num_Vectors * sizeof(int), 0, memcpyHostToDevice);
+ 				}
+-				status = deviceMemcpyToSymbol(hemelb::_CZ_19, LatticeType::CZ, LatticeType::NUMVECTORS*sizeof(int), 0, memcpyHostToDevice);
+ 				if (!status) {
+ 					fprintf(stderr, "GPU constant memory copy failed (6)\n");
+ 					initialise_GPU_res = false;
+ 					return initialise_GPU_res;
+-					//return false;
+ 				}
+ 
+ 				// 2.e. Relaxation Time tau
