@@ -1,6 +1,6 @@
 cheese:
   name: hemelb-gpu
-  description: HemePure-GPU LBM blood flow solver (UCL-CCS); CUDA backend; same 2-stage bundled-dep build as CPU version
+  description: HemePure-GPU LBM blood flow solver (UCL-CCS) with CUDA backend
   type: package
   toolchain: cmake
 
@@ -8,28 +8,35 @@ cheese:
     type: git
     url: https://github.com/UCL-CCS/HemePure-GPU
     releases:
-      - version: master
-        tag: master
+      - version: isc26
+        tag: HIP-CUDA-ROCM_SL
 
   dependencies:
     - mpi
     - cuda
 
   build:
-    # Stage 1: build bundled deps (tinyxml2, ctemplate, parmetis) in dep/build/.
-    # /usr/bin/cmake is prepended so older bundled cmake_minimum_required calls don't
-    # trip up on cmake 4.x.  CUDA bin is added so CMake's FindCUDA locates nvcc.
-    # libtirpc is built from the tarball bundled in dep/src/ (same as the CPU dep build
-    # does via ExternalProject_Add) and installed to dep/install/; a symlink
-    # dep/install/include/rpc -> tirpc/rpc makes #include <rpc/xdr.h> resolve without
-    # any cmake changes, since dep/install/include is already on the include path.
-    # MPI headers are copied into dep/install/include so nvcc (which uses -ccbin g++,
-    # not mpicxx) can find mpi.h when compiling CUDA translation units.
-    # Preprocessing ends in src/ so Fromager's cmake toolchain runs mkdir build && cmake ../ there.
-    preprocessing: export PATH="/usr/bin:${cuda.prefix}/bin:$(dirname ${mpi.c}):$PATH" && rm -rf ${source}/dep/build && mkdir -p ${source}/dep/build && cd ${source}/dep/build && cmake -DCMAKE_C_COMPILER=${mpi.c} -DCMAKE_CXX_COMPILER=${mpi.cxx} -DHEMELB_SUBPROJECT_MAKE_JOBS=8 -DCMAKE_BUILD_TYPE=Release .. && make -j && cd ${source}/dep/src && ([ -f libtirpc-1.2.6.tar.bz2 ] || curl -sSL -o libtirpc-1.2.6.tar.bz2 https://sourceforge.net/projects/libtirpc/files/libtirpc/1.2.6/libtirpc-1.2.6.tar.bz2/download) && rm -rf libtirpc-1.2.6 && tar xjf libtirpc-1.2.6.tar.bz2 && cd libtirpc-1.2.6 && ./configure --prefix=${source}/dep/install --disable-static --disable-gssapi && make -j && make install && ln -snf tirpc/rpc ${source}/dep/install/include/rpc && ln -snf tirpc/netconfig.h ${source}/dep/install/include/netconfig.h && cp -rn "$(dirname ${mpi.c})/../include/." ${source}/dep/install/include/ && cd ${source}/src
+    # Pre-build step to build bundled dependencies
+    preprocessing: |-
+      export CMAKE_POLICY_VERSION_MINIMUM=3.5
+      cd ${source}/dep
+      cmake -B build -S . \
+        -DCMAKE_C_COMPILER=${mpi.c} \
+        -DCMAKE_CXX_COMPILER=${mpi.cxx} \
+        -DHEMELB_SUBPROJECT_MAKE_JOBS=${FROMAGER_NPROC} \
+        -DCMAKE_BUILD_TYPE=Release
+      cmake --build build --parallel ${FROMAGER_NPROC}
+      cp -r ${source}/dep/install/include ${hemelb-gpu.prefix}/
+      cp -r ${source}/dep/install/lib ${hemelb-gpu.prefix}/
+      cd ${source}/src
 
     configurations:
       options:
+        - name: -DCMAKE_INSTALL_PREFIX
+          description: Installation prefix
+          enabled_value:
+            default: ${hemelb-gpu.prefix}
+
         - name: -DCMAKE_C_COMPILER
           description: C compiler — MPI wrapper
           enabled_value:
@@ -57,10 +64,10 @@ cheese:
             default: CUDA
 
         - name: -DCMAKE_CUDA_ARCHITECTURES
-          description: CUDA compute capability (80 = A100, 70 = V100)
+          description: CUDA compute capability (90 = H100, 80 = A100, 70 = V100)
           user_configurable: true
           enabled_value:
-            default: "80"
+            default: 90
 
         - name: -DHEMELB_CUDA_AWARE_MPI
           description: Enable CUDA-aware MPI (requires CUDA-aware OpenMPI)
@@ -84,6 +91,11 @@ cheese:
           user_configurable: true
           enabled_value:
             default: OFF
+
+        - name: -DHEMELB_LATTICE
+          description: Lattice type [D3Q15, D3Q19, D3Q27]
+          enabled_value:
+            default: D3Q15
 
         - name: -DHEMELB_INLET_BOUNDARY
           description: Inlet boundary condition type
@@ -122,16 +134,44 @@ cheese:
         - name: -DCTEMPLATE_LIBRARY
           description: Static ctemplate library from bundled dep build
           enabled_value:
-            default: ${source}/dep/install/lib/libctemplate.a
+            default: ${hemelb-gpu.prefix}/lib/libctemplate.a
 
         - name: -DCMAKE_EXE_LINKER_FLAGS
           description: Link libtirpc (GPU CMakeLists.txt omits it unlike the CPU version; XDR functions were in glibc on old RHEL, now in libtirpc)
           enabled_value:
-            default: ${source}/dep/install/lib/libtirpc.so
+            default: -L${hemelb-gpu.prefix}/lib -ltirpc
 
+        - name: -DCMAKE_SHARED_LINKER_FLAGS
+          description: Link libtirpc for shared libs too
+          enabled_value:
+            default: -L${hemelb-gpu.prefix}/lib -ltirpc
+
+        - name: -DCMAKE_C_FLAGS
+          description: Extra C flags for nvcc to find MPI headers
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_CXX_FLAGS
+          description: Extra C++ flags for nvcc to find MPI headers
+          enabled_value:
+            default: -O3 -std=c++11
+
+        - name: -DCMAKE_CUDA_FLAGS
+          description: Extra CUDA flags for nvcc to find MPI headers
+          enabled_value:
+            default: -O3 -I${mpi.prefix}/include -I${hemelb-gpu.prefix}/include/tirpc -gencode arch=compute_90a,code=sm_90a
+
+        - name: -DCMAKE_BUILD_RPATH
+          description: Linker flags
+          enabled_value:
+            default: ${hemelb-gpu.prefix}/lib
+
+        - name: -DCMAKE_INSTALL_RPATH
+          description: Runtime linker flags
+          enabled_value:
+            default: ${hemelb-gpu.prefix}/lib
     stages:
       - target: ~
-
-    postprocessing: mkdir -p ${hemelb-gpu.prefix}/bin && cp ${source}/src/build/hemepure_gpu ${hemelb-gpu.prefix}/bin/hemepure_gpu
+      - target: install
 
   properties: ~
