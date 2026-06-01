@@ -461,6 +461,24 @@ else
     echo "git is already installed, skipping..."
 fi
 
+# gtest
+folder_and_version=$(fetch_latest_github "google/googletest")
+if [[ -n "$folder_and_version" ]]; then
+    echo "Installing gtest..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${FROMAGER_SYSTEM_TMP}/${folder}"
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX="${FROMAGER_SYSTEM}"
+    make -j"${FROMAGER_NPROC}"
+    make install
+    cd "${FROMAGER_SYSTEM_TMP}" && rm -rf *
+    echo -e "  gtest:\n    version: ${version}" >> "${FROMAGER_SYSTEM}/state.yaml"
+else
+    echo "gtest is already installed, skipping..."
+fi
+
 
 # PHASE 5: Essential Tools for Fromager
 # ----------------------------------------------------

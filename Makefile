@@ -5,7 +5,7 @@ CXXFLAGS ?= -O3 -flto -std=c++17
 CXX_DEBUG_FLAGS = -DDDEBUG -g -gz=none -O0
 INCLUDES = -I$(FROMAGER_ENV)/system/include -I$(FROMAGER_HOME)/include
 LDFLAGS += -L$(FROMAGER_ENV)/system/lib -L$(FROMAGER_ENV)/system/lib64
-LDFLAGS += -lyaml-cpp
+LDFLAGS += -lyaml-cpp -lgtest -lgtest_main -lpthread
 LDFLAGS += -Wl,-rpath=$(FROMAGER_ENV)/system/lib -Wl,-rpath=$(FROMAGER_ENV)/system/lib64
 
 # Directories
