@@ -94,8 +94,9 @@ cheese:
 
         - name: -DHEMELB_LATTICE
           description: Lattice type [D3Q15, D3Q19, D3Q27]
+          user_configurable: true
           enabled_value:
-            default: D3Q15
+            default: D3Q19
 
         - name: -DHEMELB_INLET_BOUNDARY
           description: Inlet boundary condition type
@@ -128,6 +129,7 @@ cheese:
 
         - name: -DHEMELB_USE_MPI_WIN
           description: MPI window-based communication
+          user_configurable: true
           enabled_value:
             default: OFF
 
@@ -148,18 +150,21 @@ cheese:
 
         - name: -DCMAKE_C_FLAGS
           description: Extra C flags for nvcc to find MPI headers
+          user_configurable: true
           enabled_value:
             default: -O3
 
         - name: -DCMAKE_CXX_FLAGS
           description: Extra C++ flags for nvcc to find MPI headers
+          user_configurable: true
           enabled_value:
             default: -O3 -std=c++11
 
         - name: -DCMAKE_CUDA_FLAGS
           description: Extra CUDA flags for nvcc to find MPI headers
+          user_configurable: true
           enabled_value:
-            default: -O3 -I${mpi.prefix}/include -I${hemelb-gpu.prefix}/include/tirpc -gencode arch=compute_90a,code=sm_90a
+            default: -O3 -I${mpi.prefix}/include -I${hemelb-gpu.prefix}/include/tirpc
 
         - name: -DCMAKE_BUILD_RPATH
           description: Linker flags
