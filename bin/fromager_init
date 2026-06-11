@@ -537,11 +537,11 @@ if check_installation "cuda"; then
         # Format `CUDA Version        : 12.4`
         cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
         cuda_arch_suffix=$(yq -r ".architecture.cuda.${FROMAGER_ARCH}" "${FROMAGER_HOME}/heuristics/architecture.yaml")
-        cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch}/${cuda_arch_suffix}/")
+        cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch.cuda}/${cuda_arch_suffix}/")
         if [ -z "${cuda_runfile_link}" ] || [ "${cuda_runfile_link}" = "null" ]; then
             # Fallback to the first release if specific version not found
             echo "Specific CUDA version not found in database, using the latest available version."
-            cuda_runfile_link=$(yq -r ".cheese.source.releases[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch}/${cuda_arch_suffix}/")
+            cuda_runfile_link=$(yq -r ".cheese.source.releases[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch.cuda}/${cuda_arch_suffix}/")
             cuda_version=$(yq -r ".cheese.source.releases[0].version" "${FROMAGER_DB}/cuda.yaml")
         fi
         echo "Installing CUDA ${cuda_version} from ${cuda_runfile_link}..."
