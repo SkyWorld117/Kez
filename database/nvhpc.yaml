@@ -5,8 +5,10 @@ cheese:
   source:
     type: tarball
     releases:
-      - version: 25.7 #TODO sophia will fix this shit:)
-        url: https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
+      - version: 26.3
+        url: https://developer.download.nvidia.com/hpc-sdk/26.3/nvhpc_2026_263_Linux_${fromager.arch}_cuda_13.1.tar.gz
+      - version: 25.7
+        url: https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_${fromager.arch}_cuda_12.9.tar.gz
 
   build:
     postprocessing: |-
@@ -15,12 +17,12 @@ cheese:
 
   properties:
     nccl_ldflags:
-      default: -L${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nccl/lib -Wl,-rpath,${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nccl/lib
+      default: -L${nvhpc.prefix}/Linux_${fromager.arch}/${nvhpc.version}/comm_libs/nccl/lib -Wl,-rpath,${nvhpc.prefix}/Linux_${fromager.arch}/${nvhpc.version}/comm_libs/nccl/lib
     nccl_libs:
       default: -lnccl
     nccl_prefix:
-      default: ${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nccl
+      default: ${nvhpc.prefix}/Linux_${fromager.arch}/${nvhpc.version}/comm_libs/nccl
     nvshmem_ldflags:
-      default: -L${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nvshmem/lib -Wl,-rpath,${nvhpc.prefix}/Linux_x86_64/25.7/comm_libs/nvshmem/lib
+      default: -L${nvhpc.prefix}/Linux_${fromager.arch}/${nvhpc.version}/comm_libs/nvshmem/lib -Wl,-rpath,${nvhpc.prefix}/Linux_${fromager.arch}/${nvhpc.version}/comm_libs/nvshmem/lib
     nvshmem_libs:
       default: -lnvshmem
