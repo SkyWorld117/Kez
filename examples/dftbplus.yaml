@@ -1,151 +1,215 @@
 cheese:
   dftbplus:
+    description: DFTB+ - Density Functional Tight Binding molecular dynamics
     version: 25.1
-    compiler: gcc@14.3.0
+    compiler: gcc@13.4.0
     build:
       configurations:
         options:
-          - name: -DCMAKE_C_FLAGS
-            enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
-          - name: -DCMAKE_CXX_FLAGS
-            enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
-          - name: -DCMAKE_Fortran_FLAGS
-            enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3
           - name: -DWITH_MPI
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
+            requires: [mpi]
           - name: -DWITH_OMP
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
           - name: -DWITH_ELSI
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
+            requires: [elsi]
           - name: -DWITH_GPU
             enabled: true
-          - name: -DCMAKE_EXE_LINKER_FLAGS
+            enabled_value: ~
+            disabled_value: ~
+            requires: [cuda]
+          - name: -DCMAKE_C_FLAGS
             enabled: true
-            enabled_value: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
-          - name: -DCMAKE_SHARED_LINKER_FLAGS
+            enabled_value: -O3
+          - name: -DCMAKE_CXX_FLAGS
             enabled: true
-            enabled_value: ${scalapack.ldflags} ${scalapack.libs} ${elpa.ldflags} ${cuda.ldflags} ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+            enabled_value: -O3
+          - name: -DCMAKE_Fortran_FLAGS
+            enabled: true
+            enabled_value: -O3
   elsi:
+    description: ELSI - EigenvaLue SIver (unified interface for eigensolvers)
     version: 2.12.0
-    compiler: gcc@14.3.0
+    compiler: system
     build:
       configurations:
         options:
           - name: -DCMAKE_C_FLAGS
+            description: C compiler optimization flags
             enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
-          - name: -DCMAKE_CXX_FLAGS
-            enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+            enabled_value: -O3 -fallow-argument-mismatch
           - name: -DCMAKE_Fortran_FLAGS
+            description: Fortran compiler optimization flags
             enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch
+            enabled_value: -O3 -fallow-argument-mismatch
+          - name: -DCMAKE_CXX_FLAGS
+            description: C++ compiler optimization flags
+            enabled: true
+            enabled_value: -O3 -fallow-argument-mismatch
           - name: elpa
+            description: Use external ELPA library
             enabled: true
-
+            enabled_value: ~
+            disabled_value: ~
   elpa:
+    description: ELPA - Eigenvalue soLvers for Petaflop Applications (HPC optimized)
     version: 2026.02.001
-    compiler: gcc@14.3.0
+    compiler: system
+    patches:
+      - name: sm80.patch
+        enabled: true
     build:
       configurations:
         options:
           - name: CFLAGS
             enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+            enabled_value: -O3
           - name: CXXFLAGS
             enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3 -fPIC
+            enabled_value: -O3
           - name: FCFLAGS
             enabled: true
-            enabled_value: -O3 -march=znver3 -mtune=znver3
-          - name: LDFLAGS
-            enabled: false
+            enabled_value: -O3
           - name: mpi
+            description: Enable MPI parallelization
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
           - name: openmp
+            description: Enable OpenMP for shared-memory parallelism
             enabled: false
-
+            enabled_value: ~
+            disabled_value: ~
           - name: disable-generic-kernels
+            description: Do NOT build generic kernels
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
           - name: disable-sse-kernels
+            description: Do NOT build SSE kernels
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
           - name: disable-sse-assembly-kernels
+            description: Do NOT build SSE assembly kernels
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
           - name: disable-avx-kernels
+            description: Do NOT build AVX kernels (Intel Sandy Bridge+)
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
           - name: disable-avx2-kernels
-            enabled: false
+            description: Do NOT build AVX2 kernels (Intel Haswell+, AMD EPYC snver2+)
+            enabled: true
+            enabled_value: ~
+            disabled_value: ~
           - name: disable-avx512-kernels
+            description: Do NOT build AVX-512 kernels (Intel Knights Landing+, AMD EPYC 7773X/72F3)
             enabled: true
-
+            enabled_value: ~
+            disabled_value: ~
           - name: enable-nvidia-gpu-kernels
+            description: Build Nvidia GPU kernels (requires CUDA). Set compute capability with --with-NVIDIA-GPU-compute-capability
             enabled: true
+            enabled_value: ~
+            disabled_value: ~
+            requires: [cuda]
+          - name: enable-cuda-aware-mpi
+            description: Enable CUDA-aware MPI (experimental)
+            enabled: false
+            enabled_value: ~
+            disabled_value: ~
+            requires: [cuda]
+          - name: enable-gpu-ccl
+            description: Enable collective communication library (NCCL from NVHPC)
+            enabled: true
+            enabled_value: ~
+            disabled_value: ~
+            requires: [cuda, nvhpc]
+          - name: --with-nccl-path
+            description: Path to NCCL installation directory
+            enabled_value: ${nvhpc.nccl_prefix}
+            requires: [nvhpc]
           - name: --with-NVIDIA-GPU-compute-capability
-            enabled: true
+            description: NVIDIA GPU compute capabilities to build for (comma-separated, e.g. sm_60,sm_80)
             enabled_value: sm_80
           - name: enable-nvidia-sm80-gpu-kernels
+            description: Build Nvidia GPU kernels for compute capability 8.0+ (A100, H100, etc.)
             enabled: true
-          - name: enable-cuda-aware-mpi
-            enabled: false
-          - name: enable-gpu-ccl
-            enabled: true
-          - name: --with-nccl-path
-            enabled: true
-            enabled_value: ${nvhpc.nccl_prefix}
-
+            enabled_value: ~
+            disabled_value: ~
+            requires: [cuda]
           - name: disable-single-precision
+            description: Build for double precision only
             enabled: true
+            enabled_value: ~
           - name: disable-autotuning
+            description: Disable runtime autotuning
             enabled: false
+            enabled_value: ~
           - name: disable-timings
+            description: Disable internal timing measurements
             enabled: true
-
+            enabled_value: ~
+  nvhpc:
+    version: 26.3
+  cuda:
+    description: NVIDIA CUDA Toolkit
+    version: 13.3
   intel-oneapi-mkl:
+    description: Intel oneAPI Math Kernel Library for high-performance math routines
     build:
       configurations:
         options:
           - name: fortran_format
+            description: Fortran Format [ gf | intel ]
             enabled: true
             enabled_value: gf
           - name: integer_size
+            description: Use ilp64 interface [ lp64 | ilp64 ]
             enabled: true
             enabled_value: lp64
           - name: multithreaded
-            enabled: true
+            description: Use multithreading
+            enabled: false
             enabled_value: ~
           - name: multithreading_library
+            description: Multithreading library [ gnu | tbb ]
             enabled: true
             enabled_value: gnu
           - name: mpi-family
+            description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
             enabled: true
             enabled_value: openmpi
-
   intel-oneapi:
-    version: 2025.1.0.666
-
-  nvhpc:
-    version: 25.7-x86_64
-
+    version: 2026.0.1.27
   openmpi:
-    version: 5.0.9
-    compiler: gcc@14.3.0
-
+    description: Open Source Implementation of the Message Passing Interface
+    version: 5.0.10
+    compiler: gcc@13.4.0
 recipe:
   abstract_packages:
-    mpi: openmpi
-    blas: intel-oneapi-mkl
-    lapack: intel-oneapi-mkl
     scalapack: intel-oneapi-mkl
+    lapack: intel-oneapi-mkl
+    blas: intel-oneapi-mkl
+    mpi: openmpi
   dependencies:
     - dftbplus
     - elsi
     - elpa
-    - cuda
     - nvhpc
-    - intel-oneapi
+    - cuda
     - intel-oneapi-mkl
+    - intel-oneapi
     - openmpi
-
+  targets:
+    - dftbplus
