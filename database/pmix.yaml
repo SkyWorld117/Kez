@@ -43,10 +43,16 @@ cheese:
           enabled_value:
             default: -O3
 
+        # TODO: make this dependent on hwloc instead of openmpi
+        # This requires iterative config resolution with the upcoming C++ wrapper
         - name: LDFLAGS
           description: Linker flags
           enabled_value:
             default: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags}
+            conditions:
+              - condition: ${openmpi.config.--with-cuda} true
+                action: append
+                value: ${cuda.ldflags}
     stages:
       - target: ~
       - target: install
