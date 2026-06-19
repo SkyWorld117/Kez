@@ -1,14 +1,13 @@
-# Dummy config file, CUDA version should be determined by the system CUDA driver.
-# This should be installed by the `fromager_init` script.
-
 cheese:
   name: cuda
   description: NVIDIA CUDA Toolkit
-  type: system
+  type: vendor
 
   source:
     type: script
     releases:
+      - version: 13.3
+        url: https://developer.download.nvidia.com/compute/cuda/13.3.0/local_installers/cuda_13.3.0_610.43.02_linux${fromager.arch.cuda}.run
       - version: 13.2
         url: https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux${fromager.arch.cuda}.run
       - version: 12.9
@@ -28,12 +27,14 @@ cheese:
       mkdir -p ${cuda.prefix}/.tmp
       bash ${source} --silent --toolkit --override --toolkitpath=${cuda.prefix} --no-drm --tmpdir=${cuda.prefix}/.tmp
       rm -f /tmp/cuda-installer.log
-      if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-          cp -rsf "${cuda.prefix}/targets/x86_64-linux/include"/* "${cuda.prefix}/include/"
-          cp -rsf "${cuda.prefix}/targets/x86_64-linux/lib"/* "${cuda.prefix}/lib64/"
-      elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-          cp -rsf "${cuda.prefix}/targets/sbsa-linux/include"/* "${cuda.prefix}/include/"
-          cp -rsf "${cuda.prefix}/targets/sbsa-linux/lib"/* "${cuda.prefix}/lib64/"
+      if [ ! -L "${cuda.prefix}/include" ] && [ ! -L "${cuda.prefix}/lib64" ]; then
+        if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
+            cp -rsf "${cuda.prefix}/targets/x86_64-linux/include"/* "${cuda.prefix}/include/"
+            cp -rsf "${cuda.prefix}/targets/x86_64-linux/lib"/* "${cuda.prefix}/lib64/"
+        elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
+            cp -rsf "${cuda.prefix}/targets/sbsa-linux/include"/* "${cuda.prefix}/include/"
+            cp -rsf "${cuda.prefix}/targets/sbsa-linux/lib"/* "${cuda.prefix}/lib64/"
+        fi
       fi
 
   properties:

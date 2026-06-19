@@ -527,45 +527,7 @@ make -C "${FROMAGER_HOME}" -B -j"${FROMAGER_NPROC}"
 # PHASE 6: Other Tools
 # ----------------------------------------------------
 
-# CUDA
-if check_installation "cuda"; then
-    echo "Checking for NVIDIA GPU to install CUDA..."
-    # Test nvidia-smi to check if NVIDIA GPU is available
-    if command -v nvidia-smi &> /dev/null; then
-        echo "NVIDIA GPU detected, installing CUDA..."
-        # Get CUDA version
-        # Format `CUDA Version        : 12.4`
-        cuda_version=$(nvidia-smi --version | grep -oP 'CUDA Version\s*:\s*\K[0-9]+\.[0-9]+')
-        cuda_arch_suffix=$(yq -r ".architecture.cuda.${FROMAGER_ARCH}" "${FROMAGER_HOME}/heuristics/architecture.yaml")
-        cuda_runfile_link=$(yq -r ".cheese.source.releases | filter(.version == \"${cuda_version}\") | .[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch.cuda}/${cuda_arch_suffix}/")
-        if [ -z "${cuda_runfile_link}" ] || [ "${cuda_runfile_link}" = "null" ]; then
-            # Fallback to the first release if specific version not found
-            echo "Specific CUDA version not found in database, using the latest available version."
-            cuda_runfile_link=$(yq -r ".cheese.source.releases[0].url" "${FROMAGER_DB}/cuda.yaml" | sed "s/\${fromager.arch.cuda}/${cuda_arch_suffix}/")
-            cuda_version=$(yq -r ".cheese.source.releases[0].version" "${FROMAGER_DB}/cuda.yaml")
-        fi
-        echo "Installing CUDA ${cuda_version} from ${cuda_runfile_link}..."
-        wget --quiet --show-progress --output-document="${FROMAGER_SYSTEM_TMP}/cuda.run" "${cuda_runfile_link}"
-        bash "${FROMAGER_SYSTEM_TMP}/cuda.run" --silent --toolkit --override --toolkitpath="${FROMAGER_SYSTEM}" --installpath="${FROMAGER_SYSTEM}" --no-drm --tmpdir="${FROMAGER_SYSTEM_TMP}"
-        # Remove /tmp/cuda-installer.log if exists
-        rm -f /tmp/cuda-installer.log
-        # Soft link CUDA files
-        if [ "${FROMAGER_ARCH}" = "x86_64" ]; then
-            cp -rsf "${FROMAGER_SYSTEM}/targets/x86_64-linux/include"/* "${FROMAGER_SYSTEM}/include/"
-            cp -rsf "${FROMAGER_SYSTEM}/targets/x86_64-linux/lib"/* "${FROMAGER_SYSTEM}/lib64/"
-        elif [ "${FROMAGER_ARCH}" = "arm64" ]; then
-            cp -rsf "${FROMAGER_SYSTEM}/targets/sbsa-linux/include"/* "${FROMAGER_SYSTEM}/include/"
-            cp -rsf "${FROMAGER_SYSTEM}/targets/sbsa-linux/lib"/* "${FROMAGER_SYSTEM}/lib64/"
-        fi
-        rm -f "${FROMAGER_SYSTEM_TMP}/cuda.run"
-        rm -f /tmp/cuda-installer.log
-        echo -e "  cuda:\n    version: ${cuda_version}" >> "${FROMAGER_SYSTEM}/state.yaml"
-    else
-        echo "No NVIDIA GPU detected, skipping CUDA installation."
-    fi
-else
-    echo "CUDA is already installed, skipping..."
-fi
+# Placeholders for other tools that may be needed in the future
 
 # End of Script
 # ----------------------------------------------------
