@@ -18,6 +18,12 @@ cheese:
 
   build:
     configurations:
+      # This needs to be set because NVCC is not properly parsed by elpa.
+      environment:
+        - name: PATH
+          description: Add NVCC to PATH for GPU kernel compilation
+          default: ${cuda.prefix}/bin:${PATH}
+
       options:
         - name: --prefix
           enabled_value:
@@ -115,11 +121,10 @@ cheese:
         - name: --with-cuda-path
           description: Path to CUDA installation. Auto-detected by default
           enabled:
+            default: false
             conditions:
               - condition: ${elpa.config.enable-nvidia-gpu-kernels} true
                 value: true
-              - condition: ${elpa.config.enable-nvidia-gpu-kernels} false
-                value: false
           enabled_value:
             default: ${cuda.prefix}
           requires: [cuda]
@@ -272,6 +277,9 @@ cheese:
               - condition: ${elpa.config.enable-gpu-ccl} true
                 action: append
                 value: ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+              - condition: ${elpa.config.enable-nvidia-gpu-kernels} true
+                action: append
+                value: ${cuda.ldflags}
 
         - name: SCALAPACK_FCFLAGS
           enabled_value:
@@ -283,6 +291,11 @@ cheese:
 
     stages:
       - target: ~
+        configurations:
+          environment:
+            - name: PATH
+              description: Add NVCC to PATH for GPU kernel compilation
+              default: ${cuda.prefix}/bin:${PATH}
       - target: install
 
   properties:

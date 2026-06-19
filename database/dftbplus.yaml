@@ -39,16 +39,6 @@ cheese:
           enabled_value:
             default: ${mpi.fort}
 
-        - name: -DCMAKE_CXX_FLAGS
-          user_configurable: true
-          enabled_value:
-            default: -O3
-
-        - name: -DCMAKE_Fortran_FLAGS
-          user_configurable: true
-          enabled_value:
-            default: -O3
-
         - name: -DWITH_MPI
           user_configurable: true
           enabled_format: -DWITH_MPI=ON
@@ -74,6 +64,16 @@ cheese:
             default: false
           enabled_format: -DWITH_GPU=ON
           disabled_format: -DWITH_GPU=OFF
+          requires: [cuda]
+
+        - name: -DCUDAToolkit_ROOT
+          enabled:
+            default: false
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_GPU} true
+                value: true
+          enabled_value:
+            default: ${cuda.prefix}
           requires: [cuda]
 
         - name: -DMAGMA_INCLUDE_DIRECTORY
@@ -111,11 +111,20 @@ cheese:
             conditions:
               - condition: ${dftbplus.config.-DWITH_GPU} true
                 action: append
-                value: -I${cuda.prefix}/targets/x86_64-linux/include
+                value: -I${cuda.prefix}/include
+
+        - name: -DCMAKE_CXX_FLAGS
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: -DCMAKE_Fortran_FLAGS
+          user_configurable: true
+          enabled_value:
+            default: -O3
 
         - name: -DCMAKE_EXE_LINKER_FLAGS
           enabled_value:
-            default: ~
             conditions:
               - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} false
                 value: ${scalapack.ldflags} ${scalapack.libs}
@@ -126,7 +135,6 @@ cheese:
 
         - name: -DCMAKE_SHARED_LINKER_FLAGS
           enabled_value:
-            default: ~
             conditions:
               - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} false
                 value: ${scalapack.ldflags} ${scalapack.libs}
@@ -134,6 +142,28 @@ cheese:
                 value: ${scalapack.ldflags} ${scalapack.libs} ${elsi.ldflags} ${elsi.libs} ${elpa.ldflags}
               - condition: ${dftbplus.config.-DWITH_MPI} false && ${dftbplus.config.-DWITH_GPU} true
                 value: ${magma.ldflags} ${magma.libs}
+
+        - name: -DCMAKE_BUILD_RPATH
+          enabled:
+            default: false
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_GPU} true
+                value: true
+          enabled_value:
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_GPU} true
+                value: ${cuda.prefix}/lib64
+
+        - name: -DCMAKE_INSTALL_RPATH
+          enabled:
+            default: false
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_GPU} true
+                value: true
+          enabled_value:
+            conditions:
+              - condition: ${dftbplus.config.-DWITH_GPU} true
+                value: ${cuda.prefix}/lib64
 
     stages:
       - target: ~
