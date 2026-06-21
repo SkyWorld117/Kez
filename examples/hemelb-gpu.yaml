@@ -73,6 +73,9 @@ cheese:
             description: Extra CUDA flags for nvcc to find MPI headers
             enabled: true
             enabled_value: -O3 -I${mpi.prefix}/include -I${hemelb-gpu.prefix}/include/tirpc -gencode arch=compute_90a,code=sm_90a
+  cuda:
+    description: NVIDIA CUDA Toolkit
+    version: 13.3
   openmpi:
     description: Open Source Implementation of the Message Passing Interface
     version: 5.0.10
