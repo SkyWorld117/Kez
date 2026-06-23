@@ -5,11 +5,10 @@ cheese:
   toolchain: autotools
 
   source:
-    type: git 
-    url: https://git.kernel.org/pub/scm/linux/kernel/git/axboe/fio
+    type: tarball
     releases:
-      - version: master
-        tag: master
+      - version: isc26
+        url: https://github.com/axboe/fio/archive/refs/tags/fio-3.42.tar.gz
 
   dependencies:
     - libaio
