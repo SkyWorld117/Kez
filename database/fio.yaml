@@ -1,0 +1,34 @@
+cheese:
+  name: fio
+  description: Flexible I/O tester
+  type: package
+  toolchain: autotools
+
+  source:
+    type: git 
+    url: https://git.kernel.org/pub/scm/linux/kernel/git/axboe/fio
+    releases:
+      - version: master
+        tag: master
+
+  dependencies:
+    - libaio
+
+  build:
+    configurations:
+      options:
+        - name: --prefix
+          description: Installation prefix
+          enabled_value:
+            default: ${fio.prefix}
+        - name: --extra-cflags
+          description: C Flags
+          enabled_value:
+            default: ${libaio.includes}
+        - name: --extra-ldflags
+          description: LD flags
+          enabled_value:
+            default: ${libaio.ldflags}
+    stages:
+      - target: ~
+      - target: install
