@@ -69,6 +69,8 @@ cheese:
   properties:
     ldflags:
       default: -L${mpfr.prefix}/lib
+    nvldflags:
+      default: -L${mpfr.prefix}/lib -Xlinker -rpath,${mpfr.prefix}/lib
     libs:
       default: -lmpfr
     includes:

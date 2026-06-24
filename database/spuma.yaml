@@ -1,0 +1,146 @@
+cheese:
+  name: spuma
+  description: A minimally invasive approach to the GPU porting of OPENFOAM
+  type: package
+
+  source:
+    type: git
+    url: https://gitlab.hpc.cineca.it/exafoam/spuma.git
+    releases:
+      - version: master
+        tag: master
+      - version: develop
+        tag: develop
+      - version: 0.2-v2412
+        tag: 0.2-v2412
+
+  dependencies:
+    - openmpi
+    - boost
+    - gmp
+    - mpfr
+    - cuda
+
+  build:
+    preprocessing: |-
+      set +u
+      bin/tools/foamConfigurePaths \
+        -boost-path ${boost.prefix}
+      set -u
+
+    configurations:
+      command: |-
+        set +u
+        source etc/config.sh/setup && ./Allwmake -j $FROMAGER_NPROC
+        set -u
+
+      environment:
+        - name: WM_PROJECT_VERSION
+          description: Version of the OpenFOAM project
+          default: v2412
+
+        - name: WM_COMPILER_TYPE
+          description: Compiler type for OpenFOAM
+          default: system
+
+        - name: WM_COMPILER
+          description: Compiler for OpenFOAM
+          default: Nvidia
+
+        - name: FOAM_SIGFPE
+          description: Enable trapping of floating-point exceptions in OpenFOAM
+          default: false
+
+        - name: have_cuda
+          description: Whether CUDA support is enabled in OpenFOAM
+          default: true
+
+        - name: NVARCH
+          description: CUDA compute capability for OpenFOAM GPU kernels
+          user_configurable: true
+          default: 90
+
+        - name: WM_PRECISION_OPTION
+          description: Precision option for OpenFOAM [DP | SP | SPDP]
+          user_configurable: true
+          default: DP
+
+        - name: WM_LABEL_SIZE
+          description: Label size for OpenFOAM [32 | 64]
+          user_configurable: true
+          default: 32
+
+        - name: WM_ARCH_OPTION
+          description: Architecture option for OpenFOAM [32 | 64]
+          default: 64
+
+        - name: WM_COMPILE_OPTION
+          description: Compile option for OpenFOAM [Opt | Dbg | Debug | Prof]
+          user_configurable: true
+          default: Opt
+
+        - name: WM_MPLIB
+          description: Message Passing Library for OpenFOAM [OPENMPI | MPICH]
+          default: SYSTEMOPENMPI
+
+        - name: WM_PROJECT
+          description: OpenFOAM project to build
+          default: OpenFOAM
+
+        - name: WM_PROJECT_DIR
+          description: Directory of the OpenFOAM project
+          default: ${source}
+
+        - name: MPI_ARCH_PATH
+          description: Path to MPI architecture-specific files for OpenFOAM
+          default: ${openmpi.prefix}
+
+        - name: GMP_ARCH_PATH
+          description: Path to GMP architecture-specific files for OpenFOAM
+          default: ${gmp.prefix}
+
+        - name: MPFR_ARCH_PATH
+          description: Path to MPFR architecture-specific files for OpenFOAM
+          default: ${mpfr.prefix}
+
+        - name: PATH
+          description: PATH environment variable for OpenFOAM
+          default: ${compiler.prefix}/bin:${openmpi.prefix}/bin:${cuda.prefix}/bin:$PATH
+
+        - name: LIBRARY_PATH
+          description: LIBRARY_PATH environment variable for OpenFOAM
+          default: ${compiler.prefix}/lib:${openmpi.prefix}/lib:${cuda.prefix}/lib64
+
+        - name: C_INCLUDE_PATH
+          description: C_INCLUDE_PATH environment variable for OpenFOAM
+          default: ${compiler.prefix}/include:${openmpi.prefix}/include
+
+        - name: CPLUS_INCLUDE_PATH
+          description: CPLUS_INCLUDE_PATH environment variable for OpenFOAM
+          default: ${compiler.prefix}/include:${openmpi.prefix}/include
+
+        - name: FOAM_EXTRA_CFLAGS
+          description: Extra compiler flags for OpenFOAM to bake RPATH
+          user_configurable: true
+          default: ${spuma.nvldflags} ${gmp.includes} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+
+        - name: FOAM_EXTRA_CXXFLAGS
+          description: Extra C++ compiler flags for OpenFOAM to bake RPATH
+          user_configurable: true
+          default: ${spuma.nvldflags} ${gmp.includes} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+
+        - name: FOAM_EXTRA_LDFLAGS
+          description: Extra linker flags for OpenFOAM to bake RPATH
+          default: ${spuma.nvldflags} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+
+    postprocessing: |-
+      cp -r ${source}/platforms/linux*/* ${spuma.prefix}/
+      cp -r ${source}/bin ${spuma.prefix}/
+      cp -r ${source}/etc ${spuma.prefix}/
+      cp -r ${source}/tutorials ${spuma.prefix}/
+
+  properties:
+    ldflags:
+      default: -L${spuma.prefix}/lib -Wl,-rpath,${spuma.prefix}/lib -L${spuma.prefix}/lib/sys-openmpi -Wl,-rpath,${spuma.prefix}/lib/sys-openmpi
+    nvldflags:
+      default: -L${spuma.prefix}/lib -Xlinker -rpath,${spuma.prefix}/lib -L${spuma.prefix}/lib/sys-openmpi -Xlinker -rpath,${spuma.prefix}/lib/sys-openmpi

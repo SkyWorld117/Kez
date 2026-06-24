@@ -60,6 +60,8 @@ cheese:
   properties:
     ldflags:
       default: -L${gmp.prefix}/lib -Wl,-rpath,${gmp.prefix}/lib
+    nvldflags:
+      default: -L${gmp.prefix}/lib -Xlinker -rpath,${gmp.prefix}/lib
     libs:
       default: -lgmp
     includes:

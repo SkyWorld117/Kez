@@ -40,6 +40,8 @@ cheese:
   properties:
     ldflags:
       default: -L${cuda.prefix}/lib64 -Wl,-rpath,${cuda.prefix}/lib64
+    nvldflags:
+      default: -L${cuda.prefix}/lib64 -Xlinker -rpath,${cuda.prefix}/lib64
     libs:
       default: -lcudart -lcublas -lcufft -lcusolver -lcudnn -lcusparse -lcurand
     includes:
