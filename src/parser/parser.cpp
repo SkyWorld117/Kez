@@ -67,7 +67,7 @@ YAML::Node parse(YAML::Node& user_config, const std::string& build_mode,
         for (auto& instruction : package_instructions[pkg_name]) {
             // Parse properties in the instruction
             instruction = parse_properties_in_scalar(instruction, context);
-            filter(instruction);  // Filter the instruction
+            // filter(instruction);  // Filter the instruction
         }
     }
 
