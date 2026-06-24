@@ -4,7 +4,8 @@ cheese:
     version: 25.1
     compiler: gcc@13.4.0
     patches:
-      - name: 
+      - name: mix_precision.patch
+        enabled: true
     build:
       configurations:
         options:
@@ -142,7 +143,8 @@ cheese:
             enabled_value: ${nvhpc.nccl_prefix}
             requires: [nvhpc]
           - name: --with-NVIDIA-GPU-compute-capability
-            description: NVIDIA GPU compute capabilities to build for (comma-separated, e.g. sm_60,sm_80)
+            description: NVIDIA GPU compute capabilities to build for (comma-separated, e.g.
+              sm_60,sm_80)
             enabled_value: sm_80
           - name: enable-nvidia-sm80-gpu-kernels
             description: Build Nvidia GPU kernels for compute capability 8.0+ (A100, H100, etc.)
@@ -152,7 +154,7 @@ cheese:
             requires: [cuda]
           - name: disable-single-precision
             description: Build for double precision only
-            enabled: true
+            enabled: false
             enabled_value: ~
           - name: disable-autotuning
             description: Disable runtime autotuning
@@ -166,7 +168,7 @@ cheese:
     version: 26.3
   cuda:
     description: NVIDIA CUDA Toolkit
-    version: 13.3
+    version: 13.2
   intel-oneapi-mkl:
     description: Intel oneAPI Math Kernel Library for high-performance math routines
     build:

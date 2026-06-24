@@ -22,7 +22,7 @@ cheese:
       environment:
         - name: PATH
           description: Add NVCC to PATH for GPU kernel compilation
-          default: ${cuda.prefix}/bin:${PATH}
+          default: ${mpi.prefix}/bin:${cuda.prefix}/bin:${PATH}
 
       options:
         - name: --prefix
