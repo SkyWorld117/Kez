@@ -50,7 +50,7 @@ cheese:
   openmpi:
     description: Open Source Implementation of the Message Passing Interface
     version: 5.0.10
-    compiler: nvhpc-compilers@24.3
+    compiler: nvhpc-compilers@26.3
 recipe:
   abstract_packages:
     mpi: openmpi

@@ -16,6 +16,8 @@ cheese:
     - hdf5
 
   build:
+    # postprocessing: exit 0
+
     configurations:
       options:
         - name: -DCMAKE_POLICY_VERSION_MINIMUM=3.5
@@ -48,6 +50,10 @@ cheese:
           enabled_value:
             default: ON
 
+        - name: -DGPU_CUDA
+          enabled_value:
+            default: 13.1
+
         - name: -DTOOL_MESHPART
           enabled_value:
             default: ON
@@ -79,8 +85,8 @@ cheese:
           enabled_value:
             default: ${sod2d.prefix}/lib
 
-  stages:
-      - target: ~
-      - target: install
+    stages:
+        - target: ~
+        - target: install
 
   properties: ~
