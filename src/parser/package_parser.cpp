@@ -174,14 +174,18 @@ std::vector<std::string> parse_package(ParserContext& context) {
                         stage_cmd += " " + stage_target;
                     }
                 } else if (toolchain == "cmake") {
-                    stage_cmd = "cmake --build build";
+                    if (stage_target == "install") {
+                        stage_cmd = "cmake --install build";
+                    } else {
+                        stage_cmd = "cmake --build build";
 
-                    if (multithreaded && !threads.empty()) {
-                        stage_cmd += " --parallel " + threads;
-                    }
+                        if (multithreaded && !threads.empty()) {
+                            stage_cmd += " --parallel " + threads;
+                        }
 
-                    if (!stage_target.empty()) {
-                        stage_cmd += " --target " + stage_target;
+                        if (!stage_target.empty()) {
+                            stage_cmd += " --target " + stage_target;
+                        }
                     }
                 } else {
                     // Ignore the others for now
