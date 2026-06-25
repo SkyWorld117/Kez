@@ -24,6 +24,12 @@ cheese:
           enabled:
             default: false
 
+        - name: --enable-fortran
+          description: Compile the Fortran interface
+          user_configurable: true
+          enabled:
+            default: false
+
         - name: --enable-parallel
           description: Search for MPI-IO and MPI support
           user_configurable: true
@@ -58,6 +64,21 @@ cheese:
 
         - name: CXXFLAGS
           description: C++ compiler flags
+          user_configurable: true
+          enabled_value:
+            default: -O3
+
+        - name: FC
+          description: Fortran compiler
+          enabled_value:
+            default: ${compiler.fort}
+            conditions:
+              - condition: ${hdf5.config.--enable-parallel} true
+                action: set
+                value: ${mpi.fort}
+
+        - name: FCFLAGS
+          description: Fortran compiler flags
           user_configurable: true
           enabled_value:
             default: -O3
