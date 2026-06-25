@@ -1,7 +1,7 @@
 cheese:
   hemelb-gpu:
     description: HemePure-GPU LBM blood flow solver (UCL-CCS) with CUDA backend
-    version: isc26
+    version: isc26@/scratch/zyi/Applications/source/HemePure-GPU/HemePure-GPU
     compiler: system
     patches:
       - name: openmp_init.patch
@@ -14,6 +14,8 @@ cheese:
         enabled: true
       - name: enable_d3q15_fast.patch
         enabled: false
+      - name: no_properties.patch
+        enabled: true
     build:
       configurations:
         options:
@@ -72,7 +74,8 @@ cheese:
           - name: -DCMAKE_CUDA_FLAGS
             description: Extra CUDA flags for nvcc to find MPI headers
             enabled: true
-            enabled_value: -O3 -I${mpi.prefix}/include -I${hemelb-gpu.prefix}/include/tirpc -gencode arch=compute_90a,code=sm_90a
+            enabled_value: -O3 -I${mpi.prefix}/include -I${hemelb-gpu.prefix}/include/tirpc
+              -gencode arch=compute_90a,code=sm_90a
   cuda:
     description: NVIDIA CUDA Toolkit
     version: 13.3
