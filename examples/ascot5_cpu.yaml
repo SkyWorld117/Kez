@@ -1,0 +1,92 @@
+cheese:
+  ascot5:
+    description: Simulation tool used in fusion energy science and engineering
+    version: isc26
+    compiler: system
+    build:
+      stages:
+        - target: ascot5_main
+          configurations:
+            options:
+              - name: &1 MPI
+                description: &2 Toggle MPI
+                enabled: &3 true
+                enabled_value: &4 1
+                requires: &5 [mpi]
+              - name: &6 OMP
+                description: &7 Toggle OpenMP
+                enabled: &8 true
+                enabled_value: &9 1
+              - name: &10 ACC
+                description: &11 Toggle OpenACC
+                enabled: &12 false
+                enabled_value: &13 1
+              - name: &14 NSIMD
+                description: &15 SIMD vector length used for CPU vectorization
+                enabled: &16 true
+                enabled_value: &17 8
+              - name: &18 FLAGS
+                description: &19 C flags
+                enabled: &20 true
+                enabled_value: &21 -O3 -march=native -ffast-math -flto -funroll-loops -mprefer-vector-width=512 -lmvec -lm
+        - target: libascot
+          configurations:
+            options:
+              - name: *1
+                description: *2
+                enabled: *3
+                enabled_value: *4
+                requires: *5
+              - name: *6
+                description: *7
+                enabled: *8
+                enabled_value: *9
+              - name: *10
+                description: *11
+                enabled: *12
+                enabled_value: *13
+              - name: *14
+                description: *15
+                enabled: *16
+                enabled_value: *17
+              - name: *18
+                description: *19
+                enabled: *20
+                enabled_value: *21
+  hdf5:
+    description: High-performance data management and storage suite
+    version: 1.10.11
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: --enable-cxx
+            description: Compile the C++ interface
+            enabled: false
+            enabled_value: ~
+          - name: --enable-parallel
+            description: Search for MPI-IO and MPI support
+            enabled: true
+            enabled_value: ~
+            requires: [mpi]
+          - name: CFLAGS
+            description: C compiler flags
+            enabled: true
+            enabled_value: -O3
+          - name: CXXFLAGS
+            description: C++ compiler flags
+            enabled: true
+            enabled_value: -O3
+  openmpi:
+    description: Open Source Implementation of the Message Passing Interface
+    version: 5.0.10
+    compiler: system
+recipe:
+  abstract_packages:
+    mpi: openmpi
+  dependencies:
+    - ascot5
+    - hdf5
+    - openmpi
+  targets:
+    - ascot5

@@ -20,7 +20,7 @@ rm -rf $target_cellar/.tmp/source $target_cellar/.tmp/source*
 package_count=$(yq -r '. | length' "$target_cellar/.tmp/ins.yaml")
 
 # Create state.yaml to store all the installed packages if it doesn't exist
-if [ ! -f "$target_cellar/state.yaml" ] || ! $(yq -r ". | has(\"cheese\")" "$target_cellar/state.yaml"); then
+if [ ! -f "$target_cellar/state.yaml" ] || ! $(yq -r ". | has(\"cheese\")" "$target_cellar/state.yaml") || [ "$force" == true ]; then
     echo "cheese:" > "$target_cellar/state.yaml"
 fi
 

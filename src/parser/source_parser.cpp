@@ -21,7 +21,7 @@ void download_source(const YAML::Node pkg_config, const YAML::Node release,
         instructions.push_back("wget --quiet --show-progress --no-check-certificate "
                                "--output-document=source" +
                                ext + " " + url);
-        instructions.push_back("bash $FROMAGER_HOME/patches/fgr_patch_source_structure.sh source" +
+        instructions.push_back("bash $FROMAGER_HOME/tools/fgr_unpack.sh source" +
                                ext + " source");
         instructions.push_back("rm source" + ext);
         instructions.push_back("cd source");
@@ -32,7 +32,7 @@ void download_source(const YAML::Node pkg_config, const YAML::Node release,
         // Parse Fromager-wide templates in the Git URL
         git_url             = parse_fromager_template_in_scalar(git_url);
         std::string git_tag = release["tag"].as<std::string>();
-        instructions.push_back("bash $FROMAGER_HOME/patches/fgr_patch_git_clone.sh " + git_url +
+        instructions.push_back("bash $FROMAGER_HOME/tools/fgr_shallow_clone.sh " + git_url +
                                " " + git_tag + " source");
         instructions.push_back("cd source");
     } else if (source_type == "script" && release["url"]) {
@@ -60,7 +60,7 @@ void download_source(const YAML::Node pkg_config, const YAML::Node release,
                                "--output-document=source.zip " +
                                url);
         instructions.push_back(
-            "bash $FROMAGER_HOME/patches/fgr_patch_source_structure.sh source.zip source");
+            "bash $FROMAGER_HOME/tools/fgr_unpack.sh source.zip source");
         instructions.push_back("rm source.zip");
         instructions.push_back("cd source");
     } else {

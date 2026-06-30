@@ -21,6 +21,20 @@ void config_per_pkg(YAML::Node& config, const YAML::Node& db_pkg_node,
         db_pkg_node["cheese"]["type"].as<std::string>() != "external") {
         config["cheese"][pkg_name]["compiler"] = global_config::get_default_compiler();
     }
+
+    std::filesystem::path patches_dir(get_env_var("FROMAGER_HOME") + "/patches/" + pkg_name);
+    if (std::filesystem::exists(patches_dir) && std::filesystem::is_directory(patches_dir)) {
+        config["cheese"][pkg_name]["patches"] = YAML::Node(YAML::NodeType::Sequence);
+        for (const auto& entry : std::filesystem::directory_iterator(patches_dir)) {
+            if (entry.is_regular_file()) {
+                YAML::Node patch_node = YAML::Node(YAML::NodeType::Map);
+                patch_node["name"] = entry.path().filename().string();
+                patch_node["enabled"] = false;  // Default to disabled, user can enable in the config
+                config["cheese"][pkg_name]["patches"].push_back(patch_node);
+            }
+        }
+    }
+
     // MPI needs to be handled separately
     bool pkg_is_target = (db_pkg_node["cheese"]["type"].as<std::string>() != "mpi" &&
                           db_pkg_node["cheese"]["type"].as<std::string>() != "compiler") ||

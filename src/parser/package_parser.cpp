@@ -2,6 +2,7 @@
 #include <global_config.hpp>
 #include <parser/package_parser.hpp>
 #include <parser/source_parser.hpp>
+#include <utils/bash_utils.hpp>
 
 std::vector<std::string> parse_package(ParserContext& context) {
     std::vector<std::string> instructions;
@@ -68,6 +69,22 @@ std::vector<std::string> parse_package(ParserContext& context) {
             // Preserve timestamps to avoid triggering autoreconf tooling during builds.
             instructions.push_back("cp -a " + source_path.string() + " source");
             instructions.push_back("cd source");
+        }
+    }
+
+    // Patches if available
+    if (user_config_pkg["patches"]) {
+        std::filesystem::path patches_dir(get_env_var("FROMAGER_HOME") + "/patches/" + package_name);
+        for (const auto& patch : user_config_pkg["patches"]) {
+            if (patch["enabled"] && patch["enabled"].as<bool>()) {
+                std::string patch_name = patch["name"].as<std::string>();
+                std::filesystem::path patch_path = patches_dir / patch_name;
+                if (!std::filesystem::exists(patch_path)) {
+                    ERROR("Patch file does not exist: " + patch_path.string());
+                    exit(EXIT_FAILURE);
+                }
+                instructions.push_back("git apply " + patch_path.string());
+            }
         }
     }
 
@@ -157,14 +174,18 @@ std::vector<std::string> parse_package(ParserContext& context) {
                         stage_cmd += " " + stage_target;
                     }
                 } else if (toolchain == "cmake") {
-                    stage_cmd = "cmake --build build";
+                    if (stage_target == "install") {
+                        stage_cmd = "cmake --install build";
+                    } else {
+                        stage_cmd = "cmake --build build";
 
-                    if (multithreaded && !threads.empty()) {
-                        stage_cmd += " --parallel " + threads;
-                    }
+                        if (multithreaded && !threads.empty()) {
+                            stage_cmd += " --parallel " + threads;
+                        }
 
-                    if (!stage_target.empty()) {
-                        stage_cmd += " --target " + stage_target;
+                        if (!stage_target.empty()) {
+                            stage_cmd += " --target " + stage_target;
+                        }
                     }
                 } else {
                     // Ignore the others for now

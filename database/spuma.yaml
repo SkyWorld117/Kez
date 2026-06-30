@@ -1,39 +1,31 @@
 cheese:
-  name: openfoam
-  description: OpenFOAM is a free, open source CFD software package.
+  name: spuma
+  description: A minimally invasive approach to the GPU porting of OPENFOAM
   type: package
 
   source:
     type: git
-    url: https://gitlab.com/openfoam/core/openfoam.git
+    url: https://gitlab.hpc.cineca.it/exafoam/spuma.git
     releases:
-      - version: 2412
-        tag: OpenFOAM-v2412
+      - version: master
+        tag: master
+      - version: develop
+        tag: develop
+      - version: 0.2-v2412
+        tag: 0.2-v2412
 
   dependencies:
-    - flex
     - openmpi
-    - adios2
     - boost
-    - cgal
-    - fftw3-api
-    - kahip
-    - metis
-    - scotch6
     - gmp
     - mpfr
+    - cuda
 
   build:
     preprocessing: |-
       set +u
       bin/tools/foamConfigurePaths \
-        -adios-path ${adios2.prefix} \
-        -boost-path ${boost.prefix} \
-        -cgal-path ${cgal.prefix} \
-        -fftw-path ${fftw3-api.prefix} \
-        -kahip-path ${kahip.prefix} \
-        -metis-path ${metis.prefix} \
-        -scotch-path ${scotch6.prefix}
+        -boost-path ${boost.prefix}
       set -u
 
     configurations:
@@ -45,7 +37,7 @@ cheese:
       environment:
         - name: WM_PROJECT_VERSION
           description: Version of the OpenFOAM project
-          default: v${openfoam.version}
+          default: v2412
 
         - name: WM_COMPILER_TYPE
           description: Compiler type for OpenFOAM
@@ -53,8 +45,20 @@ cheese:
 
         - name: WM_COMPILER
           description: Compiler for OpenFOAM
+          default: Nvidia
+
+        - name: FOAM_SIGFPE
+          description: Enable trapping of floating-point exceptions in OpenFOAM
+          default: false
+
+        - name: have_cuda
+          description: Whether CUDA support is enabled in OpenFOAM
+          default: true
+
+        - name: NVARCH
+          description: CUDA compute capability for OpenFOAM GPU kernels
           user_configurable: true
-          default: Gcc
+          default: 90
 
         - name: WM_PRECISION_OPTION
           description: Precision option for OpenFOAM [DP | SP | SPDP]
@@ -64,6 +68,10 @@ cheese:
         - name: WM_LABEL_SIZE
           description: Label size for OpenFOAM [32 | 64]
           user_configurable: true
+          default: 32
+
+        - name: WM_ARCH_OPTION
+          description: Architecture option for OpenFOAM [32 | 64]
           default: 64
 
         - name: WM_COMPILE_OPTION
@@ -97,41 +105,42 @@ cheese:
 
         - name: PATH
           description: PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/bin:${compiler.prefix}/bin:${openmpi.prefix}/bin:$PATH
+          default: ${compiler.prefix}/bin:${openmpi.prefix}/bin:${cuda.prefix}/bin:$PATH
 
         - name: LIBRARY_PATH
           description: LIBRARY_PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/lib:${compiler.prefix}/lib:${openmpi.prefix}/lib
+          default: ${compiler.prefix}/lib:${openmpi.prefix}/lib:${cuda.prefix}/lib64
 
         - name: C_INCLUDE_PATH
           description: C_INCLUDE_PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/include:${compiler.prefix}/include:${openmpi.prefix}/include
+          default: ${compiler.prefix}/include:${openmpi.prefix}/include
 
         - name: CPLUS_INCLUDE_PATH
           description: CPLUS_INCLUDE_PATH environment variable for OpenFOAM
-          default: ${flex.prefix}/include:${compiler.prefix}/include:${openmpi.prefix}/include
+          default: ${compiler.prefix}/include:${openmpi.prefix}/include
 
         - name: FOAM_EXTRA_CFLAGS
           description: Extra compiler flags for OpenFOAM to bake RPATH
           user_configurable: true
-          default: -O3 ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
+          default: ${spuma.nvldflags} ${gmp.includes} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
 
         - name: FOAM_EXTRA_CXXFLAGS
           description: Extra C++ compiler flags for OpenFOAM to bake RPATH
           user_configurable: true
-          default: -O3 ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
+          default: ${spuma.nvldflags} ${gmp.includes} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
 
         - name: FOAM_EXTRA_LDFLAGS
           description: Extra linker flags for OpenFOAM to bake RPATH
-          default: ${flex.ldflags} ${openfoam.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs}
+          default: ${spuma.nvldflags} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
 
     postprocessing: |-
-      cp -r ${source}/platforms/linux*/* ${openfoam.prefix}/
-      cp -r ${source}/bin ${openfoam.prefix}/
-      cp -r ${source}/etc ${openfoam.prefix}/
-      cp -r ${source}/tutorials ${openfoam.prefix}/
-      bash $FROMAGER_HOME/tools/fgr_patch_rpath.sh ${openfoam.prefix}/lib/sys-openmpi/libptscotchDecomp.so ${openmpi.prefix}/lib
+      cp -r ${source}/platforms/linux*/* ${spuma.prefix}/
+      cp -r ${source}/bin ${spuma.prefix}/
+      cp -r ${source}/etc ${spuma.prefix}/
+      cp -r ${source}/tutorials ${spuma.prefix}/
 
   properties:
     ldflags:
-      default: -L${openfoam.prefix}/lib -Wl,-rpath,${openfoam.prefix}/lib -L${openfoam.prefix}/lib/sys-openmpi -Wl,-rpath,${openfoam.prefix}/lib/sys-openmpi
+      default: -L${spuma.prefix}/lib -Wl,-rpath,${spuma.prefix}/lib -L${spuma.prefix}/lib/sys-openmpi -Wl,-rpath,${spuma.prefix}/lib/sys-openmpi
+    nvldflags:
+      default: -L${spuma.prefix}/lib -Xlinker -rpath,${spuma.prefix}/lib -L${spuma.prefix}/lib/sys-openmpi -Xlinker -rpath,${spuma.prefix}/lib/sys-openmpi
