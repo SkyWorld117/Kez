@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: dd4hep
   description: Detector description toolkit for high energy physics
   type: package

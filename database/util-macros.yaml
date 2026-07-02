@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: util-macros
   description: X.Org utility macros for configure scripts
   type: package

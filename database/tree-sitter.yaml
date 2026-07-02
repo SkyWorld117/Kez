@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: tree-sitter
   description: tree-sitter - a parser generator tool and an incremental parsing library
   type: package

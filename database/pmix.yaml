@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: pmix
   description: Process Management Interface for Exascale
   type: package

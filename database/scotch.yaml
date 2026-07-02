@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: scotch
   description: Scotch is a software package for graph and mesh partitioning, graph clustering, and sparse matrix ordering.
   type: package

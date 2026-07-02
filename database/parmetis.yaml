@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: parmetis
   description: ParMETIS is an MPI-based library for partitioning graphs, partitioning finite element meshes, and producing fill reducing orderings for sparse matrices.
   type: package

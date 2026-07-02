@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: hepmc3
   description: HepMC3 - A C++ event record for Monte Carlo generators
   type: package

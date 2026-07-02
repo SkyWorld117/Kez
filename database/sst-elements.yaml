@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: sst-elements
   description: Structural Simulation Toolkit Elements
   type: package

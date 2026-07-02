@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: git-lfs
   description: Git Large File Storage
   type: package

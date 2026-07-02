@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: python
   description: Python Programming Language
   type: package

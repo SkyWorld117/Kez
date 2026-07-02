@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: prrte
   description: PMIx Reference RunTime Environment
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: intel-oneapi-tbb
   description: Intel oneAPI Threading Building Blocks for parallel programming
   type: vendor

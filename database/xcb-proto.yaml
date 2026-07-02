@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: xcb-proto
   description: XCB protocol descriptions and C bindings generator
   type: package

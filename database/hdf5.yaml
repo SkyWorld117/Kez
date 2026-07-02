@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: hdf5
   description: High-performance data management and storage suite
   type: package

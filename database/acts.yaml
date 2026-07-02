@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: acts
   description: A Common Tracking Software framework
   type: package

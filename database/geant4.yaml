@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: geant4
   description: Geant4 - A toolkit for the simulation of the passage of particles through matter
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: hemelb-gpu
   description: HemePure-GPU LBM blood flow solver (UCL-CCS) with CUDA backend
   type: package

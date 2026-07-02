@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: rdma-core
   description: RDMA core userspace libraries and daemons
   type: external

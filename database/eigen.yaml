@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: eigen
   description: Eigen C++ Template Library for Linear Algebra
   type: package

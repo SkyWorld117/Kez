@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: cosma
   description: COSMA - Communication-Optimal Matrix Multiplication, drop-in ScaLAPACK PDGEMM replacement
   type: package

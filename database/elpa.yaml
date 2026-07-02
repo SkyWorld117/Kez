@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: elpa
   type: package
   description: ELPA - Eigenvalue soLvers for Petaflop Applications (HPC optimized)

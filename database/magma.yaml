@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: magma
   description: MAGMA - Matrix Algebra on GPU and Multicore Architectures
   type: package

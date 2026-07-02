@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: gdrcopy
   description: GDRCopy userspace library
   type: external

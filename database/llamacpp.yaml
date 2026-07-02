@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: llamacpp
   description: llama.cpp - LLM inference on consumer and HPC hardware
   type: package

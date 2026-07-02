@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: scalapack
   description: ScaLAPACK for parallel linear algebra
   type: abstract

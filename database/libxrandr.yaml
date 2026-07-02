@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libxrandr
   description: X Resize, Rotate and Reflect Extension library
   type: package

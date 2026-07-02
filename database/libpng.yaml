@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libpng
   description: A library for reading and writing PNG images
   type: package

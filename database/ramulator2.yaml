@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: ramulator2
   description: RAM module simulator
   type: package

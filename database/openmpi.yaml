@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: openmpi
   description: Open Source Implementation of the Message Passing Interface
   type: mpi

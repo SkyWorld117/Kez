@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: goblinhmcsim
   description: Goblin HMC Sim
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: mpc
   description: GNU MPC Library for multiple precision complex arithmetic
   type: system

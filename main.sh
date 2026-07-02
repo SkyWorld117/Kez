@@ -1,62 +1,61 @@
 #!/usr/bin/env bash
 
-# Fromager wrapper script that forwards arguments to the `fromager` command except:
+# Wrapper script that forwards arguments to the binary except:
 
-# Fromager location: ${FROMAGER_HOME}/bin/fromager
-
-# - `cellar enter <cellar>`
-# - `cellar exit`
+# - `env enter <env>`
+# - `env exit`
 # - `compiler load <compiler>`
 # - `compiler unload`
 # - `mpi load <mpi>`
 # - `mpi unload`
-# - `rt factory enter <factory>`
-# - `rt factory exit`
+# - `factory enter <factory>`
+# - `factory exit`
 
 # These commands will return bash instructions that will be evaluated by this wrapper script to change the current shell environment.
 
-fgr () {
-    if [ ! -f "${FROMAGER_HOME}/bin/fromager" ]; then
-        if [ "${1:-}" == "init" ]; then
-            echo "[W]: Fromager is not initialized. Running initialization process..."
+source /dev/stdin <<EOF
+${ABBREV} () {
+    if [ ! -f "${!_HOME}/bin/${BINARY}" ]; then
+        if [ "\${1:-}" == "init" ]; then
+            echo "[W]: ${PROJECT} is not initialized. Running initialization process..."
 
-            local cmd="${FROMAGER_HOME}/bin/fromager_init"
+            local cmd="bash ${!_HOME}/scripts/init.sh"
 
-            if [ "${2:-}" == "--refresh" ] || [ "${3:-}" == "--refresh" ]; then
-                cmd="${cmd} --refresh"
+            if [ "\${2:-}" == "--refresh" ] || [ "\${3:-}" == "--refresh" ]; then
+                cmd="\${cmd} --refresh"
             fi
 
-            if [ "${2:-}" == "--with-slurm" ] || [ "${3:-}" == "--with-slurm" ]; then
-                echo "[I]: Initializing with Slurm support..."
-                sbatch --nodes=1 --ntasks=1 --cpus-per-task=${FROMAGER_NPROC} --job-name=fromager_init --wrap="${cmd}"
-            else
-                eval "${cmd}"
+            if [ "\${2:-}" == "--use-distro-compiler" ] || [ "\${3:-}" == "--use-distro-compiler" ]; then
+                cmd="\${cmd} --use-distro-compiler"
             fi
 
-            return $?
-        else
-            echo >&2 "[E]: Fromager is not initialized. Please run 'fgr init' to initialize Fromager before using other commands."
-            return 1
+            eval "\${cmd}"
+
+            return \$?
         fi
+
+        echo >&2 "[E]: ${PROJECT} is not initialized. Please run '${ABBREV} init' to initialize ${PROJECT} before using other commands."
+        return 1
     fi
 
     local intercept=0
     
-    if [[ "${1:-}" == "cellar" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
+    if [[ "\${1:-}" == "env" && ( "\${2:-}" == "enter" || "\${2:-}" == "exit" ) ]]; then
         intercept=1
-    elif [[ "${1:-}" == "compiler" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
+    elif [[ "\${1:-}" == "compiler" && ( "\${2:-}" == "load" || "\${2:-}" == "unload" ) ]]; then
         intercept=1
-    elif [[ "${1:-}" == "mpi" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
+    elif [[ "\${1:-}" == "mpi" && ( "\${2:-}" == "load" || "\${2:-}" == "unload" ) ]]; then
         intercept=1
-    elif [[ "${1:-}" == "rt" && "${2:-}" == "factory" && ( "${3:-}" == "enter" || "${3:-}" == "exit" ) ]]; then
+    elif [[ "\${1:-}" == "factory" && ( "\${2:-}" == "enter" || "\${2:-}" == "exit" ) ]]; then
         intercept=1
     fi
 
-    if [[ $intercept -eq 1 ]]; then
-        eval "$("${FROMAGER_HOME}/bin/fromager" "$@")"
+    if [[ \$intercept -eq 1 ]]; then
+        eval "\$("${!_HOME}/bin/${BINARY}" "$@")"
     else
-        "${FROMAGER_HOME}/bin/fromager" "$@"
+        "${!_HOME}/bin/${BINARY}" "$@"
     fi
 }
+EOF
 
-export -f fgr
+export -f ${ABBREV}

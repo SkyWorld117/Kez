@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: dramsim3
   description: DRAM Simulator 3
   type: package

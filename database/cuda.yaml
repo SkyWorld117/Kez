@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: cuda
   description: NVIDIA CUDA Toolkit
   type: vendor

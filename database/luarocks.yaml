@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: luarocks
   description: LuaRocks - a package manager for Lua modules
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: flex
   description: Fast Lexical Analyzer Generator
   type: package

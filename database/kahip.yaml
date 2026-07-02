@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: kahip
   description: KaHIP is a Karlsruhe High Quality Partitioning software package.
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: numactl
   description: NUMA support for Linux
   type: package

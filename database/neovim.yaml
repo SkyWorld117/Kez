@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: neovim
   description: Neovim - hyperextensible Vim-based text editor
   type: package

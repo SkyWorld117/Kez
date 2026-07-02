@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: mvapich
   description: High-Performance MPI Library for InfiniBand and RDMA
   type: mpi

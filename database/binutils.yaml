@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: binutils
   description: GNU Binary Utilities collection
   type: package

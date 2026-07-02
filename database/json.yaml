@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: json
   description: JSON for Modern C++
   type: package

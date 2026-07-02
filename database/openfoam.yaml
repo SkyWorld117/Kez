@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: openfoam
   description: OpenFOAM is a free, open source CFD software package.
   type: package

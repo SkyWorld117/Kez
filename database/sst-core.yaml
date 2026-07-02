@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: sst-core
   description: Structural Simulation Toolkit Core
   type: package

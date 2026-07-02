@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: root
   description: ROOT Data Analysis Framework
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: osu
   description: Ohio State University Micro-Benchmarks
   type: package

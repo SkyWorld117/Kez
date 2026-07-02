@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: mgard
   description: MGARD is a multigrid-based lossy compression library for scientific data.
   type: package

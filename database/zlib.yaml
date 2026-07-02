@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: zlib
   description: Compression library implementing the deflate compression method
   type: system

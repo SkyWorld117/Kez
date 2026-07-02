@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: c-blosc2
   description: A high-performance compressor optimized for binary data
   type: package

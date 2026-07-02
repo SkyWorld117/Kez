@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: zstd
   description: Zstandard compression library
   type: system

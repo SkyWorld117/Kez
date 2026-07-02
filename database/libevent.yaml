@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libevent
   description: Event notification library
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: ucx
   description: Unified Communication X
   type: package

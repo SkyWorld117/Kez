@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libxau
   description: X11 Authorization library
   type: package

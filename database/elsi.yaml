@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: elsi
   description: ELSI - EigenvaLue SIver (unified interface for eigensolvers)
   type: package

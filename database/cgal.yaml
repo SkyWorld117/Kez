@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: cgal
   description: CGAL is a software library that provides easy access to efficient and reliable geometric algorithms in the form of a C++ library.
   type: package

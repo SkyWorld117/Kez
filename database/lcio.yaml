@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: lcio
   description: Linear Collider I/O - persistency framework for HEP and HEP-like applications
   type: package

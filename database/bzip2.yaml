@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: bzip2
   description: A high-quality data compressor
   type: package

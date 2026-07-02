@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: ascot5
   description: Simulation tool used in fusion energy science and engineering
   type: package

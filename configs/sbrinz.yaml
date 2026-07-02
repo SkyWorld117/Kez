@@ -1,17 +1,7 @@
-fromager:
+settings:
   n_proc_for_build: 32
 
   default_compiler: system
-
-  paths:
-    cellars: cellars
-    system: cellars/system
-    utilities: cellars/utilities
-    compilers: cellars/compilers
-    mpis: cellars/mpis
-    vendors: cellars/vendors
-    factories: factories
-    modulefiles: modulefiles
 
   external:
     rdma-core:

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libunwind
   description: libunwind is a C API for determining the current call chain of ELF program threads of execution
   type: package

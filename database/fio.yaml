@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: fio
   description: Flexible I/O tester
   type: package

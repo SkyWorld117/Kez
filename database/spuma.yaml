@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: spuma
   description: A minimally invasive approach to the GPU porting of OPENFOAM
   type: package

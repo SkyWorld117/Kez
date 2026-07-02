@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libxinerama
   description: Xinerama extension library
   type: package

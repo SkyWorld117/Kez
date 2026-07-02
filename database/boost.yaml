@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: boost
   description: Boost C++ Libraries
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: conquest
   description: CONQUEST linear scaling DFT code
   type: package

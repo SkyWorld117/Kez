@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: zfp
   description: ZFP is a compressed floating-point array library.
   type: package

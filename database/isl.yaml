@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: isl
   description: Integer Set Library for polyhedral computations
   type: system

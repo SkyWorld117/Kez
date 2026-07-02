@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: protobuf
   description: Protocol Buffers - Google's data interchange format
   type: package

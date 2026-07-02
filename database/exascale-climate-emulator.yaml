@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: exascale-climate-emulator
   description: Exascale Climate Emulator (ECE) is a software framework for emulating climate model output at exascale resolutions.
   type: package

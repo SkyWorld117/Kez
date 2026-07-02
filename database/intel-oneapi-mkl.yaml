@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: intel-oneapi-mkl
   description: Intel oneAPI Math Kernel Library for high-performance math routines
   type: vendor

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: pythia
   description: Pythia is a standard tool for the generation of high-energy physics events.
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: fftw3
   description: FFTW is a C library for computing the discrete Fourier transform in one or more dimensions, of arbitrary input size, and of both real and complex data.
   type: package

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: dftbplus
   description: DFTB+ - Density Functional Tight Binding molecular dynamics
   type: package

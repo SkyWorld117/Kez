@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: hwloc
   description: Hardware Locality
   type: package

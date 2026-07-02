@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: h5hut
   description: Parallel file format for storing particles, which is recognized by paraview.
   type: package

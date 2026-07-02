@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libxrender
   description: X Rendering Extension library
   type: package

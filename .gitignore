@@ -24,3 +24,5 @@ obj/
 # Ignore slurm logs
 *.out
 *.err
+
+fromager/

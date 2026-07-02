@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libxc
   type: package
   toolchain: autotools

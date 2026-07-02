@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: sod2d
   description: Spectral high-Order coDe 2 solve partial Differential equations
   type: package

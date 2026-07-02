@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libxfixes
   description: X Fixes extension library
   type: package

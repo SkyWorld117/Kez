@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: mpfr
   description: GNU MPFR Library for multiple precision floating-point computations
   type: system

@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: llvm
   description: LLVM Compiler Infrastructure
   type: compiler

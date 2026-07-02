@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: slurm
   description: Simple Linux Utility for Resource Management
   type: external

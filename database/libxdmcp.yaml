@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: libxdmcp
   description: X Display Manager Control Protocol library
   type: package

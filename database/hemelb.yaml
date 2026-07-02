@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: hemelb
   description: HemePure LBM blood flow solver (UCL-CCS); 2-stage build — bundled deps first, then src/
   type: package

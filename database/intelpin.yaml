@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: intelpin
   description: Intel PIN
   type: vendor

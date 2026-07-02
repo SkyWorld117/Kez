@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: xorgproto
   description: X.Org Protocol headers
   type: package

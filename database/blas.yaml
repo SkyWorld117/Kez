@@ -1,4 +1,4 @@
-cheese:
+recipe:
   name: blas
   description: Basic Linear Algebra Subprograms
   type: abstract
