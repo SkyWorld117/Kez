@@ -11,8 +11,8 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Define the work directory and other environment variables
-PREFIX=$(sed -n '/project:/ {n; s/.*name:[[:space:]]*//p; q;}' ${SCRIPT_DIR}/../manifest.yaml)
-PREFIX=${PREFIX^^}  # Convert to uppercase
+PROJECT=$(yq -r '.project.name' "${SCRIPT_DIR}/../manifest.yaml")
+PREFIX=${PROJECT^^}  # Convert to uppercase
 
 _WORKDIR="${PREFIX}_WORKDIR"
 _HOME="${PREFIX}_HOME"
@@ -555,11 +555,11 @@ else
     echo "argparse is already installed, skipping..."
 fi
 
-# gtest
-version=$(yq -r '.dependencies.gtest' "${!_HOME}/manifest.yaml")
+# googletest
+version=$(yq -r '.dependencies.googletest' "${!_HOME}/manifest.yaml")
 folder_and_version=$(fetch_github "google/googletest" "${version}")
 if [[ -n "$folder_and_version" ]]; then
-    echo "Installing gtest..."
+    echo "Installing googletest..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${!_SYSTEM_TMP}/${folder}"
@@ -569,9 +569,9 @@ if [[ -n "$folder_and_version" ]]; then
     make -j"${!_NPROC}"
     make install -j"${!_NPROC}"
     cd "${!_SYSTEM_TMP}" && rm -rf *
-    echo -e "  gtest: ${version}" >> "${!_SYSTEM}/state.yaml"
+    echo -e "  googletest: ${version}" >> "${!_SYSTEM}/state.yaml"
 else
-    echo "gtest is already installed, skipping..."
+    echo "googletest is already installed, skipping..."
 fi
 
 # patchelf
@@ -602,6 +602,6 @@ fi
 
 # End of Script
 # ----------------------------------------------------
-echo "Fromager environment initialization complete."
+echo "${PROJECT} environment initialization complete."
 
 set +Eeuo pipefail
