@@ -20,6 +20,7 @@ bin/test*
 # Ignore object files
 obj/
 *.o
+*.a
 
 # Ignore slurm logs
 *.out
