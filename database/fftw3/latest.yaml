@@ -33,12 +33,6 @@ recipe:
           enabled:
             default: false
 
-        - name: --enable-long-double
-          description: Build long double-precision version of the library
-          user_configurable: true
-          enabled:
-            default: false
-
         - name: --enable-quad-precision
           description: Build quad-precision version of the library
           user_configurable: true
