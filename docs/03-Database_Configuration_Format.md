@@ -55,7 +55,7 @@ Notice that if the type is `script`, `url` does not have to exist. This is due t
 
 ```yaml
 overrides:
-  - condition: <condition>
+  - condition: <condition> # Optional, used to specify when the override should be applied
     target: <target_name> # **ANY** template variable as long as it is defined, details see `Templating` section
     action: <append|prepend|set> # Optional, default is `set`
     value: <value>
