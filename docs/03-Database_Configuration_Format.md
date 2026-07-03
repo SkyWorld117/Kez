@@ -8,13 +8,14 @@ This document outlines the general format for configuration files used in the da
 In principle, all concrete packages share the same structure, which is defined as follows:
 
 ```yaml
-cheese:
+recipe:
   name: <package_name>
   description: <package_description> # Optional, but recommended
   type: <package_type>  # e.g., system, compiler, mpi, vendor, abstract, etc.
   toolchain: <toolchain_name> # Optional for system, abstract and vendor packages
   source: <source_definition> # Optional for system and abstract packages
   dependencies: <dependencies> # Only if available
+  overrides: <overrides> # Optional, e.g., modify the build process for some dependencies
   build: # Optional for system, abstract and vendor packages
     preprocessing: <preprocessing_commands> # Optional, e.g., autoconf, cmake, etc.
     postprocessing: <postprocessing_commands> # Optional, e.g., manual installation, etc.
@@ -47,6 +48,18 @@ Notice that if the type is `script`, `url` does not have to exist. This is due t
 ### `dependencies`
 
 `dependencies` is a list of packages. There is no version information for now, but maybe it will be added later as some packages can depend on different packages when setting to different versions.
+
+### `overrides`
+
+`overrides` is a list of overrides for the build process of some dependencies. It is useful when a package needs to modify the build process of its dependencies, e.g., adding additional flags or changing the installation path. The `target` entry can be any template variable as long as it is defined in the configuration file. Details can be found in the `Templating` section.
+
+```yaml
+overrides:
+  - condition: <condition>
+    target: <target_name> # **ANY** template variable as long as it is defined, details see `Templating` section
+    action: <append|prepend|set> # Optional, default is `set`
+    value: <value>
+```
 
 ### `build`
 
@@ -137,7 +150,8 @@ condition =
     <condition> && <condition> | 
     <condition> || <condition> | 
     "not" <condition> | 
-    "(" <condition> ")"
+    "(" <condition> ")" |
+    true | false
 ```
 
 ### `properties`
