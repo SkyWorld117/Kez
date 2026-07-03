@@ -121,3 +121,43 @@ std::size_t get_length_without_color(const std::string& str) {
 
     return size;
 }
+
+int compare_versions(const std::string& left, const std::string& right) {
+    std::vector<std::string> left_parts  = split(left, '.');
+    std::vector<std::string> right_parts = split(right, '.');
+
+    static const std::vector<char> secondary_delimiters = {
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+
+    for (size_t i = 0; i < std::min(left_parts.size(), right_parts.size()); i++) {
+        if (left_parts[i] != right_parts[i]) {
+            // Split by alphabetic characters
+            std::vector<std::string> left_subparts =
+                split_keep_delimiters(left_parts[i], secondary_delimiters);
+            std::vector<std::string> right_subparts =
+                split_keep_delimiters(right_parts[i], secondary_delimiters);
+
+            for (size_t j = 0; j < std::min(left_subparts.size(), right_subparts.size()); j++) {
+                if (left_subparts[j] != right_subparts[j]) {
+                    if (is_numeric(left_subparts[j]) && is_numeric(right_subparts[j])) {
+                        long long left_num  = std::stoll(left_subparts[j]);
+                        long long right_num = std::stoll(right_subparts[j]);
+                        if (left_num != right_num) {
+                            return left_num < right_num ? -1 : 1;
+                        }
+                    } else {
+                        return left_subparts[j] < right_subparts[j] ? -1 : 1;
+                    }
+                }
+            }
+            return left_subparts.size() < right_subparts.size() ? -1 : 1;
+        }
+    }
+
+    if (left_parts.size() != right_parts.size()) {
+        return left_parts.size() < right_parts.size() ? -1 : 1;
+    }
+
+    return 0;
+}
