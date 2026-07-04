@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <database/config_selector.hpp>
 #include <database/database.hpp>
-#include <database/errors.hpp>
 #include <mutex>
 #include <unordered_map>
 #include <utils/bash_utils.hpp>

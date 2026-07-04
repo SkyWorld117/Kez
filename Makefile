@@ -31,7 +31,6 @@ LIB_SOURCES := \
 	$(SRC_DIR)/database/config_selector.cpp \
 	$(SRC_DIR)/database/condition_parser.cpp \
 	$(SRC_DIR)/database/database.cpp \
-	$(SRC_DIR)/database/errors.cpp \
 	$(SRC_DIR)/database/parser_utils.cpp \
 	$(SRC_DIR)/database/source_parser.cpp \
 	$(SRC_DIR)/dependency_resolver/advisor.cpp \

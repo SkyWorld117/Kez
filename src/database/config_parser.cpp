@@ -1,7 +1,6 @@
 #include <database/build_parser.hpp>
 #include <database/condition_parser.hpp>
 #include <database/config_parser.hpp>
-#include <database/errors.hpp>
 #include <database/parser_utils.hpp>
 #include <database/source_parser.hpp>
 #include <memory>
@@ -170,12 +169,6 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
 }
 
 PackageConfigPtr parse_db_config(const std::filesystem::path& config_path) {
-    try {
-        YAML::Node document = YAML::LoadFile(config_path.string());
-        return parse_config_document(document, DatabaseParserContext {config_path});
-    } catch (const ConfigError&) {
-        throw;
-    } catch (const YAML::Exception& error) {
-        raise_config_error("Failed to parse '" + config_path.string() + "': " + error.what());
-    }
+    YAML::Node document = YAML::LoadFile(config_path.string());
+    return parse_config_document(document, DatabaseParserContext {config_path});
 }

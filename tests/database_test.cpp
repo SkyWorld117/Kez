@@ -203,10 +203,8 @@ recipe:
         write("demo", "1.0-2.0.yaml", config);
         write("demo", "2.0-3.0.yaml", config);
 
-        testing::internal::CaptureStderr();
-        EXPECT_THROW(static_cast<void>(get_db_config("demo", "2.0")), DatabaseError);
-        const std::string error_output = testing::internal::GetCapturedStderr();
-        EXPECT_NE(error_output.find("[E]: Overlapping database config ranges"), std::string::npos);
+        EXPECT_EXIT(static_cast<void>(get_db_config("demo", "2.0")),
+                    ::testing::ExitedWithCode(EXIT_FAILURE), "Overlapping database config ranges");
     }
 
     TEST(DatabaseIntegration, ParsesEveryRepositoryConfig) {

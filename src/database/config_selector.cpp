@@ -1,6 +1,7 @@
 #include <algorithm>
+#include <cstdlib>
 #include <database/config_selector.hpp>
-#include <database/errors.hpp>
+#include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
 #include <vector>
 
@@ -10,28 +11,21 @@ struct ConfigRange {
     std::filesystem::path path;
 };
 
-static int compare_range_versions(const std::string& left, const std::string& right,
-                                  const std::filesystem::path& path) {
-    try {
-        return compare_versions(left, right);
-    } catch (const std::exception& error) {
-        raise_database_error("Cannot compare versions in '" + path.string() + "': " + error.what());
-    }
-}
-
 static ConfigRange parse_range_path(const std::filesystem::path& path) {
     const std::string stem      = path.stem().string();
     const std::size_t separator = stem.find('-');
     if (separator == std::string::npos || separator == 0 || separator + 1 == stem.size() ||
         stem.find('-', separator + 1) != std::string::npos) {
-        raise_database_error("Invalid database config filename '" + path.string() +
-                             "'; expected latest.yaml or <start-version>-<end-version>.yaml");
+        ERROR("Invalid database config filename '" + path.string() +
+              "'; expected latest.yaml or <start-version>-<end-version>.yaml");
+        exit(EXIT_FAILURE);
     }
 
     ConfigRange range {stem.substr(0, separator), stem.substr(separator + 1), path};
-    if (compare_range_versions(range.start, range.end, path) > 0) {
-        raise_database_error("Invalid database config range '" + path.string() +
-                             "': start version is greater than end version");
+    if (compare_versions(range.start, range.end) > 0) {
+        ERROR("Invalid database config range '" + path.string() +
+              "': start version is greater than end version");
+        exit(EXIT_FAILURE);
     }
     return range;
 }
@@ -41,12 +35,14 @@ std::filesystem::path select_config_path(const std::filesystem::path& database_p
                                          const std::string& version) {
     const std::filesystem::path package_path = database_path / package_name;
     if (!std::filesystem::is_directory(package_path)) {
-        raise_database_error("Package config directory not found: " + package_path.string());
+        ERROR("Package config directory not found: " + package_path.string());
+        exit(EXIT_FAILURE);
     }
 
     const std::filesystem::path latest_path = package_path / "latest.yaml";
     if (!std::filesystem::is_regular_file(latest_path)) {
-        raise_database_error("Latest package config not found: " + latest_path.string());
+        ERROR("Latest package config not found: " + latest_path.string());
+        exit(EXIT_FAILURE);
     }
 
     std::vector<ConfigRange> ranges;
@@ -59,17 +55,17 @@ std::filesystem::path select_config_path(const std::filesystem::path& database_p
     }
 
     std::sort(ranges.begin(), ranges.end(), [](const ConfigRange& left, const ConfigRange& right) {
-        const int start_comparison = compare_range_versions(left.start, right.start, left.path);
+        const int start_comparison = compare_versions(left.start, right.start);
         if (start_comparison != 0) {
             return start_comparison < 0;
         }
-        return compare_range_versions(left.end, right.end, left.path) < 0;
+        return compare_versions(left.end, right.end) < 0;
     });
     for (std::size_t i = 1; i < ranges.size(); ++i) {
-        if (compare_range_versions(ranges[i].start, ranges[i - 1].end, ranges[i].path) <= 0) {
-            raise_database_error("Overlapping database config ranges: '" +
-                                 ranges[i - 1].path.string() + "' and '" + ranges[i].path.string() +
-                                 "'");
+        if (compare_versions(ranges[i].start, ranges[i - 1].end) <= 0) {
+            ERROR("Overlapping database config ranges: '" + ranges[i - 1].path.string() +
+                  "' and '" + ranges[i].path.string() + "'");
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -77,8 +73,8 @@ std::filesystem::path select_config_path(const std::filesystem::path& database_p
         return latest_path;
     }
     for (const ConfigRange& range : ranges) {
-        if (compare_range_versions(range.start, version, range.path) <= 0 &&
-            compare_range_versions(version, range.end, range.path) <= 0) {
+        if (compare_versions(range.start, version) <= 0 &&
+            compare_versions(version, range.end) <= 0) {
             return range.path;
         }
     }
@@ -89,6 +85,7 @@ void validate_package_name(const std::string& package_name) {
     const std::filesystem::path path(package_name);
     if (package_name.empty() || package_name == "." || package_name == ".." ||
         path.has_parent_path() || path.filename().string() != package_name) {
-        raise_database_error("Invalid package name: '" + package_name + "'");
+        ERROR("Invalid package name: '" + package_name + "'");
+        exit(EXIT_FAILURE);
     }
 }

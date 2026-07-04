@@ -1,30 +1,32 @@
-#include <database/errors.hpp>
+#include <cstdlib>
 #include <database/parser_utils.hpp>
-#include <sstream>
 #include <unordered_set>
+#include <utils/colored_io.hpp>
 
 bool has_key(const YAML::Node& node, const std::string& key) { return node[key].IsDefined(); }
 
 [[noreturn]] void fail_config(const YAML::Node& node, const std::string& yaml_path,
                               const std::string& message, const DatabaseParserContext& context) {
-    std::ostringstream error;
-    error << context.source_path.string();
+    std::string error_smg = context.source_path.string();
     if (node.IsDefined() && !node.Mark().is_null()) {
-        error << ':' << node.Mark().line + 1 << ':' << node.Mark().column + 1;
+        error_smg += ':' + std::to_string(node.Mark().line + 1) + ':' +
+                     std::to_string(node.Mark().column + 1);
     }
-    error << ": " << yaml_path << ' ' << message;
-    raise_config_error(error.str());
+    error_smg += ": " + yaml_path + ' ' + message;
+
+    ERROR(error_smg);
+    exit(EXIT_FAILURE);
 }
 
 void warn_config(const YAML::Node& node, const std::string& yaml_path, const std::string& message,
                  const DatabaseParserContext& context) {
-    std::ostringstream warning;
-    warning << context.source_path.string();
+    std::string warning_msg = context.source_path.string();
     if (node.IsDefined() && !node.Mark().is_null()) {
-        warning << ':' << node.Mark().line + 1 << ':' << node.Mark().column + 1;
+        warning_msg += ':' + std::to_string(node.Mark().line + 1) + ':' +
+                       std::to_string(node.Mark().column + 1);
     }
-    warning << ": " << yaml_path << ' ' << message;
-    emit_config_warning(warning.str());
+    warning_msg += ": " + yaml_path + ' ' + message;
+    WARNING(warning_msg);
 }
 
 void expect_map(const YAML::Node& node, const std::string& path,
