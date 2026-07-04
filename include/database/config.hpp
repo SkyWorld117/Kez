@@ -130,7 +130,6 @@ class PackageConfig {
     std::optional<Source> source;
     std::vector<std::string> dependencies;
     std::vector<Override> overrides;
-    std::optional<BuildConfiguration> common_configurations;
     std::optional<Build> build;
     std::vector<Property> properties;
     std::vector<std::string> implementations;

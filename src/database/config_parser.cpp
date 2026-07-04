@@ -125,7 +125,7 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
     expect_map(recipe, "recipe", context);
     check_keys(recipe,
                {"name", "description", "author", "type", "toolchain", "source", "dependencies",
-                "overrides", "common_configurations", "build", "properties", "implementations"},
+                "overrides", "build", "properties", "implementations"},
                "recipe", context);
 
     validate_templates(document, "document", context);
@@ -149,10 +149,6 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
     }
     if (has_key(recipe, "overrides")) {
         config->overrides = parse_overrides(recipe["overrides"], "recipe.overrides", context);
-    }
-    if (has_key(recipe, "common_configurations")) {
-        config->common_configurations = parse_build_configuration(
-            recipe["common_configurations"], "recipe.common_configurations", context);
     }
     if (has_key(recipe, "build")) {
         config->build = parse_build(recipe["build"], "recipe.build", context);

@@ -59,7 +59,7 @@ void check_keys(const YAML::Node& node, std::initializer_list<const char*> allow
             fail_config(entry.first, path + "." + key, "is duplicated", context);
         }
         if (allowed.find(key) == allowed.end()) {
-            fail_config(entry.first, path + "." + key, "is an unexpected key", context);
+            warn_config(entry.first, path + "." + key, "ignoring unexpected key", context);
         }
     }
 }

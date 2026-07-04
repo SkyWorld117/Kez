@@ -148,7 +148,7 @@ recipe:
         EXPECT_EQ(config->overrides.front().action, ValueAction::Append);
     }
 
-    TEST_F(TemporaryDatabase, RejectsUnexpectedKeysAtAnySchemaLevel) {
+    TEST_F(TemporaryDatabase, IgnoresUnexpectedKeysAtAnySchemaLevelAndEmitsWarning) {
         write("invalid", "latest.yaml", R"(
 recipe:
   name: invalid
@@ -160,20 +160,18 @@ recipe:
           unexpected: true
 )");
 
-        std::string error_message;
-        testing::internal::CaptureStderr();
-        try {
-            static_cast<void>(get_db_config("invalid", "latest"));
-        } catch (const ConfigError& error) {
-            error_message = error.what();
-        }
-        const std::string error_output = testing::internal::GetCapturedStderr();
+        testing::internal::CaptureStdout();
+        PackageConfigPtr config   = get_db_config("invalid", "latest");
+        const std::string warning = testing::internal::GetCapturedStdout();
 
-        ASSERT_FALSE(error_message.empty());
-        EXPECT_NE(error_message.find("unexpected key"), std::string::npos);
-        EXPECT_NE(error_message.find("recipe.build.configurations.options[0]"), std::string::npos);
-        EXPECT_NE(error_output.find("[E]:"), std::string::npos);
-        EXPECT_NE(error_output.find(error_message), std::string::npos);
+        ASSERT_TRUE(config->build.has_value());
+        ASSERT_TRUE(config->build->configurations.has_value());
+        ASSERT_EQ(config->build->configurations->options.size(), 1U);
+        EXPECT_EQ(config->build->configurations->options.front().name, "feature");
+        EXPECT_NE(warning.find("ignoring unexpected key"), std::string::npos);
+        EXPECT_NE(warning.find("recipe.build.configurations.options[0].unexpected"),
+                  std::string::npos);
+        EXPECT_NE(warning.find("[W]:"), std::string::npos);
     }
 
     TEST_F(TemporaryDatabase, RetainsDuplicateOptionsAndEmitsWarning) {
