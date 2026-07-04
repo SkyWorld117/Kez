@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 #include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
@@ -160,4 +161,19 @@ int compare_versions(const std::string& left, const std::string& right) {
     }
 
     return 0;
+}
+
+std::string trim(const std::string& input) {
+    const std::size_t first = input.find_first_not_of(" \n\r\t");
+    if (first == std::string::npos) {
+        return {};
+    }
+    const std::size_t last = input.find_last_not_of(" \n\r\t");
+    return input.substr(first, last - first + 1);
+}
+
+void append_unique(std::vector<std::string>& values, const std::string& value) {
+    if (std::find(values.begin(), values.end(), value) == values.end()) {
+        values.push_back(value);
+    }
 }

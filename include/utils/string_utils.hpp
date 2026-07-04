@@ -22,3 +22,7 @@ template <typename T> std::string dump(const T& value) {
 }
 
 int compare_versions(const std::string& left, const std::string& right);
+
+std::string trim(const std::string& input);
+
+void append_unique(std::vector<std::string>& values, const std::string& value);
