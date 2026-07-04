@@ -1,6 +1,6 @@
 project:
-  name: Fromager
-  abbrev: fgr
+  name: Kez
+  abbrev: kez
   version: dev
 
 dependencies:

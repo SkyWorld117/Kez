@@ -2,7 +2,7 @@
 
 check_installation() {
     local pkg="$1"
-    if $(yq -r ".state | has(\"${pkg}\")" "${!_SYSTEM}/state.yaml"); then
+    if $(yq -r ".state | has(\"${pkg}\")" "${KEZ_SYSTEM}/state.yaml"); then
         return 1
     else
         return 0
@@ -38,20 +38,20 @@ fetch_web() {
         return 1
     fi
 
-    wget --quiet --show-progress --output-document="${!_SYSTEM_TMP}/${filename}" "${url}${filename}"
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/${filename}" "${url}${filename}"
 
     # Check if the file was downloaded successfully
-    if [ ! -f "${!_SYSTEM_TMP}/${filename}" ]; then
+    if [ ! -f "${KEZ_SYSTEM_TMP}/${filename}" ]; then
         echo >&2 "Failed to download ${filename} from ${url}"
         return 1
     fi
 
     if [ ${ext} = "tar.xz" ]; then
-        tar -xf "${!_SYSTEM_TMP}/${filename}"
+        tar -xf "${KEZ_SYSTEM_TMP}/${filename}"
     elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${!_SYSTEM_TMP}/${filename}"
+        tar -xzf "${KEZ_SYSTEM_TMP}/${filename}"
     elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${!_SYSTEM_TMP}/${filename}"
+        tar -xjf "${KEZ_SYSTEM_TMP}/${filename}"
     else
         echo >&2 "Unsupported file extension: ${ext}"
         return 1
@@ -98,24 +98,24 @@ fetch_rust() {
     fi
 
     local suffix
-    if [ "${!_ARCH}" == "x86_64" ]; then
+    if [ "${KEZ_ARCH}" == "x86_64" ]; then
         suffix="x86_64-unknown-linux-gnu"
-    elif [ "${!_ARCH}" == "arm64" ]; then
+    elif [ "${KEZ_ARCH}" == "arm64" ]; then
         suffix="aarch64-unknown-linux-gnu"
     else
-        echo >&2 "Unsupported architecture: ${!_ARCH}"
+        echo >&2 "Unsupported architecture: ${KEZ_ARCH}"
         return 1
     fi
     local filename="rust-${version}-${suffix}.tar.gz"
 
-    wget --quiet --show-progress --output-document="${!_SYSTEM_TMP}/${filename}" "https://static.rust-lang.org/dist/${filename}"
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/${filename}" "https://static.rust-lang.org/dist/${filename}"
 
-    if [ ! -f "${!_SYSTEM_TMP}/${filename}" ]; then
+    if [ ! -f "${KEZ_SYSTEM_TMP}/${filename}" ]; then
         echo >&2 "Failed to download ${filename} from ${url}"
         return 1
     fi
 
-    tar -xzf "${!_SYSTEM_TMP}/${filename}"
+    tar -xzf "${KEZ_SYSTEM_TMP}/${filename}"
 
     echo "${filename%.tar.*}::${version}"
 }
@@ -158,15 +158,15 @@ fetch_github() {
         fi
     fi
 
-    wget --quiet --show-progress --output-document="${!_SYSTEM_TMP}/${pkg}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/${pkg}-${tag}.tar.gz" "https://github.com/${repo}/archive/refs/tags/${tag}.tar.gz"
 
     # Check if the file was downloaded successfully
-    if [ ! -f "${!_SYSTEM_TMP}/${pkg}-${tag}.tar.gz" ]; then
+    if [ ! -f "${KEZ_SYSTEM_TMP}/${pkg}-${tag}.tar.gz" ]; then
         echo >&2 "Failed to download ${pkg} version ${tag} from GitHub"
         return 1
     fi
 
-    tar -xzf "${!_SYSTEM_TMP}/${pkg}-${tag}.tar.gz"
+    tar -xzf "${KEZ_SYSTEM_TMP}/${pkg}-${tag}.tar.gz"
 
     local version="${tag#v}"
     echo "${pkg}-${tag#v}::${version}"
@@ -187,15 +187,15 @@ fetch_elfutils() {
         version="${version%/}"
     fi
 
-    wget --quiet --show-progress --output-document="${!_SYSTEM_TMP}/elfutils-${version}.tar.bz2" "https://sourceware.org/elfutils/ftp/${version}/elfutils-${version}.tar.bz2"
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/elfutils-${version}.tar.bz2" "https://sourceware.org/elfutils/ftp/${version}/elfutils-${version}.tar.bz2"
 
     # Check if the file was downloaded successfully
-    if [ ! -f "${!_SYSTEM_TMP}/elfutils-${version}.tar.bz2" ]; then
+    if [ ! -f "${KEZ_SYSTEM_TMP}/elfutils-${version}.tar.bz2" ]; then
         echo >&2 "Failed to download elfutils version ${version} from sourceware.org"
         return 1
     fi
 
-    tar -xjf "${!_SYSTEM_TMP}/elfutils-${version}.tar.bz2"
+    tar -xjf "${KEZ_SYSTEM_TMP}/elfutils-${version}.tar.bz2"
 
     echo "elfutils-${version}::${version}"
 }
@@ -218,20 +218,20 @@ fetch_gcc() {
             | tail -n1)
     fi
 
-    wget --quiet --show-progress --output-document="${!_SYSTEM_TMP}/${basename}.${ext}" "https://ftp.gnu.org/gnu/gcc/${basename}/${basename}.${ext}"
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/${basename}.${ext}" "https://ftp.gnu.org/gnu/gcc/${basename}/${basename}.${ext}"
 
     # Check if the file was downloaded successfully
-    if [ ! -f "${!_SYSTEM_TMP}/${basename}.${ext}" ]; then
+    if [ ! -f "${KEZ_SYSTEM_TMP}/${basename}.${ext}" ]; then
         echo >&2 "Failed to download ${basename}.${ext} from GNU"
         return 1
     fi
 
     if [ ${ext} = "tar.xz" ]; then
-        tar -xf "${!_SYSTEM_TMP}/${basename}.${ext}"
+        tar -xf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
     elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${!_SYSTEM_TMP}/${basename}.${ext}"
+        tar -xzf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
     elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${!_SYSTEM_TMP}/${basename}.${ext}"
+        tar -xjf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
     else
         echo >&2 "Unsupported file extension: ${ext}"
         return 1

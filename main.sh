@@ -13,49 +13,47 @@
 
 # These commands will return bash instructions that will be evaluated by this wrapper script to change the current shell environment.
 
-source /dev/stdin <<EOF
-${ABBREV} () {
-    if [ ! -f "${!_HOME}/bin/${BINARY}" ]; then
-        if [ "\${1:-}" == "init" ]; then
+kez () {
+    if [ ! -f "${KEZ_HOME}/bin/kez" ]; then
+        if [ "${1:-}" == "init" ]; then
             echo "[W]: ${PROJECT} is not initialized. Running initialization process..."
 
-            local cmd="bash ${!_HOME}/scripts/init.sh"
+            local cmd="bash ${KEZ_HOME}/scripts/init.sh"
 
-            if [ "\${2:-}" == "--refresh" ] || [ "\${3:-}" == "--refresh" ]; then
-                cmd="\${cmd} --refresh"
+            if [ "${2:-}" == "--refresh" ] || [ "${3:-}" == "--refresh" ]; then
+                cmd="${cmd} --refresh"
             fi
 
-            if [ "\${2:-}" == "--use-distro-compiler" ] || [ "\${3:-}" == "--use-distro-compiler" ]; then
-                cmd="\${cmd} --use-distro-compiler"
+            if [ "${2:-}" == "--use-distro-compiler" ] || [ "${3:-}" == "--use-distro-compiler" ]; then
+                cmd="${cmd} --use-distro-compiler"
             fi
 
-            eval "\${cmd}"
+            eval "${cmd}"
 
-            return \$?
+            return $?
         fi
 
-        echo >&2 "[E]: ${PROJECT} is not initialized. Please run '${ABBREV} init' to initialize ${PROJECT} before using other commands."
+        echo >&2 "[E]: Kez is not initialized. Please run 'kez init' to initialize Kez before using other commands."
         return 1
     fi
 
     local intercept=0
     
-    if [[ "\${1:-}" == "env" && ( "\${2:-}" == "enter" || "\${2:-}" == "exit" ) ]]; then
+    if [[ "${1:-}" == "env" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
         intercept=1
-    elif [[ "\${1:-}" == "compiler" && ( "\${2:-}" == "load" || "\${2:-}" == "unload" ) ]]; then
+    elif [[ "${1:-}" == "compiler" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1
-    elif [[ "\${1:-}" == "mpi" && ( "\${2:-}" == "load" || "\${2:-}" == "unload" ) ]]; then
+    elif [[ "${1:-}" == "mpi" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1
-    elif [[ "\${1:-}" == "factory" && ( "\${2:-}" == "enter" || "\${2:-}" == "exit" ) ]]; then
+    elif [[ "${1:-}" == "factory" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
         intercept=1
     fi
 
-    if [[ \$intercept -eq 1 ]]; then
-        eval "\$("${!_HOME}/bin/${BINARY}" "$@")"
+    if [[ $intercept -eq 1 ]]; then
+        eval "$(("${KEZ_HOME}/bin/kez" "$@"))"
     else
-        "${!_HOME}/bin/${BINARY}" "$@"
+        "${KEZ_HOME}/bin/kez" "$@"
     fi
 }
-EOF
 
-export -f ${ABBREV}
+export -f kez
