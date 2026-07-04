@@ -1,8 +1,9 @@
+---
 recipe:
-  name: fftw3-api
-  description: FFTW3 API for fast Fourier transforms
-  type: abstract
+    name: fftw3-api
+    description: FFTW3 API for fast Fourier transforms
+    type: abstract
 
-  implementations:
-    - fftw3
-    - intel-oneapi-mkl
+    implementations:
+        - fftw3
+        - intel-oneapi-mkl

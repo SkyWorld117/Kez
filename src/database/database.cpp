@@ -4,16 +4,14 @@
 #include <database/errors.hpp>
 #include <mutex>
 #include <unordered_map>
+#include <utils/bash_utils.hpp>
 
 static std::unordered_map<std::string, PackageConfigPtr> db_cache;
 static std::mutex db_cache_mutex;
 
 PackageConfigPtr get_db_config(const std::string& package_name, const std::string& version) {
     validate_package_name(package_name);
-    const char* database_env = std::getenv("FROMAGER_DB");
-    if (database_env == nullptr || std::string(database_env).empty()) {
-        raise_database_error("Environment variable 'FROMAGER_DB' is not set");
-    }
+    std::filesystem::path database_env = get_env_var("KEZ_DB");
 
     const std::filesystem::path config_path =
         select_config_path(database_env, package_name, version);

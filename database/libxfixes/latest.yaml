@@ -1,50 +1,51 @@
+---
 recipe:
-  name: libxfixes
-  description: X Fixes extension library
-  type: package
-  toolchain: autotools
+    name: libxfixes
+    description: X Fixes extension library
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 6.0.2
-        url: https://www.x.org/releases/individual/lib/libXfixes-6.0.2.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 6.0.2
+              url: https://www.x.org/releases/individual/lib/libXfixes-6.0.2.tar.xz
 
-  dependencies:
-    - xorgproto
-    - libx11
+    dependencies:
+        - xorgproto
+        - libx11
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libxfixes.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libxfixes.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${libx11.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${libx11.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libxfixes.prefix}/lib -Wl,-rpath,${libxfixes.prefix}/lib
-    libs:
-      default: -lXfixes
-    includes:
-      default: -I${libxfixes.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libxfixes.prefix}/lib -Wl,-rpath,${libxfixes.prefix}/lib
+        libs:
+            default: -lXfixes
+        includes:
+            default: -I${libxfixes.prefix}/include

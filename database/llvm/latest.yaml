@@ -1,25 +1,26 @@
+---
 recipe:
-  name: llvm
-  description: LLVM Compiler Infrastructure
-  type: compiler
+    name: llvm
+    description: LLVM Compiler Infrastructure
+    type: compiler
 
-  source:
-    type: tarball
-    releases:
-      - version: 21.1.0-x86_64
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz 
-      - version: 21.1.0-arm64
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 21.1.0-x86_64
+              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
+            - version: 21.1.0-arm64
+              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz
 
-  build:
-    postprocessing: cp -r ${source}/* ${llvm.prefix}
+    build:
+        postprocessing: cp -r ${source}/* ${llvm.prefix}
 
-  properties:
-    c: ${compiler.prefix}/bin/clang
-    cxx: ${compiler.prefix}/bin/clang++
-    fort: ${compiler.prefix}/bin/flang
-    omp_flags: -fopenmp
-    ldflags:
-      default: -L${compiler.prefix}/lib -Wl,-rpath,${compiler.prefix}/lib
-    includes:
-      default: -I${compiler.prefix}/include
+    properties:
+        c: ${compiler.prefix}/bin/clang
+        cxx: ${compiler.prefix}/bin/clang++
+        fort: ${compiler.prefix}/bin/flang
+        omp_flags: -fopenmp
+        ldflags:
+            default: -L${compiler.prefix}/lib -Wl,-rpath,${compiler.prefix}/lib
+        includes:
+            default: -I${compiler.prefix}/include

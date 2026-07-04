@@ -1,77 +1,78 @@
+---
 recipe:
-  name: isl
-  description: Integer Set Library for polyhedral computations
-  type: system
-  toolchain: autotools
+    name: isl
+    description: Integer Set Library for polyhedral computations
+    type: system
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 0.27
-        url: https://libisl.sourceforge.io/isl-0.27.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 0.27
+              url: https://libisl.sourceforge.io/isl-0.27.tar.gz
 
-  dependencies:
-    - gmp
+    dependencies:
+        - gmp
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: "${isl.prefix}"
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${isl.prefix}
 
-        - name: --enable-shared
-          description: Build shared libraries
+                - name: --enable-shared
+                  description: Build shared libraries
 
-        - name: --enable-static
-          description: Build static libraries
+                - name: --enable-static
+                  description: Build static libraries
 
-        - name: --with-gmp-prefix
-          description: Specify GMP installation prefix
-          enabled_value:
-            default: ${gmp.prefix}
+                - name: --with-gmp-prefix
+                  description: Specify GMP installation prefix
+                  enabled_value:
+                      default: ${gmp.prefix}
 
-        - name: --with-int
-          description: Package for multi-precision integers
-          enabled_value:
-            default: gmp
+                - name: --with-int
+                  description: Package for multi-precision integers
+                  enabled_value:
+                      default: gmp
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: CXXFLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CXXFLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          user_configurable: true
-          enabled_value:
-            default: ${gmp.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  user_configurable: true
+                  enabled_value:
+                      default: ${gmp.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${isl.prefix}/lib -Wl,-rpath,${isl.prefix}/lib
-    libs:
-      default: -lisl
-    includes:
-      default: -I${isl.prefix}/include
+    properties:
+        ldflags:
+            default: -L${isl.prefix}/lib -Wl,-rpath,${isl.prefix}/lib
+        libs:
+            default: -lisl
+        includes:
+            default: -I${isl.prefix}/include

@@ -1,8 +1,9 @@
+---
 recipe:
-  name: lapack
-  description: Linear Algebra PACKage
-  type: abstract
+    name: lapack
+    description: Linear Algebra PACKage
+    type: abstract
 
-  implementations:
-    - openblas
-    - intel-oneapi-mkl
+    implementations:
+        - openblas
+        - intel-oneapi-mkl

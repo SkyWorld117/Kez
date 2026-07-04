@@ -1,57 +1,58 @@
+---
 recipe:
-  name: sio
-  description: SIO - Simple IO
-  type: package
-  toolchain: cmake
+    name: sio
+    description: SIO - Simple IO
+    type: package
+    toolchain: cmake
 
-  source:
-    type: tarball
-    releases:
-      - version: 00-02
-        url: https://github.com/iLCSoft/SIO/archive/refs/tags/v00-02.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 00-02
+              url: https://github.com/iLCSoft/SIO/archive/refs/tags/v00-02.tar.gz
 
-  build:
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          description: Installation prefix
-          enabled_value:
-            default: ${sio.prefix}
+    build:
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${sio.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          description: Build type
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  description: Build type
+                  enabled_value:
+                      default: Release
 
-        - name: -DCMAKE_C_COMPILER
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: -DCMAKE_C_COMPILER
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: -DCMAKE_CXX_COMPILER
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: -DCMAKE_C_FLAGS_RELEASE
-          description: C compiler flags for Release build
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: -DCMAKE_C_FLAGS_RELEASE
+                  description: C compiler flags for Release build
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: -DCMAKE_CXX_FLAGS_RELEASE
-          description: C++ compiler flags for Release build
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: -DCMAKE_CXX_FLAGS_RELEASE
+                  description: C++ compiler flags for Release build
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${sio.prefix}/lib -Wl,-rpath,${sio.prefix}/lib
-    libs:
-      default: -lsio
-    includes:
-      default: -I${sio.prefix}/include
+    properties:
+        ldflags:
+            default: -L${sio.prefix}/lib -Wl,-rpath,${sio.prefix}/lib
+        libs:
+            default: -lsio
+        includes:
+            default: -I${sio.prefix}/include

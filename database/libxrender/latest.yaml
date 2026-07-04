@@ -1,45 +1,46 @@
+---
 recipe:
-  name: libxrender
-  description: X Rendering Extension library
-  type: package
-  toolchain: autotools
+    name: libxrender
+    description: X Rendering Extension library
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 0.9.12
-        url: https://www.x.org/releases/individual/lib/libXrender-0.9.12.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 0.9.12
+              url: https://www.x.org/releases/individual/lib/libXrender-0.9.12.tar.xz
 
-  dependencies:
-    - xorgproto
-    - util-macros
+    dependencies:
+        - xorgproto
+        - util-macros
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libxrender.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libxrender.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libxrender.prefix}/lib -Wl,-rpath,${libxrender.prefix}/lib
-    libs:
-      default: -lXrender
-    includes:
-      default: -I${libxrender.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libxrender.prefix}/lib -Wl,-rpath,${libxrender.prefix}/lib
+        libs:
+            default: -lXrender
+        includes:
+            default: -I${libxrender.prefix}/include

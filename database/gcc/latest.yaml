@@ -1,127 +1,129 @@
+---
 recipe:
-  name: gcc
-  description: GNU Compiler Collection
-  type: compiler
-  toolchain: autotools
+    name: gcc
+    description: GNU Compiler Collection
+    type: compiler
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 16.1.0
-        url: https://ftp.gnu.org/gnu/gcc/gcc-16.1.0/gcc-16.1.0.tar.xz
-      - version: 15.2.0
-        url: https://ftp.gnu.org/gnu/gcc/gcc-15.2.0/gcc-15.2.0.tar.gz
-      - version: 14.3.0
-        url: https://ftp.gnu.org/gnu/gcc/gcc-14.3.0/gcc-14.3.0.tar.gz
-      - version: 13.4.0
-        url: https://ftp.gnu.org/gnu/gcc/gcc-13.4.0/gcc-13.4.0.tar.gz
-      - version: 12.4.0
-        url: https://ftp.gnu.org/gnu/gcc/gcc-12.4.0/gcc-12.4.0.tar.gz
-      - version: 11.5.0
-        url: https://ftp.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 16.1.0
+              url: https://ftp.gnu.org/gnu/gcc/gcc-16.1.0/gcc-16.1.0.tar.xz
+            - version: 15.2.0
+              url: https://ftp.gnu.org/gnu/gcc/gcc-15.2.0/gcc-15.2.0.tar.gz
+            - version: 14.3.0
+              url: https://ftp.gnu.org/gnu/gcc/gcc-14.3.0/gcc-14.3.0.tar.gz
+            - version: 13.4.0
+              url: https://ftp.gnu.org/gnu/gcc/gcc-13.4.0/gcc-13.4.0.tar.gz
+            - version: 12.4.0
+              url: https://ftp.gnu.org/gnu/gcc/gcc-12.4.0/gcc-12.4.0.tar.gz
+            - version: 11.5.0
+              url: https://ftp.gnu.org/gnu/gcc/gcc-11.5.0/gcc-11.5.0.tar.gz
 
-  dependencies:
-    - isl
-    - gmp
-    - mpfr
-    - mpc
-    - zstd
+    dependencies:
+        - isl
+        - gmp
+        - mpfr
+        - mpc
+        - zstd
 
-  build:
-    postprocessing: $FROMAGER_HOME/tools/gcc_patch_linking.sh ${gcc.prefix}
+    build:
+        postprocessing: $KEZ_HOME/tools/gcc_patch_linking.sh ${gcc.prefix}
 
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${gcc.prefix}
-
-        - name: --enable-languages
-          description: Enable specific programming languages
-          user_configurable: true
-          enabled_value:
-            default: "c,c++,fortran"
-
-        - name: --disable-multilib
-          description: Disable multilib support
-
-        - name: --disable-nls
-          description: Disable native language support
-
-        - name: --with-gmp
-          description: Specify GMP installation prefix
-          enabled_value:
-            default: ${gmp.prefix}
-
-        - name: --with-mpfr
-          description: Specify MPFR installation prefix
-          enabled_value:
-            default: ${mpfr.prefix}
-
-        - name: --with-mpc
-          description: Specify MPC installation prefix
-          enabled_value:
-            default: ${mpc.prefix}
-
-        - name: --with-isl
-          description: Specify ISL installation prefix
-          enabled_value:
-            default: ${isl.prefix}
-
-        - name: --with-zstd-include
-          description: Specify Zstandard include directory
-          enabled_format: --with-zstd-include
-          enabled_value:
-            default: ${zstd.prefix}/include
-
-        - name: --with-zstd-lib
-          description: Specify Zstandard library directory
-          enabled_value:
-            default: ${zstd.prefix}/lib
-
-        - name: --with-stage1-ldflags
-          description: Linker flags for stage 1
-          enabled_value:
-            default: ${gmp.ldflags} ${mpfr.ldflags} ${mpc.ldflags} ${isl.ldflags} ${zstd.ldflags} ${gcc.self_build_ldflags}
-
-        - name: --with-boot-ldflags
-          description: Linker flags for bootstrapping
-          enabled_value:
-            default: ${gmp.ldflags} ${mpfr.ldflags} ${mpc.ldflags} ${isl.ldflags} ${zstd.ldflags} ${gcc.self_build_ldflags} -static-libstdc++ -static-libgcc
-
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
-
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
-    stages:
-      - target: ~
         configurations:
-          environment:
-            - name: LD_RUN_PATH
-              description: Runtime library search path
-              user_configurable: false
-              default: ${gcc.prefix}/lib:${gcc.prefix}/lib64
-            - name: LIBRARY_PATH
-              description: Library search path for build tools
-              conditions:
-                - condition: version ${gcc.version}>=16.0.0
-                  value: ${source}/gcc
-      - target: install
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${gcc.prefix}
 
-  properties:
-    c: ${compiler.prefix}/bin/gcc
-    cxx: ${compiler.prefix}/bin/g++
-    fort: ${compiler.prefix}/bin/gfortran
-    omp_flags: -fopenmp
-    self_build_ldflags:
-      default: -L${gcc.prefix}/lib -Wl,-rpath,${gcc.prefix}/lib -L${gcc.prefix}/lib64 -Wl,-rpath,${gcc.prefix}/lib64
-    ldflags:
-      default: -L${compiler.prefix}/lib64 -Wl,-rpath,${compiler.prefix}/lib64
-    includes:
-      default: -I${compiler.prefix}/include
+                - name: --enable-languages
+                  description: Enable specific programming languages
+                  user_configurable: true
+                  enabled_value:
+                      default: c,c++,fortran
+
+                - name: --disable-multilib
+                  description: Disable multilib support
+
+                - name: --disable-nls
+                  description: Disable native language support
+
+                - name: --with-gmp
+                  description: Specify GMP installation prefix
+                  enabled_value:
+                      default: ${gmp.prefix}
+
+                - name: --with-mpfr
+                  description: Specify MPFR installation prefix
+                  enabled_value:
+                      default: ${mpfr.prefix}
+
+                - name: --with-mpc
+                  description: Specify MPC installation prefix
+                  enabled_value:
+                      default: ${mpc.prefix}
+
+                - name: --with-isl
+                  description: Specify ISL installation prefix
+                  enabled_value:
+                      default: ${isl.prefix}
+
+                - name: --with-zstd-include
+                  description: Specify Zstandard include directory
+                  enabled_format: --with-zstd-include
+                  enabled_value:
+                      default: ${zstd.prefix}/include
+
+                - name: --with-zstd-lib
+                  description: Specify Zstandard library directory
+                  enabled_value:
+                      default: ${zstd.prefix}/lib
+
+                - name: --with-stage1-ldflags
+                  description: Linker flags for stage 1
+                  enabled_value:
+                      default: ${gmp.ldflags} ${mpfr.ldflags} ${mpc.ldflags} ${isl.ldflags} ${zstd.ldflags} ${gcc.self_build_ldflags}
+
+                - name: --with-boot-ldflags
+                  description: Linker flags for bootstrapping
+                  enabled_value:
+                      default: ${gmp.ldflags} ${mpfr.ldflags} ${mpc.ldflags} ${isl.ldflags} ${zstd.ldflags} ${gcc.self_build_ldflags} 
+                          -static-libstdc++ -static-libgcc
+
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
+
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
+        stages:
+            - target:
+              configurations:
+                  environment:
+                      - name: LD_RUN_PATH
+                        description: Runtime library search path
+                        user_configurable: false
+                        default: ${gcc.prefix}/lib:${gcc.prefix}/lib64
+                      - name: LIBRARY_PATH
+                        description: Library search path for build tools
+                        conditions:
+                            - condition: version ${gcc.version}>=16.0.0
+                              value: ${source}/gcc
+            - target: install
+
+    properties:
+        c: ${compiler.prefix}/bin/gcc
+        cxx: ${compiler.prefix}/bin/g++
+        fort: ${compiler.prefix}/bin/gfortran
+        omp_flags: -fopenmp
+        self_build_ldflags:
+            default: -L${gcc.prefix}/lib -Wl,-rpath,${gcc.prefix}/lib -L${gcc.prefix}/lib64 -Wl,-rpath,${gcc.prefix}/lib64
+        ldflags:
+            default: -L${compiler.prefix}/lib64 -Wl,-rpath,${compiler.prefix}/lib64
+        includes:
+            default: -I${compiler.prefix}/include

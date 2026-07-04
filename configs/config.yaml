@@ -1,18 +1,19 @@
+---
 settings:
-  n_proc_for_build: 4
+    n_proc_for_build: 4
 
-  default_compiler: system
+    default_compiler: system
 
-  external:
-    rdma-core:
-      prefix: ~
-      version: ~
-    hcoll:
-      prefix: ~
-      version: ~
-    gdrcopy:
-      prefix: ~
-      version: ~
-    slurm:
-      prefix: ~
-      version: ~
+    external:
+        rdma-core:
+            prefix:
+            version:
+        hcoll:
+            prefix:
+            version:
+        gdrcopy:
+            prefix:
+            version:
+        slurm:
+            prefix:
+            version:

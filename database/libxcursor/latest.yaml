@@ -1,51 +1,52 @@
+---
 recipe:
-  name: libxcursor
-  description: X Cursor management library
-  type: package
-  toolchain: autotools
+    name: libxcursor
+    description: X Cursor management library
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.2.3
-        url: https://www.x.org/releases/individual/lib/libXcursor-1.2.3.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 1.2.3
+              url: https://www.x.org/releases/individual/lib/libXcursor-1.2.3.tar.xz
 
-  dependencies:
-    - libx11
-    - libxrender
-    - libxfixes
+    dependencies:
+        - libx11
+        - libxrender
+        - libxfixes
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libxcursor.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libxcursor.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${libx11.ldflags} ${libxrender.ldflags} ${libxfixes.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${libx11.ldflags} ${libxrender.ldflags} ${libxfixes.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libxcursor.prefix}/lib -Wl,-rpath,${libxcursor.prefix}/lib
-    libs:
-      default: -lXcursor
-    includes:
-      default: -I${libxcursor.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libxcursor.prefix}/lib -Wl,-rpath,${libxcursor.prefix}/lib
+        libs:
+            default: -lXcursor
+        includes:
+            default: -I${libxcursor.prefix}/include

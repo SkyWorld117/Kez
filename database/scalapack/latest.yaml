@@ -1,8 +1,9 @@
+---
 recipe:
-  name: scalapack
-  description: ScaLAPACK for parallel linear algebra
-  type: abstract
+    name: scalapack
+    description: ScaLAPACK for parallel linear algebra
+    type: abstract
 
-  implementations:
-    - netlib-scalapack
-    - intel-oneapi-mkl
+    implementations:
+        - netlib-scalapack
+        - intel-oneapi-mkl

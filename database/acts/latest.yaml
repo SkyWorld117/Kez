@@ -1,193 +1,195 @@
+---
 recipe:
-  name: acts
-  description: A Common Tracking Software framework
-  type: package
-  toolchain: cmake
+    name: acts
+    description: A Common Tracking Software framework
+    type: package
+    toolchain: cmake
 
-  source:
-    type: tarball
-    releases:
-      - version: 44.2.0
-        url: https://github.com/acts-project/acts/releases/download/v44.2.0/acts-v44.2.0.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 44.2.0
+              url: https://github.com/acts-project/acts/releases/download/v44.2.0/acts-v44.2.0.tar.gz
 
   # Due to the dependency on Intel oneAPI TBB, it is not recommended to build ACTS on AARCH64 systems.
   # The dependency on Intel oneAPI MKL is not mandatory, but since we are x86_64, we use it for better performance (of Eigen).
-  dependencies:
-    - boost
-    - xerces-c
-    - hepmc3
-    - geant4
-    - dd4hep
-    - root
-    - lcio
-    - sio
-    - pythia
-    - json
-    - intel-oneapi-tbb 
-    - eigen
-    - intel-oneapi-mkl
+    dependencies:
+        - boost
+        - xerces-c
+        - hepmc3
+        - geant4
+        - dd4hep
+        - root
+        - lcio
+        - sio
+        - pythia
+        - json
+        - intel-oneapi-tbb
+        - eigen
+        - intel-oneapi-mkl
 
-  build:
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          description: Installation prefix
-          enabled_value:
-            default: ${acts.prefix}
+    build:
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${acts.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          description: Build type
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  description: Build type
+                  enabled_value:
+                      default: Release
 
-        - name: -DCMAKE_CXX_STANDARD
-          description: C++ standard version
-          enabled_value:
-            default: 20
+                - name: -DCMAKE_CXX_STANDARD
+                  description: C++ standard version
+                  enabled_value:
+                      default: 20
 
-        - name: -DBoost_ROOT
-          description: Path to Boost installation
-          enabled_value:
-            default: ${boost.prefix}
+                - name: -DBoost_ROOT
+                  description: Path to Boost installation
+                  enabled_value:
+                      default: ${boost.prefix}
 
-        - name: -DXercesC_ROOT
-          description: Path to Xerces-C installation
-          enabled_value:
-            default: ${xerces-c.prefix}
+                - name: -DXercesC_ROOT
+                  description: Path to Xerces-C installation
+                  enabled_value:
+                      default: ${xerces-c.prefix}
 
-        - name: -DACTS_BUILD_EXAMPLES
-          description: Enable building of examples
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_EXAMPLES
+                  description: Enable building of examples
+                  enabled_value:
+                      default: ON
 
-        - name: -DACTS_BUILD_EXAMPLES_PYTHON_BINDINGS
-          description: Enable building of Python bindings for examples
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_EXAMPLES_PYTHON_BINDINGS
+                  description: Enable building of Python bindings for examples
+                  enabled_value:
+                      default: ON
 
-        - name: -DACTS_BUILD_PLUGIN_DD4HEP
-          description: Enable DD4hep plugin
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_PLUGIN_DD4HEP
+                  description: Enable DD4hep plugin
+                  enabled_value:
+                      default: ON
 
-        - name: -DACTS_BUILD_PLUGIN_GEANT4
-          description: Enable Geant4 plugin
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_PLUGIN_GEANT4
+                  description: Enable Geant4 plugin
+                  enabled_value:
+                      default: ON
 
-        - name: -DACTS_BUILD_PLUGIN_PYTHIA8
-          description: Enable Pythia8 plugin
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_PLUGIN_PYTHIA8
+                  description: Enable Pythia8 plugin
+                  enabled_value:
+                      default: ON
 
-        - name: -DACTS_BUILD_EXAMPLES_PYTHIA8
-          description: Enable building of Pythia8 examples
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_EXAMPLES_PYTHIA8
+                  description: Enable building of Pythia8 examples
+                  enabled_value:
+                      default: ON
 
-        - name: -DACTS_BUILD_PLUGIN_ROOT
-          description: Enable ROOT plugin
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_PLUGIN_ROOT
+                  description: Enable ROOT plugin
+                  enabled_value:
+                      default: ON
 
-        - name: -DACTS_BUILD_ODD
-          description: Enable ODD support
-          enabled_value:
-            default: ON
+                - name: -DACTS_BUILD_ODD
+                  description: Enable ODD support
+                  enabled_value:
+                      default: ON
 
-        - name: -DPythia8_INCLUDE_DIR
-          description: Path to Pythia8 installation
-          enabled_value:
-            default: ${pythia.prefix}/include
+                - name: -DPythia8_INCLUDE_DIR
+                  description: Path to Pythia8 installation
+                  enabled_value:
+                      default: ${pythia.prefix}/include
 
-        - name: -DPythia8_LIBRARY
-          description: Path to Pythia8 library
-          enabled_value:
-            default: ${pythia.prefix}/lib/libpythia8.so
+                - name: -DPythia8_LIBRARY
+                  description: Path to Pythia8 library
+                  enabled_value:
+                      default: ${pythia.prefix}/lib/libpythia8.so
 
-        - name: -DHepMC3_DIR
-          description: Path to HepMC3 installation
-          enabled_value:
-            default: ${hepmc3.prefix}/share/HepMC3/cmake
+                - name: -DHepMC3_DIR
+                  description: Path to HepMC3 installation
+                  enabled_value:
+                      default: ${hepmc3.prefix}/share/HepMC3/cmake
 
-        - name: -DGeant4_DIR
-          description: Path to Geant4 installation
-          enabled_value:
-            default: ${geant4.prefix}/lib64/cmake/Geant4
+                - name: -DGeant4_DIR
+                  description: Path to Geant4 installation
+                  enabled_value:
+                      default: ${geant4.prefix}/lib64/cmake/Geant4
 
-        - name: -DDD4hep_DIR
-          description: Path to DD4hep installation
-          enabled_value:
-            default: ${dd4hep.prefix}/cmake
+                - name: -DDD4hep_DIR
+                  description: Path to DD4hep installation
+                  enabled_value:
+                      default: ${dd4hep.prefix}/cmake
 
-        - name: -DROOT_DIR
-          description: Path to ROOT installation
-          enabled_value:
-            default: ${root.prefix}/cmake
+                - name: -DROOT_DIR
+                  description: Path to ROOT installation
+                  enabled_value:
+                      default: ${root.prefix}/cmake
 
-        - name: -DLCIO_DIR
-          description: Path to LCIO installation
-          enabled_value:
-            default: ${lcio.prefix}/lib64/cmake/LCIO
+                - name: -DLCIO_DIR
+                  description: Path to LCIO installation
+                  enabled_value:
+                      default: ${lcio.prefix}/lib64/cmake/LCIO
 
-        - name: -DSIO_DIR
-          description: Path to SIO installation
-          enabled_value:
-            default: ${sio.prefix}/lib64/cmake/SIO
+                - name: -DSIO_DIR
+                  description: Path to SIO installation
+                  enabled_value:
+                      default: ${sio.prefix}/lib64/cmake/SIO
 
-        - name: -Dnlohmann_json_DIR
-          description: Path to nlohmann_json installation
-          enabled_value:
-            default: ${json.prefix}/lib/cmake/nlohmann_json
+                - name: -Dnlohmann_json_DIR
+                  description: Path to nlohmann_json installation
+                  enabled_value:
+                      default: ${json.prefix}/lib/cmake/nlohmann_json
 
-        - name: -DTBB_DIR
-          description: Path to oneTBB installation
-          enabled_value:
-            default: ${intel-oneapi-tbb.prefix}/lib/cmake/tbb
+                - name: -DTBB_DIR
+                  description: Path to oneTBB installation
+                  enabled_value:
+                      default: ${intel-oneapi-tbb.prefix}/lib/cmake/tbb
 
-        - name: -DEigen3_DIR
-          description: Path to Eigen3 installation
-          enabled_value:
-            default: ${eigen.prefix}/share/eigen3/cmake
+                - name: -DEigen3_DIR
+                  description: Path to Eigen3 installation
+                  enabled_value:
+                      default: ${eigen.prefix}/share/eigen3/cmake
 
-        - name: -DCMAKE_CXX_COMPILER
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: -DCMAKE_CXX_FLAGS_RELEASE
-          description: C++ compiler flags for Release build
-          user_configurable: true
-          enabled_value:
-            default: -O3 -DEIGEN_USE_MKL_ALL ${intel-oneapi-mkl.includes}
+                - name: -DCMAKE_CXX_FLAGS_RELEASE
+                  description: C++ compiler flags for Release build
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3 -DEIGEN_USE_MKL_ALL ${intel-oneapi-mkl.includes}
 
-        - name: -DCMAKE_BUILD_RPATH
-          description: Linker flags
-          enabled_value:
-            default: ${compiler.prefix}/lib64;${intel-oneapi-mkl.prefix}/lib
+                - name: -DCMAKE_BUILD_RPATH
+                  description: Linker flags
+                  enabled_value:
+                      default: ${compiler.prefix}/lib64;${intel-oneapi-mkl.prefix}/lib
 
-        - name: -DCMAKE_INSTALL_RPATH
-          description: Runtime linker flags
-          enabled_value:
-            default: ${compiler.prefix}/lib64;${intel-oneapi-mkl.prefix}/lib
+                - name: -DCMAKE_INSTALL_RPATH
+                  description: Runtime linker flags
+                  enabled_value:
+                      default: ${compiler.prefix}/lib64;${intel-oneapi-mkl.prefix}/lib
 
-        - name: -DCMAKE_EXE_LINKER_FLAGS
-          description: Executable linker flags
-          enabled_value:
-            default: -Wl,-rpath,${compiler.prefix}/lib64 ${intel-oneapi-tbb.ldflags} ${intel-oneapi-tbb.libs} ${intel-oneapi-mkl.ldflags} ${intel-oneapi-mkl.libs} -lmkl_gf_lp64 -lmkl_tbb_thread -lgomp -lmkl_rt
+                - name: -DCMAKE_EXE_LINKER_FLAGS
+                  description: Executable linker flags
+                  enabled_value:
+                      default: -Wl,-rpath,${compiler.prefix}/lib64 ${intel-oneapi-tbb.ldflags} ${intel-oneapi-tbb.libs} ${intel-oneapi-mkl.ldflags} 
+                          ${intel-oneapi-mkl.libs} -lmkl_gf_lp64 -lmkl_tbb_thread -lgomp -lmkl_rt
 
-        - name: -DCMAKE_POLICY_VERSION_MINIMUM
-          description: Minimum CMake policy version
-          enabled_value:
-            default: 3.5
-    stages:
-      - target: ~
-      - target: install
+                - name: -DCMAKE_POLICY_VERSION_MINIMUM
+                  description: Minimum CMake policy version
+                  enabled_value:
+                      default: 3.5
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${acts.prefix}/lib -Wl,-rpath,${acts.prefix}/lib
-    libs:
-      default: -lActsCore -lActsExamples -lActsPluginsGeant4 -lActsPluginsPythia8 -lActsPluginsRoot -lActsPluginsDD4hep
-    includes:
-      default: -I${acts.prefix}/include
+    properties:
+        ldflags:
+            default: -L${acts.prefix}/lib -Wl,-rpath,${acts.prefix}/lib
+        libs:
+            default: -lActsCore -lActsExamples -lActsPluginsGeant4 -lActsPluginsPythia8 -lActsPluginsRoot -lActsPluginsDD4hep
+        includes:
+            default: -I${acts.prefix}/include

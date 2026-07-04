@@ -1,71 +1,72 @@
+---
 recipe:
-  name: libxc
-  type: package
-  toolchain: autotools
+    name: libxc
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 7.0.0
-        url: https://gitlab.com/libxc/libxc/-/archive/7.0.0/libxc-7.0.0.tar.gz
-      - version: 6.2.2
-        url: https://gitlab.com/libxc/libxc/-/archive/6.2.2/libxc-6.2.2.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 7.0.0
+              url: https://gitlab.com/libxc/libxc/-/archive/7.0.0/libxc-7.0.0.tar.gz
+            - version: 6.2.2
+              url: https://gitlab.com/libxc/libxc/-/archive/6.2.2/libxc-6.2.2.tar.gz
 
-  build:
-    preprocessing: autoreconf -i
-    configurations:
-      options:
-        - name: --prefix
-          enabled_value:
-            default: ${libxc.prefix}
+    build:
+        preprocessing: autoreconf -i
+        configurations:
+            options:
+                - name: --prefix
+                  enabled_value:
+                      default: ${libxc.prefix}
 
-        - name: use_cuda
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_format: --enable-cuda
-          disabled_format: --disable-cuda
-          requires: [cuda]
+                - name: use_cuda
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_format: --enable-cuda
+                  disabled_format: --disable-cuda
+                  requires: [cuda]
 
-        - name: CC
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: FC
-          enabled_value:
-            default: ${compiler.fort}
+                - name: FC
+                  enabled_value:
+                      default: ${compiler.fort}
 
-        - name: FCFLAGS
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: FCFLAGS
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          user_configurable: true
-          enabled:
-            default: false
-            conditions:
-              - condition: ${libxc.config.use_cuda} true
-                value: true
-          enabled_value:
-            default: ~
-            conditions:
-              - condition: ${libxc.config.use_cuda} true
-                action: append
-                value: ${cuda.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  user_configurable: true
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${libxc.config.use_cuda} true
+                            value: true
+                  enabled_value:
+                      default:
+                      conditions:
+                          - condition: ${libxc.config.use_cuda} true
+                            action: append
+                            value: ${cuda.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libxc.prefix}/lib -Wl,-rpath,${libxc.prefix}/lib
-    libs:
-      default: -lxcf90 -lxc
-    includes:
-      default: -I${libxc.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libxc.prefix}/lib -Wl,-rpath,${libxc.prefix}/lib
+        libs:
+            default: -lxcf90 -lxc
+        includes:
+            default: -I${libxc.prefix}/include

@@ -1,106 +1,107 @@
+---
 recipe:
-  name: llamacpp
-  description: llama.cpp - LLM inference on consumer and HPC hardware
-  type: package
-  toolchain: cmake
+    name: llamacpp
+    description: llama.cpp - LLM inference on consumer and HPC hardware
+    type: package
+    toolchain: cmake
 
-  source:
-    type: git
+    source:
+        type: git
     # url: https://github.com/ggml-org/llama.cpp
-    url: https://github.com/ynkrue/llama.cpp
-    releases:
-      - version: master
-        tag: master
-      - version: isc26
-        tag: yr/isc26
+        url: https://github.com/ynkrue/llama.cpp
+        releases:
+            - version: master
+              tag: master
+            - version: isc26
+              tag: yr/isc26
 
-  dependencies:
-    - cuda
-    - nvhpc
+    dependencies:
+        - cuda
+        - nvhpc
 
-  build:
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          enabled_value:
-            default: ${llamacpp.prefix}
+    build:
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  enabled_value:
+                      default: ${llamacpp.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  enabled_value:
+                      default: Release
 
-        - name: -DCMAKE_C_COMPILER
-          enabled_value:
-            default: ${compiler.c}
+                - name: -DCMAKE_C_COMPILER
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: -DCMAKE_CXX_COMPILER
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: -DCMAKE_CUDA_COMPILER
-          enabled_value:
-            default: ${cuda.prefix}/bin/nvcc
+                - name: -DCMAKE_CUDA_COMPILER
+                  enabled_value:
+                      default: ${cuda.prefix}/bin/nvcc
 
-        - name: -DCUDA_TOOLKIT_ROOT_DIR
-          enabled_value:
-            default: ${cuda.prefix}
+                - name: -DCUDA_TOOLKIT_ROOT_DIR
+                  enabled_value:
+                      default: ${cuda.prefix}
 
         # ── CUDA backend ──────────────────────────────────────────────────
-        - name: -DGGML_CUDA
-          enabled_value:
-            default: ON
+                - name: -DGGML_CUDA
+                  enabled_value:
+                      default: ON
 
-        - name: -DCMAKE_CUDA_ARCHITECTURES
-          user_configurable: true
-          enabled_value:
-            default: "90a"
+                - name: -DCMAKE_CUDA_ARCHITECTURES
+                  user_configurable: true
+                  enabled_value:
+                      default: 90a
 
-        - name: -DGGML_NATIVE
-          enabled_value:
-            default: OFF
+                - name: -DGGML_NATIVE
+                  enabled_value:
+                      default: OFF
 
-        - name: -DGGML_CUDA_F16
-          enabled_value:
-            default: ON
+                - name: -DGGML_CUDA_F16
+                  enabled_value:
+                      default: ON
 
-        - name: -DGGML_CUDA_FA_ALL_QUANTS
-          enabled_value:
-            default: OFF
+                - name: -DGGML_CUDA_FA_ALL_QUANTS
+                  enabled_value:
+                      default: OFF
 
-        - name: -DGGML_CUDA_PEER_MAX_BATCH_SIZE
-          enabled_value:
-            default: "1073741824"
+                - name: -DGGML_CUDA_PEER_MAX_BATCH_SIZE
+                  enabled_value:
+                      default: '1073741824'
 
-        - name: -DGGML_NCCL
-          enabled_value:
-            default: ON
+                - name: -DGGML_NCCL
+                  enabled_value:
+                      default: ON
 
-        - name: -DNCCL_ROOT
-          enabled_value:
-            default: ${nvhpc.nccl_prefix}
+                - name: -DNCCL_ROOT
+                  enabled_value:
+                      default: ${nvhpc.nccl_prefix}
 
-        - name: -DCMAKE_PREFIX_PATH
-          enabled_value:
-            default: ${nvhpc.nccl_prefix}
+                - name: -DCMAKE_PREFIX_PATH
+                  enabled_value:
+                      default: ${nvhpc.nccl_prefix}
 
-        - name: -DCMAKE_EXE_LINKER_FLAGS
-          enabled_value:
-            default: "${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}"
+                - name: -DCMAKE_EXE_LINKER_FLAGS
+                  enabled_value:
+                      default: ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
 
-        - name: -DBUILD_SHARED_LIBS
-          enabled_value:
-            default: OFF
+                - name: -DBUILD_SHARED_LIBS
+                  enabled_value:
+                      default: OFF
 
-        - name: -DBUILD_TESTING
-          enabled_value:
-            default: OFF
+                - name: -DBUILD_TESTING
+                  enabled_value:
+                      default: OFF
 
-        - name: -DCMAKE_BUILD_RPATH
-          enabled_value:
-            default: ${compiler.prefix}/lib64
+                - name: -DCMAKE_BUILD_RPATH
+                  enabled_value:
+                      default: ${compiler.prefix}/lib64
 
-    stages:
-      - target: ~
-      - target: install
+        stages:
+            - target:
+            - target: install
 
-  properties: ~
+    properties:

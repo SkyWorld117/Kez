@@ -1,44 +1,45 @@
+---
 recipe:
-  name: zlib
-  description: Compression library implementing the deflate compression method
-  type: system
-  toolchain: autotools
+    name: zlib
+    description: Compression library implementing the deflate compression method
+    type: system
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.3.1
-        url: https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.3.1
+              url: https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${zlib.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${zlib.prefix}
 
-        - name: --64
-          description: Enable 64-bit support
+                - name: --64
+                  description: Enable 64-bit support
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${zlib.prefix}/lib -Wl,-rpath,${zlib.prefix}/lib
-    libs:
-      default: -lz
-    includes:
-      default: -I${zlib.prefix}/include
+    properties:
+        ldflags:
+            default: -L${zlib.prefix}/lib -Wl,-rpath,${zlib.prefix}/lib
+        libs:
+            default: -lz
+        includes:
+            default: -I${zlib.prefix}/include

@@ -1,17 +1,20 @@
+---
 recipe:
-  name: intel-oneapi
-  type: vendor
+    name: intel-oneapi
+    type: vendor
 
-  source:
-    type: script
-    releases:
-      - version: 2026.0.1.27
-        url: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/c9c3d3e3-ddb4-490e-bb41-6e9041ba32a7/intel-oneapi-toolkit-2026.0.1.27_offline.sh
-      - version: 2025.1.0.666
-        url: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d0df6732-bf5c-493b-a484-6094bea53787/intel-oneapi-hpc-toolkit-2025.1.0.666_offline.sh
+    source:
+        type: script
+        releases:
+            - version: 2026.0.1.27
+              url: 
+                  https://registrationcenter-download.intel.com/akdlm/IRC_NAS/c9c3d3e3-ddb4-490e-bb41-6e9041ba32a7/intel-oneapi-toolkit-2026.0.1.27_offline.sh
+            - version: 2025.1.0.666
+              url: 
+                  https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d0df6732-bf5c-493b-a484-6094bea53787/intel-oneapi-hpc-toolkit-2025.1.0.666_offline.sh
 
-  build:
+    build:
     # Clean up any previous installations
-    preprocessing: rm -rf ~/intel
+        preprocessing: rm -rf ~/intel
     # Install Intel oneAPI HPC Toolkit silently and remove intel files after installation
-    postprocessing: bash ${source} -a --silent --eula accept --cli --install-dir=${intel-oneapi.prefix} && rm -rf ~/intel
+        postprocessing: bash ${source} -a --silent --eula accept --cli --install-dir=${intel-oneapi.prefix} && rm -rf ~/intel

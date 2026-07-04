@@ -1,9 +1,10 @@
+---
 recipe:
-  name: mpi
-  type: abstract
+    name: mpi
+    type: abstract
 
-  implementations:
-    - openmpi
-    - mpich
-    - intel-oneapi-mpi
-    - mvapich
+    implementations:
+        - openmpi
+        - mpich
+        - intel-oneapi-mpi
+        - mvapich

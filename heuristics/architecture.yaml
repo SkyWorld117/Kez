@@ -1,0 +1,20 @@
+---
+architecture:
+    llvm:
+        x86_64: X64
+        arm64: ARM64
+    ripgrep:
+        x86_64: x86_64-unknown-linux-musl
+        arm64: aarch64-unknown-linux-gnu
+    tree-sitter:
+        x86_64: x64
+        arm64: arm64
+    nodejs:
+        x86_64: x64
+        arm64: arm64
+    cuda:
+        x86_64: ''
+        arm64: _sbsa
+    default:
+        x86_64: x86_64
+        arm64: aarch64

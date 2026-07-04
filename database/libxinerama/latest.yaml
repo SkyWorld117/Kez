@@ -1,50 +1,51 @@
+---
 recipe:
-  name: libxinerama
-  description: Xinerama extension library
-  type: package
-  toolchain: autotools
+    name: libxinerama
+    description: Xinerama extension library
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.1.5
-        url: https://www.x.org/releases/individual/lib/libXinerama-1.1.5.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 1.1.5
+              url: https://www.x.org/releases/individual/lib/libXinerama-1.1.5.tar.xz
 
-  dependencies:
-    - libx11
-    - libxext
+    dependencies:
+        - libx11
+        - libxext
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libxinerama.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libxinerama.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${libx11.ldflags} ${libxext.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${libx11.ldflags} ${libxext.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libxinerama.prefix}/lib -Wl,-rpath,${libxinerama.prefix}/lib
-    libs:
-      default: -lXinerama
-    includes:
-      default: -I${libxinerama.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libxinerama.prefix}/lib -Wl,-rpath,${libxinerama.prefix}/lib
+        libs:
+            default: -lXinerama
+        includes:
+            default: -I${libxinerama.prefix}/include

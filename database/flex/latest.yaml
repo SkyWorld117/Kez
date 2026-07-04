@@ -1,41 +1,42 @@
+---
 recipe:
-  name: flex
-  description: Fast Lexical Analyzer Generator
-  type: package
-  toolchain: autotools
+    name: flex
+    description: Fast Lexical Analyzer Generator
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 2.6.4
-        url: https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 2.6.4
+              url: https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${flex.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${flex.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${flex.prefix}/lib -Wl,-rpath,${flex.prefix}/lib
-    libs:
-      default: -lfl
-    includes:
-      default: -I${flex.prefix}/include
+    properties:
+        ldflags:
+            default: -L${flex.prefix}/lib -Wl,-rpath,${flex.prefix}/lib
+        libs:
+            default: -lfl
+        includes:
+            default: -I${flex.prefix}/include

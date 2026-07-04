@@ -1,53 +1,54 @@
+---
 recipe:
-  name: bzip2
-  description: A high-quality data compressor
-  type: package
-  toolchain: makefile
+    name: bzip2
+    description: A high-quality data compressor
+    type: package
+    toolchain: makefile
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.0.8
-        url: https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.0.8
+              url: https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
 
-  build:
-    stages:
-      - target: -f Makefile-libbz2_so
-        configurations:
-          options:
-            - name: CC
-              description: C compiler
-              enabled_value:
-                default: ${compiler.c}
+    build:
+        stages:
+            - target: -f Makefile-libbz2_so
+              configurations:
+                  options:
+                      - name: CC
+                        description: C compiler
+                        enabled_value:
+                            default: ${compiler.c}
 
-            - name: CFLAGS
-              description: C compiler flags
-              user_configurable: true
-              enabled_value:
-                default: -O3 -fPIC -D_FILE_OFFSET_BITS=64
-      - target: ~
-        configurations:
-          options:
-            - name: PREFIX
-              description: Installation prefix
-              enabled_value:
-                default: ${bzip2.prefix}
+                      - name: CFLAGS
+                        description: C compiler flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -O3 -fPIC -D_FILE_OFFSET_BITS=64
+            - target:
+              configurations:
+                  options:
+                      - name: PREFIX
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${bzip2.prefix}
 
-            - name: CC
-              description: C compiler
-              enabled_value:
-                default: ${compiler.c}
+                      - name: CC
+                        description: C compiler
+                        enabled_value:
+                            default: ${compiler.c}
 
-            - name: CFLAGS
-              description: C compiler flags
-              user_configurable: true
-              enabled_value:
-                default: -O3 -fPIC -D_FILE_OFFSET_BITS=64
+                      - name: CFLAGS
+                        description: C compiler flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -O3 -fPIC -D_FILE_OFFSET_BITS=64
 
-  properties:
-    ldflags:
-      default: -L${bzip2.prefix}/lib -Wl,-rpath,${bzip2.prefix}/lib
-    libs:
-      default: -lbz2
-    includes:
-      default: -I${bzip2.prefix}/include
+    properties:
+        ldflags:
+            default: -L${bzip2.prefix}/lib -Wl,-rpath,${bzip2.prefix}/lib
+        libs:
+            default: -lbz2
+        includes:
+            default: -I${bzip2.prefix}/include

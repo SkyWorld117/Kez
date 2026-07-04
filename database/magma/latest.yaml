@@ -1,8 +1,9 @@
+---
 recipe:
-  name: magma
-  description: MAGMA - Matrix Algebra on GPU and Multicore Architectures
-  type: package
-  toolchain: cmake
+    name: magma
+    description: MAGMA - Matrix Algebra on GPU and Multicore Architectures
+    type: package
+    toolchain: cmake
 
 #  source:
 #    type: git
@@ -10,81 +11,81 @@ recipe:
 #    releases:
 #      - version: 2.10.0
 #        tag: v2.10.0
-  source:
-    type: tarball
-    releases:
-      - version: 2.10.0
-        url: https://icl.utk.edu/projectsfiles/magma/downloads/magma-2.10.0.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 2.10.0
+              url: https://icl.utk.edu/projectsfiles/magma/downloads/magma-2.10.0.tar.gz
 
-  dependencies:
-    - cuda
-    - blas
-    - lapack
+    dependencies:
+        - cuda
+        - blas
+        - lapack
 
-  build:
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          enabled_value:
-            default: ${magma.prefix}
+    build:
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  enabled_value:
+                      default: ${magma.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  enabled_value:
+                      default: Release
 
-        - name: -DCMAKE_C_COMPILER
-          enabled_value:
-            default: ${compiler.c}
+                - name: -DCMAKE_C_COMPILER
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: -DCMAKE_CXX_COMPILER
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: -DCMAKE_C_FLAGS
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: -DCMAKE_C_FLAGS
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: -DCMAKE_CXX_FLAGS
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: -DCMAKE_CXX_FLAGS
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: -DMAGMA_ENABLE_CUDA
-          enabled_value:
-            default: ON
-          requires: [cuda]
+                - name: -DMAGMA_ENABLE_CUDA
+                  enabled_value:
+                      default: ON
+                  requires: [cuda]
 
-        - name: -DGPU_TARGET
-          user_configurable: true
-          enabled_value:
-            default: sm_90
+                - name: -DGPU_TARGET
+                  user_configurable: true
+                  enabled_value:
+                      default: sm_90
 
-        - name: -DMKLROOT
-          enabled_value:
-            default: ${intel-oneapi-mkl.prefix}
+                - name: -DMKLROOT
+                  enabled_value:
+                      default: ${intel-oneapi-mkl.prefix}
 
-        - name: -DLAPACK_LIBRARIES
-          enabled_value:
-            default: ${blas.ldflags} ${blas.libs} ${lapack.ldflags} ${lapack.libs}
+                - name: -DLAPACK_LIBRARIES
+                  enabled_value:
+                      default: ${blas.ldflags} ${blas.libs} ${lapack.ldflags} ${lapack.libs}
 
-        - name: -DBUILD_SHARED_LIBS
-          enabled_value:
-            default: ON
+                - name: -DBUILD_SHARED_LIBS
+                  enabled_value:
+                      default: ON
 
-        - name: -DUSE_FORTRAN
-          enabled_value:
-            default: ON
+                - name: -DUSE_FORTRAN
+                  enabled_value:
+                      default: ON
 
-    stages:
-      - target: ~
-      - target: install
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${magma.prefix}/lib -Wl,-rpath,${magma.prefix}/lib
-    libs:
-      default: -lmagma
-    includes:
-      default: -I${magma.prefix}/include
+    properties:
+        ldflags:
+            default: -L${magma.prefix}/lib -Wl,-rpath,${magma.prefix}/lib
+        libs:
+            default: -lmagma
+        includes:
+            default: -I${magma.prefix}/include
 

@@ -1,45 +1,46 @@
+---
 recipe:
-  name: libxdmcp
-  description: X Display Manager Control Protocol library
-  type: package
-  toolchain: autotools
+    name: libxdmcp
+    description: X Display Manager Control Protocol library
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.1.5
-        url: https://www.x.org/releases/individual/lib/libXdmcp-1.1.5.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 1.1.5
+              url: https://www.x.org/releases/individual/lib/libXdmcp-1.1.5.tar.xz
 
-  dependencies:
-    - xorgproto
-    - util-macros
+    dependencies:
+        - xorgproto
+        - util-macros
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libxdmcp.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libxdmcp.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libxdmcp.prefix}/lib -Wl,-rpath,${libxdmcp.prefix}/lib
-    libs:
-      default: -lXdmcp
-    includes:
-      default: -I${libxdmcp.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libxdmcp.prefix}/lib -Wl,-rpath,${libxdmcp.prefix}/lib
+        libs:
+            default: -lXdmcp
+        includes:
+            default: -I${libxdmcp.prefix}/include

@@ -1,75 +1,76 @@
+---
 recipe:
-  name: protobuf
-  description: Protocol Buffers - Google's data interchange format
-  type: package
-  toolchain: cmake
+    name: protobuf
+    description: Protocol Buffers - Google's data interchange format
+    type: package
+    toolchain: cmake
 
-  source:
-    type: git
-    url: https://github.com/protocolbuffers/protobuf.git
-    releases:
-      - version: 25.9
-        tag: v25.9
+    source:
+        type: git
+        url: https://github.com/protocolbuffers/protobuf.git
+        releases:
+            - version: 25.9
+              tag: v25.9
 
-  build:
-    preprocessing: git submodule update --init --recursive
+    build:
+        preprocessing: git submodule update --init --recursive
 
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          description: Installation prefix
-          enabled_value:
-            default: ${protobuf.prefix}
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${protobuf.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          description: CMake build type
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  description: CMake build type
+                  enabled_value:
+                      default: Release
 
-        - name: -Dprotobuf_BUILD_TESTS
-          description: Build protobuf tests
-          enabled_value:
-            default: OFF
+                - name: -Dprotobuf_BUILD_TESTS
+                  description: Build protobuf tests
+                  enabled_value:
+                      default: OFF
 
-        - name: -DCMAKE_C_COMPILER
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: -DCMAKE_C_COMPILER
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: -DCMAKE_CXX_COMPILER
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: -DCMAKE_BUILD_RPATH
-          description: RPATH for built libraries
-          enabled_value:
-            default: ${protobuf.prefix}/lib
+                - name: -DCMAKE_BUILD_RPATH
+                  description: RPATH for built libraries
+                  enabled_value:
+                      default: ${protobuf.prefix}/lib
 
-        - name: -DCMAKE_INSTALL_RPATH
-          description: RPATH for installed libraries
-          enabled_value:
-            default: ${protobuf.prefix}/lib
+                - name: -DCMAKE_INSTALL_RPATH
+                  description: RPATH for installed libraries
+                  enabled_value:
+                      default: ${protobuf.prefix}/lib
 
-        - name: -DCMAKE_C_FLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3 -fPIC
+                - name: -DCMAKE_C_FLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3 -fPIC
 
-        - name: -DCMAKE_CXX_FLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3 -fPIC
-    stages:
-      - target: ~
-      - target: install
+                - name: -DCMAKE_CXX_FLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3 -fPIC
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${protobuf.prefix}/lib -Wl,-rpath,${protobuf.prefix}/lib
-    libs:
-      default: -lprotobuf
-    includes:
-      default: -I${protobuf.prefix}/include
+    properties:
+        ldflags:
+            default: -L${protobuf.prefix}/lib -Wl,-rpath,${protobuf.prefix}/lib
+        libs:
+            default: -lprotobuf
+        includes:
+            default: -I${protobuf.prefix}/include

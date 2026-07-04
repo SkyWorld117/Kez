@@ -30,7 +30,7 @@ It is not trivial to determine a type of a package because one package may belon
 
 ### `source`
 
-`source` describes a way for Fromager to fetch the source code or prebuilt binaries. It supports various types of source files: `git`, `tarball`, `zip` and `script`.
+`source` describes a way for Kez to fetch the source code or prebuilt binaries. It supports various types of source files: `git`, `tarball`, `zip` and `script`.
 
 ```yaml
 source:

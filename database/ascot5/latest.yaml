@@ -1,106 +1,107 @@
+---
 recipe:
-  name: ascot5
-  description: Simulation tool used in fusion energy science and engineering
-  type: package
-  toolchain: makefile
+    name: ascot5
+    description: Simulation tool used in fusion energy science and engineering
+    type: package
+    toolchain: makefile
 
-  source:
-    type: git
-    url: https://github.com/ascot4fusion/ascot5.git
-    releases:
-      - version: main
-        tag: main
-      - version: isc26
-        tag: b83170f
+    source:
+        type: git
+        url: https://github.com/ascot4fusion/ascot5.git
+        releases:
+            - version: main
+              tag: main
+            - version: isc26
+              tag: b83170f
 
-  dependencies:
-    - hdf5
+    dependencies:
+        - hdf5
 
-  common_configurations: &ascot_configurations
-    options:
-      - name: MPI
-        description: Toggle MPI
-        user_configurable: true
-        enabled:
-          default: false
-        enabled_value:
-          default: 1
-        requires: [mpi]
+    common_configurations: &ascot_configurations
+        options:
+            - name: MPI
+              description: Toggle MPI
+              user_configurable: true
+              enabled:
+                  default: false
+              enabled_value:
+                  default: 1
+              requires: [mpi]
 
-      - name: OMP
-        description: Toggle OpenMP
-        user_configurable: true
-        enabled:
-          default: false
-        enabled_value:
-          default: 1
+            - name: OMP
+              description: Toggle OpenMP
+              user_configurable: true
+              enabled:
+                  default: false
+              enabled_value:
+                  default: 1
 
-      - name: ACC
-        description: Toggle OpenACC
-        user_configurable: true
-        enabled:
-          default: false
-        enabled_value:
-          default: 1
+            - name: ACC
+              description: Toggle OpenACC
+              user_configurable: true
+              enabled:
+                  default: false
+              enabled_value:
+                  default: 1
 
-      - name: GPU
-        description: Toggle NVHPC
-        user_configurable: true
-        enabled:
-          default: false
-        enabled_value:
-          default: 1
-        requires: [nvhpc-compilers]
+            - name: GPU
+              description: Toggle NVHPC
+              user_configurable: true
+              enabled:
+                  default: false
+              enabled_value:
+                  default: 1
+              requires: [nvhpc-compilers]
 
-      - name: NSIMD
-        description: SIMD vector length used for CPU vectorization
-        user_configurable: true
-        enabled:
-          default: false
-        enabled_value:
-          default: 8
+            - name: NSIMD
+              description: SIMD vector length used for CPU vectorization
+              user_configurable: true
+              enabled:
+                  default: false
+              enabled_value:
+                  default: 8
 
-      - name: FLAGS
-        description: C flags
-        user_configurable: true
-        enabled_value:
-          default: -O2
+            - name: FLAGS
+              description: C flags
+              user_configurable: true
+              enabled_value:
+                  default: -O2
 
-      - name: CC
-        description: C compiler
-        enabled: 
-          default: false
-          conditions:
-            - condition: ${ascot5.config.MPI} true
-              action: set
-              value: true
-            - condition: ${ascot5.config.GPU} true
-              action: set
-              value: true
-        enabled_value:
-          default: ~
-          conditions:
-            - condition: ${ascot5.config.GPU} true
-              action: set
-              value: ${nvhpc-compilers.c} ${hdf5.includes} ${hdf5.ldflags} ${mpi.includes} ${mpi.ldflags} ${mpi.libs}
-            - condition: ${ascot5.config.MPI} true
-              action: set
-              value: ${mpi.c} ${hdf5.includes} ${hdf5.ldflags}
+            - name: CC
+              description: C compiler
+              enabled:
+                  default: false
+                  conditions:
+                      - condition: ${ascot5.config.MPI} true
+                        action: set
+                        value: true
+                      - condition: ${ascot5.config.GPU} true
+                        action: set
+                        value: true
+              enabled_value:
+                  default:
+                  conditions:
+                      - condition: ${ascot5.config.GPU} true
+                        action: set
+                        value: ${nvhpc-compilers.c} ${hdf5.includes} ${hdf5.ldflags} ${mpi.includes} ${mpi.ldflags} ${mpi.libs}
+                      - condition: ${ascot5.config.MPI} true
+                        action: set
+                        value: ${mpi.c} ${hdf5.includes} ${hdf5.ldflags}
 
-  build:
+    build:
     # Delete setting -O2 in the Makefile, to let the user set their own flag 
-    preprocessing: |-
-      sed -i '/CFLAGS+=-O2/d' ${source}/src/Makefile
+        preprocessing: |-
+            sed -i '/CFLAGS+=-O2/d' ${source}/src/Makefile
 
-    stages:
-        - target: ascot5_main
-          configurations: *ascot_configurations
+        stages:
+            - target: ascot5_main
+              configurations: *ascot_configurations
 
-        - target: libascot
-          configurations: *ascot_configurations
+            - target: libascot
+              configurations: *ascot_configurations
 
-    postprocessing: |-
-      cp -r ${source}/build/* ${ascot5.prefix}/bin/
-      mkdir -p ${ascot5.prefix}/ascot5/
-      cp -r ${source}/* ${ascot5.prefix}/ascot5/
+        postprocessing: |-
+            cp -r ${source}/build/* ${ascot5.prefix}/bin/
+            mkdir -p ${ascot5.prefix}/ascot5/
+            cp -r ${source}/* ${ascot5.prefix}/ascot5/
 

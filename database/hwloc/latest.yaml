@@ -1,140 +1,140 @@
+---
 recipe:
-  name: hwloc
-  description: Hardware Locality
-  type: package
-  toolchain: autotools
+    name: hwloc
+    description: Hardware Locality
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 2.12.1
-        url: https://download.open-mpi.org/release/hwloc/v2.12/hwloc-2.12.1.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 2.12.1
+              url: https://download.open-mpi.org/release/hwloc/v2.12/hwloc-2.12.1.tar.gz
 
-  dependencies:
-    - zlib
-    - lz4
-    - libpciaccess
-    - libxml2
+    dependencies:
+        - zlib
+        - lz4
+        - libpciaccess
+        - libxml2
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${hwloc.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${hwloc.prefix}
 
-        - name: use_cuda
-          description: Use CUDA support
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_format: --enable-cuda
-          disabled_format: --disable-cuda
-          requires: [cuda]
+                - name: use_cuda
+                  description: Use CUDA support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_format: --enable-cuda
+                  disabled_format: --disable-cuda
+                  requires: [cuda]
 
-        - name: --with-cuda
-          description: Specify CUDA installation path
-          enabled:
-            conditions:
-              - condition: ${hwloc.config.use_cuda} true
-                value: true
-              - condition: ${hwloc.config.use_cuda} false
-                value: false
-          enabled_value:
-            conditions:
-              - condition: ${hwloc.config.use_cuda} true
-                value: ${cuda.prefix}
+                - name: --with-cuda
+                  description: Specify CUDA installation path
+                  enabled:
+                      conditions:
+                          - condition: ${hwloc.config.use_cuda} true
+                            value: true
+                          - condition: ${hwloc.config.use_cuda} false
+                            value: false
+                  enabled_value:
+                      conditions:
+                          - condition: ${hwloc.config.use_cuda} true
+                            value: ${cuda.prefix}
 
-        - name: --with-cuda-version
-          description: Specify CUDA version
-          enabled:
-            conditions:
-              - condition: ${hwloc.config.use_cuda} true
-                value: true
-              - condition: ${hwloc.config.use_cuda} false
-                value: false
-          enabled_value:
-            conditions:
-              - condition: ${hwloc.config.use_cuda} true
-                value: ${cuda.version}
+                - name: --with-cuda-version
+                  description: Specify CUDA version
+                  enabled:
+                      conditions:
+                          - condition: ${hwloc.config.use_cuda} true
+                            value: true
+                          - condition: ${hwloc.config.use_cuda} false
+                            value: false
+                  enabled_value:
+                      conditions:
+                          - condition: ${hwloc.config.use_cuda} true
+                            value: ${cuda.version}
 
-        - name: use_rocm
-          description: Use ROCm support
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_format: --enable-rsmi
-          disabled_format: --disable-rsmi
-          requires: [rocm]
-        
-        - name: --with-rocm
-          description: Specify ROCm installation path
-          enabled:
-            conditions:
-              - condition: ${hwloc.config.use_rocm} true
-                value: true
-              - condition: ${hwloc.config.use_rocm} false
-                value: false
-          enabled_value:
-            conditions:
-              - condition: ${hwloc.config.use_rocm} true
-                value: ${rocm.prefix}
+                - name: use_rocm
+                  description: Use ROCm support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_format: --enable-rsmi
+                  disabled_format: --disable-rsmi
+                  requires: [rocm]
+                - name: --with-rocm
+                  description: Specify ROCm installation path
+                  enabled:
+                      conditions:
+                          - condition: ${hwloc.config.use_rocm} true
+                            value: true
+                          - condition: ${hwloc.config.use_rocm} false
+                            value: false
+                  enabled_value:
+                      conditions:
+                          - condition: ${hwloc.config.use_rocm} true
+                            value: ${rocm.prefix}
 
-        - name: --with-rocm-version
-          description: Specify ROCm version
-          enabled:
-            conditions:
-              - condition: ${hwloc.config.use_rocm} true
-                value: true
-              - condition: ${hwloc.config.use_rocm} false
-                value: false
-          enabled_value:
-            conditions:
-              - condition: ${hwloc.config.use_rocm} true
-                value: ${rocm.version}
+                - name: --with-rocm-version
+                  description: Specify ROCm version
+                  enabled:
+                      conditions:
+                          - condition: ${hwloc.config.use_rocm} true
+                            value: true
+                          - condition: ${hwloc.config.use_rocm} false
+                            value: false
+                  enabled_value:
+                      conditions:
+                          - condition: ${hwloc.config.use_rocm} true
+                            value: ${rocm.version}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: CXXFLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CXXFLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags}
-            conditions:
-              - condition: ${hwloc.config.use_cuda} true
-                action: append
-                value: ${cuda.ldflags}
-              - condition: ${hwloc.config.use_rocm} true
-                action: append
-                value: ${rocm.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags}
+                      conditions:
+                          - condition: ${hwloc.config.use_cuda} true
+                            action: append
+                            value: ${cuda.ldflags}
+                          - condition: ${hwloc.config.use_rocm} true
+                            action: append
+                            value: ${rocm.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${hwloc.prefix}/lib -Wl,-rpath,${hwloc.prefix}/lib
-    libs:
-      default: -lhwloc
-    includes:
-      default: -I${hwloc.prefix}/include
+    properties:
+        ldflags:
+            default: -L${hwloc.prefix}/lib -Wl,-rpath,${hwloc.prefix}/lib
+        libs:
+            default: -lhwloc
+        includes:
+            default: -I${hwloc.prefix}/include

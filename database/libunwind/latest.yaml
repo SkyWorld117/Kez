@@ -1,42 +1,43 @@
+---
 recipe:
-  name: libunwind
-  description: libunwind is a C API for determining the current call chain of ELF program threads of execution
-  type: package
-  toolchain: autotools
+    name: libunwind
+    description: libunwind is a C API for determining the current call chain of ELF program threads of execution
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.8.3
-        url: https://github.com/libunwind/libunwind/releases/download/v1.8.3/libunwind-1.8.3.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.8.3
+              url: https://github.com/libunwind/libunwind/releases/download/v1.8.3/libunwind-1.8.3.tar.gz
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libunwind.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libunwind.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-    stages:
-      - target: ~
-      - target: install
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libunwind.prefix}/lib -Wl,-rpath,${libunwind.prefix}/lib
-    libs:
-      default: -lunwind
-    includes:
-      default: -I${libunwind.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libunwind.prefix}/lib -Wl,-rpath,${libunwind.prefix}/lib
+        libs:
+            default: -lunwind
+        includes:
+            default: -I${libunwind.prefix}/include

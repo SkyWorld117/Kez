@@ -1,54 +1,55 @@
+---
 recipe:
-  name: osu
-  description: Ohio State University Micro-Benchmarks
-  type: package
-  toolchain: autotools
+    name: osu
+    description: Ohio State University Micro-Benchmarks
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 7.5.1
-        url: https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5.1.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 7.5.1
+              url: https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5.1.tar.gz
 
-  dependencies:
-    - mpi
+    dependencies:
+        - mpi
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${osu.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${osu.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${mpi.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${mpi.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${mpi.cxx}
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${mpi.cxx}
 
-        - name: CXXFLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CXXFLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${compiler.ldflags} ${mpi.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${compiler.ldflags} ${mpi.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties: ~
+    properties:

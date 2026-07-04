@@ -1,74 +1,75 @@
+---
 recipe:
-  name: zstd
-  description: Zstandard compression library
-  type: system
-  toolchain: makefile
+    name: zstd
+    description: Zstandard compression library
+    type: system
+    toolchain: makefile
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.5.7
-        url: https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.5.7
+              url: https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
 
-  dependencies:
-    - zlib
-    - xz
-    - lz4
+    dependencies:
+        - zlib
+        - xz
+        - lz4
 
-  build:
-    stages:
-      - target: ~
-        configurations:
-          environment:
-            - name: CC
-              description: C compiler
-              default: ${compiler.c}
+    build:
+        stages:
+            - target:
+              configurations:
+                  environment:
+                      - name: CC
+                        description: C compiler
+                        default: ${compiler.c}
 
-            - name: CXX
-              description: C++ compiler
-              default: ${compiler.cxx}
+                      - name: CXX
+                        description: C++ compiler
+                        default: ${compiler.cxx}
 
-            - name: CFLAGS
-              description: C compiler flags
-              user_configurable: true
-              default: -O3 ${zlib.includes} ${lz4.includes} ${xz.includes}
+                      - name: CFLAGS
+                        description: C compiler flags
+                        user_configurable: true
+                        default: -O3 ${zlib.includes} ${lz4.includes} ${xz.includes}
 
-            - name: CXXFLAGS
-              description: C++ compiler flags
-              user_configurable: true
-              default: -O3 ${zlib.includes} ${lz4.includes} ${xz.includes}
+                      - name: CXXFLAGS
+                        description: C++ compiler flags
+                        user_configurable: true
+                        default: -O3 ${zlib.includes} ${lz4.includes} ${xz.includes}
 
-            - name: LDFLAGS
-              description: Linker flags
-              user_configurable: true
-              default: ${zlib.ldflags} ${lz4.ldflags} ${xz.ldflags}
-          options:
-            - name: HAVE_ZLIB
-              description: Enable zlib support
-              enabled_value:
-                default: 1
+                      - name: LDFLAGS
+                        description: Linker flags
+                        user_configurable: true
+                        default: ${zlib.ldflags} ${lz4.ldflags} ${xz.ldflags}
+                  options:
+                      - name: HAVE_ZLIB
+                        description: Enable zlib support
+                        enabled_value:
+                            default: 1
 
-            - name: HAVE_LZ4
-              description: Enable LZ4 support
-              enabled_value:
-                default: 1
+                      - name: HAVE_LZ4
+                        description: Enable LZ4 support
+                        enabled_value:
+                            default: 1
 
-            - name: HAVE_LZMA
-              description: Enable LZMA support
-              enabled_value:
-                default: 1
-      - target: install
-        configurations:
-          options:
-            - name: PREFIX
-              description: Installation prefix
-              enabled_value:
-                default: ${zstd.prefix}
+                      - name: HAVE_LZMA
+                        description: Enable LZMA support
+                        enabled_value:
+                            default: 1
+            - target: install
+              configurations:
+                  options:
+                      - name: PREFIX
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${zstd.prefix}
 
-  properties:
-    ldflags:
-      default: -L${zstd.prefix}/lib -Wl,-rpath,${zstd.prefix}/lib
-    includes:
-      default: -I${zstd.prefix}/include
-    libs:
-      default: -lzstd
+    properties:
+        ldflags:
+            default: -L${zstd.prefix}/lib -Wl,-rpath,${zstd.prefix}/lib
+        includes:
+            default: -I${zstd.prefix}/include
+        libs:
+            default: -lzstd

@@ -1,124 +1,125 @@
+---
 recipe:
-  name: sst-elements
-  description: Structural Simulation Toolkit Elements
-  type: package
-  toolchain: autotools
+    name: sst-elements
+    description: Structural Simulation Toolkit Elements
+    type: package
+    toolchain: autotools
 
-  source:
-    type: git
-    url: https://github.com/sstsimulator/sst-elements.git
-    releases:
-      - version: scc25
-        tag: 22504be
-      - version: latest
-        tag: master
+    source:
+        type: git
+        url: https://github.com/sstsimulator/sst-elements.git
+        releases:
+            - version: scc25
+              tag: 22504be
+            - version: latest
+              tag: master
 
-  dependencies:
-    - sst-core
-    - mpi
-    - python
+    dependencies:
+        - sst-core
+        - mpi
+        - python
 
-  build:
-    preprocessing: ${python.prefix}/bin/pip3 install numpy; ./autogen.sh
-    postprocessing: |-
-      mkdir -p ${sst-elements.prefix}/src
-      cp -r ${source}/src/* ${sst-elements.prefix}/src/
-      sed -i 's|${source}|${sst-elements.prefix}|g' ${sst-core.prefix}/etc/sst/sstsimulator.conf
+    build:
+        preprocessing: ${python.prefix}/bin/pip3 install numpy; ./autogen.sh
+        postprocessing: |-
+            mkdir -p ${sst-elements.prefix}/src
+            cp -r ${source}/src/* ${sst-elements.prefix}/src/
+            sed -i 's|${source}|${sst-elements.prefix}|g' ${sst-core.prefix}/etc/sst/sstsimulator.conf
 
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${sst-elements.prefix}
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${sst-elements.prefix}
 
-        - name: --with-sst-core
-          description: Path to SST Core installation
-          enabled_value:
-            default: ${sst-core.prefix}
+                - name: --with-sst-core
+                  description: Path to SST Core installation
+                  enabled_value:
+                      default: ${sst-core.prefix}
 
-        - name: --with-dramsim3
-          description: Enable DRAMSim3 support
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_value:
-            default: ${dramsim3.prefix}
-          disabled_format: --without-dramsim3
-          requires: [dramsim3]          
+                - name: --with-dramsim3
+                  description: Enable DRAMSim3 support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${dramsim3.prefix}
+                  disabled_format: --without-dramsim3
+                  requires: [dramsim3]
 
-        - name: --with-pin
-          description: Enable Intel PIN support
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_value:
-            default: ${intelpin.prefix}
-          disabled_format: --without-pin
-          requires: [intelpin]
+                - name: --with-pin
+                  description: Enable Intel PIN support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${intelpin.prefix}
+                  disabled_format: --without-pin
+                  requires: [intelpin]
 
-        - name: --with-goblin-hmcsim
-          description: Enable Goblin HMC Sim support
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_value:
-            default: ${goblinhmcsim.prefix}
-          disabled_format: --without-goblinhmcsim
-          requires: [goblinhmcsim]
+                - name: --with-goblin-hmcsim
+                  description: Enable Goblin HMC Sim support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${goblinhmcsim.prefix}
+                  disabled_format: --without-goblinhmcsim
+                  requires: [goblinhmcsim]
 
-        - name: --with-ramulator2
-          description: Enable Ramulator2 support
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_value:
-            default: ${ramulator2.prefix}
-          disabled_format: --without-ramulator2
-          requires: [ramulator2]
+                - name: --with-ramulator2
+                  description: Enable Ramulator2 support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${ramulator2.prefix}
+                  disabled_format: --without-ramulator2
+                  requires: [ramulator2]
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: CXXFLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CXXFLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: MPICC
-          description: MPI C compiler
-          enabled_value:
-            default: ${mpi.c}
-            
-        - name: MPICXX
-          description: MPI C++ compiler
-          enabled_value:
-            default: ${mpi.cxx}
+                - name: MPICC
+                  description: MPI C compiler
+                  enabled_value:
+                      default: ${mpi.c}
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${compiler.ldflags} ${python.ldflags} ${python.libs}
-    stages:
-      - target: ~
-      - target: install
+                - name: MPICXX
+                  description: MPI C++ compiler
+                  enabled_value:
+                      default: ${mpi.cxx}
 
-  properties:
-    ldflags:
-      default: -L${sst-elements.prefix}/lib -Wl,-rpath,${sst-elements.prefix}/lib
-    includes:
-      default: -I${sst-elements.prefix}/include
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${compiler.ldflags} ${python.ldflags} ${python.libs}
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        ldflags:
+            default: -L${sst-elements.prefix}/lib -Wl,-rpath,${sst-elements.prefix}/lib
+        includes:
+            default: -I${sst-elements.prefix}/include

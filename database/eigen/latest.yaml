@@ -1,38 +1,39 @@
+---
 recipe:
-  name: eigen
-  description: Eigen C++ Template Library for Linear Algebra
-  type: package
-  toolchain: cmake
+    name: eigen
+    description: Eigen C++ Template Library for Linear Algebra
+    type: package
+    toolchain: cmake
 
-  source:
-    type: tarball
-    releases:
-      - version: 5.0.1
-        url: https://gitlab.com/libeigen/eigen/-/archive/5.0.1/eigen-5.0.1.tar.gz
-      - version: 3.4.1
-        url: https://gitlab.com/libeigen/eigen/-/archive/3.4.1/eigen-3.4.1.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 5.0.1
+              url: https://gitlab.com/libeigen/eigen/-/archive/5.0.1/eigen-5.0.1.tar.gz
+            - version: 3.4.1
+              url: https://gitlab.com/libeigen/eigen/-/archive/3.4.1/eigen-3.4.1.tar.gz
 
-  build:
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          description: Installation prefix
-          enabled_value:
-            default: ${eigen.prefix}
+    build:
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${eigen.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          description: Build type
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  description: Build type
+                  enabled_value:
+                      default: Release
 
-        - name: -DCMAKE_CXX_COMPILER
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
-    stages:
-      - target: ~
-      - target: install
+                - name: -DCMAKE_CXX_COMPILER
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    includes:
-      default: -I${eigen.prefix}/include
+    properties:
+        includes:
+            default: -I${eigen.prefix}/include

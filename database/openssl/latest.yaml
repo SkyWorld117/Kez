@@ -1,78 +1,80 @@
+---
 recipe:
-  name: openssl
-  description: OpenSSL is a robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication over computer networks.
-  type: package
+    name: openssl
+    description: OpenSSL is a robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication over computer 
+        networks.
+    type: package
 
-  source:
-    type: tarball
-    releases:
-      - version: 3.5.2
-        url: https://github.com/openssl/openssl/releases/download/openssl-3.5.2/openssl-3.5.2.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 3.5.2
+              url: https://github.com/openssl/openssl/releases/download/openssl-3.5.2/openssl-3.5.2.tar.gz
 
-  dependencies:
-    - zlib
+    dependencies:
+        - zlib
 
-  build:
-    configurations:
-      command: ./Configure
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${openssl.prefix}
+    build:
+        configurations:
+            command: ./Configure
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${openssl.prefix}
 
-        - name: --openssldir
-          description: OpenSSL configuration directory
-          enabled_value:
-            default: ${openssl.prefix}/ssl
+                - name: --openssldir
+                  description: OpenSSL configuration directory
+                  enabled_value:
+                      default: ${openssl.prefix}/ssl
 
-        - name: --release
-          description: Release build
+                - name: --release
+                  description: Release build
 
-        - name: --with-zlib-include
-          description: Zlib include directory
-          enabled_value:
-            default: ${zlib.prefix}/include
+                - name: --with-zlib-include
+                  description: Zlib include directory
+                  enabled_value:
+                      default: ${zlib.prefix}/include
 
-        - name: --with-zlib-lib
-          description: Zlib library directory
-          enabled_value:
-            default: ${zlib.prefix}/lib
+                - name: --with-zlib-lib
+                  description: Zlib library directory
+                  enabled_value:
+                      default: ${zlib.prefix}/lib
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: CXXFLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CXXFLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${zlib.ldflags} ${openssl.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${zlib.ldflags} ${openssl.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${openssl.prefix}/lib -Wl,-rpath,${openssl.prefix}/lib64
-    libs:
-      default: -lssl -lcrypto
-    includes:
-      default: -I${openssl.prefix}/include
+    properties:
+        ldflags:
+            default: -L${openssl.prefix}/lib -Wl,-rpath,${openssl.prefix}/lib64
+        libs:
+            default: -lssl -lcrypto
+        includes:
+            default: -I${openssl.prefix}/include

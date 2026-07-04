@@ -1,29 +1,30 @@
+---
 recipe:
-  name: luarocks
-  description: LuaRocks - a package manager for Lua modules
-  type: package
-  toolchain: autotools
+    name: luarocks
+    description: LuaRocks - a package manager for Lua modules
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 3.13.0
-        url: https://luarocks.github.io/luarocks/releases/luarocks-3.13.0.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 3.13.0
+              url: https://luarocks.github.io/luarocks/releases/luarocks-3.13.0.tar.gz
 
-  dependencies:
-    - lua
+    dependencies:
+        - lua
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${luarocks.prefix}
-        - name: --with-lua
-          description: Path to Lua installation
-          enabled_value:
-            default: ${lua.prefix}
-    stages:
-      - target: ~
-      - target: install
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${luarocks.prefix}
+                - name: --with-lua
+                  description: Path to Lua installation
+                  enabled_value:
+                      default: ${lua.prefix}
+        stages:
+            - target:
+            - target: install

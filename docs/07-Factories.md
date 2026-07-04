@@ -9,7 +9,7 @@ Factories are a submodule of `rt` (rapid testing).
 A factory is a module that performs batch instantiation of configurations and profiles the results.
 
 ```
-${FROMAGER_WORKDIR}/factories/
+${KEZ_WORKDIR}/factories/
  ├── factory_A/
      ├── wheels/
      ├── cellars/

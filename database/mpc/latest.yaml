@@ -1,78 +1,79 @@
+---
 recipe:
-  name: mpc
-  description: GNU MPC Library for multiple precision complex arithmetic
-  type: system
-  toolchain: autotools
+    name: mpc
+    description: GNU MPC Library for multiple precision complex arithmetic
+    type: system
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.3.1
-        url: https://ftp.gnu.org/gnu/mpc/mpc-1.3.1.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.3.1
+              url: https://ftp.gnu.org/gnu/mpc/mpc-1.3.1.tar.gz
 
-  dependencies:
-    - gmp
-    - mpfr
+    dependencies:
+        - gmp
+        - mpfr
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${mpc.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${mpc.prefix}
 
-        - name: --enable-shared
-          description: Build shared libraries
+                - name: --enable-shared
+                  description: Build shared libraries
 
-        - name: --enable-static
-          description: Build static libraries
+                - name: --enable-static
+                  description: Build static libraries
 
-        - name: --with-gmp
-          description: Specify GMP installation prefix
-          enabled_value:
-            default: ${gmp.prefix}
+                - name: --with-gmp
+                  description: Specify GMP installation prefix
+                  enabled_value:
+                      default: ${gmp.prefix}
 
-        - name: --with-mpfr
-          description: Specify MPFR installation prefix
-          enabled_value:
-            default: ${mpfr.prefix}
+                - name: --with-mpfr
+                  description: Specify MPFR installation prefix
+                  enabled_value:
+                      default: ${mpfr.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: CXXFLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CXXFLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          user_configurable: true
-          enabled_value:
-            default: ${gmp.ldflags} ${mpfr.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  user_configurable: true
+                  enabled_value:
+                      default: ${gmp.ldflags} ${mpfr.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${mpc.prefix}/lib
-    libs:
-      default: -lmpc
-    includes:
-      default: -I${mpc.prefix}/include
+    properties:
+        ldflags:
+            default: -L${mpc.prefix}/lib
+        libs:
+            default: -lmpc
+        includes:
+            default: -I${mpc.prefix}/include

@@ -1,15 +1,16 @@
+---
 recipe:
-  name: slurm
-  description: Simple Linux Utility for Resource Management
-  type: external
+    name: slurm
+    description: Simple Linux Utility for Resource Management
+    type: external
 
   # This package should not be built from source
   # Use the system package instead
 
-  properties:
-    ldflags:
-      default: -L${slurm.prefix}/lib64 -Wl,-rpath,${slurm.prefix}/lib64
-    libs:
-      default: -lslurm
-    includes:
-      default: -I${slurm.prefix}/include
+    properties:
+        ldflags:
+            default: -L${slurm.prefix}/lib64 -Wl,-rpath,${slurm.prefix}/lib64
+        libs:
+            default: -lslurm
+        includes:
+            default: -I${slurm.prefix}/include

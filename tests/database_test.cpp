@@ -12,15 +12,15 @@ namespace {
     class TemporaryDatabase : public ::testing::Test {
        protected:
         void SetUp() override {
-            const char* current = std::getenv("FROMAGER_DB");
+            const char* current = std::getenv("KEZ_DB");
             if (current != nullptr) {
                 previous_database_ = current;
             }
             path_ = std::filesystem::temp_directory_path() /
-                    ("fromager-database-test-" + std::to_string(getpid()));
+                    ("kez-database-test-" + std::to_string(getpid()));
             std::filesystem::remove_all(path_);
             std::filesystem::create_directories(path_);
-            setenv("FROMAGER_DB", path_.c_str(), 1);
+            setenv("KEZ_DB", path_.c_str(), 1);
             clear_db_cache();
         }
 
@@ -28,9 +28,9 @@ namespace {
             clear_db_cache();
             std::filesystem::remove_all(path_);
             if (previous_database_.empty()) {
-                unsetenv("FROMAGER_DB");
+                unsetenv("KEZ_DB");
             } else {
-                setenv("FROMAGER_DB", previous_database_.c_str(), 1);
+                setenv("KEZ_DB", previous_database_.c_str(), 1);
             }
         }
 
@@ -212,9 +212,8 @@ recipe:
     }
 
     TEST(DatabaseIntegration, ParsesEveryRepositoryConfig) {
-        const std::filesystem::path database =
-            std::filesystem::path(FROMAGER_SOURCE_DIR) / "database";
-        setenv("FROMAGER_DB", database.c_str(), 1);
+        const std::filesystem::path database = std::filesystem::path(KEZ_SOURCE_DIR) / "database";
+        setenv("KEZ_DB", database.c_str(), 1);
         clear_db_cache();
 
         std::size_t package_count = 0;

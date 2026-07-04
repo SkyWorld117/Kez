@@ -1,24 +1,25 @@
+---
 recipe:
-  name: goblinhmcsim
-  description: Goblin HMC Sim
-  type: package
-  toolchain: makefile
+    name: goblinhmcsim
+    description: Goblin HMC Sim
+    type: package
+    toolchain: makefile
 
-  source:
-    type: tarball
-    releases: 
-      - version: sst-8.0.0
-        url: https://github.com/tactcomplabs/gc64-hmcsim/archive/refs/tags/sst-8.0.0-release.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: sst-8.0.0
+              url: https://github.com/tactcomplabs/gc64-hmcsim/archive/refs/tags/sst-8.0.0-release.tar.gz
 
-  build:
-    stages:
-      - target: ~
-        configurations:
-          options:
-            - name: CC
-              description: C compiler
-              enabled_value:
-                default: ${compiler.c}
+    build:
+        stages:
+            - target:
+              configurations:
+                  options:
+                      - name: CC
+                        description: C compiler
+                        enabled_value:
+                            default: ${compiler.c}
 
             # - name: CFLAGS
             #   description: C compiler flags
@@ -26,26 +27,26 @@ recipe:
             #   enabled_value:
             #     default: -O3 -I${source}/include
 
-            - name: CXX
-              description: C++ compiler
-              enabled_value:
-                default: ${compiler.cxx}
+                      - name: CXX
+                        description: C++ compiler
+                        enabled_value:
+                            default: ${compiler.cxx}
 
             # - name: CXXFLAGS
             #   description: C++ compiler flags
             #   user_configurable: true
             #   enabled_value:
             #     default: -O3
-      - target: install
-        configurations:
-          options:
-            - name: PREFIX
-              description: Installation prefix
-              enabled_value:
-                default: ${goblinhmcsim.prefix}
+            - target: install
+              configurations:
+                  options:
+                      - name: PREFIX
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${goblinhmcsim.prefix}
 
-  properties:
-    ldflags:
-      default: -L${goblinhmcsim.prefix}/lib -Wl,-rpath,${goblinhmcsim.prefix}/lib
-    includes:
-      default: -I${goblinhmcsim.prefix}/include
+    properties:
+        ldflags:
+            default: -L${goblinhmcsim.prefix}/lib -Wl,-rpath,${goblinhmcsim.prefix}/lib
+        includes:
+            default: -I${goblinhmcsim.prefix}/include

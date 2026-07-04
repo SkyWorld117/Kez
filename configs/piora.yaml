@@ -1,18 +1,19 @@
+---
 settings:
-  n_proc_for_build: 32
+    n_proc_for_build: 32
 
-  default_compiler: system
+    default_compiler: system
 
-  external:
-    rdma-core:
-      prefix: /usr
-      version: 51.0
-    hcoll:
-      prefix: /opt/mellanox/hcoll
-      version: 4.8.3227
-    gdrcopy:
-      prefix: ~
-      version: ~
-    slurm:
-      prefix: /cm/shared/apps/slurm/23.02.7
-      version: 23.02.7
+    external:
+        rdma-core:
+            prefix: /usr
+            version: 51.0
+        hcoll:
+            prefix: /opt/mellanox/hcoll
+            version: 4.8.3227
+        gdrcopy:
+            prefix:
+            version:
+        slurm:
+            prefix: /cm/shared/apps/slurm/23.02.7
+            version: 23.02.7

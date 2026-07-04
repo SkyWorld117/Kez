@@ -1,6 +1,6 @@
 # Getting Started
 
-Fromager is supposed to run on Linux systems. It heavily relies on the GNU toolchain. As a minimum requirement, you need:
+Kez is supposed to run on Linux systems. It heavily relies on the GNU toolchain. As a minimum requirement, you need:
 
 - GNU/Linux
 - bash
@@ -12,46 +12,46 @@ Fromager is supposed to run on Linux systems. It heavily relies on the GNU toolc
 - tar
 - gettext (autopoint)
 
-Since Fromager is an HPC-focused package manager, it is designed to work seamlessly with HPC Linux distributions such as CentOS, Rocky Linux, and RHEL. It is tested on Rocky Linux. 
+Since Kez is an HPC-focused package manager, it is designed to work seamlessly with HPC Linux distributions such as CentOS, Rocky Linux, and RHEL. It is tested on Rocky Linux. 
 
 ## Download
 
-You can download Fromager from the [GitHub repository](https://github.com/SkyWorld117/Fromager).
+You can download Kez from the [GitHub repository](https://github.com/SkyWorld117/Kez).
 
 ```bash
-git clone -c feature.manyFiles=true https://github.com/SkyWorld117/Fromager.git
+git clone -c feature.manyFiles=true https://github.com/SkyWorld117/Kez.git
 ```
 
 After cloning the repository, you can place it anywhere you like, including your home directory. The whole project is not large and can be easily managed. However, it does contain many files since the whole database is included. If your cluster has a quota limit of the number of files, you may need to clone the repository elsewhere.
 
-## Initialization of Fromager Environment
+## Initialization of Kez Environment
 
-Fromager requires a directory to store its configurations and cellars (which contain all the packages you install). You can specify it using the environment variable `FROMAGER_WORKDIR`. 
+Kez requires a directory to store its configurations and cellars (which contain all the packages you install). You can specify it using the environment variable `KEZ_WORKDIR`. 
 
 For example, it can be a good choice to set it to a directory with ample space, such as the scratch filesystem:
 ```bash
-export FROMAGER_WORKDIR=/scratch/${USER}/.fromager
+export KEZ_WORKDIR=/scratch/${USER}/.kez
 ```
 
-After setting the `FROMAGER_WORKDIR`, you can initialize the Fromager environment by running the following command:
+After setting the `KEZ_WORKDIR`, you can initialize the Kez environment by running the following command:
 
 ```bash
-cd Fromager
+cd Kez
 source setup-env.sh
 ```
 
-For the first time you run `setup-env.sh`, you will be asked to configure the configuration file listed in the next section. After that, you can simply run `source setup-env.sh` again to load the Fromager environment variables and functions.
+For the first time you run `setup-env.sh`, you will be asked to configure the configuration file listed in the next section. After that, you can simply run `source setup-env.sh` again to load the Kez environment variables and functions.
 
 It is recommended to add both of the commands to your `.bashrc`. 
 
 ## Configuring
 
-The `setup-env.sh` script will create `$FROMAGER_WORKDIR/config.yaml` which one can customize certain behaviors of Fromager.
+The `setup-env.sh` script will create `$KEZ_WORKDIR/config.yaml` which one can customize certain behaviors of Kez.
 
 It looks like this by default:
 
 ```yaml
-fromager:
+settings:
   n_proc_for_build: 4
 
   default_compiler: system
@@ -84,16 +84,14 @@ fromager:
 
 `default_compiler` specifies the default compiler to use when building packages. It can be set to `system` or a specific compiler in the `compilers` cellar in the format of `<vendor>@<version>`. For example, if you have a GCC 11.4.0 installed in the `compilers` cellar, you can set it to `gcc@11.4.0`.
 
-`paths` specifies the directory structure of the cellar. They are relative paths to the `FROMAGER_WORKDIR`. You can change them if you want.
-
-`external` contains a list of external dependencies that Fromager is supposed to use. These are usually libraries that are not supposed to be built by the users of a cluster, as they may cause ABI incompatibilities if the package versions mismatch the driver versions. Fromager will not use them if the entries are left as `~`, which means "null". 
+`external` contains a list of external dependencies that Kez is supposed to use. These are usually libraries that are not supposed to be built by the users of a cluster, as they may cause ABI incompatibilities if the package versions mismatch the driver versions. Kez will not use them if the entries are left as `~`, which means "null". 
 
 Users are supposed to find the packages installed by their system administrators or contact them if certain packages are not available.
 
 `prefix` specifies the installation prefix of the external package, while `version` specifies the version of the package. Here is the example configuration on the Piora cluster:
 
 ```yaml
-fromager:
+settings:
   n_proc_for_build: 32
 
   external:
@@ -108,9 +106,9 @@ fromager:
       version: ~
 ```
 
-## Initialization of Fromager Toolchain
+## Initialization of Kez Toolchain
 
-To make Fromager as distribution-independent as possible, it creates a mini toolchain which contains a GCC compiler, GNU build system, cmake set, and other essential tools. This toolchain is isolated from the system environment and can be easily managed within the Fromager environment.
+To make Kez as distribution-independent as possible, it creates a mini toolchain which contains a GCC compiler, GNU build system, cmake set, and other essential tools. This toolchain is isolated from the system environment and can be easily managed within the Kez environment.
 
 This process takes however quite some time and compute power, so it is recommended to run it on a dedicated compute node.
 
@@ -134,21 +132,21 @@ fgr --help
 
 We first introduce the non-conventional terminologies:
 
-- Fromager, or in commands as `fgr` for short, refers to the package manager
+- Kez, or in commands as `fgr` for short, refers to the package manager
 - Cellar, an isolated folder that contains the target packages
 - Cheese, a configuration file for a package, appears as the header in user configuration files and database configuration files
 
 In HPC workflow, we would like to achieve coexistence of multiple versions and configurations of one single application, thus it is 
 
-## Uninstalling and Reinstalling Fromager
+## Uninstalling and Reinstalling Kez
 
-To uninstall Fromager, you can simply remove the cloned repository and the `FROMAGER_WORKDIR`:
+To uninstall Kez, you can simply remove the cloned repository and the `Kez_WORKDIR`:
 
 ```bash
-rm -rf Fromager
-rm -rf $FROMAGER_WORKDIR
+rm -rf Kez
+rm -rf $KEZ_WORKDIR
 ```
 
 You may want to reload the shell after that to remove the environment variables set by `setup-env.sh`.
 
-To reinstall Fromager, you can simply clone the repository again and run `setup-env.sh` again, following the instructions above.
+To reinstall Kez, you can simply clone the repository again and run `setup-env.sh` again, following the instructions above.

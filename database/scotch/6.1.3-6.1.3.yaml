@@ -1,73 +1,75 @@
+---
 recipe:
-  name: scotch6
-  description: Scotch is a software package for graph and mesh partitioning, graph clustering, and sparse matrix ordering.
-  type: package
-  toolchain: makefile
+    name: scotch6
+    description: Scotch is a software package for graph and mesh partitioning, graph clustering, and sparse matrix ordering.
+    type: package
+    toolchain: makefile
 
-  source:
-    type: git
-    url: https://gitlab.inria.fr/scotch/scotch.git
-    releases:
-      - version: 6.1.3
-        tag: v6.1.3
+    source:
+        type: git
+        url: https://gitlab.inria.fr/scotch/scotch.git
+        releases:
+            - version: 6.1.3
+              tag: v6.1.3
 
-  dependencies:
-    - bison
-    - flex
-    - mpi
+    dependencies:
+        - bison
+        - flex
+        - mpi
 
-  build:
-    preprocessing: |-
-      cp ${source}/src/Make.inc/Makefile.inc.x86-64_pc_linux2.shlib ${source}/src/Makefile.inc
-      cd ${source}/src
+    build:
+        preprocessing: |-
+            cp ${source}/src/Make.inc/Makefile.inc.x86-64_pc_linux2.shlib ${source}/src/Makefile.inc
+            cd ${source}/src
 
-    stages:
-      - target: scotch ptscotch
-        configurations:
-          environment:
-            - name: PATH
-              description: PATH environment variable for Scotch
-              default: ${bison.prefix}/bin:${flex.prefix}/bin:${compiler.prefix}/bin:$PATH
-          options:
-            - name: prefix
-              description: Installation prefix
-              enabled_value:
-                default: ${scotch6.prefix}
+        stages:
+            - target: scotch ptscotch
+              configurations:
+                  environment:
+                      - name: PATH
+                        description: PATH environment variable for Scotch
+                        default: ${bison.prefix}/bin:${flex.prefix}/bin:${compiler.prefix}/bin:$PATH
+                  options:
+                      - name: prefix
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${scotch6.prefix}
 
-            - name: CCS
-              description: C compiler command (Sequential)
-              enabled_value:
-                default: ${compiler.c}
-              
-            - name: CCD
-              description: C compiler command (Debug)
-              enabled_value:
-                default: ${mpi.c}
+                      - name: CCS
+                        description: C compiler command (Sequential)
+                        enabled_value:
+                            default: ${compiler.c}
 
-            - name: CCP
-              description: C compiler command (Parallel)
-              enabled_value:
-                default: ${mpi.c}
+                      - name: CCD
+                        description: C compiler command (Debug)
+                        enabled_value:
+                            default: ${mpi.c}
 
-            - name: CFLAGS
-              description: C compiler flags
-              user_configurable: true
-              enabled:
-                default: false
-              enabled_value:
-                default: -O3 -fPIC ${scotch6.ldflags} -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -DSCOTCH_PTHREAD -Drestrict=__restrict -DIDXSIZE64
-      - target: install
-        configurations:
-          options:
-            - name: prefix
-              description: Installation prefix
-              enabled_value:
-                default: ${scotch6.prefix}
+                      - name: CCP
+                        description: C compiler command (Parallel)
+                        enabled_value:
+                            default: ${mpi.c}
 
-  properties:
-    ldflags:
-      default: -L${scotch6.prefix}/lib -Wl,-rpath,${scotch6.prefix}/lib
-    libs:
-      default: -lscotch -lscotcherr
-    includes:
-      default: -I${scotch6.prefix}/include
+                      - name: CFLAGS
+                        description: C compiler flags
+                        user_configurable: true
+                        enabled:
+                            default: false
+                        enabled_value:
+                            default: -O3 -fPIC ${scotch6.ldflags} -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED 
+                                -DSCOTCH_RENAME -DSCOTCH_PTHREAD -Drestrict=__restrict -DIDXSIZE64
+            - target: install
+              configurations:
+                  options:
+                      - name: prefix
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${scotch6.prefix}
+
+    properties:
+        ldflags:
+            default: -L${scotch6.prefix}/lib -Wl,-rpath,${scotch6.prefix}/lib
+        libs:
+            default: -lscotch -lscotcherr
+        includes:
+            default: -I${scotch6.prefix}/include

@@ -1,55 +1,56 @@
+---
 recipe:
-  name: boost
-  description: Boost C++ Libraries
-  type: package
+    name: boost
+    description: Boost C++ Libraries
+    type: package
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.89.0
-        url: https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.89.0
+              url: https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
 
-  build:
-    preprocessing: ./bootstrap.sh --prefix=${boost.prefix}
-    configurations:
-      command: ./b2
-      options:
-        - name: cxxstd
-          description: C++ standard version
-          enabled_value:
-            default: 20
+    build:
+        preprocessing: ./bootstrap.sh --prefix=${boost.prefix}
+        configurations:
+            command: ./b2
+            options:
+                - name: cxxstd
+                  description: C++ standard version
+                  enabled_value:
+                      default: 20
 
-        - name: variant
-          description: Build variant
-          enabled_value:
-            default: release
+                - name: variant
+                  description: Build variant
+                  enabled_value:
+                      default: release
 
-        - name: link
-          description: Link type
-          enabled_value:
-            default: shared
+                - name: link
+                  description: Link type
+                  enabled_value:
+                      default: shared
 
-        - name: threading
-          description: Threading model
-          enabled_value:
-            default: multi
+                - name: threading
+                  description: Threading model
+                  enabled_value:
+                      default: multi
 
-        - name: cxxflags
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3 -fPIC
+                - name: cxxflags
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3 -fPIC
 
-        - name: linkflags
-          description: Linker flags
-          enabled_value:
-            default: ${boost.ldflags}
+                - name: linkflags
+                  description: Linker flags
+                  enabled_value:
+                      default: ${boost.ldflags}
 
-        - name: install
-          description: Install target
+                - name: install
+                  description: Install target
 
-  properties:
-    ldflags:
-      default: -L${boost.prefix}/lib -Wl,-rpath,${boost.prefix}/lib
-    includes:
-      default: -I${boost.prefix}/include
+    properties:
+        ldflags:
+            default: -L${boost.prefix}/lib -Wl,-rpath,${boost.prefix}/lib
+        includes:
+            default: -I${boost.prefix}/include

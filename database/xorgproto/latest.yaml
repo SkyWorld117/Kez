@@ -1,40 +1,41 @@
+---
 recipe:
-  name: xorgproto
-  description: X.Org Protocol headers
-  type: package
-  toolchain: autotools
+    name: xorgproto
+    description: X.Org Protocol headers
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 2024.1
-        url: https://www.x.org/releases/individual/proto/xorgproto-2024.1.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 2024.1
+              url: https://www.x.org/releases/individual/proto/xorgproto-2024.1.tar.xz
 
-  dependencies:
-    - util-macros
+    dependencies:
+        - util-macros
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${xorgproto.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${xorgproto.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    includes:
-      default: -I${xorgproto.prefix}/include
+    properties:
+        includes:
+            default: -I${xorgproto.prefix}/include

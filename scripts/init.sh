@@ -496,7 +496,7 @@ else
 fi
 
 
-# PHASE 5: Essential Tools for Fromager
+# PHASE 5: Essential Tools for Kez
 # ----------------------------------------------------
 
 # yaml-cpp
@@ -581,7 +581,7 @@ else
     echo "patchelf is already installed, skipping..."
 fi
 
-# Fromager
+# Kez
 # make -C "${KEZ_HOME}" -B -j"${KEZ_NPROC}"
 
 

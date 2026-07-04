@@ -1,61 +1,63 @@
+---
 recipe:
-  name: intel-oneapi-mkl
-  description: Intel oneAPI Math Kernel Library for high-performance math routines
-  type: vendor
+    name: intel-oneapi-mkl
+    description: Intel oneAPI Math Kernel Library for high-performance math routines
+    type: vendor
 
-  dependencies:
-    - intel-oneapi
+    dependencies:
+        - intel-oneapi
 
-  build:
-    configurations:
-      options:
-        - name: fortran_format
-          description: Fortran Format [ gf | intel ]
-          user_configurable: true
-          enabled_value:
-            default: gf
-        - name: integer_size
-          description: Use ilp64 interface [ lp64 | ilp64 ]
-          user_configurable: true
-          enabled_value:
-            default: lp64
-        - name: multithreaded
-          description: Use multithreading
-          user_configurable: true
-          enabled:
-            default: false
-        - name: multithreading_library
-          description: Multithreading library [ gnu | tbb ]
-          user_configurable: true
-          enabled_value:
-            default: gnu
-        - name: mpi-family
-          description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
-          user_configurable: true
-          enabled_value:
-            default: openmpi
+    build:
+        configurations:
+            options:
+                - name: fortran_format
+                  description: Fortran Format [ gf | intel ]
+                  user_configurable: true
+                  enabled_value:
+                      default: gf
+                - name: integer_size
+                  description: Use ilp64 interface [ lp64 | ilp64 ]
+                  user_configurable: true
+                  enabled_value:
+                      default: lp64
+                - name: multithreaded
+                  description: Use multithreading
+                  user_configurable: true
+                  enabled:
+                      default: false
+                - name: multithreading_library
+                  description: Multithreading library [ gnu | tbb ]
+                  user_configurable: true
+                  enabled_value:
+                      default: gnu
+                - name: mpi-family
+                  description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
+                  user_configurable: true
+                  enabled_value:
+                      default: openmpi
 
-  properties:
-    prefix: ${intel-oneapi.prefix}/mkl/latest
-    ldflags:
-      default: -L${intel-oneapi.prefix}/mkl/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/mkl/latest/lib -Wl,--no-as-needed -m64
-    libs:
-      default: -lmkl_sequential -lmkl_core -lpthread -lm -ldl
-      conditions:
-        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true
-          action: prepend
-          value: -lmkl_${intel-oneapi-mkl.config.fortran_format}_${intel-oneapi-mkl.config.integer_size}
-        - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true && ${intel-oneapi-mkl.config.multithreaded} true
-          action: prepend
-          value: -lmkl_${intel-oneapi-mkl.config.multithreading_library}_thread
-        - condition: ${intel-oneapi-mkl.config.multithreaded} true && ${intel-oneapi-mkl.config.multithreading_library} true gnu
-          action: append
-          value: -lgomp
-        - condition: ${scalapack.use-intel-oneapi-mkl} true
-          action: prepend
-          value: -lmkl_scalapack_${intel-oneapi-mkl.config.integer_size} -lmkl_blacs_${intel-oneapi-mkl.config.mpi-family}_${intel-oneapi-mkl.config.integer_size}
-        - condition: ${fftw3-api.use-intel-oneapi-mkl} true
-          action: append
-          value: -lmkl_rt
-    includes:
-      default: -I${intel-oneapi.prefix}/mkl/latest/include -m64
+    properties:
+        prefix: ${intel-oneapi.prefix}/mkl/latest
+        ldflags:
+            default: -L${intel-oneapi.prefix}/mkl/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/mkl/latest/lib -Wl,--no-as-needed -m64
+        libs:
+            default: -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+            conditions:
+                - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true
+                  action: prepend
+                  value: -lmkl_${intel-oneapi-mkl.config.fortran_format}_${intel-oneapi-mkl.config.integer_size}
+                - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true && ${intel-oneapi-mkl.config.multithreaded} true
+                  action: prepend
+                  value: -lmkl_${intel-oneapi-mkl.config.multithreading_library}_thread
+                - condition: ${intel-oneapi-mkl.config.multithreaded} true && ${intel-oneapi-mkl.config.multithreading_library} true gnu
+                  action: append
+                  value: -lgomp
+                - condition: ${scalapack.use-intel-oneapi-mkl} true
+                  action: prepend
+                  value: -lmkl_scalapack_${intel-oneapi-mkl.config.integer_size} 
+                      -lmkl_blacs_${intel-oneapi-mkl.config.mpi-family}_${intel-oneapi-mkl.config.integer_size}
+                - condition: ${fftw3-api.use-intel-oneapi-mkl} true
+                  action: append
+                  value: -lmkl_rt
+        includes:
+            default: -I${intel-oneapi.prefix}/mkl/latest/include -m64

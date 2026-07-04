@@ -1,54 +1,55 @@
+---
 recipe:
-  name: libpciaccess
-  description: Generic PCI access library.
-  type: package
-  toolchain: autotools
+    name: libpciaccess
+    description: Generic PCI access library.
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 0.17
-        url: https://www.x.org/archive/individual/lib/libpciaccess-0.17.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 0.17
+              url: https://www.x.org/archive/individual/lib/libpciaccess-0.17.tar.xz
 
-  dependencies:
-    - zlib
+    dependencies:
+        - zlib
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libpciaccess.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libpciaccess.prefix}
 
-        - name: --with-zlib
-          description: Use zlib for compression
-          enabled_value:
-            default: ${zlib.prefix}
+                - name: --with-zlib
+                  description: Use zlib for compression
+                  enabled_value:
+                      default: ${zlib.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${zlib.ldflags}
-    stages:
-      - target: ~
-      - target: install
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${zlib.ldflags}
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libpciaccess.prefix}/lib -Wl,-rpath,${libpciaccess.prefix}/lib
-    libs:
-      default: -lpciaccess
-    includes:
-      default: -I${libpciaccess.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libpciaccess.prefix}/lib -Wl,-rpath,${libpciaccess.prefix}/lib
+        libs:
+            default: -lpciaccess
+        includes:
+            default: -I${libpciaccess.prefix}/include

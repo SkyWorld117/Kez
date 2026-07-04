@@ -1,56 +1,57 @@
+---
 recipe:
-  name: pythia
-  description: Pythia is a standard tool for the generation of high-energy physics events.
-  type: package
+    name: pythia
+    description: Pythia is a standard tool for the generation of high-energy physics events.
+    type: package
   # It's not really autotools, but the build system is similar enough, whatever.
-  toolchain: autotools
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 8.3.16
-        url: https://pythia.org/download/pythia83/pythia8316.tar
+    source:
+        type: tarball
+        releases:
+            - version: 8.3.16
+              url: https://pythia.org/download/pythia83/pythia8316.tar
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${pythia.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${pythia.prefix}
 
-        - name: --with-hepmc3
-          description: Use HepMC3 for event record I/O
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_value:
-            default: ${hepmc3.prefix}
-          disabled_format: --without-hepmc3
-          requires: [hepmc3]
+                - name: --with-hepmc3
+                  description: Use HepMC3 for event record I/O
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${hepmc3.prefix}
+                  disabled_format: --without-hepmc3
+                  requires: [hepmc3]
 
-        - name: --with-openmp
-          description: Enable OpenMP support
-          user_configurable: true
-          enabled:
-            default: false
+                - name: --with-openmp
+                  description: Enable OpenMP support
+                  user_configurable: true
+                  enabled:
+                      default: false
 
-        - name: --cxx
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: --cxx
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: --cxx-common
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3 -fPIC
-    stages:
-      - target: ~
-      - target: install
+                - name: --cxx-common
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3 -fPIC
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${pythia.prefix}/lib -Wl,-rpath,${pythia.prefix}/lib
-    includes:
-      default: -I${pythia.prefix}/include
+    properties:
+        ldflags:
+            default: -L${pythia.prefix}/lib -Wl,-rpath,${pythia.prefix}/lib
+        includes:
+            default: -I${pythia.prefix}/include

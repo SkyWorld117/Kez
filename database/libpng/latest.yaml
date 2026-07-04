@@ -1,41 +1,42 @@
+---
 recipe:
-  name: libpng
-  description: A library for reading and writing PNG images
-  type: package
-  toolchain: autotools
+    name: libpng
+    description: A library for reading and writing PNG images
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.6.58
-        url: https://download.sourceforge.net/libpng/libpng-1.6.58.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 1.6.58
+              url: https://download.sourceforge.net/libpng/libpng-1.6.58.tar.xz
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${libpng.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${libpng.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${libpng.prefix}/lib -Wl,-rpath,${libpng.prefix}/lib
-    libs:
-      default: -lpng
-    includes:
-      default: -I${libpng.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libpng.prefix}/lib -Wl,-rpath,${libpng.prefix}/lib
+        libs:
+            default: -lpng
+        includes:
+            default: -I${libpng.prefix}/include

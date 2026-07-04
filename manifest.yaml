@@ -1,54 +1,55 @@
+---
 project:
-  name: Kez
-  abbrev: kez
-  version: dev
+    name: Kez
+    abbrev: kez
+    version: dev
 
 dependencies:
-  argparse: latest
-  patchelf: latest
-  googletest: latest
-  yaml-cpp: latest
-  yq: latest
+    argparse: latest
+    patchelf: latest
+    googletest: latest
+    yaml-cpp: latest
+    yq: latest
 
 # System libraries and tools (installed in the system cellar)
 system-stack:
   # Core libraries
-  gmp: latest
-  mpfr: latest
-  mpc: latest
-  isl: latest
+    gmp: latest
+    mpfr: latest
+    mpc: latest
+    isl: latest
 
   # Compression libraries
-  zlib: latest
-  xz: latest
-  lz4: latest
-  zstd: latest
+    zlib: latest
+    xz: latest
+    lz4: latest
+    zstd: latest
 
   # Compiling tools
-  binutils: latest
-  gcc: 11.5.0
-  elfutils: latest
+    binutils: latest
+    gcc: 11.5.0
+    elfutils: latest
 
   # Build tools
-  m4: latest
-  autoconf: latest
-  automake: latest
-  libtool: latest
-  make: latest
-  rust: latest
-  cmake: latest
-  perl: latest
-  git: latest
+    m4: latest
+    autoconf: latest
+    automake: latest
+    libtool: latest
+    make: latest
+    rust: latest
+    cmake: latest
+    perl: latest
+    git: latest
 
 # Relative paths to the work directory
 paths:
-  environment: env
-  system: env/system
-  utilities: env/utilities
-  compilers: env/compilers
-  mpis: env/mpis
-  vendors: env/vendors
-  applications: env/applications
-  cache: .cache
-  factories: factories
-  modulefiles: modulefiles
+    environment: env
+    system: env/system
+    utilities: env/utilities
+    compilers: env/compilers
+    mpis: env/mpis
+    vendors: env/vendors
+    applications: env/applications
+    cache: .cache
+    factories: factories
+    modulefiles: modulefiles

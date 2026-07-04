@@ -1,15 +1,16 @@
+---
 recipe:
-  name: hcoll
-  description: Modern Interface for Mellanox Fabric Collective Accelerator
-  type: external
+    name: hcoll
+    description: Modern Interface for Mellanox Fabric Collective Accelerator
+    type: external
 
   # This package should not be built from source
   # Use the system package instead
 
-  properties:
-    ldflags:
-      default: -L${hcoll.prefix}/lib -Wl,-rpath,${hcoll.prefix}/lib
-    libs:
-      default: -lhcoll
-    includes:
-      default: -I${hcoll.prefix}/include
+    properties:
+        ldflags:
+            default: -L${hcoll.prefix}/lib -Wl,-rpath,${hcoll.prefix}/lib
+        libs:
+            default: -lhcoll
+        includes:
+            default: -I${hcoll.prefix}/include

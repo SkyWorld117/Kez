@@ -1,9 +1,10 @@
+---
 BasedOnStyle: Google
 
-ColumnLimit:  100
-IndentWidth:  4
-TabWidth:     4
-UseTab:       Never
+ColumnLimit: 100
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
 
 AlignConsecutiveMacros: true
 AlignConsecutiveAssignments: true

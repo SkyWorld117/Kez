@@ -1,15 +1,16 @@
+---
 recipe:
-  name: git-lfs
-  description: Git Large File Storage
-  type: package
+    name: git-lfs
+    description: Git Large File Storage
+    type: package
 
-  source:
-    type: tarball
-    releases:
-      - version: 3.7.1-x86_64
-        url: https://github.com/git-lfs/git-lfs/releases/download/v3.7.1/git-lfs-linux-amd64-v3.7.1.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 3.7.1-x86_64
+              url: https://github.com/git-lfs/git-lfs/releases/download/v3.7.1/git-lfs-linux-amd64-v3.7.1.tar.gz
 
-  build:
-    postprocessing: PREFIX=${git-lfs.prefix} ./install.sh
+    build:
+        postprocessing: PREFIX=${git-lfs.prefix} ./install.sh
 
-  properties: ~
+    properties:

@@ -1,8 +1,9 @@
+---
 recipe:
-  name: blas
-  description: Basic Linear Algebra Subprograms
-  type: abstract
+    name: blas
+    description: Basic Linear Algebra Subprograms
+    type: abstract
 
-  implementations:
-    - openblas
-    - intel-oneapi-mkl
+    implementations:
+        - openblas
+        - intel-oneapi-mkl

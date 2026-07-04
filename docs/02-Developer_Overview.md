@@ -1,18 +1,18 @@
 # Developer Overview
 
-This document provides an overview of the developer's perspective on the Fromager project, including its structure, components, and development practices.
+This document provides an overview of the developer's perspective on the Kez project, including its structure, components, and development practices.
 
 
 ## Source Code Structure
 
-The source code of Fromager is organized into several key directories:
+The source code of Kez is organized into several key directories:
 
-- `bin/`: Contains executable scripts and Fromager's binaries that are built during `fgr init`
+- `bin/`: Contains executable scripts and Kez's binaries that are built during `fgr init`
 - `database/`: Contains all the package metadata in YAML format
 - `docs/`: Contains all the documentation files
-- `src/`: Contains the source code of Fromager, including the core logic and utilities (see more in [`src` Directory](#src-directory))
+- `src/`: Contains the source code of Kez, including the core logic and utilities (see more in [`src` Directory](#src-directory))
 - `main.sh`: The main script that acts as a bridge between the bash frontend and the C++ backend
-- `setup-env.sh`: A script to set up the Fromager environment
+- `setup-env.sh`: A script to set up the Kez environment
 
 ### `src` Directory
 
@@ -50,7 +50,7 @@ This module is mainly used by `user_config_gen` to generate the user configurati
 
 #### `package_format_verifier`
 
-`package_format_verifier` is a helper tool of package developers to verify whether their YAML configuration files are in the correct format. It can also be used as a self check tool for Fromager.
+`package_format_verifier` is a helper tool of package developers to verify whether their YAML configuration files are in the correct format. It can also be used as a self check tool for Kez.
 
 Although `parser` also performs certain degrees of checking, `package_format_verifier` is supposed to offer more comprehensive reports when encountering issues. `package_format_verifier` is developer-focused while `parser` is user-focused.
 
@@ -69,10 +69,10 @@ It outputs structured bash commands based on the configurations, stored in `${TA
 `user_config_generator` is responsible for generating the user configuration file based on the resolved dependencies. It takes the output from the `dependency_resolver` and produces a YAML file that can be used by the package manager.
 
 
-## `$FROMAGER_WORKDIR` Structure
+## `$KEZ_WORKDIR` Structure
 
 ```
-$FROMAGER_WORKDIR
+$KEZ_WORKDIR
 ├── config.yaml
 ├── cellars
     ├── system
@@ -92,7 +92,7 @@ $FROMAGER_WORKDIR
     ├── ... [<Your custom cellars>]
 ```
 
-As discussed in [Getting Started](01-Getting_Started.md#configuring) `config.yaml` contains the basic configurations of Fromager.
+As discussed in [Getting Started](01-Getting_Started.md#configuring) `config.yaml` contains the basic configurations of Kez.
 
 Here we focus on `cellars`. `cellars` contains a collection of prefixes that act like virtual environments for different end-user applications. For example, one can create a `CONQUEST-1.4` cellar to install specific versions of dependencies required by that application without affecting other applications.
 

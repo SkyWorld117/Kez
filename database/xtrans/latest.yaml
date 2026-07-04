@@ -1,40 +1,41 @@
+---
 recipe:
-  name: xtrans
-  description: X Transport library
-  type: package
-  toolchain: autotools
+    name: xtrans
+    description: X Transport library
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.6.0
-        url: https://www.x.org/releases/individual/lib/xtrans-1.6.0.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 1.6.0
+              url: https://www.x.org/releases/individual/lib/xtrans-1.6.0.tar.xz
 
-  dependencies:
-    - util-macros
+    dependencies:
+        - util-macros
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${xtrans.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${xtrans.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    includes:
-      default: -I${xtrans.prefix}/include
+    properties:
+        includes:
+            default: -I${xtrans.prefix}/include

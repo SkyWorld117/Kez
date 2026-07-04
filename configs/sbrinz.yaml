@@ -1,18 +1,19 @@
+---
 settings:
-  n_proc_for_build: 32
+    n_proc_for_build: 32
 
-  default_compiler: system
+    default_compiler: system
 
-  external:
-    rdma-core:
-      prefix: /usr
-      version: 61.0
-    hcoll:
-      prefix: ~
-      version: ~
-    gdrcopy:
-      prefix: /usr
-      version: 2.5.2
-    slurm:
-      prefix: /cm/local/apps/slurm/24.11
-      version: 24.11
+    external:
+        rdma-core:
+            prefix: /usr
+            version: 61.0
+        hcoll:
+            prefix:
+            version:
+        gdrcopy:
+            prefix: /usr
+            version: 2.5.2
+        slurm:
+            prefix: /cm/local/apps/slurm/24.11
+            version: 24.11

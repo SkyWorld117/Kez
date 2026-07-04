@@ -1,41 +1,42 @@
+---
 recipe:
-  name: numactl
-  description: NUMA support for Linux
-  type: package
-  toolchain: autotools
+    name: numactl
+    description: NUMA support for Linux
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 2.0.19
-        url: https://github.com/numactl/numactl/releases/download/v2.0.19/numactl-2.0.19.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 2.0.19
+              url: https://github.com/numactl/numactl/releases/download/v2.0.19/numactl-2.0.19.tar.gz
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${numactl.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${numactl.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
-    stages:
-      - target: ~
-      - target: install
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
+        stages:
+            - target:
+            - target: install
 
-  properties:
-    ldflags:
-      default: -L${numactl.prefix}/lib -Wl,-rpath,${numactl.prefix}/lib
-    libs:
-      default: -lnuma
-    includes:
-      default: -I${numactl.prefix}/include
+    properties:
+        ldflags:
+            default: -L${numactl.prefix}/lib -Wl,-rpath,${numactl.prefix}/lib
+        libs:
+            default: -lnuma
+        includes:
+            default: -I${numactl.prefix}/include

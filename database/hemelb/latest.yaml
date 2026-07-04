@@ -1,71 +1,74 @@
+---
 recipe:
-  name: hemelb
-  description: HemePure LBM blood flow solver (UCL-CCS); 2-stage build — bundled deps first, then src/
-  type: package
-  toolchain: cmake
+    name: hemelb
+    description: HemePure LBM blood flow solver (UCL-CCS); 2-stage build — bundled deps first, then src/
+    type: package
+    toolchain: cmake
 
-  source:
-    type: git
-    url: https://github.com/UCL-CCS/HemePure
-    releases:
-      - version: master
-        tag: master
+    source:
+        type: git
+        url: https://github.com/UCL-CCS/HemePure
+        releases:
+            - version: master
+              tag: master
 
-  dependencies:
-    - mpi
+    dependencies:
+        - mpi
 
-  build:
-    # Stage 1: build bundled deps (parmetis, tinyxml2, ctemplate, tirpc, etc.) in dep/build/.
-    # /usr/bin/cmake (3.26.5) is prepended to PATH so that sub-project cmake invocations inside
-    # dep/CMakeLists.txt ExternalProject_Add calls use 3.26.5, not Fromager's cmake 4.x which
-    # rejects old cmake_minimum_required(VERSION < 3.5) calls present in these bundled deps.
-    # The PATH export persists for the main cmake stage below (src/ also has VERSION 3.1).
-    # Preprocessing ends in src/ so Fromager's cmake toolchain runs mkdir build && cmake ../ there.
-    preprocessing: export PATH="/usr/bin:$(dirname ${mpi.c}):$PATH" && rm -rf ${source}/dep/build && mkdir -p ${source}/dep/build && cd ${source}/dep/build && cmake -DCMAKE_C_COMPILER=${mpi.c} -DCMAKE_CXX_COMPILER=${mpi.cxx} -DHEMELB_SUBPROJECT_MAKE_JOBS=8 -DCMAKE_BUILD_TYPE=Release .. && make -j && cd ${source}/src
+    build:
+        # Stage 1: build bundled deps (parmetis, tinyxml2, ctemplate, tirpc, etc.) in dep/build/.
+        # /usr/bin/cmake (3.26.5) is prepended to PATH so that sub-project cmake invocations inside
+        # dep/CMakeLists.txt ExternalProject_Add calls use 3.26.5, not Kez's cmake 4.x which
+        # rejects old cmake_minimum_required(VERSION < 3.5) calls present in these bundled deps.
+        # The PATH export persists for the main cmake stage below (src/ also has VERSION 3.1).
+        # Preprocessing ends in src/ so Kez's cmake toolchain runs mkdir build && cmake ../ there.
+        preprocessing: export PATH="/usr/bin:$(dirname ${mpi.c}):$PATH" && rm -rf ${source}/dep/build && mkdir -p ${source}/dep/build && cd 
+            ${source}/dep/build && cmake -DCMAKE_C_COMPILER=${mpi.c} -DCMAKE_CXX_COMPILER=${mpi.cxx} -DHEMELB_SUBPROJECT_MAKE_JOBS=8 
+            -DCMAKE_BUILD_TYPE=Release .. && make -j && cd ${source}/src
 
-    configurations:
-      options:
-        - name: -DCMAKE_C_COMPILER
-          description: C compiler — MPI wrapper so find_package(MPI) resolves correctly
-          enabled_value:
-            default: ${mpi.c}
+        configurations:
+            options:
+                - name: -DCMAKE_C_COMPILER
+                  description: C compiler — MPI wrapper so find_package(MPI) resolves correctly
+                  enabled_value:
+                      default: ${mpi.c}
 
-        - name: -DCMAKE_CXX_COMPILER
-          description: C++ compiler — MPI wrapper
-          enabled_value:
-            default: ${mpi.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  description: C++ compiler — MPI wrapper
+                  enabled_value:
+                      default: ${mpi.cxx}
 
-        - name: -DHEMELB_USE_SSE3
-          description: Enable SSE3 vectorisation
-          user_configurable: true
-          enabled_value:
-            default: ON
+                - name: -DHEMELB_USE_SSE3
+                  description: Enable SSE3 vectorisation
+                  user_configurable: true
+                  enabled_value:
+                      default: ON
 
-        - name: -DHEMELB_USE_AVX2
-          description: Enable AVX2 vectorisation
-          user_configurable: true
-          enabled_value:
-            default: ON
+                - name: -DHEMELB_USE_AVX2
+                  description: Enable AVX2 vectorisation
+                  user_configurable: true
+                  enabled_value:
+                      default: ON
 
-        - name: -DHEMELB_USE_GMYPLUS
-          description: Disable GMY+ geometry format (not needed for benchmark)
-          enabled_value:
-            default: OFF
+                - name: -DHEMELB_USE_GMYPLUS
+                  description: Disable GMY+ geometry format (not needed for benchmark)
+                  enabled_value:
+                      default: OFF
 
-        - name: -DHEMELB_USE_MPI_WIN
-          description: Disable MPI window-based communication (SRCbuild_Benchmark default)
-          enabled_value:
-            default: OFF
+                - name: -DHEMELB_USE_MPI_WIN
+                  description: Disable MPI window-based communication (SRCbuild_Benchmark default)
+                  enabled_value:
+                      default: OFF
 
-        - name: -DCTEMPLATE_LIBRARY
-          description: Static ctemplate library — avoids shared-lib RPATH issue after source cleanup
-          enabled_value:
-            default: ${source}/dep/install/lib/libctemplate.a
+                - name: -DCTEMPLATE_LIBRARY
+                  description: Static ctemplate library — avoids shared-lib RPATH issue after source cleanup
+                  enabled_value:
+                      default: ${source}/dep/install/lib/libctemplate.a
 
-    stages:
-      - target: ~
+        stages:
+            - target:
 
-    # Binary is named hemepure and lives at the root of the cmake build tree (src/build/).
-    postprocessing: mkdir -p ${hemelb.prefix}/bin && cp ${source}/src/build/hemepure ${hemelb.prefix}/bin/hemepure
+        # Binary is named hemepure and lives at the root of the cmake build tree (src/build/).
+        postprocessing: mkdir -p ${hemelb.prefix}/bin && cp ${source}/src/build/hemepure ${hemelb.prefix}/bin/hemepure
 
-  properties: ~
+    properties:

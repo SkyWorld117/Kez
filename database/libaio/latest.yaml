@@ -1,28 +1,29 @@
+---
 recipe:
-  name: libaio
-  description: The Linux-native asynchronous I/O facility
-  type: package
-  toolchain: makefile
+    name: libaio
+    description: The Linux-native asynchronous I/O facility
+    type: package
+    toolchain: makefile
 
-  source:
-    type: git
-    url: https://github.com/JingchengLi/libaio.git
-    releases:
-      - version: master
-        tag: master
+    source:
+        type: git
+        url: https://github.com/JingchengLi/libaio.git
+        releases:
+            - version: master
+              tag: master
 
-  build:
-    stages:
-      - target: install
-        configurations:
-          options:
-            - name: prefix
-              description: Installation prefix
-              enabled_value: 
-                default: ${libaio.prefix}
+    build:
+        stages:
+            - target: install
+              configurations:
+                  options:
+                      - name: prefix
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${libaio.prefix}
 
-  properties:
-    ldflags:
-      default: -L${libaio.prefix}/lib -Wl,-rpath,${libaio.prefix}/lib
-    includes:
-      default: -I${libaio.prefix}/include
+    properties:
+        ldflags:
+            default: -L${libaio.prefix}/lib -Wl,-rpath,${libaio.prefix}/lib
+        includes:
+            default: -I${libaio.prefix}/include

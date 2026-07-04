@@ -1,59 +1,60 @@
+---
 recipe:
-  name: python
-  description: Python Programming Language
-  type: package
-  toolchain: autotools
+    name: python
+    description: Python Programming Language
+    type: package
+    toolchain: autotools
 
-  source:
-    type: tarball
-    releases:
-      - version: 3.13.9
-        url: https://www.python.org/ftp/python/3.13.9/Python-3.13.9.tar.xz
-      - version: 3.12.12
-        url: https://www.python.org/ftp/python/3.12.12/Python-3.12.12.tar.xz
-      - version: 3.11.14
-        url: https://www.python.org/ftp/python/3.11.14/Python-3.11.14.tar.xz
-      - version: 3.10.19
-        url: https://www.python.org/ftp/python/3.10.19/Python-3.10.19.tar.xz
+    source:
+        type: tarball
+        releases:
+            - version: 3.13.9
+              url: https://www.python.org/ftp/python/3.13.9/Python-3.13.9.tar.xz
+            - version: 3.12.12
+              url: https://www.python.org/ftp/python/3.12.12/Python-3.12.12.tar.xz
+            - version: 3.11.14
+              url: https://www.python.org/ftp/python/3.11.14/Python-3.11.14.tar.xz
+            - version: 3.10.19
+              url: https://www.python.org/ftp/python/3.10.19/Python-3.10.19.tar.xz
 
-  build:
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${python.prefix}
+    build:
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${python.prefix}
 
-        - name: --enable-shared
-          description: Build shared library
+                - name: --enable-shared
+                  description: Build shared library
 
-        - name: --enable-optimizations
-          description: Enable optimizations
+                - name: --enable-optimizations
+                  description: Enable optimizations
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        ldflags:
             default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
-    stages:
-      - target: ~
-      - target: install
-
-  properties:
-    ldflags:
-      default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
-    libs:
-      default: -lpython3
-    includes:
-      default: -I${python.prefix}/include
+        libs:
+            default: -lpython3
+        includes:
+            default: -I${python.prefix}/include
 

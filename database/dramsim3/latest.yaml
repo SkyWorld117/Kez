@@ -1,81 +1,82 @@
+---
 recipe:
-  name: dramsim3
-  description: DRAM Simulator 3
-  type: package
-  toolchain: cmake
+    name: dramsim3
+    description: DRAM Simulator 3
+    type: package
+    toolchain: cmake
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.0.0
-        url: https://github.com/umd-memsys/DRAMsim3/archive/refs/tags/1.0.0.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.0.0
+              url: https://github.com/umd-memsys/DRAMsim3/archive/refs/tags/1.0.0.tar.gz
 
-  build:
-    postprocessing: mkdir -p ${dramsim3.prefix}/build && cp dramsim3main ${dramsim3.prefix}/build && cp ../libdramsim3.so ${dramsim3.prefix}
+    build:
+        postprocessing: mkdir -p ${dramsim3.prefix}/build && cp dramsim3main ${dramsim3.prefix}/build && cp ../libdramsim3.so ${dramsim3.prefix}
 
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          description: Installation prefix
-          enabled_value:
-            default: ${dramsim3.prefix}
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${dramsim3.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          description: Build type
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  description: Build type
+                  enabled_value:
+                      default: Release
 
         # Specify c compiler
-        - name: -DCMAKE_C_COMPILER
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: -DCMAKE_C_COMPILER
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
         # Specify c flags
-        - name: -DCMAKE_C_FLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: -DCMAKE_C_FLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
         # Specify cxx compiler
-        - name: -DCMAKE_CXX_COMPILER
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
         # Specify cxx flags
-        - name: -DCMAKE_CXX_FLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: -DCMAKE_CXX_FLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: -DCMAKE_BUILD_RPATH
-          description: Build RPATH
-          enabled_value:
-            default: ${compiler.prefix}/lib64
+                - name: -DCMAKE_BUILD_RPATH
+                  description: Build RPATH
+                  enabled_value:
+                      default: ${compiler.prefix}/lib64
 
-        - name: -DCMAKE_INSTALL_RPATH
-          description: Install RPATH
-          enabled_value:
-            default: ${compiler.prefix}/lib64
+                - name: -DCMAKE_INSTALL_RPATH
+                  description: Install RPATH
+                  enabled_value:
+                      default: ${compiler.prefix}/lib64
 
         # LD flags
-        - name: -DCMAKE_EXE_LINKER_FLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${compiler.ldflags}
+                - name: -DCMAKE_EXE_LINKER_FLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${compiler.ldflags}
 
-        - name: -DCMAKE_POLICY_VERSION_MINIMUM
-          description: CMake policy version minimum
-          enabled_value:
-            default: 3.15
-    stages:
-      - target: ~
+                - name: -DCMAKE_POLICY_VERSION_MINIMUM
+                  description: CMake policy version minimum
+                  enabled_value:
+                      default: 3.15
+        stages:
+            - target:
 
-  properties:
-    ldflags:
-      default: -L${dramsim3.prefix}/ -Wl,-rpath,${dramsim3.prefix}
-    libs:
-      default: -ldramsim3
+    properties:
+        ldflags:
+            default: -L${dramsim3.prefix}/ -Wl,-rpath,${dramsim3.prefix}
+        libs:
+            default: -ldramsim3

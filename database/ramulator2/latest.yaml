@@ -1,70 +1,71 @@
+---
 recipe:
-  name: ramulator2
-  description: RAM module simulator
-  type: package
-  toolchain: cmake
+    name: ramulator2
+    description: RAM module simulator
+    type: package
+    toolchain: cmake
 
-  source:
-    type: git
-    url: https://github.com/CMU-SAFARI/ramulator2.git
-    releases:
-      - version: scc25
-        tag: main
+    source:
+        type: git
+        url: https://github.com/CMU-SAFARI/ramulator2.git
+        releases:
+            - version: scc25
+              tag: main
 
-  build:
-    preprocessing: |-
-      curl -LJO https://github.com/sstsimulator/sst-elements/releases/download/v15.0.0_Final/sstelements-15.0.0.tar.gz
-      tar xf sstelements-15.0.0.tar.gz
-      cp ./sst-elements/src/sst/elements/memHierarchy/membackend/ramulator2/sst_frontend.cpp ./src/frontend/impl/external_wrapper/
-      sed -i.bak '19a impl/external_wrapper/sst_frontend.cpp' ./src/frontend/CMakeLists.txt
-    postprocessing: mkdir -p ${ramulator2.prefix} && cp ./ramulator2 ${ramulator2.prefix}
+    build:
+        preprocessing: |-
+            curl -LJO https://github.com/sstsimulator/sst-elements/releases/download/v15.0.0_Final/sstelements-15.0.0.tar.gz
+            tar xf sstelements-15.0.0.tar.gz
+            cp ./sst-elements/src/sst/elements/memHierarchy/membackend/ramulator2/sst_frontend.cpp ./src/frontend/impl/external_wrapper/
+            sed -i.bak '19a impl/external_wrapper/sst_frontend.cpp' ./src/frontend/CMakeLists.txt
+        postprocessing: mkdir -p ${ramulator2.prefix} && cp ./ramulator2 ${ramulator2.prefix}
 
-    configurations:
-      options:
-        - name: -DCMAKE_INSTALL_PREFIX
-          description: Installation prefix
-          enabled_value:
-            default: ${dramsim3.prefix}
+        configurations:
+            options:
+                - name: -DCMAKE_INSTALL_PREFIX
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${dramsim3.prefix}
 
-        - name: -DCMAKE_BUILD_TYPE
-          description: Build type
-          enabled_value:
-            default: Release
+                - name: -DCMAKE_BUILD_TYPE
+                  description: Build type
+                  enabled_value:
+                      default: Release
 
         # Specify cxx compiler
-        - name: -DCMAKE_CXX_COMPILER
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: -DCMAKE_CXX_COMPILER
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
         # Specify cxx flags
-        - name: -DCMAKE_CXX_FLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: -DCMAKE_CXX_FLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: -DCMAKE_BUILD_RPATH
-          description: Build RPATH
-          enabled_value:
-            default: ${compiler.prefix}/lib64
+                - name: -DCMAKE_BUILD_RPATH
+                  description: Build RPATH
+                  enabled_value:
+                      default: ${compiler.prefix}/lib64
 
-        - name: -DCMAKE_INSTALL_RPATH
-          description: Install RPATH
-          enabled_value:
-            default: ${compiler.prefix}/lib64
+                - name: -DCMAKE_INSTALL_RPATH
+                  description: Install RPATH
+                  enabled_value:
+                      default: ${compiler.prefix}/lib64
 
-        - name: -DCMAKE_EXE_LINKER_FLAGS
-          description: Linker flags
-          enabled_value:
-            default: -L${compiler.prefix}/lib64 -Wl,-rpath,${compiler.prefix}/lib64
+                - name: -DCMAKE_EXE_LINKER_FLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: -L${compiler.prefix}/lib64 -Wl,-rpath,${compiler.prefix}/lib64
 
         # Allow for older Cmake version
-        - name: -DCMAKE_POLICY_VERSION_MINIMUM
-          description: Minimum CMake policy version
-          enabled_value:
-            default: 3.15
-    stages:
-      - target: ~
+                - name: -DCMAKE_POLICY_VERSION_MINIMUM
+                  description: Minimum CMake policy version
+                  enabled_value:
+                      default: 3.15
+        stages:
+            - target:
 
-  properties: ~
+    properties:

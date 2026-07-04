@@ -1,21 +1,21 @@
-ifndef FROMAGER_WORKDIR
-$(error FROMAGER_WORKDIR is not set; source setup-env.sh first)
+ifndef KEZ_WORKDIR
+$(error KEZ_WORKDIR is not set; source setup-env.sh first)
 endif
 
-FROMAGER_SYSTEM ?= $(FROMAGER_WORKDIR)/env/system
+KEZ_SYSTEM ?= $(KEZ_WORKDIR)/env/system
 
 ifeq ($(origin CXX), default)
-CXX := $(FROMAGER_SYSTEM)/bin/g++
+CXX := $(KEZ_SYSTEM)/bin/g++
 endif
 ifeq ($(origin AR), default)
-AR := $(FROMAGER_SYSTEM)/bin/ar
+AR := $(KEZ_SYSTEM)/bin/ar
 endif
 
-CPPFLAGS := -Iinclude -I$(FROMAGER_SYSTEM)/include -DFROMAGER_SOURCE_DIR=\"$(CURDIR)\"
+CPPFLAGS := -Iinclude -I$(KEZ_SYSTEM)/include -DKEZ_SOURCE_DIR=\"$(CURDIR)\"
 CXXFLAGS ?= -O3
 CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic -MMD -MP
-LDFLAGS := -L$(FROMAGER_SYSTEM)/lib -L$(FROMAGER_SYSTEM)/lib64 \
-	-Wl,-rpath,$(FROMAGER_SYSTEM)/lib -Wl,-rpath,$(FROMAGER_SYSTEM)/lib64
+LDFLAGS := -L$(KEZ_SYSTEM)/lib -L$(KEZ_SYSTEM)/lib64 \
+	-Wl,-rpath,$(KEZ_SYSTEM)/lib -Wl,-rpath,$(KEZ_SYSTEM)/lib64
 LDLIBS := -lyaml-cpp
 TEST_LDLIBS := -lgtest -lgtest_main -pthread
 
@@ -39,7 +39,7 @@ LIB_SOURCES := \
 	$(SRC_DIR)/utils/string_utils.cpp
 LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 TEST_OBJECT := $(OBJ_DIR)/tests/database_test.o
-LIBRARY := $(LIB_DIR)/libfromager.a
+LIBRARY := $(LIB_DIR)/libkez.a
 TEST_BINARY := $(BIN_DIR)/test_database
 
 .DEFAULT_GOAL := all

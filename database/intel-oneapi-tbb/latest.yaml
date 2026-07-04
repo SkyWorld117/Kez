@@ -1,16 +1,17 @@
+---
 recipe:
-  name: intel-oneapi-tbb
-  description: Intel oneAPI Threading Building Blocks for parallel programming
-  type: vendor
+    name: intel-oneapi-tbb
+    description: Intel oneAPI Threading Building Blocks for parallel programming
+    type: vendor
 
-  dependencies:
-    - intel-oneapi
+    dependencies:
+        - intel-oneapi
 
-  properties:
-    prefix: ${intel-oneapi.prefix}/tbb/latest
-    ldflags:
-      default: -L${intel-oneapi.prefix}/tbb/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/tbb/latest/lib -Wl,--no-as-needed -m64
-    libs:
-      default: -ltbb -ltbbmalloc
-    includes:
-      default: -I${intel-oneapi.prefix}/tbb/latest/include
+    properties:
+        prefix: ${intel-oneapi.prefix}/tbb/latest
+        ldflags:
+            default: -L${intel-oneapi.prefix}/tbb/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/tbb/latest/lib -Wl,--no-as-needed -m64
+        libs:
+            default: -ltbb -ltbbmalloc
+        includes:
+            default: -I${intel-oneapi.prefix}/tbb/latest/include

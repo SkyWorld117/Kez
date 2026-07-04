@@ -1,65 +1,68 @@
+---
 recipe:
-  name: conquest
-  description: CONQUEST linear scaling DFT code
-  type: package
-  toolchain: makefile
+    name: conquest
+    description: CONQUEST linear scaling DFT code
+    type: package
+    toolchain: makefile
 
-  source:
-    type: tarball
-    releases:
-      - version: 1.4
-        url: https://github.com/OrderN/CONQUEST-release/archive/refs/tags/v1.4.tar.gz
+    source:
+        type: tarball
+        releases:
+            - version: 1.4
+              url: https://github.com/OrderN/CONQUEST-release/archive/refs/tags/v1.4.tar.gz
 
-  dependencies:
-    - blas
-    - lapack
-    - fftw3-api
-    - scalapack
-    - mpi
-    - libxc
+    dependencies:
+        - blas
+        - lapack
+        - fftw3-api
+        - scalapack
+        - mpi
+        - libxc
 
-  build:
-    preprocessing: cd ${source}/src && cp system/system.young.make system/system.make
-    postprocessing: mkdir -p ${conquest.prefix}/bin && cp ${source}/bin/Conquest ${conquest.prefix}/bin/
-    stages:
-      - target: ~
-        configurations:
-          options:
-            - name: FC
-              description: Fortran compiler
-              enabled_value:
-                default: ${mpi.fort}
+    build:
+        preprocessing: cd ${source}/src && cp system/system.young.make system/system.make
+        postprocessing: mkdir -p ${conquest.prefix}/bin && cp ${source}/bin/Conquest ${conquest.prefix}/bin/
+        stages:
+            - target:
+              configurations:
+                  options:
+                      - name: FC
+                        description: Fortran compiler
+                        enabled_value:
+                            default: ${mpi.fort}
 
-            - name: F77
-              description: Fortran 77 compiler
-              enabled_value:
-                default: ${mpi.fort}
+                      - name: F77
+                        description: Fortran 77 compiler
+                        enabled_value:
+                            default: ${mpi.fort}
 
-            - name: LINKFLAGS
-              description: Linker flags for Fortran
-              enabled_value:
-                default: ${compiler.omp_flags} ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} ${libxc.ldflags}
+                      - name: LINKFLAGS
+                        description: Linker flags for Fortran
+                        enabled_value:
+                            default: ${compiler.omp_flags} ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} 
+                                ${libxc.ldflags}
 
-            - name: COMPFLAGS
-              description: Fortran compiler flags
-              user_configurable: true
-              enabled_value:
-                default: -O3 -fallow-argument-mismatch ${compiler.omp_flags} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${fftw3-api.includes} ${libxc.includes}
+                      - name: COMPFLAGS
+                        description: Fortran compiler flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -O3 -fallow-argument-mismatch ${compiler.omp_flags} ${blas.includes} ${lapack.includes} ${scalapack.includes} 
+                                ${fftw3-api.includes} ${libxc.includes}
 
-            - name: LIBS
-              description: Libraries to link against
-              enabled_value:
-                default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fftw3-api.libs} ${libxc.libs}
+                      - name: LIBS
+                        description: Libraries to link against
+                        enabled_value:
+                            default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fftw3-api.libs} ${libxc.libs}
 
-            - name: XC_LIBRARY
-              description: XC library to link against
-              enabled_value:
-                default: LibXC_v5
+                      - name: XC_LIBRARY
+                        description: XC library to link against
+                        enabled_value:
+                            default: LibXC_v5
 
-            - name: MULT_KERN
-              description: Matrix multiplication kernel
-              user_configurable: true
-              enabled_value:
-                default: default
+                      - name: MULT_KERN
+                        description: Matrix multiplication kernel
+                        user_configurable: true
+                        enabled_value:
+                            default: default
 
-  properties: ~
+    properties:

@@ -1,94 +1,95 @@
+---
 recipe:
-  name: sst-core
-  description: Structural Simulation Toolkit Core
-  type: package
-  toolchain: autotools
+    name: sst-core
+    description: Structural Simulation Toolkit Core
+    type: package
+    toolchain: autotools
 
-  source:
-    type: git
-    url: https://github.com/sstsimulator/sst-core.git
-    releases:
-      - version: scc25
-        tag: 546dda2
-      - version: latest
-        tag: master
-    
-  dependencies:
-    - mpi
-    - python
+    source:
+        type: git
+        url: https://github.com/sstsimulator/sst-core.git
+        releases:
+            - version: scc25
+              tag: 546dda2
+            - version: latest
+              tag: master
 
-  build:
-    preprocessing: ./autogen.sh
-    postprocessing: |-
-      mkdir -p ${sst-core.prefix}/src
-      cp -r ${source}/src/* ${sst-core.prefix}/src/
-      cp -r ${source}/tests ${sst-core.prefix}/tests
-      sed -i 's|testsdir=.*|testsdir=${sst-core.prefix}/tests|' ${sst-core.prefix}/etc/sst/sstsimulator.conf
+    dependencies:
+        - mpi
+        - python
 
-    configurations:
-      options:
-        - name: --prefix
-          description: Installation prefix
-          enabled_value:
-            default: ${sst-core.prefix}
+    build:
+        preprocessing: ./autogen.sh
+        postprocessing: |-
+            mkdir -p ${sst-core.prefix}/src
+            cp -r ${source}/src/* ${sst-core.prefix}/src/
+            cp -r ${source}/tests ${sst-core.prefix}/tests
+            sed -i 's|testsdir=.*|testsdir=${sst-core.prefix}/tests|' ${sst-core.prefix}/etc/sst/sstsimulator.conf
 
-        - name: --with-python
-          description: Path to Python interpreter
-          enabled_value:
-            default: ${python.prefix}
+        configurations:
+            options:
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${sst-core.prefix}
 
-        - name: --with-hdf5
-          description: Use HDF5 statistics format
-          user_configurable: true
-          enabled:
-            default: false
-          enabled_value:
-            default: ${hdf5.prefix}
-          disabled_format: --without-hdf5
-          requires: [hdf5]
+                - name: --with-python
+                  description: Path to Python interpreter
+                  enabled_value:
+                      default: ${python.prefix}
 
-        - name: CC
-          description: C compiler
-          enabled_value:
-            default: ${compiler.c}
+                - name: --with-hdf5
+                  description: Use HDF5 statistics format
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${hdf5.prefix}
+                  disabled_format: --without-hdf5
+                  requires: [hdf5]
 
-        - name: CFLAGS
-          description: C compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
 
-        - name: CXX
-          description: C++ compiler
-          enabled_value:
-            default: ${compiler.cxx}
+                - name: CFLAGS
+                  description: C compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: CXXFLAGS
-          description: C++ compiler flags
-          user_configurable: true
-          enabled_value:
-            default: -O3
+                - name: CXX
+                  description: C++ compiler
+                  enabled_value:
+                      default: ${compiler.cxx}
 
-        - name: MPICC
-          description: MPI C compiler
-          enabled_value:
-            default: ${mpi.c}
-            
-        - name: MPICXX
-          description: MPI C++ compiler
-          enabled_value:
-            default: ${mpi.cxx}
+                - name: CXXFLAGS
+                  description: C++ compiler flags
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3
 
-        - name: LDFLAGS
-          description: Linker flags
-          enabled_value:
-            default: ${compiler.ldflags} ${python.ldflags} ${python.libs}
-    stages:
-      - target: ~
-      - target: install
+                - name: MPICC
+                  description: MPI C compiler
+                  enabled_value:
+                      default: ${mpi.c}
 
-  properties:
-    ldflags:
-      default: -L${sst-core.prefix}/lib -Wl,-rpath,${sst-core.prefix}/lib
-    includes:
-      default: -I${sst-core.prefix}/include
+                - name: MPICXX
+                  description: MPI C++ compiler
+                  enabled_value:
+                      default: ${mpi.cxx}
+
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${compiler.ldflags} ${python.ldflags} ${python.libs}
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        ldflags:
+            default: -L${sst-core.prefix}/lib -Wl,-rpath,${sst-core.prefix}/lib
+        includes:
+            default: -I${sst-core.prefix}/include
