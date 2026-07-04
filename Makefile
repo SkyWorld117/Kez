@@ -8,11 +8,11 @@ ifeq ($(origin CXX), default)
 CXX := $(KEZ_SYSTEM)/bin/g++
 endif
 ifeq ($(origin AR), default)
-AR := $(KEZ_SYSTEM)/bin/ar
+AR := $(shell $(CXX) -print-prog-name=gcc-ar)
 endif
 
 CPPFLAGS := -Iinclude -I$(KEZ_SYSTEM)/include -DKEZ_SOURCE_DIR=\"$(CURDIR)\"
-CXXFLAGS ?= -O3
+CXXFLAGS ?= -O3 -flto
 CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic -MMD -MP
 LDFLAGS := -L$(KEZ_SYSTEM)/lib -L$(KEZ_SYSTEM)/lib64 \
 	-Wl,-rpath,$(KEZ_SYSTEM)/lib -Wl,-rpath,$(KEZ_SYSTEM)/lib64
@@ -34,11 +34,19 @@ LIB_SOURCES := \
 	$(SRC_DIR)/database/errors.cpp \
 	$(SRC_DIR)/database/parser_utils.cpp \
 	$(SRC_DIR)/database/source_parser.cpp \
+	$(SRC_DIR)/dependency_resolver/advisor.cpp \
+	$(SRC_DIR)/dependency_resolver/essential_dependencies.cpp \
+	$(SRC_DIR)/dependency_resolver/optional_dependencies.cpp \
+	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \
+	$(SRC_DIR)/dependency_resolver/toposort.cpp \
 	$(SRC_DIR)/utils/bash_utils.cpp \
 	$(SRC_DIR)/utils/file_utils.cpp \
 	$(SRC_DIR)/utils/string_utils.cpp
 LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-TEST_OBJECT := $(OBJ_DIR)/tests/database_test.o
+TEST_SOURCES := \
+	tests/database_test.cpp \
+	tests/dependency_resolver_test.cpp
+TEST_OBJECTS := $(TEST_SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LIBRARY := $(LIB_DIR)/libkez.a
 TEST_BINARY := $(BIN_DIR)/test_database
 
@@ -54,7 +62,7 @@ test: $(TEST_BINARY)
 $(LIBRARY): $(LIB_OBJECTS) | $(LIB_DIR)
 	$(AR) rcs $@ $^
 
-$(TEST_BINARY): $(TEST_OBJECT) $(LIBRARY) | $(BIN_DIR)
+$(TEST_BINARY): $(TEST_OBJECTS) $(LIBRARY) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) $(TEST_LDLIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
@@ -71,4 +79,4 @@ $(LIB_DIR) $(BIN_DIR):
 clean:
 	rm -rf $(OBJ_DIR) $(LIBRARY) $(TEST_BINARY)
 
--include $(LIB_OBJECTS:.o=.d) $(TEST_OBJECT:.o=.d)
+-include $(LIB_OBJECTS:.o=.d) $(TEST_OBJECTS:.o=.d)
