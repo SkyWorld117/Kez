@@ -170,6 +170,9 @@ namespace {
         if (current_word_index == (utility ? 3 : 2)) {
             append(result, help_options());
         }
+        if (!contains_any(words, {"--dry-run", "-d"})) {
+            append(result, {"--dry-run", "-d"});
+        }
         if (!contains_any(words, {"--force", "-f"})) {
             append(result, {"--force", "-f"});
         }
@@ -204,20 +207,6 @@ namespace {
                                                   const std::vector<std::string>& words) {
         const std::string current  = word_at(words, current_word_index);
         const std::string previous = word_at(words, current_word_index - 1);
-        if (word_at(words, 2) == "parse") {
-            if (current_word_index == 3) {
-                std::vector<std::string> result = help_options();
-                append(result, filesystem_entries(current));
-                return result;
-            }
-            if (previous == "--prefix") {
-                return filesystem_entries(current);
-            }
-            if (!contains(words, "--prefix")) {
-                return {"--prefix"};
-            }
-            return {};
-        }
 
         if (previous == "--save" || previous == "-s") {
             return filesystem_entries(current);
@@ -225,7 +214,7 @@ namespace {
 
         std::vector<std::string> result;
         if (current_word_index == 2) {
-            append(result, {"parse", "-h", "--help"});
+            append(result, {"-h", "--help"});
         }
         append(result, database_packages());
         if (!contains_any(words, {"--save", "-s"})) {

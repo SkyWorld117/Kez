@@ -6,6 +6,7 @@
 #include <database/database.hpp>
 #include <filesystem>
 #include <iostream>
+#include <parser/user_config_parser.hpp>
 #include <string>
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
@@ -223,4 +224,13 @@ void emit_environment_deactivation(const std::filesystem::path& prefix,
                  "export PATH=\"$kez_new_path\"; unset "
               << variable
               << "; unset kez_remove_path kez_new_path kez_old_ifs kez_path_entry kez_path_parts\n";
+}
+
+void print_command_plan(const BashCommandPlan& plan) {
+    for (const PackageCommands& package : plan) {
+        INFO("Instructions for " + package.package + ":");
+        for (const std::string& command : package.commands) {
+            std::cout << " -  " << command << '\n';
+        }
+    }
 }

@@ -17,6 +17,7 @@
 namespace {
     struct InstallOptions {
         bool read_file  = false;
+        bool dry_run    = false;
         bool force      = false;
         bool with_slurm = false;
         std::string environment;
@@ -30,6 +31,7 @@ namespace {
                 << "Usage: kez utilities add [options] <package>...\n\n"
                    "Options:\n"
                    "  -r, --read             Treat the positional argument as a YAML file\n"
+                   "  -d, --dry-run           Show the commands that would be executed\n"
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                    "  -S, --with-slurm       Run scripts/install.sh through sbatch\n";
@@ -39,6 +41,7 @@ namespace {
                    "       kez install --read [options] <config.yaml>\n\n"
                    "Options:\n"
                    "  -r, --read             Treat the positional argument as a YAML file\n"
+                   "  -d, --dry-run           Show the commands that would be executed\n"
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
                    "  -C, --env NAME          Target application environment\n"
                    "      --cellar NAME       Compatibility alias for --env\n"
@@ -73,6 +76,8 @@ namespace {
             } else if (argument.rfind("--read=", 0) == 0) {
                 result.read_file = true;
                 result.positional.push_back(argument.substr(7));
+            } else if (argument == "-d" || argument == "--dry-run") {
+                result.dry_run = true;
             } else if (argument == "-f" || argument == "--force") {
                 result.force = true;
             } else if (argument == "-S" || argument == "--with-slurm") {
@@ -149,6 +154,10 @@ namespace {
         }
 
         const BashCommandPlan plan = parse_cmdline(user_config, prefix);
+        if (options.dry_run) {
+            print_command_plan(plan);
+            return;
+        }
         const std::filesystem::path plan_path =
             prefix / ".tmp" / ("install-plan-" + std::to_string(getpid()) + ".sh");
         write_install_plan(plan, plan_path);

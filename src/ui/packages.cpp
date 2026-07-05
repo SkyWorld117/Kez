@@ -42,55 +42,7 @@ namespace {
         return "unknown";
     }
 
-    void print_template_help() {
-        std::cout << "Usage: kez template <package>... [--save FILE]\n"
-                     "       kez template parse <config.yaml> [--prefix PATH]\n";
-    }
-
-    void print_command_plan(const BashCommandPlan& plan) {
-        for (const PackageCommands& package : plan) {
-            std::cout << package.package << ":\n";
-            for (const std::string& command : package.commands) {
-                std::cout << "  " << command << '\n';
-            }
-        }
-    }
-
-    void parse_template(const CommandArguments& arguments) {
-        if (arguments.size() < 2) {
-            ERROR("template parse requires a user configuration file");
-            exit(EXIT_FAILURE);
-        }
-        const std::filesystem::path config_path = arguments[1];
-        if (!std::filesystem::is_regular_file(config_path)) {
-            ERROR("User configuration file does not exist: " + config_path.string());
-            exit(EXIT_FAILURE);
-        }
-        YAML::Node user_config = YAML::LoadFile(config_path.string());
-        std::filesystem::path prefix;
-        for (std::size_t index = 2; index < arguments.size(); ++index) {
-            if (arguments[index] == "-h" || arguments[index] == "--help") {
-                print_template_help();
-                return;
-            }
-            if (arguments[index] == "--prefix") {
-                if (++index >= arguments.size()) {
-                    ERROR("Missing value for --prefix");
-                    exit(EXIT_FAILURE);
-                }
-                prefix = arguments[index];
-            } else if (arguments[index].rfind("--prefix=", 0) == 0) {
-                prefix = arguments[index].substr(9);
-            } else {
-                ERROR("Unknown template parse option: " + arguments[index]);
-                exit(EXIT_FAILURE);
-            }
-        }
-        if (prefix.empty()) {
-            prefix = installation_prefix(user_config, "", false);
-        }
-        print_command_plan(parse_user_config(user_config, "release", prefix));
-    }
+    void print_template_help() { std::cout << "Usage: kez template <package>... [--save FILE]\n"; }
 
     std::string property_value(const Property& property) {
         if (std::holds_alternative<std::string>(property.data)) {
@@ -105,10 +57,6 @@ namespace {
 void execute_template(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
         print_template_help();
-        return;
-    }
-    if (arguments.front() == "parse") {
-        parse_template(arguments);
         return;
     }
 
