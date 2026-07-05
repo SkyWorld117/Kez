@@ -11,6 +11,11 @@
 # These commands return bash instructions that this wrapper evaluates in the current shell.
 
 kez () {
+    ################################################
+    # This is a wrapper function of Kez            #
+    # The binary is located in ${KEZ_HOME}/bin/kez #
+    ################################################
+
     if [ ! -f "${KEZ_HOME}/bin/kez" ]; then
         if [ "${1:-}" == "init" ]; then
             echo "[W]: ${PROJECT} is not initialized. Running initialization process..."
@@ -35,7 +40,7 @@ kez () {
     fi
 
     local intercept=0
-    
+
     if [[ ( "${1:-}" == "env" || "${1:-}" == "cellar" ) && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
         intercept=1
     elif [[ "${1:-}" == "compiler" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
