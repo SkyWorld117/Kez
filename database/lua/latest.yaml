@@ -3,7 +3,7 @@ recipe:
     name: lua
     description: Lua - a lightweight, embeddable scripting language
     type: package
-    toolchain: makefile
+    toolchain: make
 
     source:
         type: tarball

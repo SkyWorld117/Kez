@@ -146,8 +146,9 @@ recipe:
 recipe:
   name: library
   type: package
-  toolchain: makefile
+  toolchain: make
   source:
+
     type: git
     url: https://example.invalid/library.git
     releases:

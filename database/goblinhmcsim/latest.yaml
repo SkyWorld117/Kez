@@ -3,7 +3,7 @@ recipe:
     name: goblinhmcsim
     description: Goblin HMC Sim
     type: package
-    toolchain: makefile
+    toolchain: make
 
     source:
         type: tarball

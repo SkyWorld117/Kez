@@ -84,8 +84,9 @@ recipe:
   description: Typed package
   author: test
   type: package
-  toolchain: makefile
+  toolchain: make
   source:
+
     type: git
     url: https://example.invalid/repository.git
     releases:
@@ -126,7 +127,7 @@ recipe:
 )");
 
         PackageConfigPtr config = get_db_config("typed", "1.0.0");
-        ASSERT_NE(dynamic_cast<const MakefilePackageConfig*>(config.get()), nullptr);
+        ASSERT_NE(dynamic_cast<const MakePackageConfig*>(config.get()), nullptr);
         ASSERT_TRUE(config->source.has_value());
         EXPECT_EQ(config->source->type, SourceType::Git);
         ASSERT_EQ(config->source->releases.size(), 1U);
@@ -226,7 +227,7 @@ recipe:
 
         PackageConfigPtr scotch6 = get_db_config("scotch", "6.1.3");
         EXPECT_EQ(scotch6->name, "scotch6");
-        EXPECT_NE(dynamic_cast<const MakefilePackageConfig*>(scotch6.get()), nullptr);
+        EXPECT_NE(dynamic_cast<const MakePackageConfig*>(scotch6.get()), nullptr);
         clear_db_cache();
     }
 

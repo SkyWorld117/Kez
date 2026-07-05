@@ -3,7 +3,7 @@ recipe:
     name: neovim
     description: Neovim - hyperextensible Vim-based text editor
     type: package
-    toolchain: makefile
+    toolchain: make
 
     source:
         type: tarball

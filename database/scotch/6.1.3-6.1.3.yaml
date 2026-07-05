@@ -3,7 +3,7 @@ recipe:
     name: scotch6
     description: Scotch is a software package for graph and mesh partitioning, graph clustering, and sparse matrix ordering.
     type: package
-    toolchain: makefile
+    toolchain: make
 
     source:
         type: git

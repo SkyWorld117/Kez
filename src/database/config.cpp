@@ -55,13 +55,6 @@ std::optional<std::string> CMakePackageConfig::default_stage_command(
     return command;
 }
 
-Toolchain MakefilePackageConfig::toolchain() const noexcept { return Toolchain::Makefile; }
-
-std::optional<std::string> MakefilePackageConfig::default_stage_command(
-    const BuildStage& stage, unsigned int parallel_jobs) const {
-    return make_stage_command(stage, parallel_jobs);
-}
-
 Toolchain MakePackageConfig::toolchain() const noexcept { return Toolchain::Make; }
 
 std::optional<std::string> MakePackageConfig::default_stage_command(

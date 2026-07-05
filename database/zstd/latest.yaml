@@ -3,7 +3,7 @@ recipe:
     name: zstd
     description: Zstandard compression library
     type: system
-    toolchain: makefile
+    toolchain: make
 
     source:
         type: tarball

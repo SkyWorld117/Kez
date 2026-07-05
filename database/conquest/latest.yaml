@@ -3,7 +3,7 @@ recipe:
     name: conquest
     description: CONQUEST linear scaling DFT code
     type: package
-    toolchain: makefile
+    toolchain: make
 
     source:
         type: tarball

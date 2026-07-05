@@ -3,7 +3,7 @@ recipe:
     name: libaio
     description: The Linux-native asynchronous I/O facility
     type: package
-    toolchain: makefile
+    toolchain: make
 
     source:
         type: git

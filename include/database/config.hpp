@@ -19,7 +19,6 @@ enum class Toolchain {
     None,
     Autotools,
     CMake,
-    Makefile,
     Make,
 };
 
@@ -152,13 +151,6 @@ class CMakePackageConfig final : public PackageConfig {
    public:
     Toolchain toolchain() const noexcept override;
     std::optional<std::string> default_configuration_command() const override;
-    std::optional<std::string> default_stage_command(const BuildStage& stage,
-                                                     unsigned int parallel_jobs) const override;
-};
-
-class MakefilePackageConfig final : public PackageConfig {
-   public:
-    Toolchain toolchain() const noexcept override;
     std::optional<std::string> default_stage_command(const BuildStage& stage,
                                                      unsigned int parallel_jobs) const override;
 };

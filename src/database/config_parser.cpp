@@ -49,9 +49,6 @@ static std::unique_ptr<PackageConfig> make_package_config(const YAML::Node& reci
     if (value == "cmake") {
         return std::make_unique<CMakePackageConfig>();
     }
-    if (value == "makefile") {
-        return std::make_unique<MakefilePackageConfig>();
-    }
     if (value == "make") {
         return std::make_unique<MakePackageConfig>();
     }
