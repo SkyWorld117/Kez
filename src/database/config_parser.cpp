@@ -6,6 +6,7 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
+#include <utils/yaml_utils.hpp>
 
 static PackageType parse_package_type(const YAML::Node& node, const std::string& path,
                                       const DatabaseParserContext& context) {
@@ -36,7 +37,7 @@ static PackageType parse_package_type(const YAML::Node& node, const std::string&
 
 static std::unique_ptr<PackageConfig> make_package_config(const YAML::Node& recipe,
                                                           const DatabaseParserContext& context) {
-    if (!has_key(recipe, "toolchain")) {
+    if (!yaml_has(recipe, "toolchain")) {
         return std::make_unique<GenericPackageConfig>();
     }
 
@@ -75,7 +76,7 @@ static std::vector<Override> parse_overrides(const YAML::Node& node, const std::
                                override_path + ".condition", context);
         }
         value.target = required_scalar(override_node, "target", override_path, context);
-        if (has_key(override_node, "action")) {
+        if (yaml_has(override_node, "action")) {
             value.action =
                 parse_action(override_node["action"], override_path + ".action", context);
         }
@@ -139,23 +140,23 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
     config->type        = parse_package_type(required_node(recipe, "type", "recipe", context),
                                              "recipe.type", context);
 
-    if (has_key(recipe, "source")) {
+    if (yaml_has(recipe, "source")) {
         config->source = parse_source(recipe["source"], "recipe.source", context);
     }
-    if (has_key(recipe, "dependencies")) {
+    if (yaml_has(recipe, "dependencies")) {
         config->dependencies =
             parse_scalar_sequence(recipe["dependencies"], "recipe.dependencies", context);
     }
-    if (has_key(recipe, "overrides")) {
+    if (yaml_has(recipe, "overrides")) {
         config->overrides = parse_overrides(recipe["overrides"], "recipe.overrides", context);
     }
-    if (has_key(recipe, "build")) {
+    if (yaml_has(recipe, "build")) {
         config->build = parse_build(recipe["build"], "recipe.build", context);
     }
-    if (has_key(recipe, "properties")) {
+    if (yaml_has(recipe, "properties")) {
         config->properties = parse_properties(recipe["properties"], "recipe.properties", context);
     }
-    if (has_key(recipe, "implementations")) {
+    if (yaml_has(recipe, "implementations")) {
         config->implementations =
             parse_scalar_sequence(recipe["implementations"], "recipe.implementations", context);
     }

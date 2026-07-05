@@ -13,9 +13,10 @@
 #include <user_config_generator/user_config_generator.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
+#include <utils/yaml_utils.hpp>
 #include <vector>
 
-std::string configured_default_compiler() {
+static std::string configured_default_compiler() {
     const std::string work_directory = get_env_var_noerr("KEZ_WORKDIR");
     if (work_directory.empty()) {
         return "system";
@@ -27,18 +28,21 @@ std::string configured_default_compiler() {
     }
 
     const YAML::Node document = YAML::LoadFile(path.string());
+    if (!yaml_has(document, "settings")) {
+        return "system";
+    }
     const YAML::Node settings = document["settings"];
-    if (!settings.IsMap()) {
+    if (!settings.IsMap() || !yaml_has(settings, "default_compiler")) {
         return "system";
     }
     const YAML::Node compiler = settings["default_compiler"];
     if (!compiler.IsScalar()) {
         return "system";
     }
-    return compiler.as<std::string>();
+    return yaml_scalar(compiler, "settings.default_compiler");
 }
 
-std::unordered_set<std::string> resolved_targets(
+static std::unordered_set<std::string> resolved_targets(
     const std::vector<std::string>& target_packages,
     const AbstractPackageSelections& abstract_packages) {
     std::unordered_set<std::string> result;
@@ -50,7 +54,7 @@ std::unordered_set<std::string> resolved_targets(
     return result;
 }
 
-std::vector<std::string> available_patches(const std::string& package_name) {
+static std::vector<std::string> available_patches(const std::string& package_name) {
     const std::string home = get_env_var_noerr("KEZ_HOME");
     if (home.empty()) {
         return {};
@@ -71,11 +75,11 @@ std::vector<std::string> available_patches(const std::string& package_name) {
     return result;
 }
 
-void append_package_config(YAML::Node& output, const PackageConfig& package,
-                           const std::vector<std::string>& all_dependencies,
-                           const std::unordered_set<std::string>& target_packages,
-                           const AbstractPackageSelections& abstract_packages,
-                           const std::string& default_compiler) {
+static void append_package_config(YAML::Node& output, const PackageConfig& package,
+                                  const std::vector<std::string>& all_dependencies,
+                                  const std::unordered_set<std::string>& target_packages,
+                                  const AbstractPackageSelections& abstract_packages,
+                                  const std::string& default_compiler) {
     YAML::Node package_output(YAML::NodeType::Map);
     if (package.description.has_value()) {
         package_output["description"] = *package.description;

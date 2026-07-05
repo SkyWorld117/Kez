@@ -2,6 +2,8 @@
 #include <database/config.hpp>
 #include <filesystem>
 #include <string>
+#include <utils/bash_utils.hpp>
+#include <utils/yaml_utils.hpp>
 #include <vector>
 
 #include "parser_internal.hpp"

@@ -3,9 +3,9 @@
 #include <dependency_resolver/optional_dependencies.hpp>
 #include <unordered_set>
 
-void append_requirements(const std::vector<std::string>& requirements,
-                         std::vector<std::string>& dependencies,
-                         std::unordered_set<std::string>& seen) {
+static void append_requirements(const std::vector<std::string>& requirements,
+                                std::vector<std::string>& dependencies,
+                                std::unordered_set<std::string>& seen) {
     for (const std::string& requirement : requirements) {
         if (seen.emplace(requirement).second) {
             dependencies.push_back(requirement);
@@ -13,9 +13,9 @@ void append_requirements(const std::vector<std::string>& requirements,
     }
 }
 
-void append_requirements(const BuildConfiguration& configuration,
-                         std::vector<std::string>& dependencies,
-                         std::unordered_set<std::string>& seen) {
+static void append_requirements(const BuildConfiguration& configuration,
+                                std::vector<std::string>& dependencies,
+                                std::unordered_set<std::string>& seen) {
     for (const EnvironmentVariable& variable : configuration.environment) {
         append_requirements(variable.requires, dependencies, seen);
     }

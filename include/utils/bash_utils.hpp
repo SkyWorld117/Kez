@@ -7,3 +7,6 @@ std::string get_env_var(const std::string& var_name, const std::string& err_msg)
 
 std::string get_env_var_noerr(const std::string& var_name);
 std::string get_env_var_noerr(const std::string& var_name, const std::string& default_value);
+
+std::string shell_single_quote(const std::string& value);
+std::string shell_double_quote(const std::string& value);

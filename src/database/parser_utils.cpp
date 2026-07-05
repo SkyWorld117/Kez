@@ -2,8 +2,7 @@
 #include <database/parser_utils.hpp>
 #include <unordered_set>
 #include <utils/colored_io.hpp>
-
-bool has_key(const YAML::Node& node, const std::string& key) { return node[key].IsDefined(); }
+#include <utils/yaml_utils.hpp>
 
 [[noreturn]] void fail_config(const YAML::Node& node, const std::string& yaml_path,
                               const std::string& message, const DatabaseParserContext& context) {
@@ -68,11 +67,10 @@ void check_keys(const YAML::Node& node, std::initializer_list<const char*> allow
 
 YAML::Node required_node(const YAML::Node& map, const std::string& key, const std::string& path,
                          const DatabaseParserContext& context) {
-    YAML::Node value = map[key];
-    if (!value.IsDefined()) {
+    if (!yaml_has(map, key)) {
         fail_config(map, path + "." + key, "is required", context);
     }
-    return value;
+    return map[key];
 }
 
 std::string parse_scalar(const YAML::Node& node, const std::string& path,
@@ -95,7 +93,7 @@ std::string required_scalar(const YAML::Node& map, const std::string& key, const
 std::optional<std::string> optional_scalar(const YAML::Node& map, const std::string& key,
                                            const std::string& path,
                                            const DatabaseParserContext& context) {
-    if (!has_key(map, key)) {
+    if (!yaml_has(map, key)) {
         return std::nullopt;
     }
     return parse_scalar(map[key], path + "." + key, context);

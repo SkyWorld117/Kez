@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <string>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
@@ -26,4 +27,27 @@ std::string get_env_var_noerr(const std::string& var_name, const std::string& de
         return default_value;
     }
     return std::string(value);
+}
+
+std::string shell_single_quote(const std::string& value) {
+    std::string result = "'";
+    for (const char character : value) {
+        if (character == '\'') {
+            result += "'\\''";
+        } else {
+            result += character;
+        }
+    }
+    return result + "'";
+}
+
+std::string shell_double_quote(const std::string& value) {
+    std::string result = "\"";
+    for (const char character : value) {
+        if (character == '\\' || character == '\"') {
+            result += '\\';
+        }
+        result += character;
+    }
+    return result + "\"";
 }

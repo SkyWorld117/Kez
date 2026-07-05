@@ -4,6 +4,7 @@
 #include <database/source_parser.hpp>
 #include <unordered_set>
 #include <utility>
+#include <utils/yaml_utils.hpp>
 
 template <typename T, typename ValueParser>
 static ConfigurableValue<T> parse_configurable(const YAML::Node& node, const std::string& path,
@@ -12,10 +13,10 @@ static ConfigurableValue<T> parse_configurable(const YAML::Node& node, const std
     expect_map(node, path, context);
     check_keys(node, {"default", "conditions"}, path, context);
     ConfigurableValue<T> result;
-    if (has_key(node, "default") && !node["default"].IsNull()) {
+    if (yaml_has(node, "default") && !node["default"].IsNull()) {
         result.default_value = parse_value(node["default"], path + ".default");
     }
-    if (has_key(node, "conditions")) {
+    if (yaml_has(node, "conditions")) {
         YAML::Node conditions = node["conditions"];
         expect_sequence(conditions, path + ".conditions", context);
         for (std::size_t i = 0; i < conditions.size(); ++i) {
@@ -29,7 +30,7 @@ static ConfigurableValue<T> parse_configurable(const YAML::Node& node, const std
                 required_scalar(condition_node, "condition", condition_path, context);
             validate_condition(condition.condition, condition_node["condition"],
                                condition_path + ".condition", context);
-            if (has_key(condition_node, "action")) {
+            if (yaml_has(condition_node, "action")) {
                 condition.action =
                     parse_action(condition_node["action"], condition_path + ".action", context);
             }
@@ -80,21 +81,21 @@ static EnvironmentVariable parse_environment_variable(const YAML::Node& node,
     EnvironmentVariable result;
     result.name        = required_scalar(node, "name", path, context);
     result.description = optional_scalar(node, "description", path, context);
-    if (has_key(node, "user_configurable")) {
+    if (yaml_has(node, "user_configurable")) {
         result.user_configurable =
             parse_boolean(node["user_configurable"], path + ".user_configurable", context);
     }
-    if (has_key(node, "requires")) {
+    if (yaml_has(node, "requires")) {
         result.
             requires
         = parse_scalar_sequence(node["requires"], path + ".requires", context);
     }
-    if (has_key(node, "default") && !node["default"].IsNull()) {
+    if (yaml_has(node, "default") && !node["default"].IsNull()) {
         result.value.default_value = parse_scalar(node["default"], path + ".default", context);
     }
-    if (has_key(node, "conditions")) {
+    if (yaml_has(node, "conditions")) {
         YAML::Node wrapper(YAML::NodeType::Map);
-        if (has_key(node, "default")) {
+        if (yaml_has(node, "default")) {
             wrapper["default"] = node["default"];
         }
         wrapper["conditions"] = node["conditions"];
@@ -114,25 +115,25 @@ static BuildOption parse_option(const YAML::Node& node, const std::string& path,
     BuildOption result;
     result.name        = required_scalar(node, "name", path, context);
     result.description = optional_scalar(node, "description", path, context);
-    if (has_key(node, "user_configurable")) {
+    if (yaml_has(node, "user_configurable")) {
         result.user_configurable =
             parse_boolean(node["user_configurable"], path + ".user_configurable", context);
     }
-    if (has_key(node, "enabled")) {
+    if (yaml_has(node, "enabled")) {
         result.enabled = parse_bool_configurable(node["enabled"], path + ".enabled", context);
     }
     result.enabled_format  = optional_scalar(node, "enabled_format", path, context);
     result.disabled_format = optional_scalar(node, "disabled_format", path, context);
-    if (has_key(node, "requires")) {
+    if (yaml_has(node, "requires")) {
         result.
             requires
         = parse_scalar_sequence(node["requires"], path + ".requires", context);
     }
-    if (has_key(node, "enabled_value")) {
+    if (yaml_has(node, "enabled_value")) {
         result.enabled_value =
             parse_string_configurable(node["enabled_value"], path + ".enabled_value", context);
     }
-    if (has_key(node, "disabled_value")) {
+    if (yaml_has(node, "disabled_value")) {
         result.disabled_value =
             parse_string_configurable(node["disabled_value"], path + ".disabled_value", context);
     }
@@ -146,7 +147,7 @@ BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::
 
     BuildConfiguration result;
     result.command = optional_scalar(node, "command", path, context);
-    if (has_key(node, "environment")) {
+    if (yaml_has(node, "environment")) {
         YAML::Node environment = node["environment"];
         expect_sequence(environment, path + ".environment", context);
         for (std::size_t i = 0; i < environment.size(); ++i) {
@@ -155,7 +156,7 @@ BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::
             result.environment.push_back(std::move(variable));
         }
     }
-    if (has_key(node, "options")) {
+    if (yaml_has(node, "options")) {
         YAML::Node options = node["options"];
         expect_sequence(options, path + ".options", context);
         std::unordered_set<std::string> names;
@@ -183,11 +184,11 @@ Build parse_build(const YAML::Node& node, const std::string& path,
     Build result;
     result.preprocessing  = optional_scalar(node, "preprocessing", path, context);
     result.postprocessing = optional_scalar(node, "postprocessing", path, context);
-    if (has_key(node, "configurations")) {
+    if (yaml_has(node, "configurations")) {
         result.configurations =
             parse_build_configuration(node["configurations"], path + ".configurations", context);
     }
-    if (has_key(node, "stages")) {
+    if (yaml_has(node, "stages")) {
         YAML::Node stages = node["stages"];
         expect_sequence(stages, path + ".stages", context);
         for (std::size_t i = 0; i < stages.size(); ++i) {
@@ -202,11 +203,11 @@ Build parse_build(const YAML::Node& node, const std::string& path,
             if (!target.IsNull()) {
                 stage.target = parse_scalar(target, stage_path + ".target", context);
             }
-            if (has_key(stage_node, "multithreaded")) {
+            if (yaml_has(stage_node, "multithreaded")) {
                 stage.multithreaded = parse_boolean(stage_node["multithreaded"],
                                                     stage_path + ".multithreaded", context);
             }
-            if (has_key(stage_node, "configurations")) {
+            if (yaml_has(stage_node, "configurations")) {
                 stage.configurations = parse_build_configuration(
                     stage_node["configurations"], stage_path + ".configurations", context);
             }

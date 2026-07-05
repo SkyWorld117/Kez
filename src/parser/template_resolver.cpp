@@ -4,11 +4,13 @@
 #include <cctype>
 #include <cstdlib>
 #include <database/config.hpp>
+#include <dependency_resolver/requirements.hpp>
 #include <filesystem>
 #include <string>
 #include <utility>
 #include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
+#include <utils/yaml_utils.hpp>
 #include <variant>
 #include <vector>
 
@@ -19,36 +21,19 @@
     exit(EXIT_FAILURE);
 }
 
-bool yaml_has(const YAML::Node& node, const std::string& key) {
-    return node.IsMap() && node[key].IsDefined();
-}
+static bool evaluate_parser_condition(const std::string& expression,
+                                      UserConfigParserContext& context);
+static std::string parser_package_version(const std::string& package_name,
+                                          UserConfigParserContext& context);
 
-std::string yaml_scalar(const YAML::Node& node, const std::string& description) {
-    if (!node.IsScalar()) {
-        user_config_error(description + " must be a scalar");
-    }
-    return node.Scalar();
-}
-
-bool yaml_boolean(const YAML::Node& node, const std::string& description) {
-    const std::string value = yaml_scalar(node, description);
-    if (value == "true" || value == "True" || value == "TRUE") {
-        return true;
-    }
-    if (value == "false" || value == "False" || value == "FALSE") {
-        return false;
-    }
-    user_config_error(description + " must be true or false");
-}
-
-std::string canonical_package_name(UserConfigParserContext& context,
-                                   const std::string& package_name) {
+static std::string canonical_package_name(UserConfigParserContext& context,
+                                          const std::string& package_name) {
     const auto alias = context.package_aliases.find(package_name);
     return alias == context.package_aliases.end() ? package_name : alias->second;
 }
 
-PackageConfigPtr parser_package_config(UserConfigParserContext& context,
-                                       const std::string& package_name) {
+static PackageConfigPtr parser_package_config(UserConfigParserContext& context,
+                                              const std::string& package_name) {
     const std::string requested_name = canonical_package_name(context, package_name);
     const auto parsed                = context.package_indices.find(requested_name);
     if (parsed != context.package_indices.end()) {
@@ -67,29 +52,14 @@ PackageConfigPtr parser_package_config(UserConfigParserContext& context,
     return config;
 }
 
-YAML::Node parser_user_package(UserConfigParserContext& context, const std::string& package_name) {
+static YAML::Node parser_user_package(UserConfigParserContext& context,
+                                      const std::string& package_name) {
     const std::string requested_name = canonical_package_name(context, package_name);
     const auto parsed                = context.package_indices.find(requested_name);
     if (parsed == context.package_indices.end()) {
         return YAML::Node();
     }
     return context.packages[parsed->second].user_config;
-}
-
-bool parser_requirements_satisfied(UserConfigParserContext& context,
-                                   const std::vector<std::string>& requirements) {
-    for (const std::string& requirement : requirements) {
-        if (context.dependencies.find(requirement) != context.dependencies.end()) {
-            continue;
-        }
-        const auto selected = context.abstract_packages.find(requirement);
-        if (selected != context.abstract_packages.end() &&
-            context.dependencies.find(selected->second) != context.dependencies.end()) {
-            continue;
-        }
-        return false;
-    }
-    return true;
 }
 
 namespace {
@@ -205,8 +175,9 @@ namespace {
             if (cursor.position >= cursor.tokens.size()) {
                 user_config_error("required condition is missing a package name");
             }
-            return parser_requirements_satisfied(cursor.context,
-                                                 {cursor.tokens[cursor.position++]});
+            return requirements_satisfied({cursor.tokens[cursor.position++]},
+                                          cursor.context.dependencies,
+                                          cursor.context.abstract_packages);
         }
         if (token == "environment") {
             if (cursor.position >= cursor.tokens.size()) {
@@ -451,7 +422,8 @@ namespace {
 
 }  // namespace
 
-bool evaluate_parser_condition(const std::string& expression, UserConfigParserContext& context) {
+static bool evaluate_parser_condition(const std::string& expression,
+                                      UserConfigParserContext& context) {
     const std::vector<std::string> tokens = tokenize_condition(expression);
     if (tokens.empty()) {
         user_config_error("condition must not be empty");
@@ -517,8 +489,8 @@ std::string resolve_parser_scalar(const std::string& value, UserConfigParserCont
     return result;
 }
 
-std::string parser_package_version(const std::string& package_name,
-                                   UserConfigParserContext& context) {
+static std::string parser_package_version(const std::string& package_name,
+                                          UserConfigParserContext& context) {
     const std::string requested_name = canonical_package_name(context, package_name);
     YAML::Node user_package          = parser_user_package(context, requested_name);
     if (yaml_has(user_package, "version")) {
@@ -624,27 +596,4 @@ std::string parser_package_prefix(const std::string& package_name,
         return (context.settings.install_prefix / requested_name).string();
     }
     return context.settings.install_prefix.string();
-}
-
-std::string shell_single_quote(const std::string& value) {
-    std::string result = "'";
-    for (const char character : value) {
-        if (character == '\'') {
-            result += "'\\''";
-        } else {
-            result += character;
-        }
-    }
-    return result + "'";
-}
-
-std::string shell_double_quote(const std::string& value) {
-    std::string result = "\"";
-    for (const char character : value) {
-        if (character == '\\' || character == '\"') {
-            result += '\\';
-        }
-        result += character;
-    }
-    return result + "\"";
 }

@@ -5,17 +5,7 @@ compile_commands.json
 .cache/
 
 # Ignore binary tools
-bin/fromager
-bin/fromager_bash_completion
-bin/fromager_config_verifier
-bin/fromager_rt_profile_config_parser
-bin/fromager_rt_resolve_dependencies
-
-# Colored IO
-bin/colored_io/
-
-# Test binaries
-bin/test*
+bin/
 
 # Ignore object files
 obj/

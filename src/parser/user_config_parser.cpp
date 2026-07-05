@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <database/config.hpp>
+#include <dependency_resolver/requirements.hpp>
 #include <exception>
 #include <filesystem>
 #include <limits>
@@ -11,6 +12,8 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <utils/bash_utils.hpp>
+#include <utils/yaml_utils.hpp>
 #include <vector>
 
 #include "parser_internal.hpp"
@@ -113,7 +116,8 @@ namespace {
                                                 ? user_configuration["environment"]
                                                 : YAML::Node();
         for (const EnvironmentVariable& variable : configuration.environment) {
-            const bool required = parser_requirements_satisfied(context, variable.requires);
+            const bool required = requirements_satisfied(variable.requires, context.dependencies,
+                                                         context.abstract_packages);
             std::string value;
             if (required && variable.user_configurable && use_user_values) {
                 const YAML::Node user_value = find_named_user_value(
@@ -144,7 +148,8 @@ namespace {
         const YAML::Node user_options =
             yaml_has(user_configuration, "options") ? user_configuration["options"] : YAML::Node();
         for (const BuildOption& option : configuration.options) {
-            const bool required = parser_requirements_satisfied(context, option.requires);
+            const bool required = requirements_satisfied(option.requires, context.dependencies,
+                                                         context.abstract_packages);
             YAML::Node user_value;
             if (required && option.user_configurable && use_user_values) {
                 user_value =

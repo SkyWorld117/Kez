@@ -21,13 +21,14 @@ struct ResolutionState {
     std::unordered_map<std::string, bool> optional_package_choices;
 };
 
-std::string resolve_abstract(const ResolutionState& state, const std::string& package_name) {
+static std::string resolve_abstract(const ResolutionState& state, const std::string& package_name) {
     const auto selected = state.abstract_packages.find(package_name);
     return selected == state.abstract_packages.end() ? package_name : selected->second;
 }
 
-std::string select_implementation(ResolutionState& state, const std::string& abstract_package,
-                                  const PackageConfig& config) {
+static std::string select_implementation(ResolutionState& state,
+                                         const std::string& abstract_package,
+                                         const PackageConfig& config) {
     const auto selected = state.abstract_packages.find(abstract_package);
     if (selected != state.abstract_packages.end()) {
         return selected->second;
@@ -70,8 +71,8 @@ std::string select_implementation(ResolutionState& state, const std::string& abs
     return implementation;
 }
 
-std::vector<std::string> select_dependencies(ResolutionState& state,
-                                             const std::string& package_name) {
+static std::vector<std::string> select_dependencies(ResolutionState& state,
+                                                    const std::string& package_name) {
     std::vector<std::string> dependencies                = get_essential_dependencies(package_name);
     const std::vector<std::string> optional_dependencies = get_optional_dependencies(package_name);
     bool printed_heading                                 = false;
@@ -109,7 +110,7 @@ std::vector<std::string> select_dependencies(ResolutionState& state,
     return dependencies;
 }
 
-void build_adjacency_list(ResolutionState& state, const std::string& package_name) {
+static void build_adjacency_list(ResolutionState& state, const std::string& package_name) {
     if (state.adjacency_list.find(package_name) != state.adjacency_list.end()) {
         return;
     }
@@ -142,7 +143,7 @@ void build_adjacency_list(ResolutionState& state, const std::string& package_nam
     }
 }
 
-DependencyGraph unify_adjacency_list(const ResolutionState& state) {
+static DependencyGraph unify_adjacency_list(const ResolutionState& state) {
     DependencyGraph unified_adjacency_list;
     for (const auto& [package, dependencies] : state.adjacency_list) {
         std::vector<std::string>& unified_dependencies =
@@ -154,7 +155,7 @@ DependencyGraph unify_adjacency_list(const ResolutionState& state) {
     return unified_adjacency_list;
 }
 
-std::vector<std::string> filter_system_packages(
+static std::vector<std::string> filter_system_packages(
     const std::vector<std::string>& packages,
     const std::unordered_set<std::string>& system_packages) {
     std::vector<std::string> filtered_packages;

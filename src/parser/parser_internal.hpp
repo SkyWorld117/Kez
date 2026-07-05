@@ -42,19 +42,6 @@ struct UserConfigParserContext {
 
 [[noreturn]] void user_config_error(const std::string& message);
 
-bool yaml_has(const YAML::Node& node, const std::string& key);
-std::string yaml_scalar(const YAML::Node& node, const std::string& description);
-bool yaml_boolean(const YAML::Node& node, const std::string& description);
-
-std::string canonical_package_name(UserConfigParserContext& context,
-                                   const std::string& package_name);
-PackageConfigPtr parser_package_config(UserConfigParserContext& context,
-                                       const std::string& package_name);
-YAML::Node parser_user_package(UserConfigParserContext& context, const std::string& package_name);
-
-bool parser_requirements_satisfied(UserConfigParserContext& context,
-                                   const std::vector<std::string>& requirements);
-bool evaluate_parser_condition(const std::string& expression, UserConfigParserContext& context);
 std::string apply_parser_conditions(const ConfigurableValue<std::string>& configurable,
                                     const std::string& base_value,
                                     UserConfigParserContext& context);
@@ -64,11 +51,6 @@ bool apply_parser_conditions(const ConfigurableValue<bool>& configurable, bool b
 std::string resolve_parser_scalar(const std::string& value, UserConfigParserContext& context);
 std::string parser_package_prefix(const std::string& package_name,
                                   UserConfigParserContext& context);
-std::string parser_package_version(const std::string& package_name,
-                                   UserConfigParserContext& context);
 
 void append_source_commands(const ParsedUserPackage& package, UserConfigParserContext& context,
                             std::vector<std::string>& commands);
-
-std::string shell_single_quote(const std::string& value);
-std::string shell_double_quote(const std::string& value);

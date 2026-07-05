@@ -1,5 +1,5 @@
+#include <dependency_resolver/requirements.hpp>
 #include <user_config_generator/environment_filter.hpp>
-#include <user_config_generator/requirements_filter.hpp>
 
 YAML::Node filtered_environment(const std::vector<EnvironmentVariable>& environment,
                                 const std::vector<std::string>& all_dependencies,

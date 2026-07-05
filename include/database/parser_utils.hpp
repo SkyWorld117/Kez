@@ -8,8 +8,6 @@
 #include <optional>
 #include <string>
 
-bool has_key(const YAML::Node& node, const std::string& key);
-
 [[noreturn]] void fail_config(const YAML::Node& node, const std::string& yaml_path,
                               const std::string& message, const DatabaseParserContext& context);
 void warn_config(const YAML::Node& node, const std::string& yaml_path, const std::string& message,
