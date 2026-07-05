@@ -5,7 +5,6 @@ project:
     version: dev
 
 dependencies:
-    argparse: latest
     patchelf: latest
     googletest: latest
     yaml-cpp: latest

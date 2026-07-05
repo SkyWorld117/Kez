@@ -8,10 +8,7 @@
 # - `compiler unload`
 # - `mpi load <mpi>`
 # - `mpi unload`
-# - `factory enter <factory>`
-# - `factory exit`
-
-# These commands will return bash instructions that will be evaluated by this wrapper script to change the current shell environment.
+# These commands return bash instructions that this wrapper evaluates in the current shell.
 
 kez () {
     if [ ! -f "${KEZ_HOME}/bin/kez" ]; then
@@ -39,18 +36,18 @@ kez () {
 
     local intercept=0
     
-    if [[ "${1:-}" == "env" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
+    if [[ ( "${1:-}" == "env" || "${1:-}" == "cellar" ) && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
         intercept=1
     elif [[ "${1:-}" == "compiler" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1
     elif [[ "${1:-}" == "mpi" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1
-    elif [[ "${1:-}" == "factory" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
-        intercept=1
     fi
 
     if [[ $intercept -eq 1 ]]; then
-        eval "$(("${KEZ_HOME}/bin/kez" "$@"))"
+        local shell_commands
+        shell_commands="$("${KEZ_HOME}/bin/kez" "$@")" || return $?
+        eval "${shell_commands}"
     else
         "${KEZ_HOME}/bin/kez" "$@"
     fi

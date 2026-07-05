@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ -z "${KEZ_WORKDIR:-}" ]; then
 
-    echo "[E]: ${KEZ_WORKDIR} environment variable is not set. Please set it to the desired work directory for Kez (e.g., export KEZ_WORKDIR=~/.kez)."
+    echo "[E]: KEZ_WORKDIR is not set. Please set it to the desired work directory for Kez (e.g., export KEZ_WORKDIR=~/.kez)."
 
 elif [ ! -f "${KEZ_WORKDIR}/config.yaml" ]; then
 
@@ -57,7 +57,7 @@ else
     fi
 
     export KEZ_DB="${KEZ_HOME}/database"
-    export KEZ_ENV="${KEZ_HOME}/$(yq -r '.paths.environment' ${KEZ_HOME}/manifest.yaml)"
+    export KEZ_ENV="${KEZ_WORKDIR}/$(yq -r '.paths.environment' "${KEZ_HOME}/manifest.yaml")"
 
     SYSTEM_BIN="${KEZ_WORKDIR}/$(yq -r '.paths.system' "${KEZ_HOME}/manifest.yaml")/bin"
     UTILITIES_BIN="${KEZ_WORKDIR}/$(yq -r '.paths.utilities' "${KEZ_HOME}/manifest.yaml")/bin"

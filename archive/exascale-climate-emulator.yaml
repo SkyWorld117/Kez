@@ -1,0 +1,88 @@
+---
+cheese:
+    exascale-climate-emulator:
+        description: Exascale Climate Emulator (ECE) is a software framework for emulating climate model output at exascale resolutions.
+        version: scc25
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: -DBLA_VENDOR
+                      description: BLAS vendor [Goto, ATLAS PhiPACK, CXML, DXML, SunPerf, SCSL, SGIMATH, IBMESSL, IBMESSLMT, Intel10_32 (intel mkl v10
+                          32 bit), Intel10_64lp (intel mkl v10 64 bit, lp thread model, lp64 model), Intel10_64lp_seq (intel mkl v10 64 bit, 
+                          sequential code, lp64 model), Intel( older versions of mkl 32 and 64 bit), ACML, ACML_MP, ACML_GPU, Apple, NAS, Generic]
+                      enabled: true
+                      enabled_value: Intel10_64lp
+                    - name: -DHICMA_PARSEC_HAVE_CUDA
+                      description: Enable CUDA support in HiCMA
+                      enabled: true
+                      enabled_value: ON
+                      requires: [cuda]
+                    - name: -DPARSEC_GPU_WITH_CUDA
+                      description: Enable CUDA support in PaRSEC
+                      enabled: true
+                      enabled_value: ON
+                      requires: [cuda]
+                    - name: -DCMAKE_CUDA_ARCHITECTURES
+                      description: CUDA architectures
+                      enabled_value: 80
+                    - name: -DCMAKE_CUDA_FLAGS_RELEASE
+                      description: CUDA compiler flags for Release build
+                      enabled_value: -O3
+                    - name: -DCMAKE_C_FLAGS_RELEASE
+                      description: C compiler flags for Release build
+                      enabled: true
+                      enabled_value: -O3
+                    - name: -DCMAKE_CXX_FLAGS_RELEASE
+                      description: C++ compiler flags for Release build
+                      enabled: true
+                      enabled_value: -O3
+                    - name: -DCMAKE_Fortran_FLAGS_RELEASE
+                      description: Fortran compiler flags for Release build
+                      enabled: true
+                      enabled_value: -O3
+    intel-oneapi-mkl:
+        description: Intel oneAPI Math Kernel Library for high-performance math routines
+        build:
+            configurations:
+                options:
+                    - name: fortran_format
+                      description: Fortran Format [ gf | intel ]
+                      enabled: true
+                      enabled_value: gf
+                    - name: integer_size
+                      description: Use ilp64 interface [ lp64 | ilp64 ]
+                      enabled: true
+                      enabled_value: lp64
+                    - name: multithreaded
+                      description: Use multithreading
+                      enabled: true
+                      enabled_value:
+                    - name: multithreading_library
+                      description: Multithreading library [ gnu | tbb ]
+                      enabled: true
+                      enabled_value: gnu
+                    - name: mpi-family
+                      description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
+                      enabled: true
+                      enabled_value: openmpi
+    intel-oneapi:
+        version: 2025.1.0.666
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.8
+        compiler: system
+recipe:
+    abstract_packages:
+        lapack: intel-oneapi-mkl
+        blas: intel-oneapi-mkl
+        mpi: openmpi
+    dependencies:
+        - exascale-climate-emulator
+        - cuda
+        - intel-oneapi-mkl
+        - intel-oneapi
+        - openmpi
+    targets:
+        - exascale-climate-emulator
+

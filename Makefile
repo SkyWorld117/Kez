@@ -25,6 +25,8 @@ LIB_DIR := lib
 BIN_DIR := bin
 
 LIB_SOURCES := \
+	$(SRC_DIR)/cmdline_parser/cmdline_parser.cpp \
+	$(SRC_DIR)/cmdline_parser/traverse.cpp \
 	$(SRC_DIR)/database/build_parser.cpp \
 	$(SRC_DIR)/database/config.cpp \
 	$(SRC_DIR)/database/config_parser.cpp \
@@ -47,12 +49,26 @@ LIB_SOURCES := \
 	$(SRC_DIR)/user_config_generator/options_filter.cpp \
 	$(SRC_DIR)/user_config_generator/stages_filter.cpp \
 	$(SRC_DIR)/user_config_generator/user_config_generator.cpp \
+	$(SRC_DIR)/ui/bash_completion.cpp \
+	$(SRC_DIR)/ui/ui_utils.cpp \
 	$(SRC_DIR)/utils/bash_utils.cpp \
 	$(SRC_DIR)/utils/file_utils.cpp \
 	$(SRC_DIR)/utils/string_utils.cpp \
 	$(SRC_DIR)/utils/yaml_utils.cpp
 LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+CLI_SOURCES := \
+	$(SRC_DIR)/main.cpp \
+	$(SRC_DIR)/ui/environment.cpp \
+	$(SRC_DIR)/ui/init.cpp \
+	$(SRC_DIR)/ui/install.cpp \
+	$(SRC_DIR)/ui/packages.cpp \
+	$(SRC_DIR)/ui/ui.cpp
+CLI_OBJECTS := $(CLI_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+COMPLETION_SOURCE := $(SRC_DIR)/bash_completion_main.cpp
+COMPLETION_OBJECT := $(OBJ_DIR)/bash_completion_main.o
 TEST_SOURCES := \
+	tests/bash_completion_test.cpp \
+	tests/cmdline_parser_test.cpp \
 	tests/database_test.cpp \
 	tests/dependency_resolver_test.cpp \
 	tests/utils_test.cpp \
@@ -61,12 +77,14 @@ TEST_SOURCES := \
 TEST_OBJECTS := $(TEST_SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LIBRARY := $(LIB_DIR)/libkez.a
 TEST_BINARY := $(BIN_DIR)/test_database
+CLI_BINARY := $(BIN_DIR)/kez
+COMPLETION_BINARY := $(BIN_DIR)/kez_completion
 
 .DEFAULT_GOAL := all
 
 .PHONY: all test clean
 
-all: $(LIBRARY)
+all: $(LIBRARY) $(CLI_BINARY) $(COMPLETION_BINARY)
 
 test: $(TEST_BINARY)
 	$(TEST_BINARY)
@@ -77,6 +95,12 @@ $(LIBRARY): $(LIB_OBJECTS) | $(LIB_DIR)
 
 $(TEST_BINARY): $(TEST_OBJECTS) $(LIBRARY) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) $(TEST_LDLIBS) -o $@
+
+$(CLI_BINARY): $(CLI_OBJECTS) $(LIBRARY) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+
+$(COMPLETION_BINARY): $(COMPLETION_OBJECT) $(LIBRARY) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
@@ -90,6 +114,7 @@ $(LIB_DIR) $(BIN_DIR):
 	mkdir -p $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(LIBRARY) $(TEST_BINARY)
+	rm -rf $(OBJ_DIR) $(LIBRARY) $(TEST_BINARY) $(CLI_BINARY) $(COMPLETION_BINARY)
 
--include $(LIB_OBJECTS:.o=.d) $(TEST_OBJECTS:.o=.d)
+-include $(LIB_OBJECTS:.o=.d) $(CLI_OBJECTS:.o=.d) $(COMPLETION_OBJECT:.o=.d) \
+	$(TEST_OBJECTS:.o=.d)

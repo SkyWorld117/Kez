@@ -525,21 +525,6 @@ else
     echo "yaml-cpp is already installed, skipping..."
 fi
 
-# argparse
-version=$(yq -r '.dependencies.argparse' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_github "p-ranav/argparse" "${version}")
-if [[ -n "$folder_and_version" ]]; then
-    echo "Installing argparse..."
-    folder="${folder_and_version%%::*}"
-    version="${folder_and_version##*::}"
-    cd "${KEZ_SYSTEM_TMP}/${folder}"
-    cp -r include/argparse "${KEZ_SYSTEM}/include/argparse"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  argparse: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "argparse is already installed, skipping..."
-fi
-
 # googletest
 version=$(yq -r '.dependencies.googletest' "${KEZ_HOME}/manifest.yaml")
 folder_and_version=$(fetch_github "google/googletest" "${version}")
@@ -582,7 +567,7 @@ else
 fi
 
 # Kez
-# make -C "${KEZ_HOME}" -B -j"${KEZ_NPROC}"
+make -C "${KEZ_HOME}" -B -j"${KEZ_NPROC}"
 
 
 # End of Script

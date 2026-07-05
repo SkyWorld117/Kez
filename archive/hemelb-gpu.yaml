@@ -1,0 +1,94 @@
+---
+cheese:
+    hemelb-gpu:
+        description: HemePure-GPU LBM blood flow solver (UCL-CCS) with CUDA backend
+        version: isc26@/scratch/zyi/Applications/source/HemePure-GPU/HemePure-GPU
+        compiler: system
+        patches:
+            - name: openmp_init.patch
+              enabled: true
+            - name: no_write_globalmem.patch
+              enabled: true
+            - name: no_cuda_debug.patch
+              enabled: true
+            - name: fast_kernel.patch
+              enabled: true
+            - name: enable_d3q15_fast.patch
+              enabled: false
+            - name: no_properties.patch
+              enabled: true
+        build:
+            configurations:
+                options:
+                    - name: -DHEMELB_GPU_BACKEND
+                      description: GPU backend (CUDA / HIP_CUDA / HIP_ROCM)
+                      enabled: true
+                      enabled_value: CUDA
+                    - name: -DCMAKE_CUDA_ARCHITECTURES
+                      description: CUDA compute capability (90 = H100, 80 = A100, 70 = V100)
+                      enabled: true
+                      enabled_value: 90
+                    - name: -DHEMELB_CUDA_AWARE_MPI
+                      description: Enable CUDA-aware MPI (requires CUDA-aware OpenMPI)
+                      enabled: true
+                      enabled_value: ON
+                    - name: -DHEMELB_USE_MPI_PARALLEL_IO
+                      description: Use MPI parallel I/O for reading geometry files
+                      enabled: true
+                      enabled_value: ON
+                    - name: -DHEMELB_USE_VELOCITY_WEIGHTS_FILE
+                      description: 'Inlet BC mode: OFF = pressure-pressure, ON = velocity-pressure'
+                      enabled: true
+                      enabled_value: OFF
+                    - name: -DHEMELB_LATTICE
+                      description: Lattice type [D3Q15, D3Q19, D3Q27]
+                      enabled: true
+                      enabled_value: D3Q19
+                    - name: -DHEMELB_INLET_BOUNDARY
+                      description: Inlet boundary condition type
+                      enabled: true
+                      enabled_value: NASHZEROTHORDERPRESSUREIOLET
+                    - name: -DHEMELB_WALL_INLET_BOUNDARY
+                      description: Wall-inlet corner boundary condition
+                      enabled: true
+                      enabled_value: NASHZEROTHORDERPRESSURESBB
+                    - name: -DHEMELB_OUTLET_BOUNDARY
+                      description: Outlet boundary condition type
+                      enabled: true
+                      enabled_value: NASHZEROTHORDERPRESSUREIOLET
+                    - name: -DHEMELB_WALL_OUTLET_BOUNDARY
+                      description: Wall-outlet corner boundary condition
+                      enabled: true
+                      enabled_value: NASHZEROTHORDERPRESSURESBB
+                    - name: -DHEMELB_USE_MPI_WIN
+                      description: MPI window-based communication
+                      enabled: true
+                      enabled_value: OFF
+                    - name: -DCMAKE_C_FLAGS
+                      description: Extra C flags for nvcc to find MPI headers
+                      enabled: true
+                      enabled_value: -O3
+                    - name: -DCMAKE_CXX_FLAGS
+                      description: Extra C++ flags for nvcc to find MPI headers
+                      enabled: true
+                      enabled_value: -O3 -std=c++11
+                    - name: -DCMAKE_CUDA_FLAGS
+                      description: Extra CUDA flags for nvcc to find MPI headers
+                      enabled: true
+                      enabled_value: -O3 -I${mpi.prefix}/include -I${hemelb-gpu.prefix}/include/tirpc -gencode arch=compute_90a,code=sm_90a
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+recipe:
+    abstract_packages:
+        mpi: openmpi
+    dependencies:
+        - hemelb-gpu
+        - cuda
+        - openmpi
+    targets:
+        - hemelb-gpu
