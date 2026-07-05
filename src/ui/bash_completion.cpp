@@ -159,7 +159,7 @@ namespace {
         if (previous == "--read" || previous == "-r") {
             return filesystem_entries(current);
         }
-        if (previous == "--env" || previous == "--cellar" || previous == "-C") {
+        if (previous == "--env" || previous == "-e") {
             return configured_directories("applications");
         }
         if (previous == "--config" || previous == "-c") {
@@ -183,8 +183,8 @@ namespace {
         if (!contains_any(words, {"--config", "-c"})) {
             append(result, {"--config", "-c"});
         }
-        if (!utility && !contains_any(words, {"--env", "--cellar", "-C"})) {
-            append(result, {"--env", "-C", "--cellar"});
+        if (!utility && !contains_any(words, {"--env", "-e"})) {
+            append(result, {"--env", "-e"});
         }
         return result;
     }
@@ -250,9 +250,8 @@ namespace {
     std::vector<std::string> command_suggestions(int current_word_index,
                                                  const std::vector<std::string>& words) {
         if (current_word_index == 1) {
-            return {"init",      "update", "install",  "template", "utilities",
-                    "env",       "cellar", "compiler", "mpi",      "info",
-                    "selfcheck", "-h",     "--help",   "-V",       "--version"};
+            return {"init", "update", "install",   "template", "utilities", "env", "compiler",
+                    "mpi",  "info",   "selfcheck", "-h",       "--help",    "-V",  "--version"};
         }
 
         const std::string command = word_at(words, 1);
@@ -268,7 +267,7 @@ namespace {
         if (command == "utilities") {
             return utilities_suggestions(current_word_index, words);
         }
-        if (command == "env" || command == "cellar") {
+        if (command == "env") {
             return environment_suggestions(current_word_index, words);
         }
         if (command == "compiler") {

@@ -56,7 +56,7 @@ void run_ui(int argc, char* argv[]) {
         execute_utilities(arguments);
     } else if (command == "template") {
         execute_template(arguments);
-    } else if (command == "env" || command == "cellar") {
+    } else if (command == "env") {
         execute_environment(arguments);
     } else if (command == "compiler") {
         execute_compiler(arguments);
