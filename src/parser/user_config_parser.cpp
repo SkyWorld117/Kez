@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>
-#include <exception>
 #include <filesystem>
 #include <limits>
 #include <optional>
