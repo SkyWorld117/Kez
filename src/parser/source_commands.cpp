@@ -1,12 +1,11 @@
 #include <algorithm>
 #include <database/config.hpp>
 #include <filesystem>
+#include <parser/parser_internal.hpp>
 #include <string>
 #include <utils/bash_utils.hpp>
 #include <utils/yaml_utils.hpp>
 #include <vector>
-
-#include "parser_internal.hpp"
 
 namespace {
 

@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <limits>
 #include <optional>
+#include <parser/parser_internal.hpp>
 #include <parser/user_config_parser.hpp>
 #include <string>
 #include <unordered_map>
@@ -14,8 +15,6 @@
 #include <utils/bash_utils.hpp>
 #include <utils/yaml_utils.hpp>
 #include <vector>
-
-#include "parser_internal.hpp"
 
 namespace {
 

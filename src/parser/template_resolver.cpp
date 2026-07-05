@@ -6,6 +6,7 @@
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <filesystem>
+#include <parser/parser_internal.hpp>
 #include <string>
 #include <utility>
 #include <utils/colored_io.hpp>
@@ -13,8 +14,6 @@
 #include <utils/yaml_utils.hpp>
 #include <variant>
 #include <vector>
-
-#include "parser_internal.hpp"
 
 [[noreturn]] void user_config_error(const std::string& message) {
     ERROR("Invalid user configuration: " + message);
@@ -219,7 +218,8 @@ namespace {
         bool result = option->second.enabled == expected_enabled;
         if (cursor.position < cursor.tokens.size() && cursor.tokens[cursor.position] != "&&" &&
             cursor.tokens[cursor.position] != "||" && cursor.tokens[cursor.position] != ")") {
-            result = result && option->second.selected_value() == cursor.tokens[cursor.position];
+            result = result &&
+                     get_selected_option_value(option->second) == cursor.tokens[cursor.position];
             ++cursor.position;
         }
         return result;
@@ -363,10 +363,10 @@ namespace {
             if (state == context.named_option_values.end()) {
                 user_config_error("template references unresolved option '" + key + "'");
             }
-            if (state->second.selected_value().empty()) {
+            if (get_selected_option_value(state->second).empty()) {
                 user_config_error("template option '" + key + "' has no value");
             }
-            return resolve_parser_scalar(state->second.selected_value(), context);
+            return resolve_parser_scalar(get_selected_option_value(state->second), context);
         }
         if (property_name.rfind("env.", 0) == 0) {
             const PackageConfigPtr config = parser_package_config(context, package_name);

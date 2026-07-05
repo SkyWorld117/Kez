@@ -19,9 +19,11 @@ struct ParsedOptionState {
     bool enabled = true;
     std::string enabled_value;
     std::string disabled_value;
-
-    const std::string& selected_value() const { return enabled ? enabled_value : disabled_value; }
 };
+
+inline const std::string& get_selected_option_value(const ParsedOptionState& state) {
+    return state.enabled ? state.enabled_value : state.disabled_value;
+}
 
 struct UserConfigParserContext {
     YAML::Node user_config;
