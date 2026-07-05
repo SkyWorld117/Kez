@@ -542,17 +542,13 @@ UserConfigParserSettings load_user_config_parser_settings(
         if (yaml_has(settings, "n_proc_for_build")) {
             const std::string jobs =
                 yaml_scalar(settings["n_proc_for_build"], "settings.n_proc_for_build");
-            try {
-                std::size_t parsed        = 0;
-                const unsigned long value = std::stoul(jobs, &parsed);
-                if (parsed != jobs.size() || value == 0 ||
-                    value > std::numeric_limits<unsigned int>::max()) {
-                    user_config_error("settings.n_proc_for_build must be a positive integer");
-                }
-                result.parallel_jobs = static_cast<unsigned int>(value);
-            } catch (const std::exception&) {
+            std::size_t parsed        = 0;
+            const unsigned long value = std::stoul(jobs, &parsed);
+            if (parsed != jobs.size() || value == 0 ||
+                value > std::numeric_limits<unsigned int>::max()) {
                 user_config_error("settings.n_proc_for_build must be a positive integer");
             }
+            result.parallel_jobs = static_cast<unsigned int>(value);
         }
         if (yaml_has(settings, "external")) {
             if (!settings["external"].IsMap()) {

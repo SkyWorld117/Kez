@@ -3,18 +3,7 @@
 #include <database/config.hpp>
 #include <filesystem>
 #include <memory>
-#include <stdexcept>
 #include <string>
-
-class DatabaseError : public std::runtime_error {
-   public:
-    using std::runtime_error::runtime_error;
-};
-
-class ConfigError : public DatabaseError {
-   public:
-    using DatabaseError::DatabaseError;
-};
 
 using PackageConfigPtr = std::shared_ptr<const PackageConfig>;
 
