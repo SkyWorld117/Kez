@@ -56,9 +56,10 @@ Although `parser` also performs certain degrees of checking, `package_format_ver
 
 #### `parser`
 
-`parser` is responsible for parsing the user configuration files and associating them with the appropriate package metadata. It ensures that the user configurations are correctly formatted and contain all necessary information for the package manager to function properly.
-
-It outputs structured bash commands based on the configurations, stored in `${TARGET_CELLAR}/.tmp/ins.yaml`.
+`parser` parses user configuration files against the typed package metadata and produces a
+dependency-ordered `BashCommandPlan`. Each plan entry contains a package name and its bash
+commands. The plan remains a C++ data structure so the installation executor does not need an
+intermediate instruction YAML file.
 
 #### `tests`
 

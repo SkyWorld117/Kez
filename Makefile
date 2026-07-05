@@ -38,6 +38,9 @@ LIB_SOURCES := \
 	$(SRC_DIR)/dependency_resolver/optional_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/toposort.cpp \
+	$(SRC_DIR)/parser/source_commands.cpp \
+	$(SRC_DIR)/parser/template_resolver.cpp \
+	$(SRC_DIR)/parser/user_config_parser.cpp \
 	$(SRC_DIR)/user_config_generator/configurations_filter.cpp \
 	$(SRC_DIR)/user_config_generator/environment_filter.cpp \
 	$(SRC_DIR)/user_config_generator/options_filter.cpp \
@@ -51,6 +54,7 @@ LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 TEST_SOURCES := \
 	tests/database_test.cpp \
 	tests/dependency_resolver_test.cpp \
+	tests/user_config_parser_test.cpp \
 	tests/user_config_generator_test.cpp
 TEST_OBJECTS := $(TEST_SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LIBRARY := $(LIB_DIR)/libkez.a
