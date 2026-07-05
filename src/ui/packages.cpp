@@ -114,6 +114,7 @@ void execute_template(const CommandArguments& arguments) {
 
     std::vector<std::string> packages;
     std::string output_path;
+    bool interactive = false;
     for (std::size_t index = 0; index < arguments.size(); ++index) {
         const std::string& argument = arguments[index];
         if (argument == "-s" || argument == "--save") {
@@ -122,8 +123,10 @@ void execute_template(const CommandArguments& arguments) {
                 exit(EXIT_FAILURE);
             }
             output_path = arguments[index];
+            interactive = true;
         } else if (argument.rfind("--save=", 0) == 0) {
             output_path = argument.substr(7);
+            interactive = true;
         } else if (!argument.empty() && argument.front() == '-') {
             ERROR("Unknown template option: " + argument);
             exit(EXIT_FAILURE);
@@ -136,7 +139,7 @@ void execute_template(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
 
-    const YAML::Node config = gen_user_config(packages, false);
+    const YAML::Node config = gen_user_config(packages, interactive);
     if (output_path.empty()) {
         std::cout << YAML::Dump(config) << '\n';
     } else {
