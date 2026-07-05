@@ -5,8 +5,16 @@
 
 set -Eeuo pipefail
 
+# Ensure KEZ_HOME is set; default to the project root (parent of the scripts directory)
+: ${KEZ_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
+
+KEZ_INFO=${KEZ_HOME}/bin/print_info
+KEZ_WARNING=${KEZ_HOME}/bin/print_warning
+KEZ_ERROR=${KEZ_HOME}/bin/print_error
+KEZ_SUCCESS=${KEZ_HOME}/bin/print_success
+
 if [[ $# -lt 2 || $# -gt 3 ]]; then
-    echo >&2 "[E]: Usage: install.sh <environment> <plan> [--force]"
+    ${KEZ_ERROR} "Usage: install.sh <environment> <plan> [--force]"
     exit 2
 fi
 
@@ -16,12 +24,12 @@ force=false
 if [[ ${3:-} == "--force" ]]; then
     force=true
 elif [[ -n ${3:-} ]]; then
-    echo >&2 "[E]: Unknown option: $3"
+    ${KEZ_ERROR} "Unknown option: $3"
     exit 2
 fi
 
 if [[ ! -f $plan_file ]] || [[ $(head -n 1 -- "$plan_file") != "# kez-install-plan-v1" ]]; then
-    echo >&2 "[E]: Invalid Kez installation plan: $plan_file"
+    ${KEZ_ERROR} "Invalid Kez installation plan: $plan_file"
     exit 2
 fi
 
@@ -42,11 +50,11 @@ cleanup_source() {
 report_failure() {
     local status=$?
     if [[ -n $current_command ]]; then
-        echo >&2 "[E]: Command failed for $current_package: $current_command"
+        ${KEZ_ERROR} "Command failed for $current_package: $current_command"
     elif [[ -n $current_package ]]; then
-        echo >&2 "[E]: Installation failed while processing $current_package"
+        ${KEZ_ERROR} "Installation failed while processing $current_package"
     else
-        echo >&2 "[E]: Installation failed"
+        ${KEZ_ERROR} "Installation failed"
     fi
     cleanup_source
     exit "$status"
@@ -56,7 +64,7 @@ trap report_failure ERR
 
 kez_plan_begin() {
     if [[ -n $current_package ]]; then
-        echo >&2 "[E]: Invalid installation plan: nested package"
+        ${KEZ_ERROR} "Invalid installation plan: nested package"
         return 2
     fi
 
@@ -67,16 +75,16 @@ kez_plan_begin() {
     cd "$target_env/.tmp"
 
     if [[ $force == false ]] && grep -Fqx -- "  - $current_package" "$state_file"; then
-        echo "[W]: Package $current_package is already installed; skipping."
+        ${KEZ_WARNING} "Package $current_package is already installed; skipping."
         execute_current_package=false
     else
-        echo "[I]: Processing package: $current_package"
+        ${KEZ_INFO} "Processing package: $current_package"
     fi
 }
 
 kez_plan_command() {
     if [[ -z $current_package ]]; then
-        echo >&2 "[E]: Invalid installation plan: command outside a package"
+        ${KEZ_ERROR} "Invalid installation plan: command outside a package"
         return 2
     fi
     if [[ $execute_current_package == false ]]; then
@@ -84,14 +92,14 @@ kez_plan_command() {
     fi
 
     current_command=$1
-    echo "[I]: Executing: $current_command"
+    ${KEZ_INFO} "Executing: $current_command"
     eval "$current_command"
     current_command=
 }
 
 kez_plan_end() {
     if [[ -z $current_package ]]; then
-        echo >&2 "[E]: Invalid installation plan: package end without package"
+        ${KEZ_ERROR} "Invalid installation plan: package end without package"
         return 2
     fi
 
@@ -99,7 +107,7 @@ kez_plan_end() {
         if ! grep -Fqx -- "  - $current_package" "$state_file"; then
             printf '  - %s\n' "$current_package" >> "$state_file"
         fi
-        echo "[S]: Completed package: $current_package"
+        ${KEZ_SUCCESS} "Completed package: $current_package"
     fi
     cleanup_source
     current_package=
@@ -112,7 +120,7 @@ kez_plan_end() {
 source "$plan_file"
 
 if [[ -n $current_package ]]; then
-    echo >&2 "[E]: Invalid installation plan: package was not closed"
+    ${KEZ_ERROR} "Invalid installation plan: package was not closed"
     exit 2
 fi
 
@@ -136,6 +144,6 @@ if command -v yq >/dev/null 2>&1 && [[ -n ${KEZ_HOME:-} && -n ${KEZ_WORKDIR:-} ]
             printf 'module-whatis "Loads the %s Kez environment"\n' "$tcl_environment_name"
             printf 'prepend-path PATH "%s/bin"\n' "$tcl_target_env"
         } > "$modulefile"
-        echo "[S]: Created module file: $modulefile"
+        ${KEZ_SUCCESS} "Created module file: $modulefile"
     fi
 fi

@@ -4,7 +4,7 @@
 
 set -Eeuo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+KEZ_WARNING=${KEZ_HOME}/bin/print_warning
 
 url=${1:-}
 target=${2:-}
@@ -25,7 +25,7 @@ else
     # Target is likely a commit hash
     if [[ ${#target} -lt 40 ]]; then
         # Fall back to clone and checkout if the hash is short (<40 characters)
-        ${SCRIPT_DIR}/../bin/print_warning "Hash '$target' is short, falling back to full clone and checkout. Consider using a full 40-character hash for better performance."
+        ${KEZ_WARNING} "Hash '$target' is short, falling back to full clone and checkout. Consider using a full 40-character hash for better performance."
         git clone "$url" "$dest"
         (cd "$dest" && git checkout "$target")
     else
