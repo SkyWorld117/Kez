@@ -11,24 +11,26 @@ struct ConfigRange {
     std::filesystem::path path;
 };
 
-static ConfigRange parse_range_path(const std::filesystem::path& path) {
-    const std::string stem      = path.stem().string();
-    const std::size_t separator = stem.find('-');
-    if (separator == std::string::npos || separator == 0 || separator + 1 == stem.size() ||
-        stem.find('-', separator + 1) != std::string::npos) {
-        ERROR("Invalid database config filename '" + path.string() +
-              "'; expected latest.yaml or <start-version>-<end-version>.yaml");
-        exit(EXIT_FAILURE);
-    }
+namespace {
+    ConfigRange parse_range_path(const std::filesystem::path& path) {
+        const std::string stem      = path.stem().string();
+        const std::size_t separator = stem.find('-');
+        if (separator == std::string::npos || separator == 0 || separator + 1 == stem.size() ||
+            stem.find('-', separator + 1) != std::string::npos) {
+            ERROR("Invalid database config filename '" + path.string() +
+                  "'; expected latest.yaml or <start-version>-<end-version>.yaml");
+            exit(EXIT_FAILURE);
+        }
 
-    ConfigRange range {stem.substr(0, separator), stem.substr(separator + 1), path};
-    if (compare_versions(range.start, range.end) > 0) {
-        ERROR("Invalid database config range '" + path.string() +
-              "': start version is greater than end version");
-        exit(EXIT_FAILURE);
+        ConfigRange range {stem.substr(0, separator), stem.substr(separator + 1), path};
+        if (compare_versions(range.start, range.end) > 0) {
+            ERROR("Invalid database config range '" + path.string() +
+                  "': start version is greater than end version");
+            exit(EXIT_FAILURE);
+        }
+        return range;
     }
-    return range;
-}
+}  // namespace
 
 std::filesystem::path select_config_path(const std::filesystem::path& database_path,
                                          const std::string& package_name,

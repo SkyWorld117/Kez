@@ -1,22 +1,24 @@
 #include <algorithm>
 #include <dependency_resolver/requirements.hpp>
 
-template <typename Dependencies, typename Contains>
-static bool requirements_satisfied_impl(const std::vector<std::string>& requirements,
-                                        const Dependencies& dependencies,
-                                        const AbstractPackageSelections& abstract_packages,
-                                        Contains contains) {
-    for (const std::string& requirement : requirements) {
-        if (contains(dependencies, requirement)) {
-            continue;
+namespace {
+    template <typename Dependencies, typename Contains>
+    bool requirements_satisfied_impl(const std::vector<std::string>& requirements,
+                                     const Dependencies& dependencies,
+                                     const AbstractPackageSelections& abstract_packages,
+                                     Contains contains) {
+        for (const std::string& requirement : requirements) {
+            if (contains(dependencies, requirement)) {
+                continue;
+            }
+            const auto selected = abstract_packages.find(requirement);
+            if (selected == abstract_packages.end() || !contains(dependencies, selected->second)) {
+                return false;
+            }
         }
-        const auto selected = abstract_packages.find(requirement);
-        if (selected == abstract_packages.end() || !contains(dependencies, selected->second)) {
-            return false;
-        }
+        return true;
     }
-    return true;
-}
+}  // namespace
 
 bool requirements_satisfied(const std::vector<std::string>& requirements,
                             const std::vector<std::string>& dependencies,

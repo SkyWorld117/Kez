@@ -16,118 +16,121 @@
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
-static std::string configured_default_compiler() {
-    const std::string work_directory = get_env_var_noerr("KEZ_WORKDIR");
-    if (work_directory.empty()) {
-        return "system";
-    }
-
-    const std::filesystem::path path = std::filesystem::path(work_directory) / "config.yaml";
-    if (!std::filesystem::is_regular_file(path)) {
-        return "system";
-    }
-
-    const YAML::Node document = YAML::LoadFile(path.string());
-    if (!yaml_has(document, "settings")) {
-        return "system";
-    }
-    const YAML::Node settings = document["settings"];
-    if (!settings.IsMap() || !yaml_has(settings, "default_compiler")) {
-        return "system";
-    }
-    const YAML::Node compiler = settings["default_compiler"];
-    if (!compiler.IsScalar()) {
-        return "system";
-    }
-    return yaml_scalar(compiler, "settings.default_compiler");
-}
-
-static std::unordered_set<std::string> resolved_targets(
-    const std::vector<std::string>& target_packages,
-    const AbstractPackageSelections& abstract_packages) {
-    std::unordered_set<std::string> result;
-    result.reserve(target_packages.size());
-    for (const std::string& target : target_packages) {
-        const auto selected = abstract_packages.find(target);
-        result.insert(selected == abstract_packages.end() ? target : selected->second);
-    }
-    return result;
-}
-
-static std::vector<std::string> available_patches(const std::string& package_name) {
-    const std::string home = get_env_var_noerr("KEZ_HOME");
-    if (home.empty()) {
-        return {};
-    }
-
-    const std::filesystem::path directory = std::filesystem::path(home) / "patches" / package_name;
-    if (!std::filesystem::is_directory(directory)) {
-        return {};
-    }
-
-    std::vector<std::string> result;
-    for (const auto& entry : std::filesystem::directory_iterator(directory)) {
-        if (entry.is_regular_file()) {
-            result.push_back(entry.path().filename().string());
+namespace {
+    std::string configured_default_compiler() {
+        const std::string work_directory = get_env_var_noerr("KEZ_WORKDIR");
+        if (work_directory.empty()) {
+            return "system";
         }
-    }
-    std::sort(result.begin(), result.end());
-    return result;
-}
 
-static void append_package_config(YAML::Node& output, const PackageConfig& package,
-                                  const std::vector<std::string>& all_dependencies,
-                                  const std::unordered_set<std::string>& target_packages,
-                                  const AbstractPackageSelections& abstract_packages,
-                                  const std::string& default_compiler) {
-    YAML::Node package_output(YAML::NodeType::Map);
-    if (package.description.has_value()) {
-        package_output["description"] = *package.description;
-    }
-    if (package.source.has_value() && !package.source->releases.empty()) {
-        package_output["version"] = package.source->releases.front().version;
-    }
-    if (package.type != PackageType::Vendor && package.type != PackageType::External) {
-        package_output["compiler"] = default_compiler;
-    }
-
-    const std::vector<std::string> patches = available_patches(package.name);
-    if (!patches.empty()) {
-        YAML::Node patch_output(YAML::NodeType::Sequence);
-        for (const std::string& patch : patches) {
-            YAML::Node item(YAML::NodeType::Map);
-            item["name"]    = patch;
-            item["enabled"] = false;
-            patch_output.push_back(item);
+        const std::filesystem::path path = std::filesystem::path(work_directory) / "config.yaml";
+        if (!std::filesystem::is_regular_file(path)) {
+            return "system";
         }
-        package_output["patches"] = patch_output;
+
+        const YAML::Node document = YAML::LoadFile(path.string());
+        if (!yaml_has(document, "settings")) {
+            return "system";
+        }
+        const YAML::Node settings = document["settings"];
+        if (!settings.IsMap() || !yaml_has(settings, "default_compiler")) {
+            return "system";
+        }
+        const YAML::Node compiler = settings["default_compiler"];
+        if (!compiler.IsScalar()) {
+            return "system";
+        }
+        return yaml_scalar(compiler, "settings.default_compiler");
     }
 
-    const bool include_build =
-        (package.type != PackageType::Compiler && package.type != PackageType::Mpi) ||
-        target_packages.find(package.name) != target_packages.end();
-    if (package.build.has_value() && include_build) {
-        YAML::Node build_output(YAML::NodeType::Map);
-        if (package.build->configurations.has_value()) {
-            YAML::Node configurations = filtered_configurations(
-                *package.build->configurations, all_dependencies, abstract_packages);
-            if (configurations.size() != 0) {
-                build_output["configurations"] = configurations;
+    std::unordered_set<std::string> resolved_targets(
+        const std::vector<std::string>& target_packages,
+        const AbstractPackageSelections& abstract_packages) {
+        std::unordered_set<std::string> result;
+        result.reserve(target_packages.size());
+        for (const std::string& target : target_packages) {
+            const auto selected = abstract_packages.find(target);
+            result.insert(selected == abstract_packages.end() ? target : selected->second);
+        }
+        return result;
+    }
+
+    std::vector<std::string> available_patches(const std::string& package_name) {
+        const std::string home = get_env_var_noerr("KEZ_HOME");
+        if (home.empty()) {
+            return {};
+        }
+
+        const std::filesystem::path directory =
+            std::filesystem::path(home) / "patches" / package_name;
+        if (!std::filesystem::is_directory(directory)) {
+            return {};
+        }
+
+        std::vector<std::string> result;
+        for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+            if (entry.is_regular_file()) {
+                result.push_back(entry.path().filename().string());
+            }
+        }
+        std::sort(result.begin(), result.end());
+        return result;
+    }
+
+    void append_package_config(YAML::Node& output, const PackageConfig& package,
+                               const std::vector<std::string>& all_dependencies,
+                               const std::unordered_set<std::string>& target_packages,
+                               const AbstractPackageSelections& abstract_packages,
+                               const std::string& default_compiler) {
+        YAML::Node package_output(YAML::NodeType::Map);
+        if (package.description.has_value()) {
+            package_output["description"] = *package.description;
+        }
+        if (package.source.has_value() && !package.source->releases.empty()) {
+            package_output["version"] = package.source->releases.front().version;
+        }
+        if (package.type != PackageType::Vendor && package.type != PackageType::External) {
+            package_output["compiler"] = default_compiler;
+        }
+
+        const std::vector<std::string> patches = available_patches(package.name);
+        if (!patches.empty()) {
+            YAML::Node patch_output(YAML::NodeType::Sequence);
+            for (const std::string& patch : patches) {
+                YAML::Node item(YAML::NodeType::Map);
+                item["name"]    = patch;
+                item["enabled"] = false;
+                patch_output.push_back(item);
+            }
+            package_output["patches"] = patch_output;
+        }
+
+        const bool include_build =
+            (package.type != PackageType::Compiler && package.type != PackageType::Mpi) ||
+            target_packages.find(package.name) != target_packages.end();
+        if (package.build.has_value() && include_build) {
+            YAML::Node build_output(YAML::NodeType::Map);
+            if (package.build->configurations.has_value()) {
+                YAML::Node configurations = filtered_configurations(
+                    *package.build->configurations, all_dependencies, abstract_packages);
+                if (configurations.size() != 0) {
+                    build_output["configurations"] = configurations;
+                }
+            }
+
+            YAML::Node stages =
+                filtered_stages(package.build->stages, all_dependencies, abstract_packages);
+            if (stages.size() != 0) {
+                build_output["stages"] = stages;
+            }
+            if (build_output.size() != 0) {
+                package_output["build"] = build_output;
             }
         }
 
-        YAML::Node stages =
-            filtered_stages(package.build->stages, all_dependencies, abstract_packages);
-        if (stages.size() != 0) {
-            build_output["stages"] = stages;
-        }
-        if (build_output.size() != 0) {
-            package_output["build"] = build_output;
-        }
+        output["cheese"][package.name] = package_output;
     }
-
-    output["cheese"][package.name] = package_output;
-}
+}  // namespace
 
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive) {
     return gen_user_config(package_names, interactive, configured_default_compiler());

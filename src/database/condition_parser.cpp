@@ -4,77 +4,79 @@
 #include <functional>
 #include <vector>
 
-static std::vector<std::string> tokenize_condition(const std::string& expression,
-                                                   const YAML::Node& node, const std::string& path,
-                                                   const DatabaseParserContext& context) {
-    std::vector<std::string> tokens;
-    std::string current;
-    auto flush = [&] {
-        if (!current.empty()) {
-            tokens.push_back(current);
-            current.clear();
-        }
-    };
-
-    for (std::size_t i = 0; i < expression.size(); ++i) {
-        const char character = expression[i];
-        if (std::isspace(static_cast<unsigned char>(character))) {
-            flush();
-        } else if (character == '(' || character == ')') {
-            flush();
-            tokens.emplace_back(1, character);
-        } else if (character == '&' || character == '|') {
-            flush();
-            if (i + 1 >= expression.size() || expression[i + 1] != character) {
-                fail_config(node, path, "contains an incomplete logical operator", context);
+namespace {
+    std::vector<std::string> tokenize_condition(const std::string& expression,
+                                                const YAML::Node& node, const std::string& path,
+                                                const DatabaseParserContext& context) {
+        std::vector<std::string> tokens;
+        std::string current;
+        auto flush = [&] {
+            if (!current.empty()) {
+                tokens.push_back(current);
+                current.clear();
             }
-            tokens.emplace_back(2, character);
-            ++i;
-        } else {
-            current += character;
-        }
-    }
-    flush();
-    return tokens;
-}
+        };
 
-static void validate_version_condition(const std::string& token, const YAML::Node& node,
-                                       const std::string& path,
-                                       const DatabaseParserContext& context) {
-    if (token.rfind("${", 0) != 0) {
-        fail_config(node, path, "version comparison must start with a template variable", context);
-    }
-    const std::size_t closing = token.find('}');
-    if (closing == std::string::npos || closing == 2) {
-        fail_config(node, path, "contains an invalid version template", context);
-    }
-    std::string comparisons = token.substr(closing + 1);
-    if (comparisons.empty()) {
-        fail_config(node, path, "contains no version comparison", context);
-    }
-
-    std::size_t begin = 0;
-    while (begin <= comparisons.size()) {
-        const std::size_t end                           = comparisons.find(',', begin);
-        const std::string comparison                    = comparisons.substr(begin, end - begin);
-        static const std::vector<std::string> operators = {">=", "<=", "==", "!=", ">", "<"};
-        bool valid                                      = false;
-        for (const std::string& candidate : operators) {
-            if (comparison.rfind(candidate, 0) == 0 && comparison.size() > candidate.size()) {
-                valid = true;
-                break;
+        for (std::size_t i = 0; i < expression.size(); ++i) {
+            const char character = expression[i];
+            if (std::isspace(static_cast<unsigned char>(character))) {
+                flush();
+            } else if (character == '(' || character == ')') {
+                flush();
+                tokens.emplace_back(1, character);
+            } else if (character == '&' || character == '|') {
+                flush();
+                if (i + 1 >= expression.size() || expression[i + 1] != character) {
+                    fail_config(node, path, "contains an incomplete logical operator", context);
+                }
+                tokens.emplace_back(2, character);
+                ++i;
+            } else {
+                current += character;
             }
         }
-        if (!valid) {
-            fail_config(node, path, "contains invalid version comparison '" + comparison + "'",
+        flush();
+        return tokens;
+    }
+
+    void validate_version_condition(const std::string& token, const YAML::Node& node,
+                                    const std::string& path, const DatabaseParserContext& context) {
+        if (token.rfind("${", 0) != 0) {
+            fail_config(node, path, "version comparison must start with a template variable",
                         context);
         }
-        if (end == std::string::npos) {
-            break;
+        const std::size_t closing = token.find('}');
+        if (closing == std::string::npos || closing == 2) {
+            fail_config(node, path, "contains an invalid version template", context);
         }
-        begin = end + 1;
+        std::string comparisons = token.substr(closing + 1);
+        if (comparisons.empty()) {
+            fail_config(node, path, "contains no version comparison", context);
+        }
+
+        std::size_t begin = 0;
+        while (begin <= comparisons.size()) {
+            const std::size_t end        = comparisons.find(',', begin);
+            const std::string comparison = comparisons.substr(begin, end - begin);
+            static const std::vector<std::string> operators = {">=", "<=", "==", "!=", ">", "<"};
+            bool valid                                      = false;
+            for (const std::string& candidate : operators) {
+                if (comparison.rfind(candidate, 0) == 0 && comparison.size() > candidate.size()) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                fail_config(node, path, "contains invalid version comparison '" + comparison + "'",
+                            context);
+            }
+            if (end == std::string::npos) {
+                break;
+            }
+            begin = end + 1;
+        }
     }
-}
+}  // namespace
 
 void validate_condition(const std::string& expression, const YAML::Node& node,
                         const std::string& path, const DatabaseParserContext& context) {

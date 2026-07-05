@@ -6,42 +6,60 @@
 #include <utility>
 #include <utils/yaml_utils.hpp>
 
-template <typename T, typename ValueParser>
-static ConfigurableValue<T> parse_configurable(const YAML::Node& node, const std::string& path,
-                                               const DatabaseParserContext& context,
-                                               ValueParser parse_value) {
-    expect_map(node, path, context);
-    check_keys(node, {"default", "conditions"}, path, context);
-    ConfigurableValue<T> result;
-    if (yaml_has(node, "default") && !node["default"].IsNull()) {
-        result.default_value = parse_value(node["default"], path + ".default");
-    }
-    if (yaml_has(node, "conditions")) {
-        YAML::Node conditions = node["conditions"];
-        expect_sequence(conditions, path + ".conditions", context);
-        for (std::size_t i = 0; i < conditions.size(); ++i) {
-            const std::string condition_path = path + ".conditions[" + std::to_string(i) + "]";
-            YAML::Node condition_node        = conditions[i];
-            expect_map(condition_node, condition_path, context);
-            check_keys(condition_node, {"condition", "action", "value"}, condition_path, context);
-
-            ConditionalValue<T> condition;
-            condition.condition =
-                required_scalar(condition_node, "condition", condition_path, context);
-            validate_condition(condition.condition, condition_node["condition"],
-                               condition_path + ".condition", context);
-            if (yaml_has(condition_node, "action")) {
-                condition.action =
-                    parse_action(condition_node["action"], condition_path + ".action", context);
-            }
-            condition.value =
-                parse_value(required_node(condition_node, "value", condition_path, context),
-                            condition_path + ".value");
-            result.conditions.push_back(std::move(condition));
+namespace {
+    template <typename T, typename ValueParser>
+    ConfigurableValue<T> parse_configurable(const YAML::Node& node, const std::string& path,
+                                            const DatabaseParserContext& context,
+                                            ValueParser parse_value) {
+        expect_map(node, path, context);
+        check_keys(node, {"default", "conditions"}, path, context);
+        ConfigurableValue<T> result;
+        if (yaml_has(node, "default") && !node["default"].IsNull()) {
+            result.default_value = parse_value(node["default"], path + ".default");
         }
+        if (yaml_has(node, "conditions")) {
+            YAML::Node conditions = node["conditions"];
+            expect_sequence(conditions, path + ".conditions", context);
+            for (std::size_t i = 0; i < conditions.size(); ++i) {
+                const std::string condition_path = path + ".conditions[" + std::to_string(i) + "]";
+                YAML::Node condition_node        = conditions[i];
+                expect_map(condition_node, condition_path, context);
+                check_keys(condition_node, {"condition", "action", "value"}, condition_path,
+                           context);
+
+                ConditionalValue<T> condition;
+                condition.condition =
+                    required_scalar(condition_node, "condition", condition_path, context);
+                validate_condition(condition.condition, condition_node["condition"],
+                                   condition_path + ".condition", context);
+                if (yaml_has(condition_node, "action")) {
+                    condition.action =
+                        parse_action(condition_node["action"], condition_path + ".action", context);
+                }
+                condition.value =
+                    parse_value(required_node(condition_node, "value", condition_path, context),
+                                condition_path + ".value");
+                result.conditions.push_back(std::move(condition));
+            }
+        }
+        if (!result.default_value.has_value() && result.conditions.empty()) {
+            fail_config(node, path, "must define a default or at least one condition", context);
+        }
+        return result;
     }
-    if (!result.default_value.has_value() && result.conditions.empty()) {
-        fail_config(node, path, "must define a default or at least one condition", context);
+
+}  // namespace
+
+ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node, const std::string& path,
+                                                const DatabaseParserContext& context) {
+    ConfigurableValue<bool> result = parse_configurable<bool>(
+        node, path, context, [&context](const YAML::Node& value, const std::string& value_path) {
+            return parse_boolean(value, value_path, context);
+        });
+    for (const auto& condition : result.conditions) {
+        if (condition.action != ValueAction::Set) {
+            fail_config(node, path, "boolean conditions only support the set action", context);
+        }
     }
     return result;
 }
@@ -55,90 +73,76 @@ ConfigurableValue<std::string> parse_string_configurable(const YAML::Node& node,
         });
 }
 
-static ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node,
-                                                       const std::string& path,
-                                                       const DatabaseParserContext& context) {
-    ConfigurableValue<bool> result = parse_configurable<bool>(
-        node, path, context, [&context](const YAML::Node& value, const std::string& value_path) {
-            return parse_boolean(value, value_path, context);
-        });
-    for (const auto& condition : result.conditions) {
-        if (condition.action != ValueAction::Set) {
-            fail_config(node, path, "boolean conditions only support the set action", context);
+namespace {
+    EnvironmentVariable parse_environment_variable(const YAML::Node& node, const std::string& path,
+                                                   const DatabaseParserContext& context) {
+        expect_map(node, path, context);
+        check_keys(
+            node, {"name", "description", "user_configurable", "requires", "default", "conditions"},
+            path, context);
+
+        EnvironmentVariable result;
+        result.name        = required_scalar(node, "name", path, context);
+        result.description = optional_scalar(node, "description", path, context);
+        if (yaml_has(node, "user_configurable")) {
+            result.user_configurable =
+                parse_boolean(node["user_configurable"], path + ".user_configurable", context);
         }
-    }
-    return result;
-}
-
-static EnvironmentVariable parse_environment_variable(const YAML::Node& node,
-                                                      const std::string& path,
-                                                      const DatabaseParserContext& context) {
-    expect_map(node, path, context);
-    check_keys(node,
-               {"name", "description", "user_configurable", "requires", "default", "conditions"},
-               path, context);
-
-    EnvironmentVariable result;
-    result.name        = required_scalar(node, "name", path, context);
-    result.description = optional_scalar(node, "description", path, context);
-    if (yaml_has(node, "user_configurable")) {
-        result.user_configurable =
-            parse_boolean(node["user_configurable"], path + ".user_configurable", context);
-    }
-    if (yaml_has(node, "requires")) {
-        result.
-            requires
-        = parse_scalar_sequence(node["requires"], path + ".requires", context);
-    }
-    if (yaml_has(node, "default") && !node["default"].IsNull()) {
-        result.value.default_value = parse_scalar(node["default"], path + ".default", context);
-    }
-    if (yaml_has(node, "conditions")) {
-        YAML::Node wrapper(YAML::NodeType::Map);
-        if (yaml_has(node, "default")) {
-            wrapper["default"] = node["default"];
+        if (yaml_has(node, "requires")) {
+            result.
+                requires
+            = parse_scalar_sequence(node["requires"], path + ".requires", context);
         }
-        wrapper["conditions"] = node["conditions"];
-        result.value          = parse_string_configurable(wrapper, path, context);
+        if (yaml_has(node, "default") && !node["default"].IsNull()) {
+            result.value.default_value = parse_scalar(node["default"], path + ".default", context);
+        }
+        if (yaml_has(node, "conditions")) {
+            YAML::Node wrapper(YAML::NodeType::Map);
+            if (yaml_has(node, "default")) {
+                wrapper["default"] = node["default"];
+            }
+            wrapper["conditions"] = node["conditions"];
+            result.value          = parse_string_configurable(wrapper, path, context);
+        }
+        return result;
     }
-    return result;
-}
 
-static BuildOption parse_option(const YAML::Node& node, const std::string& path,
-                                const DatabaseParserContext& context) {
-    expect_map(node, path, context);
-    check_keys(node,
-               {"name", "description", "user_configurable", "enabled", "enabled_format",
-                "disabled_format", "requires", "enabled_value", "disabled_value"},
-               path, context);
+    BuildOption parse_option(const YAML::Node& node, const std::string& path,
+                             const DatabaseParserContext& context) {
+        expect_map(node, path, context);
+        check_keys(node,
+                   {"name", "description", "user_configurable", "enabled", "enabled_format",
+                    "disabled_format", "requires", "enabled_value", "disabled_value"},
+                   path, context);
 
-    BuildOption result;
-    result.name        = required_scalar(node, "name", path, context);
-    result.description = optional_scalar(node, "description", path, context);
-    if (yaml_has(node, "user_configurable")) {
-        result.user_configurable =
-            parse_boolean(node["user_configurable"], path + ".user_configurable", context);
+        BuildOption result;
+        result.name        = required_scalar(node, "name", path, context);
+        result.description = optional_scalar(node, "description", path, context);
+        if (yaml_has(node, "user_configurable")) {
+            result.user_configurable =
+                parse_boolean(node["user_configurable"], path + ".user_configurable", context);
+        }
+        if (yaml_has(node, "enabled")) {
+            result.enabled = parse_bool_configurable(node["enabled"], path + ".enabled", context);
+        }
+        result.enabled_format  = optional_scalar(node, "enabled_format", path, context);
+        result.disabled_format = optional_scalar(node, "disabled_format", path, context);
+        if (yaml_has(node, "requires")) {
+            result.
+                requires
+            = parse_scalar_sequence(node["requires"], path + ".requires", context);
+        }
+        if (yaml_has(node, "enabled_value")) {
+            result.enabled_value =
+                parse_string_configurable(node["enabled_value"], path + ".enabled_value", context);
+        }
+        if (yaml_has(node, "disabled_value")) {
+            result.disabled_value = parse_string_configurable(node["disabled_value"],
+                                                              path + ".disabled_value", context);
+        }
+        return result;
     }
-    if (yaml_has(node, "enabled")) {
-        result.enabled = parse_bool_configurable(node["enabled"], path + ".enabled", context);
-    }
-    result.enabled_format  = optional_scalar(node, "enabled_format", path, context);
-    result.disabled_format = optional_scalar(node, "disabled_format", path, context);
-    if (yaml_has(node, "requires")) {
-        result.
-            requires
-        = parse_scalar_sequence(node["requires"], path + ".requires", context);
-    }
-    if (yaml_has(node, "enabled_value")) {
-        result.enabled_value =
-            parse_string_configurable(node["enabled_value"], path + ".enabled_value", context);
-    }
-    if (yaml_has(node, "disabled_value")) {
-        result.disabled_value =
-            parse_string_configurable(node["disabled_value"], path + ".disabled_value", context);
-    }
-    return result;
-}
+}  // namespace
 
 BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::string& path,
                                              const DatabaseParserContext& context) {

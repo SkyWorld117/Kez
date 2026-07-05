@@ -20,48 +20,42 @@
     exit(EXIT_FAILURE);
 }
 
-static bool evaluate_parser_condition(const std::string& expression,
-                                      UserConfigParserContext& context);
-static std::string parser_package_version(const std::string& package_name,
-                                          UserConfigParserContext& context);
-
-static std::string canonical_package_name(UserConfigParserContext& context,
-                                          const std::string& package_name) {
-    const auto alias = context.package_aliases.find(package_name);
-    return alias == context.package_aliases.end() ? package_name : alias->second;
-}
-
-static PackageConfigPtr parser_package_config(UserConfigParserContext& context,
-                                              const std::string& package_name) {
-    const std::string requested_name = canonical_package_name(context, package_name);
-    const auto parsed                = context.package_indices.find(requested_name);
-    if (parsed != context.package_indices.end()) {
-        return context.packages[parsed->second].database_config;
-    }
-
-    const auto cached = context.extra_configs.find(requested_name);
-    if (cached != context.extra_configs.end()) {
-        return cached->second;
-    }
-    PackageConfigPtr config = get_db_config(requested_name);
-    context.extra_configs.emplace(requested_name, config);
-    if (config->name != requested_name) {
-        context.package_aliases.emplace(config->name, requested_name);
-    }
-    return config;
-}
-
-static YAML::Node parser_user_package(UserConfigParserContext& context,
-                                      const std::string& package_name) {
-    const std::string requested_name = canonical_package_name(context, package_name);
-    const auto parsed                = context.package_indices.find(requested_name);
-    if (parsed == context.package_indices.end()) {
-        return YAML::Node();
-    }
-    return context.packages[parsed->second].user_config;
-}
-
 namespace {
+    std::string canonical_package_name(UserConfigParserContext& context,
+                                       const std::string& package_name) {
+        const auto alias = context.package_aliases.find(package_name);
+        return alias == context.package_aliases.end() ? package_name : alias->second;
+    }
+
+    PackageConfigPtr parser_package_config(UserConfigParserContext& context,
+                                           const std::string& package_name) {
+        const std::string requested_name = canonical_package_name(context, package_name);
+        const auto parsed                = context.package_indices.find(requested_name);
+        if (parsed != context.package_indices.end()) {
+            return context.packages[parsed->second].database_config;
+        }
+
+        const auto cached = context.extra_configs.find(requested_name);
+        if (cached != context.extra_configs.end()) {
+            return cached->second;
+        }
+        PackageConfigPtr config = get_db_config(requested_name);
+        context.extra_configs.emplace(requested_name, config);
+        if (config->name != requested_name) {
+            context.package_aliases.emplace(config->name, requested_name);
+        }
+        return config;
+    }
+
+    YAML::Node parser_user_package(UserConfigParserContext& context,
+                                   const std::string& package_name) {
+        const std::string requested_name = canonical_package_name(context, package_name);
+        const auto parsed                = context.package_indices.find(requested_name);
+        if (parsed == context.package_indices.end()) {
+            return YAML::Node();
+        }
+        return context.packages[parsed->second].user_config;
+    }
 
     std::vector<std::string> tokenize_condition(const std::string& expression) {
         std::vector<std::string> tokens;
@@ -309,6 +303,75 @@ namespace {
         return value;
     }
 
+    bool evaluate_parser_condition(const std::string& expression,
+                                   UserConfigParserContext& context) {
+        const std::vector<std::string> tokens = tokenize_condition(expression);
+        if (tokens.empty()) {
+            user_config_error("condition must not be empty");
+        }
+        ConditionCursor cursor {tokens, context};
+        const bool result = parse_condition_or(cursor);
+        if (cursor.position != tokens.size()) {
+            user_config_error("condition contains unexpected token '" + tokens[cursor.position] +
+                              "'");
+        }
+        return result;
+    }
+
+    std::string parser_package_version(const std::string& package_name,
+                                       UserConfigParserContext& context) {
+        const std::string requested_name = canonical_package_name(context, package_name);
+        YAML::Node user_package          = parser_user_package(context, requested_name);
+        if (yaml_has(user_package, "version")) {
+            std::string version = yaml_scalar(user_package["version"], "package version");
+            const std::size_t local_separator = version.find('@');
+            if (local_separator != std::string::npos) {
+                version = version.substr(0, local_separator);
+            }
+            return version;
+        }
+
+        const PackageConfigPtr config = parser_package_config(context, requested_name);
+        if (config->type == PackageType::External) {
+            const auto external = context.settings.external_packages.find(requested_name);
+            if (external == context.settings.external_packages.end() ||
+                external->second.version.empty()) {
+                user_config_error("external package '" + requested_name +
+                                  "' has no configured version");
+            }
+            return external->second.version;
+        }
+        if (config->type == PackageType::System) {
+            const std::filesystem::path state_path = context.settings.system_prefix / "state.yaml";
+            if (!std::filesystem::is_regular_file(state_path)) {
+                user_config_error("system package state file does not exist: " +
+                                  state_path.string());
+            }
+            const YAML::Node state = YAML::LoadFile(state_path.string());
+            if (yaml_has(state, "state") && yaml_has(state["state"], requested_name)) {
+                YAML::Node value = state["state"][requested_name];
+                return value.IsMap() && yaml_has(value, "version")
+                           ? yaml_scalar(value["version"], "system package version")
+                           : yaml_scalar(value, "system package version");
+            }
+            if (yaml_has(state, "cheese") && yaml_has(state["cheese"], requested_name) &&
+                yaml_has(state["cheese"][requested_name], "version")) {
+                return yaml_scalar(state["cheese"][requested_name]["version"],
+                                   "system package version");
+            }
+            user_config_error("system package '" + requested_name + "' is absent from state.yaml");
+        }
+
+        const auto [compiler_name, compiler_version] = current_compiler(context);
+        if (requested_name == compiler_name) {
+            return compiler_version;
+        }
+        if (config->source.has_value() && !config->source->releases.empty()) {
+            return config->source->releases.front().version;
+        }
+        user_config_error("package '" + requested_name + "' has no version");
+    }
+
     std::string resolve_parser_template_base(const std::string& name,
                                              UserConfigParserContext& context) {
         if (name == "source") {
@@ -419,22 +482,7 @@ namespace {
         }
         return apply_overrides(name, std::move(value), context);
     }
-
 }  // namespace
-
-static bool evaluate_parser_condition(const std::string& expression,
-                                      UserConfigParserContext& context) {
-    const std::vector<std::string> tokens = tokenize_condition(expression);
-    if (tokens.empty()) {
-        user_config_error("condition must not be empty");
-    }
-    ConditionCursor cursor {tokens, context};
-    const bool result = parse_condition_or(cursor);
-    if (cursor.position != tokens.size()) {
-        user_config_error("condition contains unexpected token '" + tokens[cursor.position] + "'");
-    }
-    return result;
-}
 
 std::string apply_parser_conditions(const ConfigurableValue<std::string>& configurable,
                                     const std::string& base_value,
@@ -487,59 +535,6 @@ std::string resolve_parser_scalar(const std::string& value, UserConfigParserCont
         position += replacement.size();
     }
     return result;
-}
-
-static std::string parser_package_version(const std::string& package_name,
-                                          UserConfigParserContext& context) {
-    const std::string requested_name = canonical_package_name(context, package_name);
-    YAML::Node user_package          = parser_user_package(context, requested_name);
-    if (yaml_has(user_package, "version")) {
-        std::string version               = yaml_scalar(user_package["version"], "package version");
-        const std::size_t local_separator = version.find('@');
-        if (local_separator != std::string::npos) {
-            version = version.substr(0, local_separator);
-        }
-        return version;
-    }
-
-    const PackageConfigPtr config = parser_package_config(context, requested_name);
-    if (config->type == PackageType::External) {
-        const auto external = context.settings.external_packages.find(requested_name);
-        if (external == context.settings.external_packages.end() ||
-            external->second.version.empty()) {
-            user_config_error("external package '" + requested_name +
-                              "' has no configured version");
-        }
-        return external->second.version;
-    }
-    if (config->type == PackageType::System) {
-        const std::filesystem::path state_path = context.settings.system_prefix / "state.yaml";
-        if (!std::filesystem::is_regular_file(state_path)) {
-            user_config_error("system package state file does not exist: " + state_path.string());
-        }
-        const YAML::Node state = YAML::LoadFile(state_path.string());
-        if (yaml_has(state, "state") && yaml_has(state["state"], requested_name)) {
-            YAML::Node value = state["state"][requested_name];
-            return value.IsMap() && yaml_has(value, "version")
-                       ? yaml_scalar(value["version"], "system package version")
-                       : yaml_scalar(value, "system package version");
-        }
-        if (yaml_has(state, "cheese") && yaml_has(state["cheese"], requested_name) &&
-            yaml_has(state["cheese"][requested_name], "version")) {
-            return yaml_scalar(state["cheese"][requested_name]["version"],
-                               "system package version");
-        }
-        user_config_error("system package '" + requested_name + "' is absent from state.yaml");
-    }
-
-    const auto [compiler_name, compiler_version] = current_compiler(context);
-    if (requested_name == compiler_name) {
-        return compiler_version;
-    }
-    if (config->source.has_value() && !config->source->releases.empty()) {
-        return config->source->releases.front().version;
-    }
-    user_config_error("package '" + requested_name + "' has no version");
 }
 
 std::string parser_package_prefix(const std::string& package_name,

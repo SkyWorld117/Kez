@@ -3,23 +3,25 @@
 #include <unordered_set>
 #include <utility>
 
-static SourceType parse_source_type(const YAML::Node& node, const std::string& path,
-                                    const DatabaseParserContext& context) {
-    const std::string value = parse_scalar(node, path, context);
-    if (value == "git") {
-        return SourceType::Git;
+namespace {
+    SourceType parse_source_type(const YAML::Node& node, const std::string& path,
+                                 const DatabaseParserContext& context) {
+        const std::string value = parse_scalar(node, path, context);
+        if (value == "git") {
+            return SourceType::Git;
+        }
+        if (value == "tarball") {
+            return SourceType::Tarball;
+        }
+        if (value == "zip") {
+            return SourceType::Zip;
+        }
+        if (value == "script") {
+            return SourceType::Script;
+        }
+        fail_config(node, path, "has unsupported source type '" + value + "'", context);
     }
-    if (value == "tarball") {
-        return SourceType::Tarball;
-    }
-    if (value == "zip") {
-        return SourceType::Zip;
-    }
-    if (value == "script") {
-        return SourceType::Script;
-    }
-    fail_config(node, path, "has unsupported source type '" + value + "'", context);
-}
+}  // namespace
 
 Source parse_source(const YAML::Node& node, const std::string& path,
                     const DatabaseParserContext& context) {

@@ -8,111 +8,113 @@
 #include <utility>
 #include <utils/yaml_utils.hpp>
 
-static PackageType parse_package_type(const YAML::Node& node, const std::string& path,
-                                      const DatabaseParserContext& context) {
-    const std::string value = parse_scalar(node, path, context);
-    if (value == "package") {
-        return PackageType::Package;
-    }
-    if (value == "system") {
-        return PackageType::System;
-    }
-    if (value == "compiler") {
-        return PackageType::Compiler;
-    }
-    if (value == "mpi") {
-        return PackageType::Mpi;
-    }
-    if (value == "vendor") {
-        return PackageType::Vendor;
-    }
-    if (value == "abstract") {
-        return PackageType::Abstract;
-    }
-    if (value == "external") {
-        return PackageType::External;
-    }
-    fail_config(node, path, "has unsupported package type '" + value + "'", context);
-}
-
-static std::unique_ptr<PackageConfig> make_package_config(const YAML::Node& recipe,
-                                                          const DatabaseParserContext& context) {
-    if (!yaml_has(recipe, "toolchain")) {
-        return std::make_unique<GenericPackageConfig>();
+namespace {
+    PackageType parse_package_type(const YAML::Node& node, const std::string& path,
+                                   const DatabaseParserContext& context) {
+        const std::string value = parse_scalar(node, path, context);
+        if (value == "package") {
+            return PackageType::Package;
+        }
+        if (value == "system") {
+            return PackageType::System;
+        }
+        if (value == "compiler") {
+            return PackageType::Compiler;
+        }
+        if (value == "mpi") {
+            return PackageType::Mpi;
+        }
+        if (value == "vendor") {
+            return PackageType::Vendor;
+        }
+        if (value == "abstract") {
+            return PackageType::Abstract;
+        }
+        if (value == "external") {
+            return PackageType::External;
+        }
+        fail_config(node, path, "has unsupported package type '" + value + "'", context);
     }
 
-    const YAML::Node node   = recipe["toolchain"];
-    const std::string value = parse_scalar(node, "recipe.toolchain", context);
-    if (value == "autotools") {
-        return std::make_unique<AutotoolsPackageConfig>();
-    }
-    if (value == "cmake") {
-        return std::make_unique<CMakePackageConfig>();
-    }
-    if (value == "make") {
-        return std::make_unique<MakePackageConfig>();
-    }
-    fail_config(node, "recipe.toolchain", "has unsupported toolchain '" + value + "'", context);
-}
+    std::unique_ptr<PackageConfig> make_package_config(const YAML::Node& recipe,
+                                                       const DatabaseParserContext& context) {
+        if (!yaml_has(recipe, "toolchain")) {
+            return std::make_unique<GenericPackageConfig>();
+        }
 
-static std::vector<Override> parse_overrides(const YAML::Node& node, const std::string& path,
-                                             const DatabaseParserContext& context) {
-    expect_sequence(node, path, context);
-    std::vector<Override> result;
-    for (std::size_t i = 0; i < node.size(); ++i) {
-        const std::string override_path = path + "[" + std::to_string(i) + "]";
-        YAML::Node override_node        = node[i];
-        expect_map(override_node, override_path, context);
-        check_keys(override_node, {"condition", "target", "action", "value"}, override_path,
-                   context);
+        const YAML::Node node   = recipe["toolchain"];
+        const std::string value = parse_scalar(node, "recipe.toolchain", context);
+        if (value == "autotools") {
+            return std::make_unique<AutotoolsPackageConfig>();
+        }
+        if (value == "cmake") {
+            return std::make_unique<CMakePackageConfig>();
+        }
+        if (value == "make") {
+            return std::make_unique<MakePackageConfig>();
+        }
+        fail_config(node, "recipe.toolchain", "has unsupported toolchain '" + value + "'", context);
+    }
 
-        Override value;
-        value.condition = optional_scalar(override_node, "condition", override_path, context);
-        if (value.condition.has_value()) {
-            validate_condition(*value.condition, override_node["condition"],
-                               override_path + ".condition", context);
-        }
-        value.target = required_scalar(override_node, "target", override_path, context);
-        if (yaml_has(override_node, "action")) {
-            value.action =
-                parse_action(override_node["action"], override_path + ".action", context);
-        }
-        value.value = required_scalar(override_node, "value", override_path, context);
-        result.push_back(std::move(value));
-    }
-    return result;
-}
+    std::vector<Override> parse_overrides(const YAML::Node& node, const std::string& path,
+                                          const DatabaseParserContext& context) {
+        expect_sequence(node, path, context);
+        std::vector<Override> result;
+        for (std::size_t i = 0; i < node.size(); ++i) {
+            const std::string override_path = path + "[" + std::to_string(i) + "]";
+            YAML::Node override_node        = node[i];
+            expect_map(override_node, override_path, context);
+            check_keys(override_node, {"condition", "target", "action", "value"}, override_path,
+                       context);
 
-static std::vector<Property> parse_properties(const YAML::Node& node, const std::string& path,
-                                              const DatabaseParserContext& context) {
-    if (node.IsNull()) {
-        return {};
+            Override value;
+            value.condition = optional_scalar(override_node, "condition", override_path, context);
+            if (value.condition.has_value()) {
+                validate_condition(*value.condition, override_node["condition"],
+                                   override_path + ".condition", context);
+            }
+            value.target = required_scalar(override_node, "target", override_path, context);
+            if (yaml_has(override_node, "action")) {
+                value.action =
+                    parse_action(override_node["action"], override_path + ".action", context);
+            }
+            value.value = required_scalar(override_node, "value", override_path, context);
+            result.push_back(std::move(value));
+        }
+        return result;
     }
-    expect_map(node, path, context);
-    std::unordered_set<std::string> names;
-    std::vector<Property> result;
-    for (const auto& entry : node) {
-        if (!entry.first.IsScalar()) {
-            fail_config(entry.first, path, "contains a non-scalar property name", context);
+
+    std::vector<Property> parse_properties(const YAML::Node& node, const std::string& path,
+                                           const DatabaseParserContext& context) {
+        if (node.IsNull()) {
+            return {};
         }
-        Property property;
-        property.name = entry.first.Scalar();
-        if (!names.emplace(property.name).second) {
-            fail_config(entry.first, path + "." + property.name, "is duplicated", context);
+        expect_map(node, path, context);
+        std::unordered_set<std::string> names;
+        std::vector<Property> result;
+        for (const auto& entry : node) {
+            if (!entry.first.IsScalar()) {
+                fail_config(entry.first, path, "contains a non-scalar property name", context);
+            }
+            Property property;
+            property.name = entry.first.Scalar();
+            if (!names.emplace(property.name).second) {
+                fail_config(entry.first, path + "." + property.name, "is duplicated", context);
+            }
+            const std::string property_path = path + "." + property.name;
+            if (entry.second.IsScalar()) {
+                property.data = entry.second.Scalar();
+            } else if (entry.second.IsMap()) {
+                property.data = parse_string_configurable(entry.second, property_path, context);
+            } else {
+                fail_config(entry.second, property_path,
+                            "must be a scalar or configurable value map", context);
+            }
+            result.push_back(std::move(property));
         }
-        const std::string property_path = path + "." + property.name;
-        if (entry.second.IsScalar()) {
-            property.data = entry.second.Scalar();
-        } else if (entry.second.IsMap()) {
-            property.data = parse_string_configurable(entry.second, property_path, context);
-        } else {
-            fail_config(entry.second, property_path, "must be a scalar or configurable value map",
-                        context);
-        }
-        result.push_back(std::move(property));
+        return result;
     }
-    return result;
-}
+}  // namespace
 
 PackageConfigPtr parse_config_document(const YAML::Node& document,
                                        const DatabaseParserContext& context) {

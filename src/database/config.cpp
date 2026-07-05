@@ -1,15 +1,17 @@
 #include <database/config.hpp>
 
-static std::string make_stage_command(const BuildStage& stage, unsigned int parallel_jobs) {
-    std::string command = "make";
-    if (stage.multithreaded && parallel_jobs != 0) {
-        command += " -j" + std::to_string(parallel_jobs);
+namespace {
+    std::string make_stage_command(const BuildStage& stage, unsigned int parallel_jobs) {
+        std::string command = "make";
+        if (stage.multithreaded && parallel_jobs != 0) {
+            command += " -j" + std::to_string(parallel_jobs);
+        }
+        if (stage.target.has_value() && !stage.target->empty()) {
+            command += " " + *stage.target;
+        }
+        return command;
     }
-    if (stage.target.has_value() && !stage.target->empty()) {
-        command += " " + *stage.target;
-    }
-    return command;
-}
+}  // namespace
 
 std::optional<std::string> PackageConfig::default_configuration_command() const {
     return std::nullopt;

@@ -5,8 +5,10 @@
 #include <unordered_map>
 #include <utils/bash_utils.hpp>
 
-static std::unordered_map<std::string, PackageConfigPtr> db_cache;
-static std::mutex db_cache_mutex;
+namespace {
+    std::unordered_map<std::string, PackageConfigPtr> db_cache;
+    std::mutex db_cache_mutex;
+}  // namespace
 
 PackageConfigPtr get_db_config(const std::string& package_name, const std::string& version) {
     validate_package_name(package_name);
