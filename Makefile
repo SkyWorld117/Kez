@@ -38,13 +38,20 @@ LIB_SOURCES := \
 	$(SRC_DIR)/dependency_resolver/optional_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/toposort.cpp \
+	$(SRC_DIR)/user_config_generator/configurations_filter.cpp \
+	$(SRC_DIR)/user_config_generator/environment_filter.cpp \
+	$(SRC_DIR)/user_config_generator/options_filter.cpp \
+	$(SRC_DIR)/user_config_generator/requirements_filter.cpp \
+	$(SRC_DIR)/user_config_generator/stages_filter.cpp \
+	$(SRC_DIR)/user_config_generator/user_config_generator.cpp \
 	$(SRC_DIR)/utils/bash_utils.cpp \
 	$(SRC_DIR)/utils/file_utils.cpp \
 	$(SRC_DIR)/utils/string_utils.cpp
 LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 TEST_SOURCES := \
 	tests/database_test.cpp \
-	tests/dependency_resolver_test.cpp
+	tests/dependency_resolver_test.cpp \
+	tests/user_config_generator_test.cpp
 TEST_OBJECTS := $(TEST_SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LIBRARY := $(LIB_DIR)/libkez.a
 TEST_BINARY := $(BIN_DIR)/test_database
