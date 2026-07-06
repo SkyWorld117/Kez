@@ -30,11 +30,18 @@ namespace {
             std::filesystem::remove_all(path_);
             std::filesystem::create_directories(path_ / "database");
             std::filesystem::create_directories(path_ / "heuristics");
+            std::filesystem::create_directories(path_ / "mpis");
             std::filesystem::create_directories(path_ / "patches" / "application");
+            std::filesystem::create_directories(path_ / "vendors");
             setenv("KEZ_DB", (path_ / "database").c_str(), 1);
             setenv("KEZ_HOME", path_.c_str(), 1);
             setenv("KEZ_WORKDIR", path_.c_str(), 1);
             setenv("KEZ_ARCH", "x86_64", 1);
+            write_file(path_ / "manifest.yaml", R"(
+paths:
+  mpis: mpis
+  vendors: vendors
+)");
             clear_db_cache();
         }
 
@@ -311,6 +318,7 @@ recipe:
           enabled:
             default: true
 )");
+        std::filesystem::remove_all(path_ / "mpis");
 
         testing::internal::CaptureStdout();
         const YAML::Node result = gen_user_config({"mpi"}, false, "system");
@@ -321,8 +329,43 @@ recipe:
                   std::vector<std::string>({"implementation"}));
         EXPECT_EQ(result["recipe"]["targets"].as<std::vector<std::string>>(),
                   std::vector<std::string>({"mpi"}));
+        EXPECT_EQ(result["cheese"]["implementation"]["version"].as<std::string>(), "5.0.0");
         EXPECT_EQ(result["cheese"]["implementation"]["build"]["configurations"]["options"].size(),
                   1U);
+    }
+
+    TEST_F(TemporaryGeneratorDatabase, UsesLatestInstalledMpiAndVendorVersions) {
+        write_package("implementation", R"(
+recipe:
+  name: implementation
+  type: mpi
+  source:
+    type: tarball
+    releases:
+      - version: 5.0.0
+        url: https://example.invalid/implementation-5.0.0.tar.gz
+)");
+        std::filesystem::create_directories(path_ / "mpis" / "implementation-4.1.0-system");
+        std::filesystem::create_directories(path_ / "mpis" / "implementation-5.2.0-system");
+
+        const YAML::Node mpi = gen_user_config({"implementation"}, false, "system");
+        EXPECT_EQ(mpi["cheese"]["implementation"]["version"].as<std::string>(), "5.2.0");
+
+        write_package("vendor-tool", R"(
+recipe:
+  name: vendor-tool
+  type: vendor
+  source:
+    type: tarball
+    releases:
+      - version: 2025.1
+        url: https://example.invalid/vendor-tool-2025.1.tar.gz
+)");
+        std::filesystem::create_directories(path_ / "vendors" / "vendor-tool-2024.2");
+        std::filesystem::create_directories(path_ / "vendors" / "vendor-tool-2025.3");
+
+        const YAML::Node vendor = gen_user_config({"vendor-tool"}, false, "system");
+        EXPECT_EQ(vendor["cheese"]["vendor-tool"]["version"].as<std::string>(), "2025.3");
     }
 
 }  // namespace

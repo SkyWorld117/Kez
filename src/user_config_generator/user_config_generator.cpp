@@ -7,12 +7,14 @@
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <filesystem>
 #include <string>
+#include <ui/ui_utils.hpp>
 #include <unordered_set>
 #include <user_config_generator/configurations_filter.hpp>
 #include <user_config_generator/stages_filter.hpp>
 #include <user_config_generator/user_config_generator.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
+#include <utils/string_utils.hpp>
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
@@ -77,6 +79,37 @@ namespace {
         return result;
     }
 
+    std::string get_latest_existing_version(const std::string& package_name,
+                                            const std::string& path_name, PackageType type) {
+        const std::filesystem::path root = configured_work_path(path_name);
+        if (!std::filesystem::is_directory(root)) {
+            return {};
+        }
+
+        std::string latest_version;
+        const std::string prefix = package_name + "-";
+
+        for (auto it : std::filesystem::directory_iterator(root)) {
+            if (!it.is_directory()) continue;
+            std::string dirname = it.path().filename().string();
+            if (dirname.rfind(prefix, 0) != 0) continue;
+            std::string version = dirname.substr(prefix.size());
+            if (type == PackageType::Mpi) {
+                std::size_t last_dash = version.find_last_of('-');
+                if (last_dash != std::string::npos) {
+                    version = version.substr(0, last_dash);
+                }
+            }
+
+            if (!version.empty()) {
+                if (latest_version.empty() || compare_versions(version, latest_version) > 0) {
+                    latest_version = version;
+                }
+            }
+        }
+        return latest_version;
+    }
+
     void append_package_config(YAML::Node& output, const PackageConfig& package,
                                const std::vector<std::string>& all_dependencies,
                                const std::unordered_set<std::string>& target_packages,
@@ -87,7 +120,17 @@ namespace {
             package_output["description"] = *package.description;
         }
         if (package.source.has_value() && !package.source->releases.empty()) {
-            package_output["version"] = package.source->releases.front().version;
+            std::string version = package.source->releases.front().version;
+            if (package.type == PackageType::Mpi) {
+                std::string existing =
+                    get_latest_existing_version(package.name, "mpis", PackageType::Mpi);
+                if (!existing.empty()) version = existing;
+            } else if (package.type == PackageType::Vendor) {
+                std::string existing =
+                    get_latest_existing_version(package.name, "vendors", PackageType::Vendor);
+                if (!existing.empty()) version = existing;
+            }
+            package_output["version"] = version;
         }
         if (package.type != PackageType::Vendor && package.type != PackageType::External) {
             package_output["compiler"] = default_compiler;
