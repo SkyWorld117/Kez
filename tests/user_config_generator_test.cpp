@@ -12,7 +12,6 @@
 #include <user_config_generator/options_filter.hpp>
 #include <user_config_generator/stages_filter.hpp>
 #include <user_config_generator/user_config_generator.hpp>
-#include <utility>
 #include <vector>
 
 namespace {
