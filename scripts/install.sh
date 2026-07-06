@@ -134,16 +134,7 @@ if command -v yq >/dev/null 2>&1 && [[ -n ${KEZ_HOME:-} && -n ${KEZ_WORKDIR:-} ]
     mkdir -p -- "$modulefiles_dir"
     modulefile="$modulefiles_dir/$(basename -- "$target_env")"
     if [[ ! -f $modulefile ]]; then
-        environment_name=$(basename -- "$target_env")
-        tcl_environment_name=${environment_name//\\/\\\\}
-        tcl_environment_name=${tcl_environment_name//\"/\\\"}
-        tcl_target_env=${target_env//\\/\\\\}
-        tcl_target_env=${tcl_target_env//\"/\\\"}
-        {
-            printf '#%%Module1.0\n'
-            printf 'module-whatis "Loads the %s Kez environment"\n' "$tcl_environment_name"
-            printf 'prepend-path PATH "%s/bin"\n' "$tcl_target_env"
-        } > "$modulefile"
+        "${KEZ_HOME}/scripts/gen_modulefile.sh" "$target_env" > "$modulefile"
         ${KEZ_SUCCESS} "Created module file: $modulefile"
     fi
 fi

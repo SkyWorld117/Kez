@@ -55,6 +55,20 @@ namespace {
         SUCCESS(description + " removed: " + path.filename().string());
     }
 
+    void remove_modulefile(const std::filesystem::path& env_path) {
+        const std::filesystem::path modulefiles_dir = configured_work_path("modulefiles");
+        const std::filesystem::path modulefile      = modulefiles_dir / env_path.filename();
+        if (std::filesystem::exists(modulefile)) {
+            std::error_code error;
+            std::filesystem::remove(modulefile, error);
+            if (error) {
+                WARNING("Could not remove module file: " + error.message());
+            } else {
+                INFO("Module file removed: " + modulefile.filename().string());
+            }
+        }
+    }
+
     void empty_directory(const std::filesystem::path& path, const std::string& description) {
         if (!std::filesystem::is_directory(path)) {
             ERROR(description + " does not exist: " + path.filename().string());
@@ -126,8 +140,10 @@ namespace {
             return;
         }
         if (action == "remove") {
-            const std::string name = required_name(arguments, command + " remove");
-            remove_directory(root / name, singular);
+            const std::string name           = required_name(arguments, command + " remove");
+            const std::filesystem::path path = root / name;
+            remove_directory(path, singular);
+            remove_modulefile(path);
             return;
         }
 
@@ -180,6 +196,7 @@ void execute_environment(const CommandArguments& arguments) {
         create_managed_directory(path, "Environment");
     } else if (action == "remove") {
         remove_directory(path, "Environment");
+        remove_modulefile(path);
     } else if (action == "empty") {
         empty_directory(path, "Environment");
     } else if (action == "enter") {
