@@ -1,5 +1,5 @@
 ---
-cheese:
+kez:
     openfoam:
         description: OpenFOAM is a free, open source CFD software package.
         version: 2412

@@ -433,9 +433,8 @@ namespace {
     void load_parser_context(const YAML::Node& user_config,
                              const UserConfigParserSettings& settings,
                              UserConfigParserContext& context) {
-        if (!user_config.IsMap() || !yaml_has(user_config, "cheese") ||
-            !user_config["cheese"].IsMap()) {
-            user_config_error("root must contain a cheese map");
+        if (!user_config.IsMap() || !yaml_has(user_config, "kez") || !user_config["kez"].IsMap()) {
+            user_config_error("root must contain a kez map");
         }
         if (!yaml_has(user_config, "recipe") || !user_config["recipe"].IsMap() ||
             !yaml_has(user_config["recipe"], "dependencies") ||
@@ -477,8 +476,8 @@ namespace {
             }
         }
 
-        const YAML::Node cheese = user_config["cheese"];
-        for (const auto& entry : cheese) {
+        const YAML::Node kez = user_config["kez"];
+        for (const auto& entry : kez) {
             const std::string package_name = yaml_scalar(entry.first, "package name");
             if (context.dependencies.find(package_name) == context.dependencies.end()) {
                 user_config_error("package '" + package_name +
@@ -491,14 +490,14 @@ namespace {
             if (context.package_indices.find(dependency) != context.package_indices.end()) {
                 continue;
             }
-            if (!yaml_has(cheese, dependency)) {
+            if (!yaml_has(kez, dependency)) {
                 if (get_db_config(dependency)->type == PackageType::System) {
                     continue;
                 }
                 user_config_error("non-system dependency '" + dependency +
-                                  "' is absent from the cheese map");
+                                  "' is absent from the kez map");
             }
-            const YAML::Node user_package = cheese[dependency];
+            const YAML::Node user_package = kez[dependency];
             if (!user_package.IsMap()) {
                 user_config_error("package '" + dependency + "' must be a map");
             }

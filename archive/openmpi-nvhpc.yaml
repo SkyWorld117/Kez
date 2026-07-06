@@ -1,5 +1,5 @@
 ---
-cheese:
+kez:
     openmpi:
         description: Open Source Implementation of the Message Passing Interface
         version: 5.0.9

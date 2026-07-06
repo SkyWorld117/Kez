@@ -1,5 +1,5 @@
 ---
-cheese:
+kez:
     hemelb-gpu:
         description: HemePure-GPU LBM blood flow solver (UCL-CCS) with CUDA backend
         version: isc26@/scratch/zyi/Applications/source/HemePure-GPU/HemePure-GPU

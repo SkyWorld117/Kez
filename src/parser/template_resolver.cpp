@@ -354,9 +354,9 @@ namespace {
                            ? yaml_scalar(value["version"], "system package version")
                            : yaml_scalar(value, "system package version");
             }
-            if (yaml_has(state, "cheese") && yaml_has(state["cheese"], requested_name) &&
-                yaml_has(state["cheese"][requested_name], "version")) {
-                return yaml_scalar(state["cheese"][requested_name]["version"],
+            if (yaml_has(state, "kez") && yaml_has(state["kez"], requested_name) &&
+                yaml_has(state["kez"][requested_name], "version")) {
+                return yaml_scalar(state["kez"][requested_name]["version"],
                                    "system package version");
             }
             user_config_error("system package '" + requested_name + "' is absent from state.yaml");

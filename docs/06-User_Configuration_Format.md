@@ -6,7 +6,7 @@ This document describes the format for user configuration files. These files are
 The user configuration files follow a similar structure to the general configuration format but are tailored for specific user needs. The structure is defined as follows:
 
 ```yaml
-cheese:
+kez:
   <package_name>:
     description: <package_description>
     version: <package_version> # default is latest
@@ -50,7 +50,7 @@ Users are supposed to modify the values of the entries, but not to add/remove an
 For software developers, it is often desirable to test the installation of a package using a local source directory instead of fetching the source code from the remote repository. To achieve this, users can simply set the `version` entry to the absolute path of the local source directory. For example:
 
 ```yaml
-cheese:
+kez:
   my_package:
     description: My package description
     version: name@/path/to/local/source/directory

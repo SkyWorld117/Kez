@@ -9,7 +9,7 @@ However, for the ease of use and configuration, there are more specific parsing 
 In addition to the general structure defined in the [General Configuration Format](general_config_format.md), there is an entry `implementations` that specifies the concrete packages that implement the abstract package. The structure is as follows:
 
 ```yaml
-cheese:
+kez:
     name: <abstract_package_name>
     description: <abstract_package_description> # Optional, but recommended
     type: abstract

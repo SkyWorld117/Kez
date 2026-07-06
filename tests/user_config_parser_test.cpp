@@ -168,7 +168,7 @@ recipe:
 )");
 
         YAML::Node user_config               = gen_user_config({"application"}, false, "system");
-        YAML::Node application               = user_config["cheese"]["application"];
+        YAML::Node application               = user_config["kez"]["application"];
         application["patches"][0]["enabled"] = true;
         application["build"]["configurations"]["environment"][0]["value"] = "-O2 ${PATH}";
         application["build"]["configurations"]["options"][0]["enabled"]   = true;
@@ -207,8 +207,8 @@ recipe:
 
         const std::filesystem::path local_source = path_ / "local source";
         std::filesystem::create_directories(local_source);
-        user_config["cheese"]["application"]["version"] = "dev@" + local_source.string();
-        const BashCommandPlan local_plan = parse_user_config(user_config, settings());
+        user_config["kez"]["application"]["version"] = "dev@" + local_source.string();
+        const BashCommandPlan local_plan             = parse_user_config(user_config, settings());
         ASSERT_EQ(local_plan.size(), 2U);
         ASSERT_FALSE(local_plan[1].commands.empty());
         EXPECT_EQ(local_plan[1].commands[0], "cp -a '" + local_source.string() + "' source");
@@ -247,7 +247,7 @@ recipe:
 )");
 
         const YAML::Node user_config = YAML::Load(R"(
-cheese:
+kez:
   application:
     compiler: system
   implementation: {}
@@ -281,7 +281,7 @@ recipe:
       command: echo ${demo-v1.prefix}
 )");
         const YAML::Node user_config = YAML::Load(R"(
-cheese:
+kez:
   demo:
     version: 1.5
     compiler: system

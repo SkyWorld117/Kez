@@ -25,12 +25,12 @@ namespace {
     }
 
     std::string package_version(const YAML::Node& user_config, const std::string& package) {
-        const YAML::Node cheese = user_config["cheese"];
-        if (!cheese.IsMap() || !cheese[package].IsMap() || !yaml_has(cheese[package], "version")) {
+        const YAML::Node kez = user_config["kez"];
+        if (!kez.IsMap() || !kez[package].IsMap() || !yaml_has(kez[package], "version")) {
             ERROR("Invalid user configuration: package '" + package + "' has no version");
             exit(EXIT_FAILURE);
         }
-        std::string version = yaml_scalar(cheese[package]["version"], package + ".version");
+        std::string version            = yaml_scalar(kez[package]["version"], package + ".version");
         const std::size_t local_source = version.find('@');
         if (local_source != std::string::npos) {
             version.erase(local_source);
@@ -40,11 +40,11 @@ namespace {
     }
 
     std::string package_compiler(const YAML::Node& user_config, const std::string& package) {
-        const YAML::Node cheese = user_config["cheese"];
-        if (!cheese.IsMap() || !cheese[package].IsMap() || !yaml_has(cheese[package], "compiler")) {
+        const YAML::Node kez = user_config["kez"];
+        if (!kez.IsMap() || !kez[package].IsMap() || !yaml_has(kez[package], "compiler")) {
             return "system";
         }
-        std::string compiler = yaml_scalar(cheese[package]["compiler"], package + ".compiler");
+        std::string compiler = yaml_scalar(kez[package]["compiler"], package + ".compiler");
         std::replace(compiler.begin(), compiler.end(), '@', '-');
         validate_path_component(compiler, "compiler specification");
         return compiler;

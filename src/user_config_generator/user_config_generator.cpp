@@ -171,7 +171,7 @@ namespace {
             }
         }
 
-        output["cheese"][package.name] = package_output;
+        output["kez"][package.name] = package_output;
     }
 }  // namespace
 
@@ -196,7 +196,7 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
     }
 
     YAML::Node output(YAML::NodeType::Map);
-    output["cheese"] = YAML::Node(YAML::NodeType::Map);
+    output["kez"]    = YAML::Node(YAML::NodeType::Map);
     output["recipe"] = YAML::Node(YAML::NodeType::Map);
 
     output["recipe"]["abstract_packages"] = YAML::Node(YAML::NodeType::Map);

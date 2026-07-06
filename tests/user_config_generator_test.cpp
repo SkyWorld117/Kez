@@ -256,10 +256,10 @@ recipe:
         EXPECT_TRUE(result["recipe"]["abstract_packages"].IsMap());
         EXPECT_EQ(result["recipe"]["abstract_packages"].size(), 0U);
 
-        ASSERT_EQ(result["cheese"].size(), 3U);
-        EXPECT_FALSE(result["cheese"]["system-library"].IsDefined());
+        ASSERT_EQ(result["kez"].size(), 3U);
+        EXPECT_FALSE(result["kez"]["system-library"].IsDefined());
 
-        const YAML::Node application = result["cheese"]["application"];
+        const YAML::Node application = result["kez"]["application"];
         EXPECT_EQ(application["description"].as<std::string>(), "Test application");
         EXPECT_EQ(application["version"].as<std::string>(), "2.0.0");
         EXPECT_EQ(application["compiler"].as<std::string>(), "gcc@13.4.0");
@@ -283,9 +283,9 @@ recipe:
                       .as<std::string>(),
                   "-g");
 
-        EXPECT_EQ(result["cheese"]["library"]["version"].as<std::string>(), "main");
-        EXPECT_EQ(result["cheese"]["library"]["compiler"].as<std::string>(), "gcc@13.4.0");
-        EXPECT_FALSE(result["cheese"]["external-tool"]["compiler"].IsDefined());
+        EXPECT_EQ(result["kez"]["library"]["version"].as<std::string>(), "main");
+        EXPECT_EQ(result["kez"]["library"]["compiler"].as<std::string>(), "gcc@13.4.0");
+        EXPECT_FALSE(result["kez"]["external-tool"]["compiler"].IsDefined());
     }
 
     TEST_F(TemporaryGeneratorDatabase, RecordsAbstractSelectionAndConfiguresItsConcreteTarget) {
@@ -328,9 +328,8 @@ recipe:
                   std::vector<std::string>({"implementation"}));
         EXPECT_EQ(result["recipe"]["targets"].as<std::vector<std::string>>(),
                   std::vector<std::string>({"mpi"}));
-        EXPECT_EQ(result["cheese"]["implementation"]["version"].as<std::string>(), "5.0.0");
-        EXPECT_EQ(result["cheese"]["implementation"]["build"]["configurations"]["options"].size(),
-                  1U);
+        EXPECT_EQ(result["kez"]["implementation"]["version"].as<std::string>(), "5.0.0");
+        EXPECT_EQ(result["kez"]["implementation"]["build"]["configurations"]["options"].size(), 1U);
     }
 
     TEST_F(TemporaryGeneratorDatabase, UsesLatestInstalledMpiAndVendorVersions) {
@@ -348,7 +347,7 @@ recipe:
         std::filesystem::create_directories(path_ / "mpis" / "implementation-5.2.0-system");
 
         const YAML::Node mpi = gen_user_config({"implementation"}, false, "system");
-        EXPECT_EQ(mpi["cheese"]["implementation"]["version"].as<std::string>(), "5.2.0");
+        EXPECT_EQ(mpi["kez"]["implementation"]["version"].as<std::string>(), "5.2.0");
 
         write_package("vendor-tool", R"(
 recipe:
@@ -364,7 +363,7 @@ recipe:
         std::filesystem::create_directories(path_ / "vendors" / "vendor-tool-2025.3");
 
         const YAML::Node vendor = gen_user_config({"vendor-tool"}, false, "system");
-        EXPECT_EQ(vendor["cheese"]["vendor-tool"]["version"].as<std::string>(), "2025.3");
+        EXPECT_EQ(vendor["kez"]["vendor-tool"]["version"].as<std::string>(), "2025.3");
     }
 
 }  // namespace

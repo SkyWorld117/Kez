@@ -10,8 +10,8 @@
 #include <utils/yaml_utils.hpp>
 
 void apply_cmdline_config(YAML::Node user_config, const std::vector<std::string>& config_options) {
-    if (!yaml_has(user_config, "cheese") || !user_config["cheese"].IsMap()) {
-        ERROR("Invalid user configuration: cheese must be a map");
+    if (!yaml_has(user_config, "kez") || !user_config["kez"].IsMap()) {
+        ERROR("Invalid user configuration: kez must be a map");
         exit(EXIT_FAILURE);
     }
 
@@ -21,7 +21,7 @@ void apply_cmdline_config(YAML::Node user_config, const std::vector<std::string>
             ERROR("Invalid configuration override '" + option + "'; expected <path>=<value>");
             exit(EXIT_FAILURE);
         }
-        traverse(option.substr(0, separator), option.substr(separator + 1), user_config["cheese"]);
+        traverse(option.substr(0, separator), option.substr(separator + 1), user_config["kez"]);
     }
 }
 

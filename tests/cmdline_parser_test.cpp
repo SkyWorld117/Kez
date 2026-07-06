@@ -10,7 +10,7 @@
 namespace {
     TEST(CommandLineParser, AppliesMapIndexAndNamedSequenceOverrides) {
         YAML::Node config = YAML::Load(R"(
-cheese:
+kez:
   application:
     version: 1.0
     build:
@@ -35,17 +35,15 @@ cheese:
                      "application.build.configurations.options.feature.enabled=true",
                      "application.build.stages.build.configurations.options.0.enabled_value=16"});
 
-        EXPECT_EQ(config["cheese"]["application"]["version"].Scalar(), "2.0");
-        EXPECT_EQ(
-            config["cheese"]["application"]["build"]["configurations"]["environment"][0]["value"]
-                .Scalar(),
-            "-O3");
-        EXPECT_EQ(
-            config["cheese"]["application"]["build"]["configurations"]["options"][0]["enabled"]
-                .Scalar(),
-            "true");
-        EXPECT_EQ(config["cheese"]["application"]["build"]["stages"][0]["configurations"]["options"]
-                        [0]["enabled_value"]
+        EXPECT_EQ(config["kez"]["application"]["version"].Scalar(), "2.0");
+        EXPECT_EQ(config["kez"]["application"]["build"]["configurations"]["environment"][0]["value"]
+                      .Scalar(),
+                  "-O3");
+        EXPECT_EQ(config["kez"]["application"]["build"]["configurations"]["options"][0]["enabled"]
+                      .Scalar(),
+                  "true");
+        EXPECT_EQ(config["kez"]["application"]["build"]["stages"][0]["configurations"]["options"][0]
+                        ["enabled_value"]
                             .Scalar(),
                   "16");
     }
