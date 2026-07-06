@@ -42,6 +42,7 @@ LIB_SOURCES := \
 	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/toposort.cpp \
 	$(SRC_DIR)/parser/source_commands.cpp \
+	$(SRC_DIR)/parser/config_transformer.cpp \
 	$(SRC_DIR)/parser/template_resolver.cpp \
 	$(SRC_DIR)/parser/user_config_parser.cpp \
 	$(SRC_DIR)/user_config_generator/configurations_filter.cpp \
