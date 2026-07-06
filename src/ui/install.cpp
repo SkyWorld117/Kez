@@ -31,7 +31,7 @@ namespace {
                 << "Usage: kez utilities add [options] <package>...\n\n"
                    "Options:\n"
                    "  -r, --read             Treat the positional argument as a YAML file\n"
-                   "  -d, --dry-run           Show the commands that would be executed\n"
+                   "  -d, --dry-run          Show the commands that would be executed\n"
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                    "  -S, --with-slurm       Run scripts/install.sh through sbatch\n";
@@ -41,9 +41,9 @@ namespace {
                    "       kez install --read [options] <config.yaml>\n\n"
                    "Options:\n"
                    "  -r, --read             Treat the positional argument as a YAML file\n"
-                   "  -d, --dry-run           Show the commands that would be executed\n"
+                   "  -d, --dry-run          Show the commands that would be executed\n"
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
-                   "  -e, --env NAME          Target application environment\n"
+                   "  -e, --env NAME         Target application environment\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                    "  -S, --with-slurm       Run scripts/install.sh through sbatch\n";
         }
