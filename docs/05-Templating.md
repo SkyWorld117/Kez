@@ -10,7 +10,9 @@ The templating syntax is bash-like, meaning a template variable is defined with 
 
 Templating is mostly used to access package properties, but it can also be used to define custom variables that can be set in the configuration file.
 
-For example, one wants to access the `ldflags` property of a package named `foo`, one can use `${foo.ldflags}`, as long as it is well defined in the configuration file. All the properties in the `properties` section can be accessed in this way.
+For example, `${foo.lib}` accesses the raw library directory declared by package `foo`. The derived
+templates `${foo.ldflags}`, `${foo.nvldflags}`, and `${foo.includes}` convert `lib` and `include`
+paths to compiler flags. All explicitly declared properties remain directly accessible.
 
 Exceptionally, there are also some predefined variables that can be used in the templates:
 

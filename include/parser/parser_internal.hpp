@@ -53,6 +53,8 @@ bool apply_parser_conditions(const ConfigurableValue<bool>& configurable, bool b
 std::string resolve_parser_scalar(const std::string& value, UserConfigParserContext& context);
 std::string parser_package_prefix(const std::string& package_name,
                                   UserConfigParserContext& context);
+bool parser_package_has_property(const std::string& package_name, const std::string& property_name,
+                                 UserConfigParserContext& context);
 
 void append_source_commands(const ParsedUserPackage& package, UserConfigParserContext& context,
                             std::vector<std::string>& commands);

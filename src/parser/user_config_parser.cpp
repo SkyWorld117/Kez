@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <limits>
 #include <optional>
+#include <parser/config_transformer.hpp>
 #include <parser/parser_internal.hpp>
 #include <parser/user_config_parser.hpp>
 #include <string>
@@ -242,65 +243,13 @@ namespace {
         }
     }
 
-    std::string format_options(const BuildConfiguration& configuration, Toolchain toolchain,
-                               UserConfigParserContext& context) {
-        std::vector<std::string> values;
-        for (const BuildOption& option : configuration.options) {
-            const auto parsed = context.option_values.find(&option);
-            if (parsed == context.option_values.end()) {
-                user_config_error("internal option state is missing for '" + option.name + "'");
-            }
-            const ParsedOptionState& state = parsed->second;
-            std::string format;
-            std::string value;
-            if (state.enabled) {
-                format = option.enabled_format.value_or(option.name);
-                value  = state.enabled_value;
-            } else {
-                format = option.disabled_format.value_or("");
-                value  = state.disabled_value;
-            }
-            if (format.empty()) {
-                continue;
-            }
-            std::string result = format;
-            if (!value.empty()) {
-                result += "=" + shell_double_quote(resolve_parser_scalar(value, context));
-            }
-            values.push_back(std::move(result));
-        }
-
-        auto contains_prefix = [&values](const std::string& prefix) {
-            return std::any_of(values.begin(), values.end(), [&prefix](const std::string& value) {
-                return value.rfind(prefix, 0) == 0;
-            });
-        };
-        if (toolchain == Toolchain::Autotools && !contains_prefix("--prefix")) {
-            values.push_back("--prefix=" +
-                             shell_single_quote(context.settings.install_prefix.string()));
-        } else if (toolchain == Toolchain::CMake) {
-            if (!contains_prefix("-DCMAKE_PREFIX_PATH")) {
-                values.push_back("-DCMAKE_PREFIX_PATH=" +
-                                 shell_single_quote(context.settings.install_prefix.string()));
-            }
-            if (!contains_prefix("-DCMAKE_BUILD_TYPE")) {
-                values.push_back("-DCMAKE_BUILD_TYPE=Release");
-            }
-        }
-
-        std::string result;
-        for (const std::string& value : values) {
-            result += (result.empty() ? "" : " ") + value;
-        }
-        return result;
-    }
-
     void append_configuration_commands(const BuildConfiguration& configuration,
-                                       const std::string& command, Toolchain toolchain,
-                                       UserConfigParserContext& context,
+                                       const PackageConfig& package, Toolchain toolchain,
+                                       const std::string& command, UserConfigParserContext& context,
                                        std::vector<std::string>& commands) {
         std::string resolved_command = resolve_parser_scalar(command, context);
-        const std::string options    = format_options(configuration, toolchain, context);
+        const std::string options =
+            parser::transform_configuration(configuration, package, toolchain, context);
         if (!options.empty()) {
             resolved_command += (resolved_command.empty() ? "" : " ") + options;
         }
@@ -392,9 +341,10 @@ namespace {
             const std::optional<std::string> default_command =
                 package.database_config->default_configuration_command();
             append_configuration_commands(
-                *build.configurations,
-                build.configurations->command.value_or(default_command.value_or("")),
-                package.database_config->toolchain(), context, commands);
+                *build.configurations, *package.database_config,
+                package.database_config->toolchain(),
+                build.configurations->command.value_or(default_command.value_or("")), context,
+                commands);
         }
         for (const BuildStage& stage : build.stages) {
             BuildStage resolved_stage = stage;
@@ -409,8 +359,8 @@ namespace {
                     ? *stage.configurations->command
                     : default_command.value_or("");
             if (stage.configurations.has_value()) {
-                append_configuration_commands(*stage.configurations, command, Toolchain::None,
-                                              context, commands);
+                append_configuration_commands(*stage.configurations, *package.database_config,
+                                              Toolchain::None, command, context, commands);
             } else if (!command.empty()) {
                 commands.push_back(resolve_parser_scalar(command, context));
             }

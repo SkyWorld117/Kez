@@ -6,6 +6,7 @@
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <filesystem>
+#include <parser/config_transformer.hpp>
 #include <parser/parser_internal.hpp>
 #include <string>
 #include <utility>
@@ -272,6 +273,18 @@ namespace {
         return property == config.properties.end() ? nullptr : &*property;
     }
 
+    PackageConfigPtr property_package_config(const std::string& package_name,
+                                             UserConfigParserContext& context) {
+        if (package_name == "compiler") {
+            const auto [compiler_name, compiler_version] = current_compiler(context);
+            return get_db_config(compiler_name,
+                                 compiler_version == "system" ? "latest" : compiler_version);
+        }
+        const auto abstract = context.abstract_packages.find(package_name);
+        return parser_package_config(
+            context, abstract == context.abstract_packages.end() ? package_name : abstract->second);
+    }
+
     std::string apply_string_value(const ConfigurableValue<std::string>& configurable,
                                    UserConfigParserContext& context) {
         const std::string base = configurable.default_value.value_or("");
@@ -394,9 +407,10 @@ namespace {
             return "${" + name + "}";
         }
 
-        const std::size_t separator     = name.find('.');
-        std::string package_name        = name.substr(0, separator);
-        const std::string property_name = name.substr(separator + 1);
+        const std::size_t separator             = name.find('.');
+        std::string package_name                = name.substr(0, separator);
+        const std::string template_package_name = package_name;
+        const std::string property_name         = name.substr(separator + 1);
 
         if (package_name == "compiler") {
             const auto [compiler_name, compiler_version] = current_compiler(context);
@@ -408,6 +422,19 @@ namespace {
             }
             PackageConfigPtr compiler = get_db_config(
                 compiler_name, compiler_version == "system" ? "latest" : compiler_version);
+            if (find_property(*compiler, property_name) == nullptr) {
+                if (property_name == "includes" && find_property(*compiler, "include") != nullptr) {
+                    return parser::format_include_path(
+                        resolve_parser_scalar("${compiler.include}", context));
+                }
+                if ((property_name == "ldflags" || property_name == "nvldflags") &&
+                    find_property(*compiler, "lib") != nullptr) {
+                    const std::string path = resolve_parser_scalar("${compiler.lib}", context);
+                    return property_name == "nvldflags"
+                               ? parser::format_nvidia_library_path(path)
+                               : parser::format_library_path(path, context);
+                }
+            }
             return resolve_declared_property(name, *compiler, property_name, context);
         }
 
@@ -449,6 +476,19 @@ namespace {
         }
 
         const PackageConfigPtr config = parser_package_config(context, package_name);
+        if (find_property(*config, property_name) == nullptr) {
+            if (property_name == "includes" && find_property(*config, "include") != nullptr) {
+                return parser::format_include_path(
+                    resolve_parser_scalar("${" + template_package_name + ".include}", context));
+            }
+            if ((property_name == "ldflags" || property_name == "nvldflags") &&
+                find_property(*config, "lib") != nullptr) {
+                const std::string path =
+                    resolve_parser_scalar("${" + template_package_name + ".lib}", context);
+                return property_name == "nvldflags" ? parser::format_nvidia_library_path(path)
+                                                    : parser::format_library_path(path, context);
+            }
+        }
         return resolve_declared_property(name, *config, property_name, context);
     }
 
@@ -591,4 +631,19 @@ std::string parser_package_prefix(const std::string& package_name,
         return (context.settings.install_prefix / requested_name).string();
     }
     return context.settings.install_prefix.string();
+}
+
+bool parser_package_has_property(const std::string& package_name, const std::string& property_name,
+                                 UserConfigParserContext& context) {
+    const PackageConfigPtr config = property_package_config(package_name, context);
+    if (find_property(*config, property_name) != nullptr) {
+        return true;
+    }
+    if (property_name == "includes") {
+        return find_property(*config, "include") != nullptr;
+    }
+    if (property_name == "ldflags" || property_name == "nvldflags") {
+        return find_property(*config, "lib") != nullptr;
+    }
+    return false;
 }

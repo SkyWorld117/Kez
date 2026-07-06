@@ -42,6 +42,15 @@ namespace {
             setenv("KEZ_HOME", path_.c_str(), 1);
             setenv("KEZ_ARCH", "x86_64", 1);
             setenv("CFLAGS", "host flags", 1);
+            write_package("gcc", R"(
+recipe:
+  name: gcc
+  type: compiler
+  properties:
+    c: /usr/bin/gcc
+    cxx: /usr/bin/g++
+    fort: /usr/bin/gfortran
+)");
             clear_db_cache();
         }
 
@@ -133,9 +142,9 @@ recipe:
           user_configurable: true
           enabled:
             default: false
-          enabled_format: -DFEATURE=ON
-          disabled_format: -DFEATURE=OFF
-        - name: -DLINK_FLAGS
+          enabled_format: FEATURE=ON
+          disabled_format: FEATURE=OFF
+        - name: LINK_FLAGS
           enabled_value:
             default: ${library.libs}
     stages:
@@ -197,9 +206,16 @@ recipe:
                   "git apply '" + (path_ / "patches" / "application" / "fix.patch").string() + "'");
         EXPECT_EQ(commands[5], "prepare /opt/env/.tmp/source");
         EXPECT_EQ(commands[6], "export CFLAGS=\"-O2 ${PATH}\"");
-        EXPECT_EQ(commands[7], "cmake -B build -DFEATURE=ON "
-                               "-DLINK_FLAGS=\"-lbase -lfeature -loverride\" "
-                               "-DCMAKE_PREFIX_PATH='/opt/env' -DCMAKE_BUILD_TYPE=Release");
+        EXPECT_EQ(commands[7],
+                  "cmake -B build -DFEATURE=ON "
+                  "-DLINK_FLAGS=\"-lbase -lfeature -loverride\" "
+                  "-DCMAKE_INSTALL_PREFIX=\"/opt/env\" -DCMAKE_PREFIX_PATH=\"/opt/env\" "
+                  "-DCMAKE_BUILD_TYPE=\"Release\" -DCMAKE_C_COMPILER=\"/usr/bin/gcc\" "
+                  "-DCMAKE_CXX_COMPILER=\"/usr/bin/g++\" "
+                  "-DCMAKE_Fortran_COMPILER=\"/usr/bin/gfortran\" "
+                  "-DCMAKE_EXE_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
+                  "-DCMAKE_SHARED_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
+                  "-DCMAKE_MODULE_LINKER_FLAGS=\"-lbase -lfeature -loverride\"");
         EXPECT_EQ(commands[8], "export CFLAGS='host flags'");
         EXPECT_EQ(commands[9], "cmake --build build --parallel 8 --target build");
         EXPECT_EQ(commands[10], "cmake --install build");
@@ -264,6 +280,126 @@ recipe:
         EXPECT_EQ(plan[0].package, "application");
         ASSERT_EQ(plan[0].commands.size(), 1U);
         EXPECT_EQ(plan[0].commands[0], "configure CC=\"/opt/mpi/bin/mpicc\" --with-mpi");
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase,
+           ExpandsRawDependencyPathsAndLetsExplicitOptionsOverrideDefaults) {
+        write_package("library", R"(
+recipe:
+  name: library
+  type: package
+  properties:
+    include: ${library.prefix}/include
+    lib: ${library.prefix}/lib64
+    libs: -lexample
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  toolchain: cmake
+  dependencies: [library]
+  build:
+    preprocessing: echo ${library.includes} ${library.ldflags} ${library.nvldflags}
+    configurations:
+      command: cmake -B build
+      options:
+        - name: FEATURE
+          enabled_format: FEATURE=ON
+        - name: CMAKE_C_FLAGS
+          enabled_value:
+            default: -O2
+)");
+
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  application:
+    compiler: system
+  library:
+    compiler: system
+recipe:
+  abstract_packages: {}
+  dependencies: [application, library]
+  targets: [application]
+)");
+
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        ASSERT_EQ(plan[0].commands.size(), 2U);
+        EXPECT_EQ(plan[0].commands[0],
+                  "echo -I/opt/env/include -L/opt/env/lib64 -Wl,-rpath,/opt/env/lib64 "
+                  "-L/opt/env/lib64 -Xlinker -rpath,/opt/env/lib64");
+        const std::string& command = plan[0].commands[1];
+        EXPECT_NE(command.find("-DFEATURE=ON"), std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_INSTALL_PREFIX=\"/opt/env\""), std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_C_FLAGS=\"-O2\""), std::string::npos);
+        EXPECT_EQ(command.find("-DCMAKE_C_FLAGS=\"-I/opt/env/include\""), std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_CXX_FLAGS=\"-I/opt/env/include\""), std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_EXE_LINKER_FLAGS=\"-L/opt/env/lib64 "
+                               "-Wl,-rpath,/opt/env/lib64 -lexample\""),
+                  std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_BUILD_RPATH=\"/opt/env/lib64\""), std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, UsesCompilerSpecificAutotoolsLinkerFlags) {
+        write_package("nvhpc-compilers", R"(
+recipe:
+  name: nvhpc-compilers
+  type: compiler
+  properties:
+    c: ${compiler.prefix}/bin/nvc
+    cxx: ${compiler.prefix}/bin/nvc++
+    fort: ${compiler.prefix}/bin/nvfortran
+    lib: ${compiler.prefix}/lib
+)");
+        write_package("library", R"(
+recipe:
+  name: library
+  type: package
+  properties:
+    include: ${library.prefix}/include
+    lib: ${library.prefix}/lib
+    libs: -lexample
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  toolchain: autotools
+  dependencies: [library]
+  build:
+    configurations:
+      options:
+        - name: enable-feature
+)");
+
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  application:
+    compiler: nvhpc-compilers@1.0
+  library:
+    compiler: nvhpc-compilers@1.0
+recipe:
+  abstract_packages: {}
+  dependencies: [application, library]
+  targets: [application]
+)");
+
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        ASSERT_EQ(plan[0].commands.size(), 1U);
+        const std::string& command = plan[0].commands[0];
+        EXPECT_NE(command.find("./configure --enable-feature"), std::string::npos);
+        EXPECT_NE(command.find("CC=\"/opt/compilers/nvhpc-compilers-1.0/bin/nvc\""),
+                  std::string::npos);
+        EXPECT_NE(command.find("CXXFLAGS=\"-I/opt/env/include\""), std::string::npos);
+        EXPECT_NE(command.find("LDFLAGS=\"-L/opt/compilers/nvhpc-compilers-1.0/lib "
+                               "-Xlinker -rpath,/opt/compilers/nvhpc-compilers-1.0/lib "
+                               "-L/opt/env/lib -Xlinker -rpath,/opt/env/lib\""),
+                  std::string::npos);
+        EXPECT_EQ(command.find("LIBS="), std::string::npos);
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, SelectsVersionedRecipeAndResolvesItsCanonicalName) {

@@ -116,8 +116,8 @@ options:
     enabled: # Optional if it is condition independent and enabled by default
       default: <enabled_value> # true or false, optional if there is no default value, triggers an error if no condition can assign a value while default is not set
       conditions: <conditions_block> # Optional if there is default and no conditions
-    enabled_format: <enabled_format> # e.g., --enable-feature, default is <option_name>, discarded if enabled.default is false and not user_configurable
-    disabled_format: <disabled_format> # e.g., --disable-feature, default is not to inject anything into the command line
+    enabled_format: <enabled_format> # e.g., enable-feature, default is <option_name>, discarded if enabled.default is false and not user_configurable
+    disabled_format: <disabled_format> # e.g., disable-feature, default is not to inject anything into the command line
     requires: [<required_dependency1>, <required_dependency2>, ...] # Optional, takes effect if enabled is true
     enabled_value: # Optional if a value is not needed to enable the option
       default: <enabled_value> # Optional if there is no default value, triggers an error if no condition can assign a value while default is not set
@@ -126,6 +126,17 @@ options:
       default: <disabled_value> # Optional if there is no default value, triggers an error if no condition can assign a value while default is not set
       conditions: <conditions_block> # Optional if there is default and no conditions
 ```
+
+Option names and formats are logical names. Do not include the `--` prefix for Autotools or the
+`-D` prefix for CMake; the parser adds the toolchain-specific prefix. Shell assignments such as
+`CC`, `CFLAGS`, and `LDFLAGS` are not prefixed. Existing leading prefixes are accepted for custom
+commands and backward compatibility.
+
+The parser supplies standard toolchain options when the database does not declare them. Autotools
+receives its installation prefix, compilers, dependency include flags, and linker flags.
+CMake receives its install and dependency prefixes, build type, compilers, language flags, linker
+flags, and build/install RPATH. A database option with the same logical name takes precedence over
+the generated option, including a user-configurable value selected through the generated user YAML.
 
 #### `conditions`
 
@@ -164,14 +175,8 @@ properties:
   cxx: <cxx_compiler>         # If compiler or mpi
   fort: <fortran_compiler>    # If compiler or mpi
   omp_flags: <omp_flags>      # If compiler or mpi
-  ldflags:
-    default: <default_ldflags>
-    conditions:
-      - condition: <condition1>
-        value: <flags1>
-      - condition: <condition2>
-        value: <flags2>
-      - ...
+  include: ${package.prefix}/include
+  lib: ${package.prefix}/lib  # May instead be lib64 or another package-specific directory
   libs:
     default: <default_libs>
     conditions:
@@ -180,16 +185,18 @@ properties:
       - condition: <condition2>
         value: <libs2>
       - ...
-  includes:
-    default: <default_includes>
-    conditions:
-      - condition: <condition1>
-        value: <includes1>
-      - condition: <condition2>
-        value: <includes2>
-      - ...
   ... # More if needed
 ```
+
+`include` and `lib` contain paths, not compiler flags. The parser derives `${package.includes}` and
+`${package.ldflags}` when older templates still reference those names. It also derives
+`${package.nvldflags}` using NVIDIA's linker-driver syntax. Explicit `includes`, `ldflags`, or
+`nvldflags` properties override the derived form for packages that require exceptional flags.
+
+For Autotools and CMake configurations, raw paths and `libs` from direct active dependencies are
+added to the corresponding compile/link options automatically. Linker/RPATH syntax is selected from
+the package's configured compiler (`-Wl,...` for GNU-compatible drivers and `-Xlinker ...` for the
+NVIDIA compiler family).
 
 ## Configuration Guidelines
 
