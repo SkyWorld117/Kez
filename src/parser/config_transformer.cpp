@@ -232,6 +232,11 @@ namespace parser {
         const std::string all_linker_flags =
             linker_flags + (linker_flags.empty() || libraries.empty() ? "" : " ") + libraries;
 
+        std::string opt_flags = "-O3";
+        if (!include_flags.empty()) {
+            opt_flags += " ";
+        }
+
         auto append_default = [&](const std::string& name, const std::string& value) {
             if (value.empty() ||
                 explicit_options.find(option_key(name, toolchain)) != explicit_options.end()) {
@@ -246,9 +251,9 @@ namespace parser {
             append_default("CXX", compiler_property("cxx", dependencies, context));
             append_default("FC", compiler_property("fort", dependencies, context));
             append_default("CPPFLAGS", include_flags);
-            append_default("CFLAGS", include_flags);
-            append_default("CXXFLAGS", include_flags);
-            append_default("FCFLAGS", include_flags);
+            append_default("CFLAGS", opt_flags + include_flags);
+            append_default("CXXFLAGS", opt_flags + include_flags);
+            append_default("FCFLAGS", opt_flags + include_flags);
             append_default("LDFLAGS", linker_flags);
         } else if (toolchain == Toolchain::CMake) {
             append_default("CMAKE_INSTALL_PREFIX",
@@ -259,10 +264,10 @@ namespace parser {
             append_default("CMAKE_CXX_COMPILER", compiler_property("cxx", dependencies, context));
             append_default("CMAKE_Fortran_COMPILER",
                            compiler_property("fort", dependencies, context));
-            append_default("CMAKE_C_FLAGS", include_flags);
-            append_default("CMAKE_CXX_FLAGS", include_flags);
-            append_default("CMAKE_Fortran_FLAGS", include_flags);
-            append_default("CMAKE_CUDA_FLAGS", include_flags);
+            append_default("CMAKE_C_FLAGS", opt_flags + include_flags);
+            append_default("CMAKE_CXX_FLAGS", opt_flags + include_flags);
+            append_default("CMAKE_Fortran_FLAGS", opt_flags + include_flags);
+            append_default("CMAKE_CUDA_FLAGS", opt_flags + include_flags);
             append_default("CMAKE_EXE_LINKER_FLAGS", all_linker_flags);
             append_default("CMAKE_SHARED_LINKER_FLAGS", all_linker_flags);
             append_default("CMAKE_MODULE_LINKER_FLAGS", all_linker_flags);

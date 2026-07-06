@@ -213,6 +213,8 @@ recipe:
                                "-DCMAKE_BUILD_TYPE=\"Release\" -DCMAKE_C_COMPILER=\"/usr/bin/gcc\" "
                                "-DCMAKE_CXX_COMPILER=\"/usr/bin/g++\" "
                                "-DCMAKE_Fortran_COMPILER=\"/usr/bin/gfortran\" "
+                               "-DCMAKE_C_FLAGS=\"-O3\" -DCMAKE_CXX_FLAGS=\"-O3\" "
+                               "-DCMAKE_Fortran_FLAGS=\"-O3\" -DCMAKE_CUDA_FLAGS=\"-O3\" "
                                "-DCMAKE_EXE_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
                                "-DCMAKE_SHARED_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
                                "-DCMAKE_MODULE_LINKER_FLAGS=\"-lbase -lfeature -loverride\"");
@@ -337,7 +339,7 @@ recipe:
                   std::string::npos);
         EXPECT_NE(command.find("-DCMAKE_C_FLAGS=\"-O2\""), std::string::npos);
         EXPECT_EQ(command.find("-DCMAKE_C_FLAGS=\"-I/opt/env/include\""), std::string::npos);
-        EXPECT_NE(command.find("-DCMAKE_CXX_FLAGS=\"-I/opt/env/library/include\""),
+        EXPECT_NE(command.find("-DCMAKE_CXX_FLAGS=\"-O3 -I/opt/env/library/include\""),
                   std::string::npos);
         EXPECT_NE(command.find("-DCMAKE_EXE_LINKER_FLAGS=\"-L/opt/env/library/lib64 "
                                "-Wl,-rpath,/opt/env/library/lib64 -lexample\""),
@@ -398,7 +400,7 @@ recipe:
         EXPECT_NE(command.find("./configure --enable-feature"), std::string::npos);
         EXPECT_NE(command.find("CC=\"/opt/compilers/nvhpc-compilers-1.0/bin/nvc\""),
                   std::string::npos);
-        EXPECT_NE(command.find("CXXFLAGS=\"-I/opt/env/library/include\""), std::string::npos);
+        EXPECT_NE(command.find("CXXFLAGS=\"-O3 -I/opt/env/library/include\""), std::string::npos);
         EXPECT_NE(command.find("LDFLAGS=\"-L/opt/compilers/nvhpc-compilers-1.0/lib "
                                "-Xlinker -rpath,/opt/compilers/nvhpc-compilers-1.0/lib "
                                "-L/opt/env/library/lib -Xlinker -rpath,/opt/env/library/lib\""),
