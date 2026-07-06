@@ -206,20 +206,20 @@ recipe:
                   "git apply '" + (path_ / "patches" / "application" / "fix.patch").string() + "'");
         EXPECT_EQ(commands[5], "prepare /opt/env/.tmp/source");
         EXPECT_EQ(commands[6], "export CFLAGS=\"-O2 ${PATH}\"");
-        EXPECT_EQ(commands[7],
-                  "cmake -B build -DFEATURE=ON "
-                  "-DLINK_FLAGS=\"-lbase -lfeature -loverride\" "
-                  "-DCMAKE_INSTALL_PREFIX=\"/opt/env\" -DCMAKE_PREFIX_PATH=\"/opt/env\" "
-                  "-DCMAKE_BUILD_TYPE=\"Release\" -DCMAKE_C_COMPILER=\"/usr/bin/gcc\" "
-                  "-DCMAKE_CXX_COMPILER=\"/usr/bin/g++\" "
-                  "-DCMAKE_Fortran_COMPILER=\"/usr/bin/gfortran\" "
-                  "-DCMAKE_EXE_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
-                  "-DCMAKE_SHARED_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
-                  "-DCMAKE_MODULE_LINKER_FLAGS=\"-lbase -lfeature -loverride\"");
+        EXPECT_EQ(commands[7], "cmake -B build -DFEATURE=ON "
+                               "-DLINK_FLAGS=\"-lbase -lfeature -loverride\" "
+                               "-DCMAKE_INSTALL_PREFIX=\"/opt/env/application\" "
+                               "-DCMAKE_PREFIX_PATH=\"/opt/env;/opt/env/library\" "
+                               "-DCMAKE_BUILD_TYPE=\"Release\" -DCMAKE_C_COMPILER=\"/usr/bin/gcc\" "
+                               "-DCMAKE_CXX_COMPILER=\"/usr/bin/g++\" "
+                               "-DCMAKE_Fortran_COMPILER=\"/usr/bin/gfortran\" "
+                               "-DCMAKE_EXE_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
+                               "-DCMAKE_SHARED_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
+                               "-DCMAKE_MODULE_LINKER_FLAGS=\"-lbase -lfeature -loverride\"");
         EXPECT_EQ(commands[8], "export CFLAGS='host flags'");
         EXPECT_EQ(commands[9], "cmake --build build --parallel 8 --target build");
         EXPECT_EQ(commands[10], "cmake --install build");
-        EXPECT_EQ(commands[11], "finish /opt/env");
+        EXPECT_EQ(commands[11], "finish /opt/env/application");
 
         const std::filesystem::path local_source = path_ / "local source";
         std::filesystem::create_directories(local_source);
@@ -328,18 +328,22 @@ recipe:
         ASSERT_EQ(plan.size(), 1U);
         ASSERT_EQ(plan[0].commands.size(), 2U);
         EXPECT_EQ(plan[0].commands[0],
-                  "echo -I/opt/env/include -L/opt/env/lib64 -Wl,-rpath,/opt/env/lib64 "
-                  "-L/opt/env/lib64 -Xlinker -rpath,/opt/env/lib64");
+                  "echo -I/opt/env/library/include -L/opt/env/library/lib64 "
+                  "-Wl,-rpath,/opt/env/library/lib64 "
+                  "-L/opt/env/library/lib64 -Xlinker -rpath,/opt/env/library/lib64");
         const std::string& command = plan[0].commands[1];
         EXPECT_NE(command.find("-DFEATURE=ON"), std::string::npos);
-        EXPECT_NE(command.find("-DCMAKE_INSTALL_PREFIX=\"/opt/env\""), std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_INSTALL_PREFIX=\"/opt/env/application\""),
+                  std::string::npos);
         EXPECT_NE(command.find("-DCMAKE_C_FLAGS=\"-O2\""), std::string::npos);
         EXPECT_EQ(command.find("-DCMAKE_C_FLAGS=\"-I/opt/env/include\""), std::string::npos);
-        EXPECT_NE(command.find("-DCMAKE_CXX_FLAGS=\"-I/opt/env/include\""), std::string::npos);
-        EXPECT_NE(command.find("-DCMAKE_EXE_LINKER_FLAGS=\"-L/opt/env/lib64 "
-                               "-Wl,-rpath,/opt/env/lib64 -lexample\""),
+        EXPECT_NE(command.find("-DCMAKE_CXX_FLAGS=\"-I/opt/env/library/include\""),
                   std::string::npos);
-        EXPECT_NE(command.find("-DCMAKE_BUILD_RPATH=\"/opt/env/lib64\""), std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_EXE_LINKER_FLAGS=\"-L/opt/env/library/lib64 "
+                               "-Wl,-rpath,/opt/env/library/lib64 -lexample\""),
+                  std::string::npos);
+        EXPECT_NE(command.find("-DCMAKE_BUILD_RPATH=\"/opt/env/library/lib64\""),
+                  std::string::npos);
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, UsesCompilerSpecificAutotoolsLinkerFlags) {
@@ -394,10 +398,10 @@ recipe:
         EXPECT_NE(command.find("./configure --enable-feature"), std::string::npos);
         EXPECT_NE(command.find("CC=\"/opt/compilers/nvhpc-compilers-1.0/bin/nvc\""),
                   std::string::npos);
-        EXPECT_NE(command.find("CXXFLAGS=\"-I/opt/env/include\""), std::string::npos);
+        EXPECT_NE(command.find("CXXFLAGS=\"-I/opt/env/library/include\""), std::string::npos);
         EXPECT_NE(command.find("LDFLAGS=\"-L/opt/compilers/nvhpc-compilers-1.0/lib "
                                "-Xlinker -rpath,/opt/compilers/nvhpc-compilers-1.0/lib "
-                               "-L/opt/env/lib -Xlinker -rpath,/opt/env/lib\""),
+                               "-L/opt/env/library/lib -Xlinker -rpath,/opt/env/library/lib\""),
                   std::string::npos);
         EXPECT_EQ(command.find("LIBS="), std::string::npos);
     }
@@ -431,7 +435,7 @@ recipe:
 
         ASSERT_EQ(plan.size(), 1U);
         EXPECT_EQ(plan[0].package, "demo");
-        EXPECT_EQ(plan[0].commands, std::vector<std::string>({"echo /opt/env"}));
+        EXPECT_EQ(plan[0].commands, std::vector<std::string>({"echo /opt/env/demo"}));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, ParsesARepositoryRecipeEndToEnd) {

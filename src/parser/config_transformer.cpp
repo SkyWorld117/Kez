@@ -254,9 +254,7 @@ namespace parser {
             append_default("CMAKE_INSTALL_PREFIX",
                            parser_package_prefix(context.current_package, context));
             append_default("CMAKE_PREFIX_PATH", join(paths.prefixes, ";"));
-            append_default(
-                "CMAKE_BUILD_TYPE",
-                context.settings.build_mode == UserConfigBuildMode::Debug ? "Debug" : "Release");
+            append_default("CMAKE_BUILD_TYPE", "Release");
             append_default("CMAKE_C_COMPILER", compiler_property("c", dependencies, context));
             append_default("CMAKE_CXX_COMPILER", compiler_property("cxx", dependencies, context));
             append_default("CMAKE_Fortran_COMPILER",

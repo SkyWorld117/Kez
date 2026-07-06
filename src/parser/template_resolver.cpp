@@ -627,10 +627,7 @@ std::string parser_package_prefix(const std::string& package_name,
         return (context.settings.mpis_prefix / (requested_name + "-" + version + "-" + compiler))
             .string();
     }
-    if (context.settings.build_mode == UserConfigBuildMode::Debug) {
-        return (context.settings.install_prefix / requested_name).string();
-    }
-    return context.settings.install_prefix.string();
+    return (context.settings.install_prefix / requested_name).string();
 }
 
 bool parser_package_has_property(const std::string& package_name, const std::string& property_name,

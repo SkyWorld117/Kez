@@ -462,7 +462,7 @@ namespace {
 }  // namespace
 
 UserConfigParserSettings load_user_config_parser_settings(
-    const std::filesystem::path& install_prefix, UserConfigBuildMode build_mode) {
+    const std::filesystem::path& install_prefix) {
     const char* home_value = std::getenv("KEZ_HOME");
     const char* work_value = std::getenv("KEZ_WORKDIR");
     const char* arch_value = std::getenv("KEZ_ARCH");
@@ -471,7 +471,6 @@ UserConfigParserSettings load_user_config_parser_settings(
     }
 
     UserConfigParserSettings result;
-    result.build_mode     = build_mode;
     result.install_prefix = install_prefix;
     result.kez_home       = home_value;
     result.architecture   = arch_value;
@@ -558,17 +557,9 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
     return result;
 }
 
-BashCommandPlan parse_user_config(const YAML::Node& user_config, const std::string& build_mode,
+BashCommandPlan parse_user_config(const YAML::Node& user_config,
                                   const std::filesystem::path& install_prefix) {
-    UserConfigBuildMode mode;
-    if (build_mode == "release") {
-        mode = UserConfigBuildMode::Release;
-    } else if (build_mode == "debug") {
-        mode = UserConfigBuildMode::Debug;
-    } else {
-        user_config_error("build mode must be 'release' or 'debug'");
-    }
-    return parse_user_config(user_config, load_user_config_parser_settings(install_prefix, mode));
+    return parse_user_config(user_config, load_user_config_parser_settings(install_prefix));
 }
 
 BashCommandPlan parse_user_config_file(const std::filesystem::path& path,

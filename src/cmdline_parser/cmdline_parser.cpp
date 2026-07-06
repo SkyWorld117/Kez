@@ -48,7 +48,7 @@ BashCommandPlan parse_cmdline(const std::vector<std::string>& targets,
 BashCommandPlan parse_cmdline(YAML::Node user_config, const std::filesystem::path& install_prefix,
                               const std::vector<std::string>& config_options) {
     apply_cmdline_config(user_config, config_options);
-    return parse_user_config(user_config, "release", install_prefix);
+    return parse_user_config(user_config, install_prefix);
 }
 
 void write_install_plan(const BashCommandPlan& plan, const std::filesystem::path& path) {
