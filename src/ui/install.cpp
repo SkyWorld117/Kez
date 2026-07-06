@@ -43,8 +43,7 @@ namespace {
                    "  -r, --read             Treat the positional argument as a YAML file\n"
                    "  -d, --dry-run           Show the commands that would be executed\n"
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
-                   "  -C, --env NAME          Target application environment\n"
-                   "      --cellar NAME       Compatibility alias for --env\n"
+                   "  -e, --env NAME          Target application environment\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                    "  -S, --with-slurm       Run scripts/install.sh through sbatch\n";
         }
@@ -82,7 +81,7 @@ namespace {
                 result.force = true;
             } else if (argument == "-S" || argument == "--with-slurm") {
                 result.with_slurm = true;
-            } else if (argument == "-C" || argument == "--env" || argument == "--cellar") {
+            } else if (argument == "-e" || argument == "--env") {
                 if (utility) {
                     ERROR(argument + " is not valid for utility installation");
                     exit(EXIT_FAILURE);
