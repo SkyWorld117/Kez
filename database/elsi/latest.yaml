@@ -20,53 +20,15 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${elsi.prefix}
-
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler (use MPI wrapper)
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: -DCMAKE_Fortran_COMPILER
-                  description: Fortran compiler (use MPI wrapper)
-                  enabled_value:
-                      default: ${mpi.fort}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler (use MPI wrapper)
-                  enabled_value:
-                      default: ${mpi.cxx}
-
-                - name: -DCMAKE_C_FLAGS
-                  description: C compiler optimization flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_Fortran_FLAGS
-                  description: Fortran compiler optimization flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler optimization flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
                 - name: elpa
                   description: Use external ELPA library
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: -DUSE_EXTERNAL_ELPA=ON
-                  disabled_format: -DUSE_EXTERNAL_ELPA=OFF
+                  enabled_format: USE_EXTERNAL_ELPA=ON
+                  disabled_format: USE_EXTERNAL_ELPA=OFF
 
-                - name: -DINC_PATHS
+                - name: INC_PATHS
                   enabled:
                       conditions:
                           - condition: ${elsi.config.elpa} true
@@ -76,7 +38,7 @@ recipe:
                   enabled_value:
                       default: ${elpa.modules_dir}
 
-                - name: -DLIB_PATHS
+                - name: LIB_PATHS
                   enabled:
                       conditions:
                           - condition: ${elsi.config.elpa} true
@@ -86,7 +48,7 @@ recipe:
                   enabled_value:
                       default: ${elpa.prefix}/lib
 
-                - name: -DLIBS
+                - name: LIBS
                   enabled:
                       conditions:
                           - condition: ${elsi.config.elpa} true
@@ -96,22 +58,12 @@ recipe:
                   enabled_value:
                       default: ${elpa.libs}
 
-                - name: -DCMAKE_EXE_LINKER_FLAGS
-                  enabled_value:
-                      default: ${scalapack.ldflags} ${scalapack.libs}
-
-                - name: -DCMAKE_SHARED_LINKER_FLAGS
-                  enabled_value:
-                      default: ${scalapack.ldflags} ${scalapack.libs}
-
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${elsi.prefix}/lib -Wl,-rpath,${elsi.prefix}/lib
+        lib: ${elsi.prefix}/lib
         libs:
             default: -lelsi
-        includes:
-            default: -I${elsi.prefix}/include
+        include: ${elsi.prefix}/include

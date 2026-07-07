@@ -9,9 +9,9 @@ recipe:
 
     properties:
         prefix: ${intel-oneapi.prefix}/tbb/latest
+        lib: ${intel-oneapi.prefix}/tbb/latest/lib
         ldflags:
             default: -L${intel-oneapi.prefix}/tbb/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/tbb/latest/lib -Wl,--no-as-needed -m64
         libs:
             default: -ltbb -ltbbmalloc
-        includes:
-            default: -I${intel-oneapi.prefix}/tbb/latest/include
+        include: ${intel-oneapi.prefix}/tbb/latest/include

@@ -18,53 +18,30 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libxml2.prefix}
-
-                - name: --with-python
+                - name: with-python
                   description: Enable Python bindings
                   enabled:
                       default: false
                   enabled_value:
                       default: ${python.prefix}
-                  disabled_format: --without-python
+                  disabled_format: without-python
                   requires: [python]
 
-                - name: --with-zlib
+                - name: with-zlib
                   description: Enable zlib compression
                   enabled_value:
                       default: ${zlib.prefix}
 
-                - name: --with-lzma
+                - name: with-lzma
                   description: Enable LZMA compression
                   enabled_value:
                       default: ${xz.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${zlib.ldflags} ${xz.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libxml2.prefix}/lib -Wl,-rpath,${libxml2.prefix}/lib
+        lib: ${libxml2.prefix}/lib
         libs:
             default: -lxml2
-        includes:
-            default: -I${libxml2.prefix}/include
+        include: ${libxml2.prefix}/include

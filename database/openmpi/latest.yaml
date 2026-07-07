@@ -26,110 +26,105 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${openmpi.prefix}
-
-                - name: --enable-builtin-atomics
+                - name: enable-builtin-atomics
                   description: Enable built-in atomics
 
-                - name: --disable-silent-rules
+                - name: disable-silent-rules
                   description: Disable silent rules
 
-                - name: --disable-wrapper-runpath
+                - name: disable-wrapper-runpath
                   description: Disable wrapper RPATH
 
-                - name: --disable-sphinx
+                - name: disable-sphinx
                   description: Disable building Sphinx documentation
 
-                - name: --enable-branch-probabilities
+                - name: enable-branch-probabilities
                   description: Enable profile arcs and branch probability optimization
 
-                - name: --enable-mpi-fortran
+                - name: enable-mpi-fortran
                   description: Enable Fortran bindings
 
-                - name: --enable-oshmem
+                - name: enable-oshmem
                   description: Enable OpenSHMEM support
 
-                - name: --enable-oshmem-compat
+                - name: enable-oshmem-compat
                   description: Enable OpenSHMEM compatibility
 
-                - name: --enable-wrapper-rpath
+                - name: enable-wrapper-rpath
                   description: Enable wrapper RPATH
 
-                - name: --enable-memchecker
+                - name: enable-memchecker
                   description: Enable memory and buffer checks
                   user_configurable: true
                   enabled:
                       default: false
-                  disabled_format: --disable-memchecker
+                  disabled_format: disable-memchecker
 
-                - name: --with-mpi-param-check
+                - name: with-mpi-param-check
                   description: Enable MPI parameter checking [always | runtime | never]
                   user_configurable: true
                   enabled_value:
                       default: never
 
-                - name: --with-oshmem-param-check
+                - name: with-oshmem-param-check
                   description: Enable OpenSHMEM parameter checking [always | never]
                   user_configurable: true
                   enabled_value:
                       default: never
 
-                - name: --with-libevent
+                - name: with-libevent
                   description: Build with libevent support
                   enabled_value:
                       default: ${libevent.prefix}
 
-                - name: --with-hwloc
+                - name: with-hwloc
                   description: Build with hwloc support
                   enabled_value:
                       default: ${hwloc.prefix}
 
-                - name: --with-pmix
+                - name: with-pmix
                   description: Build with PMIx support
                   enabled_value:
                       default: ${pmix.prefix}
 
-                - name: --with-prrte
+                - name: with-prrte
                   description: Build with PRRTE support
                   enabled_value:
                       default: ${prrte.prefix}
 
-                - name: --with-slurm
+                - name: with-slurm
                   description: Build with SLURM support
 
-                - name: --with-ucx
+                - name: with-ucx
                   description: Build with UCX support
                   enabled_value:
                       default: ${ucx.prefix}
 
-                - name: --without-ucc
+                - name: without-ucc
                   description: Build without UCC support
 
-                - name: --without-psm
+                - name: without-psm
                   description: Build without PSM/PSM2 support
 
-                - name: --without-mxm
+                - name: without-mxm
                   description: Build without MXM support
 
-                - name: --without-ofi
+                - name: without-ofi
                   description: Build without OFI support
 
-                - name: --without-verbs
+                - name: without-verbs
                   description: Build without libibverbs support
 
-                - name: --without-knem
+                - name: without-knem
                   description: Build without KNEM support
 
-                - name: --without-fca
+                - name: without-fca
                   description: Build without FCA support
 
-                - name: --without-xpmem
+                - name: without-xpmem
                   description: Build without XPMEM support
 
-                - name: --with-cuda
+                - name: with-cuda
                   description: Build with CUDA support
                   user_configurable: true
                   enabled:
@@ -138,7 +133,7 @@ recipe:
                       default: ${cuda.prefix}
                   requires: [cuda]
 
-                - name: --with-rocm
+                - name: with-rocm
                   description: Build with ROCm support
                   user_configurable: true
                   enabled:
@@ -147,10 +142,10 @@ recipe:
                       default: ${rocm.prefix}
                   requires: [rocm]
 
-                - name: --with-cma
+                - name: with-cma
                   description: Enable Cross Memory Attach (CMA)
 
-                - name: --with-hcoll
+                - name: with-hcoll
                   description: Build with HCOLL support
                   user_configurable: true
                   enabled:
@@ -159,59 +154,11 @@ recipe:
                       default: ${hcoll.prefix}
                   requires: [hcoll]
 
-                - name: --with-libnuma
+                - name: with-libnuma
                   description: Build with libnuma support
                   enabled_value:
                       default: ${numactl.prefix}
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: FC
-                  description: Fortran compiler
-                  enabled_value:
-                      default: ${compiler.fort}
-
-                - name: FCFLAGS
-                  description: Fortran compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${compiler.ldflags} ${libevent.ldflags} ${hwloc.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} 
-                          ${numactl.ldflags}
-                      conditions:
-                          - condition: ${openmpi.config.--with-hcoll} true
-                            action: append
-                            value: ${hcoll.ldflags}
-                          - condition: ${openmpi.config.--with-cuda} true
-                            action: append
-                            value: ${cuda.ldflags}
-                          - condition: ${openmpi.config.--with-rocm} true
-                            action: append
-                            value: ${rocm.ldflags}
         stages:
             - target:
             - target: install
@@ -222,9 +169,7 @@ recipe:
         fort: ${openmpi.prefix}/bin/mpifort
         fortflags:
             default: -I${openmpi.prefix}/lib -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh
-        ldflags:
-            default: -L${openmpi.prefix}/lib -Wl,-rpath,${openmpi.prefix}/lib
+        lib: ${openmpi.prefix}/lib
         libs:
             default: -lmpi
-        includes:
-            default: -I${openmpi.prefix}/include
+        include: ${openmpi.prefix}/include

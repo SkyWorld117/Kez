@@ -16,31 +16,13 @@ recipe:
         - util-macros
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libxrender.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libxrender.prefix}/lib -Wl,-rpath,${libxrender.prefix}/lib
+        lib: ${libxrender.prefix}/lib
         libs:
             default: -lXrender
-        includes:
-            default: -I${libxrender.prefix}/include
+        include: ${libxrender.prefix}/include

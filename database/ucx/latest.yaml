@@ -19,35 +19,30 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${ucx.prefix}
-
-                - name: --enable-compiler-opt
+                - name: enable-compiler-opt
                   description: Enable compiler optimizations
                   enabled_value:
                       default: 3
 
-                - name: --enable-optimizations
+                - name: enable-optimizations
                   description: Enable optimizations
 
-                - name: --disable-assertions
+                - name: disable-assertions
                   description: Disable assertions
 
-                - name: --enable-builtin-memcpy
+                - name: enable-builtin-memcpy
                   description: Enable built-in memcpy routine
 
-                - name: --enable-cma
+                - name: enable-cma
                   description: Enable Cross Memory Attach (CMA)
 
-                - name: --disable-params-check
+                - name: disable-params-check
                   description: Disable checking user parameters passed to API
 
-                - name: --with-mcpu
+                - name: with-mcpu
                   description: Use CPU Model compiler option
 
-                - name: --with-march
+                - name: with-march
                   description: Use architecture tuning compiler option
 
                 - name: use_cuda
@@ -55,7 +50,7 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --with-cuda
+                  enabled_format: with-cuda
                   enabled_value:
                       default: ${cuda.prefix}
                   requires: [cuda]
@@ -65,12 +60,12 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --with-rocm
+                  enabled_format: with-rocm
                   enabled_value:
                       default: ${rocm.prefix}
                   requires: [rocm]
 
-                - name: --with-gdrcopy
+                - name: with-gdrcopy
                   description: Specify gdrcopy installation path
                   user_configurable: true
                   enabled:
@@ -79,81 +74,43 @@ recipe:
                       default: ${gdrcopy.prefix}
                   requires: [gdrcopy]
 
-                - name: --with-verbs
+                - name: with-verbs
                   description: Specify RDMA verbs installation path
                   enabled_value:
                       default: ${rdma-core.prefix}
 
-                - name: --with-rdmacm
+                - name: with-rdmacm
                   description: Specify RDMA core installation path
                   enabled_value:
                       default: ${rdma-core.prefix}
 
-                - name: --with-mlx5
+                - name: with-mlx5
                   description: Compile with mlx5 Direct Verbs support
 
-                - name: --with-rc
+                - name: with-rc
                   description: Compile Reliable Connection support
 
-                - name: --with-ud
+                - name: with-ud
                   description: Compile Unreliable Datagram support
 
-                - name: --with-dc
+                - name: with-dc
                   description: Compile Dynamic Connection support
 
-                - name: --with-ib-hw-tm
+                - name: with-ib-hw-tm
                   description: Compile Tag Matching support
 
-                - name: --with-dm
+                - name: with-dm
                   description: Compile Device Memory support
 
-                - name: --without-go
+                - name: without-go
                   description: Disable Go support
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${compiler.ldflags} ${rdma-core.ldflags}
-                      conditions:
-                          - condition: ${ucx.config.use_cuda} true
-                            action: append
-                            value: ${cuda.ldflags}
-                          - condition: ${ucx.config.use_rocm} true
-                            action: append
-                            value: ${rocm.ldflags}
-                          - condition: ${ucx.config.--with-gdrcopy} true
-                            action: append
-                            value: ${gdrcopy.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${ucx.prefix}/lib -Wl,-rpath,${ucx.prefix}/lib
+        lib: ${ucx.prefix}/lib
         libs:
             default: -lucm -lucp -lucs -luct
-        includes:
-            default: -I${ucx.prefix}/include
+        include: ${ucx.prefix}/include

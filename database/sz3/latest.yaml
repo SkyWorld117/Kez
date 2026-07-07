@@ -12,57 +12,13 @@ recipe:
               url: https://github.com/szcompressor/SZ3/releases/download/v3.3.2/SZ3-v3.3.2.zip
 
     build:
-        configurations:
-            options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${sz3.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: RPATH for built libraries
-                  enabled_value:
-                      default: ${sz3.prefix}/lib
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed libraries
-                  enabled_value:
-                      default: ${sz3.prefix}/lib
-
-                - name: -DCMAKE_C_FLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${sz3.prefix}/lib -Wl,-rpath,${sz3.prefix}/lib
+        lib: ${sz3.prefix}/lib
         libs:
             default: -lsz3
-        includes:
-            default: -I${sz3.prefix}/include
+        include: ${sz3.prefix}/include

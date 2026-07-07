@@ -28,39 +28,29 @@ recipe:
 
         configurations:
             options:
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler — MPI wrapper so find_package(MPI) resolves correctly
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler — MPI wrapper
-                  enabled_value:
-                      default: ${mpi.cxx}
-
-                - name: -DHEMELB_USE_SSE3
+                - name: HEMELB_USE_SSE3
                   description: Enable SSE3 vectorisation
                   user_configurable: true
                   enabled_value:
                       default: ON
 
-                - name: -DHEMELB_USE_AVX2
+                - name: HEMELB_USE_AVX2
                   description: Enable AVX2 vectorisation
                   user_configurable: true
                   enabled_value:
                       default: ON
 
-                - name: -DHEMELB_USE_GMYPLUS
+                - name: HEMELB_USE_GMYPLUS
                   description: Disable GMY+ geometry format (not needed for benchmark)
                   enabled_value:
                       default: OFF
 
-                - name: -DHEMELB_USE_MPI_WIN
+                - name: HEMELB_USE_MPI_WIN
                   description: Disable MPI window-based communication (SRCbuild_Benchmark default)
                   enabled_value:
                       default: OFF
 
-                - name: -DCTEMPLATE_LIBRARY
+                - name: CTEMPLATE_LIBRARY
                   description: Static ctemplate library — avoids shared-lib RPATH issue after source cleanup
                   enabled_value:
                       default: ${source}/dep/install/lib/libctemplate.a

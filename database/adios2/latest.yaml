@@ -26,154 +26,121 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${adios2.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DADIOS2_USE_MPI
+                - name: ADIOS2_USE_MPI
                   description: Enable MPI support
                   enabled_value:
                       default: ON
 
-                - name: -DMPI_ROOT
+                - name: MPI_ROOT
                   description: Path to MPI installation
                   enabled_value:
                       default: ${mpi.prefix}
 
-                - name: -DADIOS2_USE_ZeroMQ
+                - name: ADIOS2_USE_ZeroMQ
                   description: Enable ZeroMQ support
                   enabled_value:
                       default: OFF
 
-                - name: -DADIOS2_USE_HDF5
+                - name: ADIOS2_USE_HDF5
                   description: Enable HDF5 support
                   enabled_value:
                       default: ON
 
-                - name: -DHDF5_ROOT
+                - name: HDF5_ROOT
                   description: Path to HDF5 installation
                   enabled_value:
                       default: ${hdf5.prefix}
 
-                - name: -DADIOS2_USE_Python
+                - name: ADIOS2_USE_Python
                   description: Enable Python bindings
                   enabled_value:
                       default: OFF
 
-                - name: -DADIOS2_USE_Fortran
+                - name: ADIOS2_USE_Fortran
                   description: Enable Fortran bindings
                   enabled_value:
                       default: ON
 
-                - name: -DADIOS2_USE_SST
+                - name: ADIOS2_USE_SST
                   description: Enable SST support
                   enabled_value:
                       default: ON
 
-                - name: -DUCX_ROOT
+                - name: UCX_ROOT
                   description: Path to UCX installation
                   enabled_value:
                       default: ${ucx.prefix}
 
-                - name: -DADIOS2_USE_BZip2
+                - name: ADIOS2_USE_BZip2
                   description: Enable BZip2 support
                   enabled_value:
                       default: ON
 
-                - name: -DBZip2_ROOT
+                - name: BZip2_ROOT
                   description: Path to BZip2 installation
                   enabled_value:
                       default: ${bzip2.prefix}
 
-                - name: -DADIOS2_USE_ZFP
+                - name: ADIOS2_USE_ZFP
                   description: Enable ZFP support
                   enabled_value:
                       default: ON
 
-                - name: -DZFP_ROOT
+                - name: ZFP_ROOT
                   description: Path to ZFP installation
                   enabled_value:
                       default: ${zfp.prefix}
 
-                - name: -DADIOS2_USE_SZ
+                - name: ADIOS2_USE_SZ
                   description: Enable SZ2 support
                   enabled_value:
                       default: OFF
 
-                - name: -DADIOS2_USE_SZ3
+                - name: ADIOS2_USE_SZ3
                   description: Enable SZ3 support
                   enabled_value:
                       default: ON
 
-                - name: -DSZ3_ROOT
+                - name: SZ3_ROOT
                   description: Path to SZ3 installation
                   enabled_value:
                       default: ${sz3.prefix}
 
-                - name: -DADIOS2_USE_MGARD
+                - name: ADIOS2_USE_MGARD
                   description: Enable MGARD support
                   enabled_value:
                       default: ON
 
-                - name: -DMGARD_ROOT
+                - name: MGARD_ROOT
                   description: Path to MGARD installation
                   enabled_value:
                       default: ${mgard.prefix}
 
-                - name: -DADIOS2_USE_PNG
+                - name: ADIOS2_USE_PNG
                   description: Enable PNG support
                   enabled_value:
                       default: ON
 
-                - name: -DPNG_ROOT
+                - name: PNG_ROOT
                   description: Path to PNG installation
                   enabled_value:
                       default: ${libpng.prefix}
 
-                - name: -DADIOS2_USE_Blosc2
+                - name: ADIOS2_USE_Blosc2
                   description: Enable Blosc2 support
                   enabled_value:
                       default: ON
 
-                - name: -DBlosc2_ROOT
+                - name: Blosc2_ROOT
                   description: Path to Blosc2 installation
                   enabled_value:
                       default: ${c-blosc2.prefix}
-
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_Fortran_COMPILER
-                  description: Fortran compiler
-                  enabled_value:
-                      default: ${compiler.fort}
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed binaries
-                  enabled_value:
-                      default: 
-                          ${adios2.prefix}/lib;${mpi.prefix}/lib;${hdf5.prefix}/lib;${ucx.prefix}/lib;${bzip2.prefix}/lib;${zfp.prefix}/lib;${sz3.prefix}/lib;${mgard.prefix}/lib;${libpng.prefix}/lib;${c-blosc2.prefix}/lib
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${adios2.prefix}/lib -Wl,-rpath,${adios2.prefix}/lib
+        lib: ${adios2.prefix}/lib
         libs:
             default: -ladios2
-        includes:
-            default: -I${adios2.prefix}/include
+        include: ${adios2.prefix}/include

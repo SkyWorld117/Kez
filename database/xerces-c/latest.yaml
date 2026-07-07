@@ -12,40 +12,11 @@ recipe:
               url: https://dlcdn.apache.org//xerces/c/3/sources/xerces-c-3.3.0.tar.gz
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${xerces-c.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${xerces-c.prefix}/lib -Wl,-rpath,${xerces-c.prefix}/lib
-        includes:
-            default: -I${xerces-c.prefix}/include
+        lib: ${xerces-c.prefix}/lib
+        include: ${xerces-c.prefix}/include

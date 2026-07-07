@@ -8,9 +8,7 @@ recipe:
   # Use the system package instead
 
     properties:
-        ldflags:
-            default: -L${hcoll.prefix}/lib -Wl,-rpath,${hcoll.prefix}/lib
+        lib: ${hcoll.prefix}/lib
         libs:
             default: -lhcoll
-        includes:
-            default: -I${hcoll.prefix}/include
+        include: ${hcoll.prefix}/include

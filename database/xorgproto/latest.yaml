@@ -15,27 +15,10 @@ recipe:
         - util-macros
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${xorgproto.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        includes:
-            default: -I${xorgproto.prefix}/include
+        include: ${xorgproto.prefix}/include

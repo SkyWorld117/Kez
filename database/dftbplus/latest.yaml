@@ -20,160 +20,106 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  enabled_value:
-                      default: ${dftbplus.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_C_COMPILER
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  enabled_value:
-                      default: ${mpi.cxx}
-
-                - name: -DCMAKE_Fortran_COMPILER
-                  enabled_value:
-                      default: ${mpi.fort}
-
-                - name: -DWITH_MPI
+                - name: WITH_MPI
                   user_configurable: true
-                  enabled_format: -DWITH_MPI=ON
-                  disabled_format: -DWITH_MPI=OFF
+                  enabled_format: WITH_MPI=ON
+                  disabled_format: WITH_MPI=OFF
                   requires: [mpi]
 
-                - name: -DWITH_OMP
+                - name: WITH_OMP
                   user_configurable: true
-                  enabled_format: -DWITH_OMP=ON
-                  disabled_format: -DWITH_OMP=OFF
+                  enabled_format: WITH_OMP=ON
+                  disabled_format: WITH_OMP=OFF
 
-                - name: -DWITH_ELSI
+                - name: WITH_ELSI
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: -DWITH_ELSI=ON
-                  disabled_format: -DWITH_ELSI=OFF
+                  enabled_format: WITH_ELSI=ON
+                  disabled_format: WITH_ELSI=OFF
                   requires: [elsi]
 
-                - name: -DWITH_GPU
+                - name: WITH_GPU
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: -DWITH_GPU=ON
-                  disabled_format: -DWITH_GPU=OFF
+                  enabled_format: WITH_GPU=ON
+                  disabled_format: WITH_GPU=OFF
                   requires: [cuda]
 
-                - name: -DCUDAToolkit_ROOT
+                - name: CUDAToolkit_ROOT
                   enabled:
                       default: false
                       conditions:
-                          - condition: ${dftbplus.config.-DWITH_GPU} true
+                          - condition: ${dftbplus.config.WITH_GPU} true
                             value: true
                   enabled_value:
                       default: ${cuda.prefix}
                   requires: [cuda]
 
-                - name: -DMAGMA_INCLUDE_DIRECTORY
+                - name: MAGMA_INCLUDE_DIRECTORY
                   enabled:
                       default: false
                       conditions:
-                          - condition: ${dftbplus.config.-DWITH_GPU} true && ${dftbplus.config.-DWITH_MPI} false
+                          - condition: ${dftbplus.config.WITH_GPU} true && ${dftbplus.config.WITH_MPI} false
                             value: true
                   enabled_value:
                       default: ${magma.prefix}/include
                   requires: [magma]
 
-                - name: -DBLAS_LIBRARY
+                - name: BLAS_LIBRARY
                   enabled_value:
                       default: ${blas.ldflags};${blas.libs}
 
-                - name: -DLAPACK_LIBRARY
+                - name: LAPACK_LIBRARY
                   enabled_value:
                       default: ${lapack.ldflags};${lapack.libs}
 
-                - name: -DSCALAPACK_LIBRARY
+                - name: SCALAPACK_LIBRARY
                   enabled:
                       default: false
                       conditions:
-                          - condition: ${dftbplus.config.-DWITH_MPI} true
+                          - condition: ${dftbplus.config.WITH_MPI} true
                             value: true
                   enabled_value:
                       default: ${scalapack.ldflags};${scalapack.libs}
                   requires: [scalapack]
 
-                - name: -DCMAKE_C_FLAGS
+                - name: CMAKE_C_FLAGS
                   user_configurable: true
                   enabled_value:
                       default: -O3
                       conditions:
-                          - condition: ${dftbplus.config.-DWITH_GPU} true
+                          - condition: ${dftbplus.config.WITH_GPU} true
                             action: append
                             value: -I${cuda.prefix}/include
 
-                - name: -DCMAKE_CXX_FLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_Fortran_FLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_EXE_LINKER_FLAGS
+                - name: CMAKE_EXE_LINKER_FLAGS
                   enabled_value:
                       conditions:
-                          - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} false
+                          - condition: ${dftbplus.config.WITH_MPI} true && ${dftbplus.config.WITH_ELSI} false
                             value: ${scalapack.ldflags} ${scalapack.libs}
-                          - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} true
+                          - condition: ${dftbplus.config.WITH_MPI} true && ${dftbplus.config.WITH_ELSI} true
                             value: ${scalapack.ldflags} ${scalapack.libs} ${elsi.ldflags} ${elsi.libs} ${elpa.ldflags}
-                          - condition: ${dftbplus.config.-DWITH_MPI} false && ${dftbplus.config.-DWITH_GPU} true
+                          - condition: ${dftbplus.config.WITH_MPI} false && ${dftbplus.config.WITH_GPU} true
                             value: ${magma.ldflags} ${magma.libs}
 
-                - name: -DCMAKE_SHARED_LINKER_FLAGS
+                - name: CMAKE_SHARED_LINKER_FLAGS
                   enabled_value:
                       conditions:
-                          - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} false
+                          - condition: ${dftbplus.config.WITH_MPI} true && ${dftbplus.config.WITH_ELSI} false
                             value: ${scalapack.ldflags} ${scalapack.libs}
-                          - condition: ${dftbplus.config.-DWITH_MPI} true && ${dftbplus.config.-DWITH_ELSI} true
+                          - condition: ${dftbplus.config.WITH_MPI} true && ${dftbplus.config.WITH_ELSI} true
                             value: ${scalapack.ldflags} ${scalapack.libs} ${elsi.ldflags} ${elsi.libs} ${elpa.ldflags}
-                          - condition: ${dftbplus.config.-DWITH_MPI} false && ${dftbplus.config.-DWITH_GPU} true
+                          - condition: ${dftbplus.config.WITH_MPI} false && ${dftbplus.config.WITH_GPU} true
                             value: ${magma.ldflags} ${magma.libs}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  enabled:
-                      default: false
-                      conditions:
-                          - condition: ${dftbplus.config.-DWITH_GPU} true
-                            value: true
-                  enabled_value:
-                      conditions:
-                          - condition: ${dftbplus.config.-DWITH_GPU} true
-                            value: ${cuda.prefix}/lib64
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  enabled:
-                      default: false
-                      conditions:
-                          - condition: ${dftbplus.config.-DWITH_GPU} true
-                            value: true
-                  enabled_value:
-                      conditions:
-                          - condition: ${dftbplus.config.-DWITH_GPU} true
-                            value: ${cuda.prefix}/lib64
 
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${dftbplus.prefix}/lib -Wl,-rpath,${dftbplus.prefix}/lib
+        lib: ${dftbplus.prefix}/lib
         libs:
             default: -ldftbplus
-        includes:
-            default: -I${dftbplus.prefix}/include
+        include: ${dftbplus.prefix}/include

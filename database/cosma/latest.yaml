@@ -22,80 +22,60 @@ recipe:
         preprocessing: git submodule init && git submodule update
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  enabled_value:
-                      default: ${cosma.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_C_COMPILER
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  enabled_value:
-                      default: ${mpi.cxx}
-
-                - name: -DCMAKE_CXX_FLAGS
+                - name: CMAKE_CXX_FLAGS
                   enabled_value:
                       default: -O3 -include cstdint
 
-                - name: -DBUILD_SHARED_LIBS
+                - name: BUILD_SHARED_LIBS
                   enabled_value:
                       default: ON
 
-                - name: -DCOSMA_BLAS
+                - name: COSMA_BLAS
                   description: BLAS backend [ MKL | OpenBLAS | BLIS | ATLAS | CUSTOM | OFF ]
                   user_configurable: true
                   enabled_value:
                       default: MKL
 
-                - name: -DCOSMA_SCALAPACK
+                - name: COSMA_SCALAPACK
                   description: ScaLAPACK backend for PXGEMM wrappers [ MKL | CUSTOM | OFF ]
                   user_configurable: true
                   enabled_value:
                       default: MKL
 
-                - name: -DMKL_ROOT
+                - name: MKL_ROOT
                   enabled:
                       default: false
                       conditions:
-                          - condition: ${cosma.config.-DCOSMA_BLAS} true MKL
+                          - condition: ${cosma.config.COSMA_BLAS} true MKL
                             value: true
-                          - condition: ${cosma.config.-DCOSMA_SCALAPACK} true MKL
+                          - condition: ${cosma.config.COSMA_SCALAPACK} true MKL
                             value: true
                   enabled_value:
                       default: ${intel-oneapi-mkl.prefix}
                   requires: [intel-oneapi-mkl]
 
-                - name: -DCOSMA_WITH_NCCL
+                - name: COSMA_WITH_NCCL
                   description: Enable NCCL for GPU-aware collective communication
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: -DCOSMA_WITH_NCCL=ON
-                  disabled_format: -DCOSMA_WITH_NCCL=OFF
                   requires: [cuda, nvhpc]
 
-                - name: -DCOSMA_WITH_GPU_AWARE_MPI
+                - name: COSMA_WITH_GPU_AWARE_MPI
                   description: Enable GPU-aware MPI
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: -DCOSMA_WITH_GPU_AWARE_MPI=ON
-                  disabled_format: -DCOSMA_WITH_GPU_AWARE_MPI=OFF
 
-                - name: -DCOSMA_WITH_TESTS
+                - name: COSMA_WITH_TESTS
                   enabled_value:
                       default: OFF
 
-                - name: -DCOSMA_WITH_APPS
+                - name: COSMA_WITH_APPS
                   enabled_value:
                       default: OFF
 
-                - name: -DCOSMA_WITH_BENCHMARKS
+                - name: COSMA_WITH_BENCHMARKS
                   enabled_value:
                       default: OFF
 
@@ -105,10 +85,7 @@ recipe:
 
     properties:
         prefix: ${cosma.prefix}
-        ldflags:
-            default: -L${cosma.prefix}/lib -Wl,-rpath,${cosma.prefix}/lib
+        lib: ${cosma.prefix}/lib
         libs:
             default: -lcosma -lcosta
-        includes:
-            default: -I${cosma.prefix}/include
-
+        include: ${cosma.prefix}/include

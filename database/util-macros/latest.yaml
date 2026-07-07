@@ -12,12 +12,7 @@ recipe:
               url: https://www.x.org/releases/individual/util/util-macros-1.20.2.tar.xz
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${util-macros.prefix}
+        configurations: {}
         stages:
             - target:
             - target: install

@@ -17,55 +17,22 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${lcio.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: Build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DBUILD_TESTING
+                - name: BUILD_TESTING
                   description: Enable building of test programs
                   enabled_value:
                       default: OFF
 
-                - name: -DROOT_DIR
+                - name: ROOT_DIR
                   description: Path to ROOT installation
                   enabled_value:
                       default: ${root.prefix}/cmake
 
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_C_FLAGS_RELEASE
-                  description: C compiler flags for Release build
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS_RELEASE
-                  description: C++ compiler flags for Release build
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${lcio.prefix}/lib -Wl,-rpath,${lcio.prefix}/lib
+        lib: ${lcio.prefix}/lib
         libs:
             default: -llcio -llcioconvert -llcioutils -llciomisc
-        includes:
-            default: -I${lcio.prefix}/include
+        include: ${lcio.prefix}/include

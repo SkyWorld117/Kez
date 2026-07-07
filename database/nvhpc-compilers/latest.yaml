@@ -14,5 +14,4 @@ recipe:
         cxx: ${compiler.prefix}/bin/nvc++
         fort: ${compiler.prefix}/bin/nvfortran
         omp_flags: -mp
-        ldflags:
-            default: -L${compiler.prefix}/lib -Wl,-rpath,${compiler.prefix}/lib
+        lib: ${compiler.prefix}/lib

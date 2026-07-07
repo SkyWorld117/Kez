@@ -13,57 +13,13 @@ recipe:
               tag: v3.0.1
 
     build:
-        configurations:
-            options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${c-blosc2.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: RPATH for built libraries
-                  enabled_value:
-                      default: ${c-blosc2.prefix}/lib
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed libraries
-                  enabled_value:
-                      default: ${c-blosc2.prefix}/lib
-
-                - name: -DCMAKE_C_FLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${c-blosc2.prefix}/lib -Wl,-rpath,${c-blosc2.prefix}/lib
+        lib: ${c-blosc2.prefix}/lib
         libs:
             default: -lblosc2
-        includes:
-            default: -I${c-blosc2.prefix}/include
+        include: ${c-blosc2.prefix}/include

@@ -38,8 +38,7 @@ recipe:
 
     properties:
         prefix: ${intel-oneapi.prefix}/mkl/latest
-        ldflags:
-            default: -L${intel-oneapi.prefix}/mkl/latest/lib -Wl,-rpath,${intel-oneapi.prefix}/mkl/latest/lib -Wl,--no-as-needed -m64
+        lib: ${intel-oneapi.prefix}/mkl/latest/lib
         libs:
             default: -lmkl_sequential -lmkl_core -lpthread -lm -ldl
             conditions:
@@ -59,5 +58,4 @@ recipe:
                 - condition: ${fftw3-api.use-intel-oneapi-mkl} true
                   action: append
                   value: -lmkl_rt
-        includes:
-            default: -I${intel-oneapi.prefix}/mkl/latest/include -m64
+        include: ${intel-oneapi.prefix}/mkl/latest/include

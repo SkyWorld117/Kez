@@ -41,40 +41,12 @@ recipe:
                   enabled_value:
                       default: ${zlib.prefix}/lib
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${zlib.ldflags} ${openssl.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${openssl.prefix}/lib -Wl,-rpath,${openssl.prefix}/lib64
+        lib: ${openssl.prefix}/lib
         libs:
             default: -lssl -lcrypto
-        includes:
-            default: -I${openssl.prefix}/include
+        include: ${openssl.prefix}/include

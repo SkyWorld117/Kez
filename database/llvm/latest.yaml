@@ -20,7 +20,5 @@ recipe:
         cxx: ${compiler.prefix}/bin/clang++
         fort: ${compiler.prefix}/bin/flang
         omp_flags: -fopenmp
-        ldflags:
-            default: -L${compiler.prefix}/lib -Wl,-rpath,${compiler.prefix}/lib
-        includes:
-            default: -I${compiler.prefix}/include
+        lib: ${compiler.prefix}/lib
+        include: ${compiler.prefix}/include

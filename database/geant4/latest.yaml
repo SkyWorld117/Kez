@@ -17,85 +17,37 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${geant4.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: Build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_CXX_STANDARD
+                - name: CMAKE_CXX_STANDARD
                   description: C++ standard version
                   enabled_value:
                       default: 20
 
-                - name: -DGEANT4_BUILD_MULTITHREADED
+                - name: GEANT4_BUILD_MULTITHREADED
                   description: Enable multithreading support
                   enabled_value:
                       default: OFF
 
-                - name: -DGEANT4_USE_GDML
+                - name: GEANT4_USE_GDML
                   description: Enable GDML support
                   enabled_value:
                       default: ON
 
-                - name: -DGEANT4_BUILD_TLS_MODEL
+                - name: GEANT4_BUILD_TLS_MODEL
                   description: Enable Thread Local Storage model
                   enabled_value:
                       default: global-dynamic
 
-                - name: -DXERCESC_ROOT_DIR
+                - name: XERCESC_ROOT_DIR
                   description: Path to Xerces-C installation
                   enabled_value:
                       default: ${xerces-c.prefix}
 
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_C_FLAGS_RELEASE
-                  description: C compiler flags for Release build
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS_RELEASE
-                  description: C++ compiler flags for Release build
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: Build RPATH
-                  enabled_value:
-                      default: ${compiler.prefix}/lib64
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: Runtime linker flags
-                  enabled_value:
-                      default: ${compiler.prefix}/lib64
-
-                - name: -DCMAKE_EXE_LINKER_FLAGS
-                  description: Executable linker flags
-                  enabled_value:
-                      default: -Wl,-rpath,${compiler.prefix}/lib64
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${geant4.prefix}/lib -Wl,-rpath,${geant4.prefix}/lib
+        lib: ${geant4.prefix}/lib
         libs:
             default: -lGeant4
-        includes:
-            default: -I${geant4.prefix}/include
+        include: ${geant4.prefix}/include

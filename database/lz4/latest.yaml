@@ -47,9 +47,7 @@ recipe:
                             default: ${lz4.prefix}
 
     properties:
-        ldflags:
-            default: -L${lz4.prefix}/lib -Wl,-rpath,${lz4.prefix}/lib
+        lib: ${lz4.prefix}/lib
         libs:
             default: -llz4
-        includes:
-            default: -I${lz4.prefix}/include
+        include: ${lz4.prefix}/include

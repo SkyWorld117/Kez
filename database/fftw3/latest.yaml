@@ -15,110 +15,100 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${fftw3.prefix}
-
-                - name: --enable-shared
+                - name: enable-shared
                   description: Build shared library
 
-                - name: --enable-float
+                - name: enable-float
                   description: Build single-precision version of the library
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-long-double
+                - name: enable-long-double
                   description: Build long double-precision version of the library
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-quad-precision
+                - name: enable-quad-precision
                   description: Build quad-precision version of the library
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-sse
+                - name: enable-sse
                   description: Build SSE-optimized version of the library [x86_64]
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-sse2
+                - name: enable-sse2
                   description: Build SSE/SSE2-optimized version of the library [x86_64]
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --enable-avx
+                - name: enable-avx
                   description: Build AVX-optimized version of the library [x86_64]
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-avx2
+                - name: enable-avx2
                   description: Build AVX/AVX2-optimized version of the library [x86_64]
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --enable-avx512
+                - name: enable-avx512
                   description: Build AVX-512-optimized version of the library [x86_64]
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --enable-avx-128-fma
+                - name: enable-avx-128-fma
                   description: Build AVX-128-FMA-optimized version of the library [x86_64]
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --enable-neon
+                - name: enable-neon
                   description: Build NEON-optimized version of the library [arm64]
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --enable-sve
+                - name: enable-sve
                   description: Build SVE-optimized version of the library [arm64]
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --enable-fma
+                - name: enable-fma
                   description: Enable FMA if the machine architecture "naturally" prefers it
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --enable-mpi
+                - name: enable-mpi
                   description: Enable MPI support
                   user_configurable: true
                   enabled:
                       default: false
                   requires: [mpi]
 
-                - name: --enable-openmp
+                - name: enable-openmp
                   description: Enable OpenMP support
                   user_configurable: true
                   enabled:
                       default: true
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
 
                 - name: MPICC
                   description: MPI C compiler wrapper
                   enabled_value:
                       default: ${compiler.c}
                       conditions:
-                          - condition: ${fftw3.config.--enable-mpi} true
+                          - condition: ${fftw3.config.enable-mpi} true
                             action: set
                             value: ${mpi.c}
 
@@ -132,9 +122,7 @@ recipe:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${fftw3.prefix}/lib -Wl,-rpath,${fftw3.prefix}/lib
+        lib: ${fftw3.prefix}/lib
         libs:
             default: -lfftw3
-        includes:
-            default: -I${fftw3.prefix}/include
+        include: ${fftw3.prefix}/include

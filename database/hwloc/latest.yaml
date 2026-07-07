@@ -20,21 +20,16 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${hwloc.prefix}
-
                 - name: use_cuda
                   description: Use CUDA support
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --enable-cuda
-                  disabled_format: --disable-cuda
+                  enabled_format: enable-cuda
+                  disabled_format: disable-cuda
                   requires: [cuda]
 
-                - name: --with-cuda
+                - name: with-cuda
                   description: Specify CUDA installation path
                   enabled:
                       conditions:
@@ -47,7 +42,7 @@ recipe:
                           - condition: ${hwloc.config.use_cuda} true
                             value: ${cuda.prefix}
 
-                - name: --with-cuda-version
+                - name: with-cuda-version
                   description: Specify CUDA version
                   enabled:
                       conditions:
@@ -65,10 +60,10 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --enable-rsmi
-                  disabled_format: --disable-rsmi
+                  enabled_format: enable-rsmi
+                  disabled_format: disable-rsmi
                   requires: [rocm]
-                - name: --with-rocm
+                - name: with-rocm
                   description: Specify ROCm installation path
                   enabled:
                       conditions:
@@ -81,7 +76,7 @@ recipe:
                           - condition: ${hwloc.config.use_rocm} true
                             value: ${rocm.prefix}
 
-                - name: --with-rocm-version
+                - name: with-rocm-version
                   description: Specify ROCm version
                   enabled:
                       conditions:
@@ -94,47 +89,12 @@ recipe:
                           - condition: ${hwloc.config.use_rocm} true
                             value: ${rocm.version}
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags}
-                      conditions:
-                          - condition: ${hwloc.config.use_cuda} true
-                            action: append
-                            value: ${cuda.ldflags}
-                          - condition: ${hwloc.config.use_rocm} true
-                            action: append
-                            value: ${rocm.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${hwloc.prefix}/lib -Wl,-rpath,${hwloc.prefix}/lib
+        lib: ${hwloc.prefix}/lib
         libs:
             default: -lhwloc
-        includes:
-            default: -I${hwloc.prefix}/include
+        include: ${hwloc.prefix}/include

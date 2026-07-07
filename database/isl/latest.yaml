@@ -17,62 +17,28 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${isl.prefix}
-
-                - name: --enable-shared
+                - name: enable-shared
                   description: Build shared libraries
 
-                - name: --enable-static
+                - name: enable-static
                   description: Build static libraries
 
-                - name: --with-gmp-prefix
+                - name: with-gmp-prefix
                   description: Specify GMP installation prefix
                   enabled_value:
                       default: ${gmp.prefix}
 
-                - name: --with-int
+                - name: with-int
                   description: Package for multi-precision integers
                   enabled_value:
                       default: gmp
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  user_configurable: true
-                  enabled_value:
-                      default: ${gmp.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${isl.prefix}/lib -Wl,-rpath,${isl.prefix}/lib
+        lib: ${isl.prefix}/lib
         libs:
             default: -lisl
-        includes:
-            default: -I${isl.prefix}/include
+        include: ${isl.prefix}/include

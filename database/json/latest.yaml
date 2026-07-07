@@ -14,17 +14,7 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${json.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: Build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DJSON_BuildTests
+                - name: JSON_BuildTests
                   description: Enable building of test programs
                   enabled_value:
                       default: OFF
@@ -33,5 +23,4 @@ recipe:
             - target: install
 
     properties:
-        includes:
-            default: -I${json.prefix}/include
+        include: ${json.prefix}/include

@@ -15,33 +15,28 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${pythia.prefix}
-
-                - name: --with-hepmc3
+                - name: with-hepmc3
                   description: Use HepMC3 for event record I/O
                   user_configurable: true
                   enabled:
                       default: false
                   enabled_value:
                       default: ${hepmc3.prefix}
-                  disabled_format: --without-hepmc3
+                  disabled_format: without-hepmc3
                   requires: [hepmc3]
 
-                - name: --with-openmp
+                - name: with-openmp
                   description: Enable OpenMP support
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --cxx
+                - name: cxx
                   description: C++ compiler
                   enabled_value:
                       default: ${compiler.cxx}
 
-                - name: --cxx-common
+                - name: cxx-common
                   description: C++ compiler flags
                   user_configurable: true
                   enabled_value:
@@ -51,7 +46,5 @@ recipe:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${pythia.prefix}/lib -Wl,-rpath,${pythia.prefix}/lib
-        includes:
-            default: -I${pythia.prefix}/include
+        lib: ${pythia.prefix}/lib
+        include: ${pythia.prefix}/include

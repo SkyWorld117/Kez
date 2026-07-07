@@ -18,50 +18,21 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${pmix.prefix}
-
-                - name: --with-hwloc
+                - name: with-hwloc
                   description: Specify hwloc installation path
                   enabled_value:
                       default: ${hwloc.prefix}
 
-                - name: --with-libevent
+                - name: with-libevent
                   description: Specify libevent installation path
                   enabled_value:
                       default: ${libevent.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-        # TODO: make this dependent on hwloc instead of openmpi
-        # This requires iterative config resolution with the upcoming C++ wrapper
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags}
-                      conditions:
-                          - condition: ${openmpi.config.--with-cuda} true
-                            action: append
-                            value: ${cuda.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${pmix.prefix}/lib -Wl,-rpath,${pmix.prefix}/lib
+        lib: ${pmix.prefix}/lib
         libs:
             default: -lpmix
-        includes:
-            default: -I${pmix.prefix}/include
+        include: ${pmix.prefix}/include

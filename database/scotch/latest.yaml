@@ -20,70 +20,27 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${scotch.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DBISON_EXECUTABLE
+                - name: BISON_EXECUTABLE
                   description: Path to Bison executable
                   enabled_value:
                       default: ${bison.prefix}/bin/bison
 
-                - name: -DFLEX_EXECUTABLE
+                - name: FLEX_EXECUTABLE
                   description: Path to Flex executable
                   enabled_value:
                       default: ${flex.prefix}/bin/flex
 
-                - name: -DMPI_HOME
+                - name: MPI_HOME
                   description: MPI installation path
                   enabled_value:
                       default: ${mpi.prefix}
 
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: RPATH for built libraries
-                  enabled_value:
-                      default: ${scotch.prefix}/lib
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed libraries
-                  enabled_value:
-                      default: ${scotch.prefix}/lib
-
-                - name: -DCMAKE_C_FLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${scotch.prefix}/lib -Wl,-rpath,${scotch.prefix}/lib
+        lib: ${scotch.prefix}/lib
         libs:
             default: -lscotch -lscotcherr
-        includes:
-            default: -I${scotch.prefix}/include
+        include: ${scotch.prefix}/include

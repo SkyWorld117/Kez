@@ -9,80 +9,38 @@ recipe:
     source:
         type: tarball
         releases:
-      # Newer versions of METIS are neither stable nor much more performant
-      # We stick to version 5.1.0 which is the last stable release and works well for our use cases
+            # Newer versions of METIS are neither stable nor much more performant
+            # We stick to version 5.1.0 which is the last stable release and works well for our use cases
             - version: 5.1.0
               url: http://papers.karypis.org/glaros/files/sw/metis/metis-5.1.0.tar.gz
 
-  # GKlib is made as an external dependency of METIS starting from version 5.2.1
-  # Notice it is contained in the prior versions of METIS, so we don't need to install it separately
+    # GKlib is made as an external dependency of METIS starting from version 5.2.1
+    # Notice it is contained in the prior versions of METIS, so we don't need to install it separately
 
-  # dependencies:
-  #   - gklib
+    # dependencies:
+    #   - gklib
 
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${metis.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DOPENMP
+                - name: OPENMP
                   description: Enable OpenMP support
                   user_configurable: true
                   enabled_value:
                       default: '1'
 
-                - name: -DSHARED
+                - name: SHARED
                   description: Build shared library
                   user_configurable: true
                   enabled_value:
                       default: '1'
 
-                - name: -DGKLIB_PATH
+                - name: GKLIB_PATH
                   description: Path to GKlib
                   enabled_value:
                       default: ${source}/GKlib
 
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: RPATH for built libraries
-                  enabled_value:
-                      default: ${metis.prefix}/lib
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed libraries
-                  enabled_value:
-                      default: ${metis.prefix}/lib
-
-                - name: -DCMAKE_C_FLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_POLICY_VERSION_MINIMUM
+                - name: CMAKE_POLICY_VERSION_MINIMUM
                   description: Minimum CMake policy version
                   enabled_value:
                       default: 3.5
@@ -91,9 +49,7 @@ recipe:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${metis.prefix}/lib -Wl,-rpath,${metis.prefix}/lib
+        lib: ${metis.prefix}/lib
         libs:
             default: -lmetis -lGKlib
-        includes:
-            default: -I${metis.prefix}/include
+        include: ${metis.prefix}/include

@@ -17,36 +17,13 @@ recipe:
         - libxfixes
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libxcursor.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${libx11.ldflags} ${libxrender.ldflags} ${libxfixes.ldflags}
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libxcursor.prefix}/lib -Wl,-rpath,${libxcursor.prefix}/lib
+        lib: ${libxcursor.prefix}/lib
         libs:
             default: -lXcursor
-        includes:
-            default: -I${libxcursor.prefix}/include
+        include: ${libxcursor.prefix}/include

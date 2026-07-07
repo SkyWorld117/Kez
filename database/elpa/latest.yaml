@@ -19,107 +19,76 @@ recipe:
 
     build:
         configurations:
-      # This needs to be set because NVCC is not properly parsed by elpa.
+            # This needs to be set because NVCC is not properly parsed by elpa.
             environment:
                 - name: PATH
                   description: Add NVCC to PATH for GPU kernel compilation
                   default: ${mpi.prefix}/bin:${cuda.prefix}/bin:${PATH}
 
             options:
-                - name: --prefix
-                  enabled_value:
-                      default: ${elpa.prefix}
-
-                - name: CC
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: CXX
-                  enabled_value:
-                      default: ${mpi.cxx}
-
-                - name: FC
-                  enabled_value:
-                      default: ${mpi.fort}
-
-                - name: CFLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXXFLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: FCFLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-        # ============ Core parallelization ============
+                # ============ Core parallelization ============
                 - name: mpi
                   description: Enable MPI parallelization
                   user_configurable: true
-                  enabled_format: --with-mpi=yes
-                  disabled_format: --with-mpi=no
+                  enabled_format: with-mpi=yes
+                  disabled_format: with-mpi=no
 
                 - name: openmp
                   description: Enable OpenMP for shared-memory parallelism
                   user_configurable: true
-                  enabled_format: --enable-openmp
-                  disabled_format: --disable-openmp
+                  enabled_format: enable-openmp
+                  disabled_format: disable-openmp
 
-        # ============ CPU kernel selection ============
+                # ============ CPU kernel selection ============
                 - name: disable-generic-kernels
                   description: Do NOT build generic kernels
                   user_configurable: true
-                  enabled_format: --disable-generic-kernels
-                  disabled_format: --enable-generic-kernels
+                  enabled_format: disable-generic-kernels
+                  disabled_format: enable-generic-kernels
 
                 - name: disable-sse-kernels
                   description: Do NOT build SSE kernels
                   user_configurable: true
-                  enabled_format: --disable-sse-kernels
-                  disabled_format: --enable-sse-kernels
+                  enabled_format: disable-sse-kernels
+                  disabled_format: enable-sse-kernels
 
                 - name: disable-sse-assembly-kernels
                   description: Do NOT build SSE assembly kernels
                   user_configurable: true
-                  enabled_format: --disable-sse-assembly-kernels
-                  disabled_format: --enable-sse-assembly-kernels
+                  enabled_format: disable-sse-assembly-kernels
+                  disabled_format: enable-sse-assembly-kernels
 
                 - name: disable-avx-kernels
                   description: Do NOT build AVX kernels (Intel Sandy Bridge+)
                   user_configurable: true
-                  enabled_format: --disable-avx-kernels
-                  disabled_format: --enable-avx-kernels
+                  enabled_format: disable-avx-kernels
+                  disabled_format: enable-avx-kernels
 
                 - name: disable-avx2-kernels
                   description: Do NOT build AVX2 kernels (Intel Haswell+, AMD EPYC snver2+)
                   user_configurable: true
-                  enabled_format: --disable-avx2-kernels
-                  disabled_format: --enable-avx2-kernels
+                  enabled_format: disable-avx2-kernels
+                  disabled_format: enable-avx2-kernels
 
                 - name: disable-avx512-kernels
                   description: Do NOT build AVX-512 kernels (Intel Knights Landing+, AMD EPYC 7773X/72F3)
                   user_configurable: true
-                  enabled_format: --disable-avx512-kernels
-                  disabled_format: --enable-avx512-kernels
+                  enabled_format: disable-avx512-kernels
+                  disabled_format: enable-avx512-kernels
 
-          # more (neon, etc.) can be added in the future
+                # more (neon, etc.) can be added in the future
 
-        # ============ Nvidia GPU support ============
+                # ============ Nvidia GPU support ============
                 - name: enable-nvidia-gpu-kernels
                   description: Build Nvidia GPU kernels (requires CUDA). Set compute capability with --with-NVIDIA-GPU-compute-capability
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --enable-nvidia-gpu-kernels
-                  disabled_format: --disable-nvidia-gpu-kernels
+                  enabled_format: enable-nvidia-gpu-kernels
+                  disabled_format: disable-nvidia-gpu-kernels
                   requires: [cuda]
 
-                - name: --with-cuda-path
+                - name: with-cuda-path
                   description: Path to CUDA installation. Auto-detected by default
                   enabled:
                       default: false
@@ -135,8 +104,8 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --enable-cuda-aware-mpi
-                  disabled_format: --disable-cuda-aware-mpi
+                  enabled_format: enable-cuda-aware-mpi
+                  disabled_format: disable-cuda-aware-mpi
                   requires: [cuda]
 
                 - name: enable-gpu-streams
@@ -147,7 +116,7 @@ recipe:
                             value: true
                           - condition: ${elpa.config.enable-nvidia-gpu-kernels} false
                             value: false
-                  enabled_format: --enable-gpu-streams=nvidia
+                  enabled_format: enable-gpu-streams=nvidia
                   requires: [cuda]
 
                 - name: enable-gpu-ccl
@@ -155,11 +124,11 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --enable-gpu-ccl=nccl
-                  disabled_format: --enable-gpu-ccl=no
+                  enabled_format: enable-gpu-ccl=nccl
+                  disabled_format: enable-gpu-ccl=no
                   requires: [cuda, nvhpc]
 
-                - name: --with-nccl-path
+                - name: with-nccl-path
                   description: Path to NCCL installation directory
                   user_configurable: true
                   enabled:
@@ -171,7 +140,7 @@ recipe:
                   enabled_value:
                       default: ${nvhpc.nccl_prefix}
                   requires: [nvhpc]
-                - name: --with-NVIDIA-GPU-compute-capability
+                - name: with-NVIDIA-GPU-compute-capability
                   description: NVIDIA GPU compute capabilities to build for (comma-separated, e.g. sm_60,sm_80)
                   user_configurable: true
                   enabled:
@@ -188,8 +157,8 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: --enable-nvidia-sm80-gpu-kernels
-                  disabled_format: --disable-nvidia-sm80-gpu-kernels
+                  enabled_format: enable-nvidia-sm80-gpu-kernels
+                  disabled_format: disable-nvidia-sm80-gpu-kernels
                   requires: [cuda]
 
                 - name: with-cusolver
@@ -200,7 +169,7 @@ recipe:
                             value: true
                           - condition: ${elpa.config.enable-nvidia-gpu-kernels} false
                             value: false
-                  enabled_format: --with-cusolver=yes
+                  enabled_format: with-cusolver=yes
                   requires: [cuda]
 
                 - name: enable-nvidia-cub
@@ -211,65 +180,65 @@ recipe:
                             value: true
                           - condition: ${elpa.config.enable-nvidia-gpu-kernels} false
                             value: false
-                  enabled_format: --enable-nvidia-cub
+                  enabled_format: enable-nvidia-cub
                   requires: [cuda]
 
-        # ============ AMD GPU support ============
+                # ============ AMD GPU support ============
 
-        # - name: enable-amd-gpu
-        #   description: Build AMD GPU kernels (requires ROCm/HIP)
-        #   user_configurable: true
-        #   enabled:
-        #     default: false
-        #   enabled_format: --enable-amd-gpu
-        #   disabled_format: --disable-amd-gpu
+                # - name: enable-amd-gpu
+                #   description: Build AMD GPU kernels (requires ROCm/HIP)
+                #   user_configurable: true
+                #   enabled:
+                #     default: false
+                #   enabled_format: enable-amd-gpu
+                #   disabled_format: disable-amd-gpu
 
-        # ============ Performance tuning ============
+                # ============ Performance tuning ============
                 - name: disable-single-precision
                   description: Build for double precision only
                   user_configurable: true
-                  enabled_format: --disable-single-precision
+                  enabled_format: disable-single-precision
 
                 - name: disable-autotuning
                   description: Disable runtime autotuning
                   user_configurable: true
-                  enabled_format: --disable-autotuning
+                  enabled_format: disable-autotuning
 
-        # - name: with-papi
-        #   description: Use PAPI library to measure flop counts
-        #   user_configurable: true
-        #   enabled:
-        #     default: false
-        #   enabled_format: --with-papi=yes
-        #   disabled_format: --with-papi=no
+                # - name: with-papi
+                #   description: Use PAPI library to measure flop counts
+                #   user_configurable: true
+                #   enabled:
+                #     default: false
+                #   enabled_format: with-papi=yes
+                #   disabled_format: with-papi=no
 
-        # - name: with-likwid
-        #   description: Use LIKWID for performance measurement
-        #   user_configurable: true
-        #   enabled:
-        #     default: false
-        #   enabled_format: --with-likwid=yes
-        #   disabled_format: --with-likwid=no
+                # - name: with-likwid
+                #   description: Use LIKWID for performance measurement
+                #   user_configurable: true
+                #   enabled:
+                #     default: false
+                #   enabled_format: with-likwid=yes
+                #   disabled_format: with-likwid=no
 
                 - name: disable-timings
                   description: Disable internal timing measurements
                   user_configurable: true
-                  enabled_format: --disable-timings
+                  enabled_format: disable-timings
 
-        # ============ Fortran & compilation features ============
+                # ============ Fortran & compilation features ============
                 - name: disable-Fortran2008-features
                   description: Do NOT use Fortran 2008 features (for older compilers)
                   enabled:
                       default: false
-                  enabled_format: --disable-Fortran2008-features
+                  enabled_format: disable-Fortran2008-features
 
                 - name: enable-ifx-compiler
                   description: Apply compatibility patches for older Intel oneAPI ifx compiler versions
                   enabled:
                       default: false
-                  enabled_format: --enable-ifx-compiler
+                  enabled_format: enable-ifx-compiler
 
-        # =========== Linker ====================================
+                # =========== Linker ====================================
                 - name: LDFLAGS
                   enabled_value:
                       default: ${compiler.ldflags}
@@ -299,15 +268,13 @@ recipe:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${elpa.prefix}/lib -Wl,-rpath,${elpa.prefix}/lib
+        lib: ${elpa.prefix}/lib
         libs:
             default: -lelpa
             conditions:
                 - condition: ${elpa.config.openmp} true
                   value: -lelpa_openmp
-        includes:
-            default: -I${elpa.prefix}/include
+        include: ${elpa.prefix}/include
         modules_dir:
             default: ${elpa.prefix}/include/elpa-${elpa.version}/modules
             conditions:

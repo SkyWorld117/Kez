@@ -39,11 +39,7 @@ recipe:
             fi
 
     properties:
-        ldflags:
-            default: -L${cuda.prefix}/lib64 -Wl,-rpath,${cuda.prefix}/lib64
-        nvldflags:
-            default: -L${cuda.prefix}/lib64 -Xlinker -rpath,${cuda.prefix}/lib64
+        lib: ${cuda.prefix}/lib64
         libs:
             default: -lcudart -lcublas -lcufft -lcusolver -lcudnn -lcusparse -lcurand
-        includes:
-            default: -I${cuda.prefix}/include
+        include: ${cuda.prefix}/include

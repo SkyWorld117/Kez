@@ -18,68 +18,31 @@ recipe:
         - protobuf
 
     build:
-    # Only build the CPU version for now
+        # Only build the CPU version for now
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${mgard.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DMGARD_ENABLE_SERIAL
+                - name: MGARD_ENABLE_SERIAL
                   description: Enable CPU support
                   enabled_value:
                       default: ON
 
-                - name: -DMGARD_ENABLE_OPENMP
+                - name: MGARD_ENABLE_OPENMP
                   description: Enable OpenMP support
                   user_configurable: true
                   enabled_value:
                       default: ON
 
-                - name: -DMGARD_ENABLE_DOCS
+                - name: MGARD_ENABLE_DOCS
                   description: Build documentation
                   enabled_value:
                       default: OFF
 
-                - name: -DCMAKE_PREFIX_PATH
-                  description: CMake prefix path for finding dependencies
-                  enabled_value:
-                      default: ${zlib.prefix};${zstd.prefix};${protobuf.prefix}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: RPATH for built libraries
-                  enabled_value:
-                      default: ${mgard.prefix}/lib64
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed libraries
-                  enabled_value:
-                      default: ${mgard.prefix}/lib64
-
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${mgard.prefix}/lib64 -Wl,-rpath,${mgard.prefix}/lib64
+        lib: ${mgard.prefix}/lib64
         libs:
             default: -lmgard
-        includes:
-            default: -I${mgard.prefix}/include
+        include: ${mgard.prefix}/include

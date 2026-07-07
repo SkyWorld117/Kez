@@ -65,7 +65,7 @@ recipe:
               description: C flags
               user_configurable: true
               enabled_value:
-                  default: -O2
+                  default: -O3
 
             - name: CC
               description: C compiler
@@ -89,7 +89,7 @@ recipe:
                         value: ${mpi.c} ${hdf5.includes} ${hdf5.ldflags}
 
     build:
-    # Delete setting -O2 in the Makefile, to let the user set their own flag 
+        # Delete setting -O2 in the Makefile, to let the user set their own flag
         preprocessing: |-
             sed -i '/CFLAGS+=-O2/d' ${source}/src/Makefile
 
@@ -104,4 +104,3 @@ recipe:
             cp -r ${source}/build/* ${ascot5.prefix}/bin/
             mkdir -p ${ascot5.prefix}/ascot5/
             cp -r ${source}/* ${ascot5.prefix}/ascot5/
-

@@ -20,5 +20,4 @@ recipe:
             cp -r ${source}/lib/* ${cgal.prefix}/lib/
 
     properties:
-        includes:
-            default: -I${cgal.prefix}/include
+        include: ${cgal.prefix}/include

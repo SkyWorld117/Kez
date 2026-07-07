@@ -17,36 +17,13 @@ recipe:
         - libxau
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libxext.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${libxcb.ldflags} ${libxau.ldflags}
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libxext.prefix}/lib -Wl,-rpath,${libxext.prefix}/lib
+        lib: ${libxext.prefix}/lib
         libs:
             default: -lXext
-        includes:
-            default: -I${libxext.prefix}/include
+        include: ${libxext.prefix}/include

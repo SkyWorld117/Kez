@@ -16,36 +16,13 @@ recipe:
         - libx11
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libxfixes.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${libx11.ldflags}
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libxfixes.prefix}/lib -Wl,-rpath,${libxfixes.prefix}/lib
+        lib: ${libxfixes.prefix}/lib
         libs:
             default: -lXfixes
-        includes:
-            default: -I${libxfixes.prefix}/include
+        include: ${libxfixes.prefix}/include

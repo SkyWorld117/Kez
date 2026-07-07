@@ -46,7 +46,5 @@ recipe:
                             default: ${goblinhmcsim.prefix}
 
     properties:
-        ldflags:
-            default: -L${goblinhmcsim.prefix}/lib -Wl,-rpath,${goblinhmcsim.prefix}/lib
-        includes:
-            default: -I${goblinhmcsim.prefix}/include
+        lib: ${goblinhmcsim.prefix}/lib
+        include: ${goblinhmcsim.prefix}/include

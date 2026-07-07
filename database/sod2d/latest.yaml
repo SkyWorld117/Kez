@@ -17,74 +17,31 @@ recipe:
         - hdf5
 
     build:
-    # postprocessing: exit 0
+        # postprocessing: exit 0
 
         configurations:
             options:
-                - name: -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+                - name: CMAKE_POLICY_VERSION_MINIMUM=3.5
 
-                - name: -DCMAKE_INSTALL_PREFIX
-                  enabled_value:
-                      default: ${sod2d.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_C_COMPILER
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  enabled_value:
-                      default: ${mpi.cxx}
-
-                - name: -DCMAKE_Fortran_COMPILER
-                  enabled_value:
-                      default: ${mpi.fort}
-
-                - name: -DHDF5_ROOT
+                - name: HDF5_ROOT
                   enabled_value:
                       default: ${hdf5.prefix}
 
-                - name: -DUSE_GPU
+                - name: USE_GPU
                   enabled_value:
                       default: ON
 
-                - name: -DGPU_CUDA
+                - name: GPU_CUDA
                   enabled_value:
                       default: 13.1
 
-                - name: -DTOOL_MESHPART
+                - name: TOOL_MESHPART
                   enabled_value:
                       default: ON
 
-                - name: -DUSE_PORDER
+                - name: USE_PORDER
                   enabled_value:
                       default: 8
-
-                - name: -DCMAKE_C_FLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_Fortran_FLAGS
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_BUILD_RPATH
-                  enabled_value:
-                      default: ${sod2d.prefix}/lib
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  enabled_value:
-                      default: ${sod2d.prefix}/lib
 
         stages:
             - target:

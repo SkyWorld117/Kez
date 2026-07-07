@@ -22,90 +22,90 @@ recipe:
     build:
         configurations:
             options:
-                - name: --disable-option-checking
+                - name: disable-option-checking
                   description: ignore unrecognized --enable/--with options
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-api-only
+                - name: enable-api-only
                   description: Only build the API library.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-mpi-io
+                - name: disable-mpi-io
                   description: Disable MPI-I/O reporting.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-mpi-rma
+                - name: disable-mpi-rma
                   description: Disable MPI RMA reporting.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-mpi-nbc
+                - name: disable-mpi-nbc
                   description: Disable MPI NONBLOCKINGCOLLECTIVES reporting.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-mpi-pcoll
+                - name: disable-mpi-pcoll
                   description: Disable MPI PERSISTENTCOLLECTIVES reporting.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-mpi-isendrecv
+                - name: disable-mpi-isendrecv
                   description: MPI ISENDRECV reporting.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-mpi-partitioned
+                - name: disable-mpi-partitioned
                   description: Disable MPI PARTITIONED reporting.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-bfd
+                - name: disable-bfd
                   description: Do not use GNU binutils libbfd for source lookup.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-libunwind
+                - name: disable-libunwind
                   description: Do not use libunwind to generate stack traces.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-so-lookup
+                - name: disable-so-lookup
                   description: Disable functionality to attempt to find source info in shared objects.
                   user_configurable: true
                   enabled:
                       default: false
-                - name: --enable-setjmp
+                - name: enable-setjmp
                   description: Use setjmp instead of glic backtrace() to generate stack traces.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --disable-fortranxlate
+                - name: disable-fortranxlate
                   description: Disable translation of Fortran opaque objects.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-fortranweak
+                - name: enable-fortranweak
                   description: Generate weak symbols for additional Fortran symbol name styles.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-stackdepth
+                - name: enable-stackdepth
                   description: Specify maximum report stacktrace depth (default is 8).
                   user_configurable: true
                   enabled:
@@ -113,7 +113,7 @@ recipe:
                   enabled_value:
                       default: 8
 
-                - name: --enable-internal-stackdepth
+                - name: enable-internal-stackdepth
                   description: Specify number of internal stack frames (default is 3).
                   user_configurable: true
                   enabled:
@@ -121,7 +121,7 @@ recipe:
                   enabled_value:
                       default: 3
 
-                - name: --enable-maxargs
+                - name: enable-maxargs
                   description: Maximum number of command line arguments copied (default is 32).
                   user_configurable: true
                   enabled:
@@ -129,116 +129,101 @@ recipe:
                   enabled_value:
                       default: 32
 
-                - name: --enable-dwarf
+                - name: enable-dwarf
                   description: Use DWARF library for source lookup.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-getarg
+                - name: enable-getarg
                   description: Use getarg to get fortran command line args.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-demangling
+                - name: enable-demangling
                   description: Specify GNU, IBM, or Compaq demangling support.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-check-time
+                - name: enable-check-time
                   description: Enable AIX check for negative time values.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-collective-report-default
+                - name: enable-collective-report-default
                   description: Have mpiP default to low-memory-use collective report generation as opposed to collecting all data at a single task 
                       (see runtime flags -l and -s).
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --enable-concise-report-default
+                - name: enable-concise-report-default
                   description: Have mpiP default to a concise summary report format. (see runtime flags -c and -v).
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --with-libunwind
+                - name: with-libunwind
                   description: Specify location of libunwind to merge.
                   enabled:
                       default: false
                       conditions:
-                          - condition: ${mpip.config.--disable-libunwind} false
+                          - condition: ${mpip.config.disable-libunwind} false
                             action: set
                             value: true
                   enabled_value:
                       default: ${libunwind.prefix}
 
-                - name: --with-bin-type-flag
+                - name: with-bin-type-flag
                   description: Binary format for AIX ar operations.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --with-gettimeofday
+                - name: with-gettimeofday
                   description: Use gettimeofday for timing.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --with-wtime
+                - name: with-wtime
                   description: Use MPI_Wtime for timing.
                   user_configurable: true
                   enabled:
                       default: true
 
-                - name: --with-clock_gettime
+                - name: with-clock_gettime
                   description: Use clock_gettime for timing.
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --with-rts_get_timebase
+                - name: with-rts_get_timebase
                   description: Use rts_get_timebase for timing on BG/L systems (default for BG/L).
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --with-read_real_time
+                - name: with-read_real_time
                   description: Use read_real_time for timing on AIX systems (default for AIX).
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --with-rtc
+                - name: with-rtc
                   description: Use _rtc for timing on CRAY X1 systems (default for X1).
                   user_configurable: true
                   enabled:
                       default: false
 
-                - name: --with-dclock
+                - name: with-dclock
                   description: Use Catamount dclock for timing.
                   user_configurable: true
                   enabled:
                       default: false
-
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${mpip.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: CXX
-                  description: C compiler
-                  enabled_value:
-                      default: ${mpi.cxx}
 
                 - name: CFLAGS
                   description: C compiler flags
@@ -246,7 +231,7 @@ recipe:
                   enabled_value:
                       default: -O3 ${compiler.includes} ${mpi.includes}
                       conditions:
-                          - condition: ${mpip.config.--disable-libunwind} false
+                          - condition: ${mpip.config.disable-libunwind} false
                             action: append
                             value: ${libunwind.includes}
 
@@ -255,7 +240,7 @@ recipe:
                   enabled_value:
                       default: ${compiler.ldflags} ${mpi.ldflags}
                       conditions:
-                          - condition: ${mpip.config.--disable-libunwind} false
+                          - condition: ${mpip.config.disable-libunwind} false
                             action: append
                             value: ${libunwind.ldflags}
 
@@ -264,7 +249,7 @@ recipe:
                   enabled:
                       default: false
                       conditions:
-                          - condition: ${mpip.config.--disable-libunwind} false
+                          - condition: ${mpip.config.disable-libunwind} false
                             action: set
                             value: true
                   enabled_value:
@@ -275,7 +260,7 @@ recipe:
                   enabled_value:
                       default: ${compiler.includes} ${mpi.includes}
                       conditions:
-                          - condition: ${mpip.config.--disable-libunwind} false
+                          - condition: ${mpip.config.disable-libunwind} false
                             action: append
                             value: ${libunwind.includes}
 

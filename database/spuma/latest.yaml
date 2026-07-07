@@ -141,6 +141,7 @@ recipe:
             cp -r ${source}/tutorials ${spuma.prefix}/
 
     properties:
+        lib: ${spuma.prefix}/lib
         ldflags:
             default: -L${spuma.prefix}/lib -Wl,-rpath,${spuma.prefix}/lib -L${spuma.prefix}/lib/sys-openmpi -Wl,-rpath,${spuma.prefix}/lib/sys-openmpi
         nvldflags:

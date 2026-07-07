@@ -21,85 +21,62 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${binutils.prefix}
-
-                - name: --disable-multilib
+                - name: disable-multilib
                   description: Disable multilib support
 
-                - name: --disable-nls
+                - name: disable-nls
                   description: Disable native language support
 
-                - name: --enable-compressed-debug-sections
+                - name: enable-compressed-debug-sections
                   description: Enable compressed debug sections
                   enabled_value:
                       default: all
 
-                - name: --enable-default-compressed-debug-sections-algorithm
+                - name: enable-default-compressed-debug-sections-algorithm
                   description: Default algorithm for compressed debug sections
                   enabled_value:
                       default: zstd
 
-                - name: --enable-gold
+                - name: enable-gold
                   description: Enable the gold linker
                   user_configurable: true
-                  disabled_format: --disable-gold
+                  disabled_format: disable-gold
 
-                - name: --enable-ld
+                - name: enable-ld
                   description: Enable the ld linker
                   user_configurable: true
-                  disabled_format: --disable-ld
+                  disabled_format: disable-ld
 
-                - name: --with-gmp
+                - name: with-gmp
                   description: Specify GMP installation prefix
                   enabled_value:
                       default: ${gmp.prefix}
 
-                - name: --with-mpfr
+                - name: with-mpfr
                   description: Specify MPFR installation prefix
                   enabled_value:
                       default: ${mpfr.prefix}
 
-                - name: --with-mpc
+                - name: with-mpc
                   description: Specify MPC installation prefix
                   enabled_value:
                       default: ${mpc.prefix}
 
-                - name: --with-isl
+                - name: with-isl
                   description: Specify ISL installation prefix
                   enabled_value:
                       default: ${isl.prefix}
 
-                - name: --with-zstd
+                - name: with-zstd
                   description: Specify Zstandard installation prefix
                   enabled_value:
                       default: ${zstd.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  user_configurable: true
-                  enabled_value:
-                      default: ${gmp.ldflags} ${mpfr.ldflags} ${mpc.ldflags} ${isl.ldflags} ${zstd.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${binutils.prefix}/lib -Wl,-rpath,${binutils.prefix}/lib
+        lib: ${binutils.prefix}/lib
         libs:
             default: -lbfd -lctf -lopcodes -lsframe
-        includes:
-            default: -I${binutils.prefix}/include
+        include: ${binutils.prefix}/include

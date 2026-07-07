@@ -14,26 +14,10 @@ recipe:
               url: https://gitlab.com/libeigen/eigen/-/archive/3.4.1/eigen-3.4.1.tar.gz
 
     build:
-        configurations:
-            options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${eigen.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: Build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        includes:
-            default: -I${eigen.prefix}/include
+        include: ${eigen.prefix}/include

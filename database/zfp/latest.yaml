@@ -14,60 +14,17 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${zfp.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DZFP_WITH_OPENMP
+                - name: ZFP_WITH_OPENMP
                   description: Enable OpenMP support
                   enabled_value:
                       default: ON
 
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: RPATH for built libraries
-                  enabled_value:
-                      default: ${zfp.prefix}/lib
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed libraries
-                  enabled_value:
-                      default: ${zfp.prefix}/lib
-
-                - name: -DCMAKE_C_FLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${zfp.prefix}/lib -Wl,-rpath,${zfp.prefix}/lib
+        lib: ${zfp.prefix}/lib
         libs:
             default: -lzfp
-        includes:
-            default: -I${zfp.prefix}/include
+        include: ${zfp.prefix}/include

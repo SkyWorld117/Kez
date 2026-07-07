@@ -14,8 +14,4 @@ recipe:
         preprocessing: cp -r ${source}/* ${intelpin.prefix}
 
     properties:
-        ldflags:
-            default: -L${intelpin.prefix}/intel64/lib -Wl,-rpath,${intelpin.prefix}/intel64/lib
-
-
-
+        lib: ${intelpin.prefix}/intel64/lib

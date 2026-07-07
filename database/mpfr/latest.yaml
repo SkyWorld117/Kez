@@ -17,62 +17,26 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${mpfr.prefix}
-
-                - name: --enable-shared
+                - name: enable-shared
                   description: Build shared libraries
 
-                - name: --enable-static
+                - name: enable-static
                   description: Build static libraries
 
-                - name: --enable-float128
+                - name: enable-float128
                   description: Enable support for 128-bit floating-point numbers
 
-                - name: --with-gmp
+                - name: with-gmp
                   description: Specify GMP installation prefix
                   enabled_value:
                       default: ${gmp.prefix}
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  user_configurable: true
-                  enabled_value:
-                      default: ${gmp.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${mpfr.prefix}/lib
-        nvldflags:
-            default: -L${mpfr.prefix}/lib -Xlinker -rpath,${mpfr.prefix}/lib
+        lib: ${mpfr.prefix}/lib
         libs:
             default: -lmpfr
-        includes:
-            default: -I${mpfr.prefix}/include
+        include: ${mpfr.prefix}/include

@@ -23,7 +23,5 @@ recipe:
                             default: ${libaio.prefix}
 
     properties:
-        ldflags:
-            default: -L${libaio.prefix}/lib -Wl,-rpath,${libaio.prefix}/lib
-        includes:
-            default: -I${libaio.prefix}/include
+        lib: ${libaio.prefix}/lib
+        include: ${libaio.prefix}/include

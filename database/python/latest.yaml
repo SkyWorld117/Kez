@@ -20,41 +20,18 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${python.prefix}
-
-                - name: --enable-shared
+                - name: enable-shared
                   description: Build shared library
 
-                - name: --enable-optimizations
+                - name: enable-optimizations
                   description: Enable optimizations
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${python.prefix}/lib -Wl,-rpath,${python.prefix}/lib
+        lib: ${python.prefix}/lib
         libs:
             default: -lpython3
-        includes:
-            default: -I${python.prefix}/include
-
+        include: ${python.prefix}/include

@@ -67,9 +67,7 @@ recipe:
                             default: ${scotch6.prefix}
 
     properties:
-        ldflags:
-            default: -L${scotch6.prefix}/lib -Wl,-rpath,${scotch6.prefix}/lib
+        lib: ${scotch6.prefix}/lib
         libs:
             default: -lscotch -lscotcherr
-        includes:
-            default: -I${scotch6.prefix}/include
+        include: ${scotch6.prefix}/include

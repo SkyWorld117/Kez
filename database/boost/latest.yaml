@@ -50,7 +50,5 @@ recipe:
                   description: Install target
 
     properties:
-        ldflags:
-            default: -L${boost.prefix}/lib -Wl,-rpath,${boost.prefix}/lib
-        includes:
-            default: -I${boost.prefix}/include
+        lib: ${boost.prefix}/lib
+        include: ${boost.prefix}/include

@@ -46,9 +46,7 @@ recipe:
                             default: -O3 -fPIC -D_FILE_OFFSET_BITS=64
 
     properties:
-        ldflags:
-            default: -L${bzip2.prefix}/lib -Wl,-rpath,${bzip2.prefix}/lib
+        lib: ${bzip2.prefix}/lib
         libs:
             default: -lbz2
-        includes:
-            default: -I${bzip2.prefix}/include
+        include: ${bzip2.prefix}/include

@@ -17,16 +17,12 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${fio.prefix}
-                - name: --extra-cflags
+                - name: extra-cflags
                   description: C Flags
                   user_configurable: true
                   enabled_value:
                       default: ${libaio.includes}
-                - name: --extra-ldflags
+                - name: extra-ldflags
                   description: LD flags
                   enabled_value:
                       default: ${libaio.ldflags}

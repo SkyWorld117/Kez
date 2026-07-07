@@ -14,106 +14,58 @@ recipe:
     build:
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${root.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: Build type
-                  enabled_value:
-                      default: Release
-
-                - name: -DCMAKE_CXX_STANDARD
+                - name: CMAKE_CXX_STANDARD
                   description: C++ standard version
                   enabled_value:
                       default: 20
 
-                - name: -Dgdml
+                - name: gdml
                   description: Enable GDML support
                   enabled_value:
                       default: ON
 
-                - name: -Dgeom
+                - name: geom
                   description: Enable Geometry support
                   enabled_value:
                       default: ON
 
-                - name: -Dasimage
+                - name: asimage
                   description: Enable ASImage support
                   enabled_value:
                       default: OFF
 
-                - name: -Dtmva
+                - name: tmva
                   description: Enable TMVA support
                   enabled_value:
                       default: OFF
 
-                - name: -Dxrootd
+                - name: xrootd
                   description: Enable XRootD support
                   enabled_value:
                       default: OFF
 
-                - name: -DDAVIX
+                - name: DAVIX
                   description: Enable DAVIX support
                   enabled_value:
                       default: OFF
 
-                - name: -Dx11
+                - name: x11
                   description: Enable X11 support
                   enabled_value:
                       default: OFF
 
-                - name: -Dopengl
+                - name: opengl
                   description: Enable OpenGL support
                   enabled_value:
                       default: OFF
 
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_C_FLAGS_RELEASE
-                  description: C compiler flags for Release build
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_CXX_FLAGS_RELEASE
-                  description: C++ compiler flags for Release build
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: Build RPATH
-                  enabled_value:
-                      default: ${compiler.prefix}/lib64
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: Install RPATH
-                  enabled_value:
-                      default: ${compiler.prefix}/lib64
-
-                - name: -DCMAKE_EXE_LINKER_FLAGS
-                  description: Executable linker flags
-                  enabled_value:
-                      default: -Wl,-rpath,${compiler.prefix}/lib64
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${root.prefix}/lib -Wl,-rpath,${root.prefix}/lib
+        lib: ${root.prefix}/lib
         libs:
             default: -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc 
                 -lMinuit -lMinuit2
-        includes:
-            default: -I${root.prefix}/include
+        include: ${root.prefix}/include

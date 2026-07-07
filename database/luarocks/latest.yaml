@@ -17,11 +17,7 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${luarocks.prefix}
-                - name: --with-lua
+                - name: with-lua
                   description: Path to Lua installation
                   enabled_value:
                       default: ${lua.prefix}

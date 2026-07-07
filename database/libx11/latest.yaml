@@ -25,35 +25,13 @@ recipe:
                 - name: PKG_CONFIG_PATH
                   description: pkg-config search path
                   default: ${xtrans.prefix}/share/pkgconfig
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libx11.prefix}
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${libxcb.ldflags}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libx11.prefix}/lib -Wl,-rpath,${libx11.prefix}/lib
+        lib: ${libx11.prefix}/lib
         libs:
             default: -lX11
-        includes:
-            default: -I${libx11.prefix}/include
+        include: ${libx11.prefix}/include

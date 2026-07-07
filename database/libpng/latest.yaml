@@ -12,31 +12,13 @@ recipe:
               url: https://download.sourceforge.net/libpng/libpng-1.6.58.tar.xz
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libpng.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libpng.prefix}/lib -Wl,-rpath,${libpng.prefix}/lib
+        lib: ${libpng.prefix}/lib
         libs:
             default: -lpng
-        includes:
-            default: -I${libpng.prefix}/include
+        include: ${libpng.prefix}/include

@@ -17,48 +17,18 @@ recipe:
 
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${protobuf.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: CMake build type
-                  enabled_value:
-                      default: Release
-
-                - name: -Dprotobuf_BUILD_TESTS
+                - name: protobuf_BUILD_TESTS
                   description: Build protobuf tests
                   enabled_value:
                       default: OFF
 
-                - name: -DCMAKE_C_COMPILER
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: RPATH for built libraries
-                  enabled_value:
-                      default: ${protobuf.prefix}/lib
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: RPATH for installed libraries
-                  enabled_value:
-                      default: ${protobuf.prefix}/lib
-
-                - name: -DCMAKE_C_FLAGS
+                - name: CMAKE_C_FLAGS
                   description: C compiler flags
                   user_configurable: true
                   enabled_value:
                       default: -O3 -fPIC
 
-                - name: -DCMAKE_CXX_FLAGS
+                - name: CMAKE_CXX_FLAGS
                   description: C++ compiler flags
                   user_configurable: true
                   enabled_value:
@@ -68,9 +38,7 @@ recipe:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${protobuf.prefix}/lib -Wl,-rpath,${protobuf.prefix}/lib
+        lib: ${protobuf.prefix}/lib
         libs:
             default: -lprotobuf
-        includes:
-            default: -I${protobuf.prefix}/include
+        include: ${protobuf.prefix}/include

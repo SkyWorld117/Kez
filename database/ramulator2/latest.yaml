@@ -22,46 +22,8 @@ recipe:
 
         configurations:
             options:
-                - name: -DCMAKE_INSTALL_PREFIX
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${dramsim3.prefix}
-
-                - name: -DCMAKE_BUILD_TYPE
-                  description: Build type
-                  enabled_value:
-                      default: Release
-
-        # Specify cxx compiler
-                - name: -DCMAKE_CXX_COMPILER
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-        # Specify cxx flags
-                - name: -DCMAKE_CXX_FLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: -DCMAKE_BUILD_RPATH
-                  description: Build RPATH
-                  enabled_value:
-                      default: ${compiler.prefix}/lib64
-
-                - name: -DCMAKE_INSTALL_RPATH
-                  description: Install RPATH
-                  enabled_value:
-                      default: ${compiler.prefix}/lib64
-
-                - name: -DCMAKE_EXE_LINKER_FLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: -L${compiler.prefix}/lib64 -Wl,-rpath,${compiler.prefix}/lib64
-
-        # Allow for older Cmake version
-                - name: -DCMAKE_POLICY_VERSION_MINIMUM
+                # Allow for older Cmake version
+                - name: CMAKE_POLICY_VERSION_MINIMUM
                   description: Minimum CMake policy version
                   enabled_value:
                       default: 3.15

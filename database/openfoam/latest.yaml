@@ -134,6 +134,7 @@ recipe:
             bash $KEZ_HOME/tools/patch_rpath.sh ${openfoam.prefix}/lib/sys-openmpi/libptscotchDecomp.so ${openmpi.prefix}/lib
 
     properties:
+        lib: ${openfoam.prefix}/lib
         ldflags:
             default: -L${openfoam.prefix}/lib -Wl,-rpath,${openfoam.prefix}/lib -L${openfoam.prefix}/lib/sys-openmpi 
                 -Wl,-rpath,${openfoam.prefix}/lib/sys-openmpi

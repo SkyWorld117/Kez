@@ -15,39 +15,7 @@ recipe:
         - mpi
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${osu.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${mpi.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${mpi.cxx}
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: LDFLAGS
-                  description: Linker flags
-                  enabled_value:
-                      default: ${compiler.ldflags} ${mpi.ldflags}
+        configurations: {}
         stages:
             - target:
             - target: install

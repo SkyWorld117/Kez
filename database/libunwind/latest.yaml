@@ -12,32 +12,13 @@ recipe:
               url: https://github.com/libunwind/libunwind/releases/download/v1.8.3/libunwind-1.8.3.tar.gz
 
     build:
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${libunwind.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${libunwind.prefix}/lib -Wl,-rpath,${libunwind.prefix}/lib
+        lib: ${libunwind.prefix}/lib
         libs:
             default: -lunwind
-        includes:
-            default: -I${libunwind.prefix}/include
+        include: ${libunwind.prefix}/include

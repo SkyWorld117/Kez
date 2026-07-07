@@ -14,16 +14,6 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${flex.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
                 - name: CFLAGS
                   description: C compiler flags
                   user_configurable: true
@@ -34,9 +24,7 @@ recipe:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${flex.prefix}/lib -Wl,-rpath,${flex.prefix}/lib
+        lib: ${flex.prefix}/lib
         libs:
             default: -lfl
-        includes:
-            default: -I${flex.prefix}/include
+        include: ${flex.prefix}/include

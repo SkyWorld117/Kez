@@ -67,9 +67,7 @@ recipe:
                             default: ${zstd.prefix}
 
     properties:
-        ldflags:
-            default: -L${zstd.prefix}/lib -Wl,-rpath,${zstd.prefix}/lib
-        includes:
-            default: -I${zstd.prefix}/include
+        lib: ${zstd.prefix}/lib
+        include: ${zstd.prefix}/include
         libs:
             default: -lzstd

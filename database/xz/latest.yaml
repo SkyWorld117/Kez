@@ -14,42 +14,13 @@ recipe:
     build:
         preprocessing: ${source}/autogen.sh --no-po4a
 
-        configurations:
-            options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${xz.prefix}
-
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CXX
-                  description: C++ compiler
-                  enabled_value:
-                      default: ${compiler.cxx}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+        configurations: {}
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${xz.prefix}/lib -Wl,-rpath,${xz.prefix}/lib
+        lib: ${xz.prefix}/lib
         libs:
             default: -llzma
-        includes:
-            default: -I${xz.prefix}/include
+        include: ${xz.prefix}/include

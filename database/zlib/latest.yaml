@@ -14,32 +14,15 @@ recipe:
     build:
         configurations:
             options:
-                - name: --prefix
-                  description: Installation prefix
-                  enabled_value:
-                      default: ${zlib.prefix}
-
-                - name: --64
+                - name: 64
                   description: Enable 64-bit support
 
-                - name: CC
-                  description: C compiler
-                  enabled_value:
-                      default: ${compiler.c}
-
-                - name: CFLAGS
-                  description: C compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
         stages:
             - target:
             - target: install
 
     properties:
-        ldflags:
-            default: -L${zlib.prefix}/lib -Wl,-rpath,${zlib.prefix}/lib
+        lib: ${zlib.prefix}/lib
         libs:
             default: -lz
-        includes:
-            default: -I${zlib.prefix}/include
+        include: ${zlib.prefix}/include
