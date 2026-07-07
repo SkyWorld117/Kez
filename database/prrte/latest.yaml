@@ -37,6 +37,14 @@ recipe:
                 - name: with-slurm
                   description: Enable Slurm support
 
+                - name: LDFLAGS
+                  description: Linker flags
+                  enabled_value:
+                      default: ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags}
+                      conditions:
+                          - condition: ${hwloc.config.use-cuda} true
+                            action: append
+                            value: ${cuda.ldflags}
         stages:
             - target:
             - target: install
