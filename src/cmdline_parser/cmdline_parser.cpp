@@ -68,6 +68,9 @@ void write_install_plan(const BashCommandPlan& plan, const std::filesystem::path
     output << "# kez-install-plan-v1\n";
     for (const PackageCommands& package : plan) {
         output << "kez_plan_begin " << shell_single_quote(package.package) << '\n';
+        for (const std::string& dependency : package.dependencies) {
+            output << "kez_plan_depends " << shell_single_quote(dependency) << '\n';
+        }
         for (const std::string& command : package.commands) {
             output << "kez_plan_command " << shell_single_quote(command) << '\n';
         }

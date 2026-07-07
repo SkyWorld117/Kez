@@ -145,7 +145,8 @@ namespace {
         const std::filesystem::path prefix =
             installation_prefix(user_config, options.environment, utility);
 
-        const BashCommandPlan plan = parse_cmdline(user_config, prefix);
+        const UserConfigParserSettings parser_settings = load_user_config_parser_settings(prefix);
+        const BashCommandPlan plan = parse_user_config(user_config, parser_settings);
         if (options.dry_run) {
             print_command_plan(plan);
             return;
@@ -169,7 +170,10 @@ namespace {
             exit(EXIT_FAILURE);
         }
 
-        std::string command = "bash " + shell_single_quote(script.string()) + " " +
+        const std::string install_jobs =
+            get_env_var_noerr("KEZ_INSTALL_JOBS", std::to_string(parser_settings.parallel_jobs));
+        std::string command = "KEZ_INSTALL_JOBS=" + shell_single_quote(install_jobs) + " bash " +
+                              shell_single_quote(script.string()) + " " +
                               shell_single_quote(prefix.string()) + " " +
                               shell_single_quote(plan_path.string());
         if (options.force) {

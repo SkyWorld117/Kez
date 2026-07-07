@@ -29,6 +29,7 @@ struct UserConfigParserSettings {
 struct PackageCommands {
     std::string package;
     std::vector<std::string> commands;
+    std::vector<std::string> dependencies;
 };
 
 using BashCommandPlan = std::vector<PackageCommands>;

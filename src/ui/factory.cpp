@@ -167,7 +167,11 @@ namespace {
             exit(EXIT_FAILURE);
         }
 
-        std::string command = "bash " + shell_single_quote(script.string()) + " " +
+        const unsigned int configured_jobs = load_user_config_parser_settings(prefix).parallel_jobs;
+        const std::string install_jobs =
+            get_env_var_noerr("KEZ_INSTALL_JOBS", std::to_string(configured_jobs));
+        std::string command = "KEZ_INSTALL_JOBS=" + shell_single_quote(install_jobs) + " bash " +
+                              shell_single_quote(script.string()) + " " +
                               shell_single_quote(prefix.string()) + " " +
                               shell_single_quote(plan_path.string());
         if (options.force) {

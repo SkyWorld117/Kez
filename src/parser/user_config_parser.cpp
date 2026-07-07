@@ -439,6 +439,77 @@ namespace {
         return commands;
     }
 
+    void append_unique(std::vector<std::string>& values, const std::string& value) {
+        if (!value.empty() && std::find(values.begin(), values.end(), value) == values.end()) {
+            values.push_back(value);
+        }
+    }
+
+    std::string plan_dependency_name(const std::string& dependency,
+                                     const UserConfigParserContext& context) {
+        const auto selected = context.abstract_packages.find(dependency);
+        const std::string resolved =
+            selected == context.abstract_packages.end() ? dependency : selected->second;
+        const auto alias = context.package_aliases.find(resolved);
+        return alias == context.package_aliases.end() ? resolved : alias->second;
+    }
+
+    void append_plan_requirements(const std::vector<std::string>& requirements,
+                                  const UserConfigParserContext& context,
+                                  const std::unordered_set<std::string>& buildable_packages,
+                                  std::vector<std::string>& result) {
+        if (!requirements_satisfied(requirements, context.dependencies,
+                                    context.abstract_packages)) {
+            return;
+        }
+        for (const std::string& requirement : requirements) {
+            const std::string dependency = plan_dependency_name(requirement, context);
+            if (buildable_packages.find(dependency) != buildable_packages.end()) {
+                append_unique(result, dependency);
+            }
+        }
+    }
+
+    void append_plan_configuration_dependencies(
+        const BuildConfiguration& configuration, const UserConfigParserContext& context,
+        const std::unordered_set<std::string>& buildable_packages,
+        std::vector<std::string>& result) {
+        for (const EnvironmentVariable& variable : configuration.environment) {
+            append_plan_requirements(variable.requires, context, buildable_packages, result);
+        }
+        for (const BuildOption& option : configuration.options) {
+            append_plan_requirements(option.requires, context, buildable_packages, result);
+        }
+    }
+
+    std::vector<std::string> generate_package_dependencies(
+        const ParsedUserPackage& package, const UserConfigParserContext& context,
+        const std::unordered_set<std::string>& buildable_packages) {
+        std::vector<std::string> result;
+        for (const std::string& dependency : package.database_config->dependencies) {
+            const std::string resolved = plan_dependency_name(dependency, context);
+            if (buildable_packages.find(resolved) != buildable_packages.end()) {
+                append_unique(result, resolved);
+            }
+        }
+
+        if (!package.transformed_build.has_value()) {
+            return result;
+        }
+        const Build& build = *package.transformed_build;
+        if (build.configurations.has_value()) {
+            append_plan_configuration_dependencies(*build.configurations, context,
+                                                   buildable_packages, result);
+        }
+        for (const BuildStage& stage : build.stages) {
+            if (stage.configurations.has_value()) {
+                append_plan_configuration_dependencies(*stage.configurations, context,
+                                                       buildable_packages, result);
+            }
+        }
+        return result;
+    }
+
     std::string database_version(const YAML::Node& user_package) {
         if (!yaml_has(user_package, "version")) {
             return "latest";
@@ -618,6 +689,12 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
         commands_by_package.emplace(package.requested_name,
                                     generate_package_commands(package, context));
     }
+    std::unordered_set<std::string> buildable_packages;
+    for (const auto& [package, commands] : commands_by_package) {
+        if (!commands.empty()) {
+            buildable_packages.insert(package);
+        }
+    }
 
     BashCommandPlan result;
     const YAML::Node dependencies = user_config["recipe"]["dependencies"];
@@ -630,7 +707,13 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
         const std::string& package = *current;
         const auto commands        = commands_by_package.find(package);
         if (commands != commands_by_package.end() && !commands->second.empty()) {
-            result.push_back({package, commands->second});
+            const auto parsed = context.package_indices.find(package);
+            if (parsed == context.package_indices.end()) {
+                user_config_error("internal package state is missing for '" + package + "'");
+            }
+            result.push_back({package, commands->second,
+                              generate_package_dependencies(context.packages[parsed->second],
+                                                            context, buildable_packages)});
         }
     }
     return result;

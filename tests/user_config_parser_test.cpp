@@ -197,6 +197,7 @@ recipe:
 
         ASSERT_EQ(plan.size(), 2U);
         EXPECT_EQ(plan[0].package, "library");
+        EXPECT_TRUE(plan[0].dependencies.empty());
         EXPECT_EQ(plan[0].commands,
                   std::vector<std::string>(
                       {"bash '" + (path_ / "tools" / "shallow_clone.sh").string() +
@@ -206,6 +207,7 @@ recipe:
                        "cd source", "make -j8", "make -j8 install"}));
 
         EXPECT_EQ(plan[1].package, "application");
+        EXPECT_EQ(plan[1].dependencies, std::vector<std::string>({"library"}));
         const std::vector<std::string>& commands = plan[1].commands;
         ASSERT_EQ(commands.size(), 14U);
         EXPECT_EQ(commands[0], "wget --quiet --show-progress --no-check-certificate "
