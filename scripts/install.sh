@@ -33,94 +33,338 @@ if [[ ! -f $plan_file ]] || [[ $(head -n 1 -- "$plan_file") != "# kez-install-pl
     exit 2
 fi
 
-mkdir -p -- "$target_env/.tmp"
+install_jobs=${KEZ_INSTALL_JOBS:-1}
+if [[ ! $install_jobs =~ ^[1-9][0-9]*$ ]]; then
+    ${KEZ_ERROR} "KEZ_INSTALL_JOBS must be a positive integer"
+    exit 2
+fi
+
+mkdir -p -- "$target_env/.tmp" "$target_env/logs"
 state_file="$target_env/state.yaml"
 if [[ ! -f $state_file ]]; then
     printf 'state:\n' > "$state_file"
 fi
 
-current_package=
-current_command=
-execute_current_package=false
+plan_runtime_dir="$target_env/.tmp/.kez-plan-$$"
+status_dir="$target_env/.tmp/.kez-status-$$"
+rm -rf -- "$plan_runtime_dir" "$status_dir"
+mkdir -p -- "$plan_runtime_dir" "$status_dir"
 
-cleanup_source() {
-    rm -rf -- "$target_env/.tmp/source" "$target_env/.tmp"/source*
+cleanup_runtime() {
+    rm -rf -- "$plan_runtime_dir" "$status_dir"
 }
+trap cleanup_runtime EXIT
 
-report_failure() {
-    local status=$?
-    if [[ -n $current_command ]]; then
-        ${KEZ_ERROR} "Command failed for $current_package: $current_command"
-    elif [[ -n $current_package ]]; then
-        ${KEZ_ERROR} "Installation failed while processing $current_package"
-    else
-        ${KEZ_ERROR} "Installation failed"
+declare -a plan_packages=()
+declare -a package_status=()
+declare -a package_command_counts=()
+declare -a package_pids=()
+declare -a running_indices=()
+declare -A package_indices=()
+current_package_index=-1
+
+sanitize_name() {
+    local value=$1
+    value=${value//[^A-Za-z0-9_.@+-]/_}
+    if [[ -z $value ]]; then
+        value=package
     fi
-    cleanup_source
-    exit "$status"
+    printf '%s\n' "$value"
 }
 
-trap report_failure ERR
+package_log_file() {
+    printf '%s/logs/%s.log\n' "$target_env" "$(sanitize_name "$1")"
+}
+
+package_work_dir() {
+    printf '%s/.tmp/%s\n' "$target_env" "$(sanitize_name "$1")"
+}
+
+package_is_recorded() {
+    grep -Fqx -- "  - $1" "$state_file"
+}
+
+mark_package_installed() {
+    if ! package_is_recorded "$1"; then
+        printf '  - %s\n' "$1" >> "$state_file"
+    fi
+}
+
+cleanup_package_work_dir() {
+    rm -rf -- "$(package_work_dir "$1")"
+}
 
 kez_plan_begin() {
-    if [[ -n $current_package ]]; then
+    if (( current_package_index >= 0 )); then
         ${KEZ_ERROR} "Invalid installation plan: nested package"
         return 2
     fi
 
-    current_package=$1
-    current_command=
-    execute_current_package=true
-    cleanup_source
-    cd "$target_env/.tmp"
-
-    if [[ $force == false ]] && grep -Fqx -- "  - $current_package" "$state_file"; then
-        ${KEZ_WARNING} "Package $current_package is already installed; skipping."
-        execute_current_package=false
-    else
-        ${KEZ_INFO} "Processing package: $current_package"
+    local package=$1
+    if [[ -n ${package_indices[$package]+set} ]]; then
+        ${KEZ_ERROR} "Invalid installation plan: duplicate package '$package'"
+        return 2
     fi
+
+    local index=${#plan_packages[@]}
+    plan_packages+=("$package")
+    package_indices["$package"]=$index
+    package_status[$index]=pending
+    package_command_counts[$index]=0
+    package_pids[$index]=
+    mkdir -p -- "$plan_runtime_dir/$index"
+    : > "$plan_runtime_dir/$index/dependencies"
+    current_package_index=$index
+}
+
+kez_plan_depends() {
+    if (( current_package_index < 0 )); then
+        ${KEZ_ERROR} "Invalid installation plan: dependency outside a package"
+        return 2
+    fi
+    printf '%s\n' "$1" >> "$plan_runtime_dir/$current_package_index/dependencies"
 }
 
 kez_plan_command() {
-    if [[ -z $current_package ]]; then
+    if (( current_package_index < 0 )); then
         ${KEZ_ERROR} "Invalid installation plan: command outside a package"
         return 2
     fi
-    if [[ $execute_current_package == false ]]; then
-        return 0
-    fi
 
-    current_command=$1
-    ${KEZ_INFO} "Executing: $current_command"
-    eval "$current_command"
-    current_command=
+    local count=${package_command_counts[$current_package_index]}
+    printf '%s' "$1" > "$plan_runtime_dir/$current_package_index/command-$count"
+    package_command_counts[$current_package_index]=$((count + 1))
 }
 
 kez_plan_end() {
-    if [[ -z $current_package ]]; then
+    if (( current_package_index < 0 )); then
         ${KEZ_ERROR} "Invalid installation plan: package end without package"
         return 2
     fi
-
-    if [[ $execute_current_package == true ]]; then
-        if ! grep -Fqx -- "  - $current_package" "$state_file"; then
-            printf '  - %s\n' "$current_package" >> "$state_file"
-        fi
-        ${KEZ_SUCCESS} "Completed package: $current_package"
-    fi
-    cleanup_source
-    current_package=
-    current_command=
-    execute_current_package=false
+    current_package_index=-1
 }
 
-# The plan contains only shell-quoted calls to the three functions above. Commands from package
-# metadata are evaluated exclusively inside kez_plan_command.
+# The plan contains only shell-quoted calls to the functions above. Commands from package metadata
+# are evaluated exclusively by run_package_body after dependency scheduling.
 source "$plan_file"
 
-if [[ -n $current_package ]]; then
+if (( current_package_index >= 0 )); then
     ${KEZ_ERROR} "Invalid installation plan: package was not closed"
+    exit 2
+fi
+
+for index in "${!plan_packages[@]}"; do
+    package=${plan_packages[$index]}
+    if [[ $force == false ]] && package_is_recorded "$package"; then
+        ${KEZ_WARNING} "Package $package is already installed; skipping."
+        package_status[$index]=skipped
+    fi
+done
+
+execute_package_command() {
+    local command=$1
+    local log_file=$2
+    local status
+
+    {
+        printf '\n[%s] command\n' "$(date -Is)"
+        printf '$ %s\n' "$command"
+    } >> "$log_file"
+
+    eval "$command" >> "$log_file" 2>&1
+    status=$?
+    if (( status == 0 )); then
+        printf '[%s] completed\n' "$(date -Is)" >> "$log_file"
+        return 0
+    fi
+
+    printf '[%s] failed with exit status %s\n' "$(date -Is)" "$status" >> "$log_file"
+    return "$status"
+}
+
+run_package_body() {
+    local index=$1
+    local package=${plan_packages[$index]}
+    local log_file
+    local work_dir
+    local command
+    local command_index
+    local status
+
+    log_file=$(package_log_file "$package")
+    work_dir=$(package_work_dir "$package")
+    cleanup_package_work_dir "$package" || return 1
+    mkdir -p -- "$work_dir" || return 1
+    : > "$log_file" || return 1
+    {
+        printf 'Kez install log\n'
+        printf 'Package: %s\n' "$package"
+        printf 'Environment: %s\n' "$target_env"
+        printf 'Started: %s\n' "$(date -Is)"
+    } >> "$log_file"
+
+    cd "$work_dir" || return 1
+    for ((command_index = 0; command_index < package_command_counts[$index]; ++command_index)); do
+        command=$(<"$plan_runtime_dir/$index/command-$command_index")
+        execute_package_command "$command" "$log_file"
+        status=$?
+        if (( status != 0 )); then
+            return "$status"
+        fi
+    done
+    printf 'Finished: %s\n' "$(date -Is)" >> "$log_file"
+    return 0
+}
+
+package_ready() {
+    local index=$1
+    local dependency
+    local dependency_index
+    local dependency_status
+
+    while IFS= read -r dependency; do
+        if [[ -z $dependency || -z ${package_indices[$dependency]+set} ]]; then
+            continue
+        fi
+        dependency_index=${package_indices[$dependency]}
+        dependency_status=${package_status[$dependency_index]}
+        if [[ $dependency_status != done && $dependency_status != skipped ]]; then
+            return 1
+        fi
+    done < "$plan_runtime_dir/$index/dependencies"
+    return 0
+}
+
+next_ready_index=-1
+find_next_ready_package() {
+    local index
+    next_ready_index=-1
+    for index in "${!plan_packages[@]}"; do
+        if [[ ${package_status[$index]} == pending ]] && package_ready "$index"; then
+            next_ready_index=$index
+            return 0
+        fi
+    done
+    return 0
+}
+
+start_package() {
+    local index=$1
+    local package=${plan_packages[$index]}
+    local log_file
+    log_file=$(package_log_file "$package")
+
+    ${KEZ_INFO} "Processing package: $package (log: $log_file)"
+    package_status[$index]=running
+    (
+        trap - EXIT
+        set +e
+        run_package_body "$index"
+        status=$?
+        printf '%s\n' "$status" > "$status_dir/$index.status.tmp"
+        mv "$status_dir/$index.status.tmp" "$status_dir/$index.status"
+        exit "$status"
+    ) &
+    package_pids[$index]=$!
+    running_indices+=("$index")
+}
+
+finish_running_position() {
+    local position=$1
+    local index=${running_indices[$position]}
+    local package=${plan_packages[$index]}
+    local log_file
+    local status
+    local pid
+    local new_running=()
+    local running_index
+
+    log_file=$(package_log_file "$package")
+    status=$(<"$status_dir/$index.status")
+    pid=${package_pids[$index]}
+    wait "$pid" >/dev/null 2>&1 || true
+    package_pids[$index]=
+
+    for running_index in "${!running_indices[@]}"; do
+        if [[ $running_index != "$position" ]]; then
+            new_running+=("${running_indices[$running_index]}")
+        fi
+    done
+    running_indices=("${new_running[@]}")
+
+    if (( status == 0 )); then
+        package_status[$index]=done
+        mark_package_installed "$package"
+        cleanup_package_work_dir "$package"
+        ${KEZ_SUCCESS} "Completed package: $package"
+        return 0
+    fi
+
+    package_status[$index]=failed
+    # Do not clean up the work directory on failure, so the user can inspect it for debugging.
+    # cleanup_package_work_dir "$package"
+    ${KEZ_ERROR} "Package $package failed. Read log file: $log_file"
+    return "$status"
+}
+
+wait_for_finished_package() {
+    local position
+    local status
+    while true; do
+        for position in "${!running_indices[@]}"; do
+            if [[ -f $status_dir/${running_indices[$position]}.status ]]; then
+                if finish_running_position "$position"; then
+                    return 0
+                else
+                    status=$?
+                    return "$status"
+                fi
+            fi
+        done
+        sleep 0.1
+    done
+}
+
+has_pending_packages() {
+    local index
+    for index in "${!plan_packages[@]}"; do
+        if [[ ${package_status[$index]} == pending ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+failure_status=0
+while true; do
+    while (( failure_status == 0 && ${#running_indices[@]} < install_jobs )); do
+        find_next_ready_package
+        if (( next_ready_index < 0 )); then
+            break
+        fi
+        start_package "$next_ready_index"
+    done
+
+    if (( ${#running_indices[@]} == 0 )); then
+        break
+    fi
+
+    if wait_for_finished_package; then
+        status=0
+    else
+        status=$?
+    fi
+    if (( status != 0 && failure_status == 0 )); then
+        failure_status=$status
+    fi
+done
+
+if (( failure_status != 0 )); then
+    exit "$failure_status"
+fi
+
+if has_pending_packages; then
+    ${KEZ_ERROR} "Invalid installation plan: dependency cycle or missing dependency prevented progress"
     exit 2
 fi
 
