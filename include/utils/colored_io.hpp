@@ -95,14 +95,14 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
                         fit = max_width - indent;
                     }
                     std::cout << current.substr(start, remaining) << " ";
-                    cur_length = std::min((size_t) max_width,
+                    cur_length = std::min(max_width,
                                           indent + get_length_without_color(current) +
                                               1);  // Plus one, because we have a space at the end
                 } else {
                     std::cout << "\n";
                     print_indent();
                     std::cout << current + " ";
-                    cur_length = std::min((size_t) max_width,
+                    cur_length = std::min(max_width,
                                           indent + get_length_without_color(current) +
                                               1);  // Plus one, because we have a space at the end
                 }
