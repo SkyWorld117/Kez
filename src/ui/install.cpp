@@ -145,6 +145,12 @@ namespace {
         const std::filesystem::path prefix =
             installation_prefix(user_config, options.environment, utility);
 
+        const BashCommandPlan plan = parse_cmdline(user_config, prefix);
+        if (options.dry_run) {
+            print_command_plan(plan);
+            return;
+        }
+
         std::error_code error;
         std::filesystem::create_directories(prefix / ".tmp", error);
         if (error) {
@@ -152,11 +158,6 @@ namespace {
             exit(EXIT_FAILURE);
         }
 
-        const BashCommandPlan plan = parse_cmdline(user_config, prefix);
-        if (options.dry_run) {
-            print_command_plan(plan);
-            return;
-        }
         const std::filesystem::path plan_path =
             prefix / ".tmp" / ("install-plan-" + std::to_string(getpid()) + ".sh");
         write_install_plan(plan, plan_path);
