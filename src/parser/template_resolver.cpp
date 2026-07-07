@@ -626,10 +626,10 @@ std::string parser_package_prefix(const std::string& package_name,
     }
     if (config->type == PackageType::Compiler) {
         const std::string version = parser_package_version(requested_name, context);
-        return version == "system"
-                   ? context.settings.system_prefix.string()
-                   : (context.settings.compilers_prefix / (requested_name + "-" + version))
-                         .string();
+        return version == "system" ? context.settings.system_prefix.string()
+                                   : (context.settings.compilers_prefix /
+                                      (requested_name + "-" + version) / requested_name)
+                                         .string();
     }
     if (config->type == PackageType::Mpi) {
         const std::string version = parser_package_version(requested_name, context);
@@ -642,7 +642,8 @@ std::string parser_package_prefix(const std::string& package_name,
             compiler = yaml_scalar(user_package["compiler"], "MPI compiler");
             std::replace(compiler.begin(), compiler.end(), '@', '-');
         }
-        return (context.settings.mpis_prefix / (requested_name + "-" + version + "-" + compiler))
+        return (context.settings.mpis_prefix / (requested_name + "-" + version + "-" + compiler) /
+                requested_name)
             .string();
     }
     return (context.settings.install_prefix / requested_name).string();
