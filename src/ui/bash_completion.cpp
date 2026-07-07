@@ -203,6 +203,37 @@ namespace {
         return {};
     }
 
+    std::vector<std::string> factory_suggestions(int current_word_index,
+                                                 const std::vector<std::string>& words) {
+        if (current_word_index == 2) {
+            return {"create", "remove", "list",      "enter", "exit",  "which",
+                    "build",  "run",    "summarize", "-h",    "--help"};
+        }
+        const std::string action = word_at(words, 2);
+        if (current_word_index == 3 && (action == "enter" || action == "remove")) {
+            std::vector<std::string> result = help_options();
+            append(result, configured_directories("factories"));
+            return result;
+        }
+        if (action == "build") {
+            std::vector<std::string> result;
+            if (current_word_index == 3) {
+                append(result, help_options());
+            }
+            if (!contains_any(words, {"--dry-run", "-d"})) {
+                append(result, {"--dry-run", "-d"});
+            }
+            if (!contains_any(words, {"--force", "-f"})) {
+                append(result, {"--force", "-f"});
+            }
+            if (!contains_any(words, {"--with-slurm", "-S"})) {
+                append(result, {"--with-slurm", "-S"});
+            }
+            return result;
+        }
+        return {};
+    }
+
     std::vector<std::string> template_suggestions(int current_word_index,
                                                   const std::vector<std::string>& words) {
         const std::string current  = word_at(words, current_word_index);
@@ -239,8 +270,9 @@ namespace {
     std::vector<std::string> command_suggestions(int current_word_index,
                                                  const std::vector<std::string>& words) {
         if (current_word_index == 1) {
-            return {"init", "update", "install",   "template", "utilities", "env", "compiler",
-                    "mpi",  "info",   "selfcheck", "-h",       "--help",    "-V",  "--version"};
+            return {"init",      "update",   "install", "template", "utilities",
+                    "env",       "compiler", "mpi",     "factory",  "info",
+                    "selfcheck", "-h",       "--help",  "-V",       "--version"};
         }
 
         const std::string command = word_at(words, 1);
@@ -264,6 +296,9 @@ namespace {
         }
         if (command == "mpi") {
             return managed_environment_suggestions(current_word_index, words, "mpis");
+        }
+        if (command == "factory") {
+            return factory_suggestions(current_word_index, words);
         }
         if (command == "template") {
             return template_suggestions(current_word_index, words);

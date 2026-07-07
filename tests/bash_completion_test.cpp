@@ -29,12 +29,14 @@ namespace {
             std::filesystem::create_directories(root_ / "work" / "env" / "compilers" / "gcc-14");
             std::filesystem::create_directories(root_ / "work" / "env" / "mpis" /
                                                 "openmpi-5-gcc-14");
+            std::filesystem::create_directories(root_ / "work" / "factories" / "sweep");
 
             write(root_ / "manifest.yaml", R"(
 paths:
   applications: env/applications
   compilers: env/compilers
   mpis: env/mpis
+  factories: factories
 )");
             write(root_ / "recipe.yaml", "recipe: {}\n");
             setenv("KEZ_HOME", root_.c_str(), 1);
@@ -108,6 +110,10 @@ paths:
         EXPECT_TRUE(has(compilers, "gcc-14"));
         const std::vector<std::string> mpis = completion_suggestions(3, {"kez", "mpi", "load", ""});
         EXPECT_TRUE(has(mpis, "openmpi-5-gcc-14"));
+
+        const std::vector<std::string> factories =
+            completion_suggestions(3, {"kez", "factory", "enter", ""});
+        EXPECT_TRUE(has(factories, "sweep"));
     }
 
     TEST_F(TemporaryCompletionEnvironment, DoesNotRepeatSingleUseOptions) {

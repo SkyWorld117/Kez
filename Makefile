@@ -41,6 +41,7 @@ LIB_SOURCES := \
 	$(SRC_DIR)/dependency_resolver/requirements.cpp \
 	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/toposort.cpp \
+	$(SRC_DIR)/factory/factory.cpp \
 	$(SRC_DIR)/parser/source_commands.cpp \
 	$(SRC_DIR)/parser/template_resolver.cpp \
 	$(SRC_DIR)/parser/user_config_parser.cpp \
@@ -60,6 +61,7 @@ LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 CLI_SOURCES := \
 	$(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/ui/environment.cpp \
+	$(SRC_DIR)/ui/factory.cpp \
 	$(SRC_DIR)/ui/init.cpp \
 	$(SRC_DIR)/ui/install.cpp \
 	$(SRC_DIR)/ui/packages.cpp \
@@ -72,6 +74,7 @@ TEST_SOURCES := \
 	tests/cmdline_parser_test.cpp \
 	tests/database_test.cpp \
 	tests/dependency_resolver_test.cpp \
+	tests/factory_test.cpp \
 	tests/utils_test.cpp \
 	tests/user_config_parser_test.cpp \
 	tests/user_config_generator_test.cpp

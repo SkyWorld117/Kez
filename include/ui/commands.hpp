@@ -15,3 +15,4 @@ void execute_compiler(const CommandArguments& arguments);
 void execute_mpi(const CommandArguments& arguments);
 void execute_info(const CommandArguments& arguments);
 void execute_selfcheck(const CommandArguments& arguments);
+void execute_factory(const CommandArguments& arguments);

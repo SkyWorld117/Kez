@@ -8,6 +8,8 @@
 # - `compiler unload`
 # - `mpi load <mpi>`
 # - `mpi unload`
+# - `factory enter <factory>`
+# - `factory exit`
 # These commands return bash instructions that this wrapper evaluates in the current shell.
 
 kez () {
@@ -46,6 +48,8 @@ kez () {
     elif [[ "${1:-}" == "compiler" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1
     elif [[ "${1:-}" == "mpi" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
+        intercept=1
+    elif [[ "${1:-}" == "factory" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
         intercept=1
     fi
 
