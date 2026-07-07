@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <database/database.hpp>
+#include <optional>
 #include <parser/user_config_parser.hpp>
 #include <string>
 #include <unordered_map>
@@ -13,6 +14,7 @@ struct ParsedUserPackage {
     std::string requested_name;
     YAML::Node user_config;
     PackageConfigPtr database_config;
+    std::optional<Build> transformed_build;
 };
 
 struct ParsedOptionState {

@@ -6,9 +6,11 @@
 #include <database/database.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <ui/ui_utils.hpp>
 #include <unordered_set>
+#include <user_config_generator/config_transformer.hpp>
 #include <user_config_generator/configurations_filter.hpp>
 #include <user_config_generator/stages_filter.hpp>
 #include <user_config_generator/user_config_generator.hpp>
@@ -112,6 +114,7 @@ namespace {
 
     void append_package_config(YAML::Node& output, const PackageConfig& package,
                                const std::vector<std::string>& all_dependencies,
+                               const std::unordered_set<std::string>& all_dependency_set,
                                const std::unordered_set<std::string>& target_packages,
                                const AbstractPackageSelections& abstract_packages,
                                const std::string& default_compiler) {
@@ -151,18 +154,19 @@ namespace {
         const bool include_build =
             (package.type != PackageType::Compiler && package.type != PackageType::Mpi) ||
             target_packages.find(package.name) != target_packages.end();
-        if (package.build.has_value() && include_build) {
+        if (include_build && package.build.has_value()) {
+            const std::optional<Build> build = user_config_generator::transformed_build(
+                package, all_dependency_set, abstract_packages, default_compiler);
             YAML::Node build_output(YAML::NodeType::Map);
-            if (package.build->configurations.has_value()) {
+            if (build->configurations.has_value()) {
                 YAML::Node configurations = filtered_configurations(
-                    *package.build->configurations, all_dependencies, abstract_packages);
+                    *build->configurations, all_dependencies, abstract_packages);
                 if (configurations.size() != 0) {
                     build_output["configurations"] = configurations;
                 }
             }
 
-            YAML::Node stages =
-                filtered_stages(package.build->stages, all_dependencies, abstract_packages);
+            YAML::Node stages = filtered_stages(build->stages, all_dependencies, abstract_packages);
             if (stages.size() != 0) {
                 build_output["stages"] = stages;
             }
@@ -216,10 +220,12 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
 
     const std::unordered_set<std::string> target_packages =
         resolved_targets(package_names, abstract_packages);
+    const std::unordered_set<std::string> all_dependency_set(all_dependencies.begin(),
+                                                             all_dependencies.end());
     for (const std::string& dependency : dependencies) {
         const PackageConfigPtr package = get_db_config(dependency);
-        append_package_config(output, *package, all_dependencies, target_packages,
-                              abstract_packages, default_compiler);
+        append_package_config(output, *package, all_dependencies, all_dependency_set,
+                              target_packages, abstract_packages, default_compiler);
     }
     return output;
 }

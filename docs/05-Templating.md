@@ -16,6 +16,9 @@ paths to compiler flags. All explicitly declared properties remain directly acce
 
 Exceptionally, there are also some predefined variables that can be used in the templates:
 
+- `${kez.prefix}`: The root prefix for the current installation environment.
+- `${kez.arch}` and `${kez.arch.<variant>}`: The active architecture string, optionally mapped
+  through architecture heuristics.
 - `${package.prefix}`: The prefix path where the package is installed.
 - `${package.version}`: The version of the package being built.
 - `${source}`: The source directory of the current package, an exception that does not follow the naming convention. If a package is supposed to be installed with a downloaded script, this will refer to the script. 

@@ -1,17 +1,19 @@
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <filesystem>
 #include <limits>
 #include <optional>
-#include <parser/config_transformer.hpp>
 #include <parser/parser_internal.hpp>
 #include <parser/user_config_parser.hpp>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <user_config_generator/config_transformer.hpp>
 #include <utility>
 #include <utils/bash_utils.hpp>
 #include <utils/yaml_utils.hpp>
@@ -61,6 +63,72 @@ namespace {
             return !user_target.IsDefined() || user_target.IsNull();
         }
         return user_target.IsScalar() && user_target.Scalar() == *database_target;
+    }
+
+    bool is_shell_assignment(const std::string& name) {
+        if (name.empty() ||
+            (name[0] != '_' && !std::isupper(static_cast<unsigned char>(name[0])))) {
+            return false;
+        }
+        return std::all_of(name.begin() + 1, name.end(), [](const char character) {
+            return character == '_' || std::isupper(static_cast<unsigned char>(character)) ||
+                   std::isdigit(static_cast<unsigned char>(character));
+        });
+    }
+
+    std::string option_name(const std::string& name, Toolchain toolchain) {
+        if (toolchain == Toolchain::Autotools) {
+            if (name.rfind("--", 0) == 0 || name.rfind('-', 0) == 0 || is_shell_assignment(name)) {
+                return name;
+            }
+            return "--" + name;
+        }
+        if (toolchain == Toolchain::CMake) {
+            return name.rfind('-', 0) == 0 ? name : "-D" + name;
+        }
+        return name;
+    }
+
+    std::string join(const std::vector<std::string>& values, const std::string& separator = " ") {
+        std::string result;
+        for (const std::string& value : values) {
+            result += (result.empty() ? "" : separator) + value;
+        }
+        return result;
+    }
+
+    std::string render_option(const BuildOption& option, const ParsedOptionState& state,
+                              Toolchain toolchain, UserConfigParserContext& context) {
+        const std::string format = state.enabled ? option.enabled_format.value_or(option.name)
+                                                 : option.disabled_format.value_or("");
+        if (format.empty()) {
+            return {};
+        }
+
+        std::string result      = option_name(format, toolchain);
+        const std::string value = resolve_parser_scalar(
+            state.enabled ? state.enabled_value : state.disabled_value, context);
+        if (!value.empty()) {
+            result += "=" + shell_double_quote(value);
+        }
+        return result;
+    }
+
+    std::string render_configuration_options(const BuildConfiguration& configuration,
+                                             Toolchain toolchain,
+                                             UserConfigParserContext& context) {
+        std::vector<std::string> options;
+        for (const BuildOption& option : configuration.options) {
+            const auto parsed = context.option_values.find(&option);
+            if (parsed == context.option_values.end()) {
+                user_config_error("internal option state is missing for '" + option.name + "'");
+            }
+            const std::string rendered = render_option(option, parsed->second, toolchain, context);
+            if (!rendered.empty()) {
+                options.push_back(rendered);
+            }
+        }
+        return join(options);
     }
 
     YAML::Node find_user_stage(const YAML::Node& user_package, const BuildStage& stage) {
@@ -221,10 +289,10 @@ namespace {
     void precompute_values(UserConfigParserContext& context) {
         for (const ParsedUserPackage& package : context.packages) {
             context.current_package = package.requested_name;
-            if (!package.database_config->build.has_value()) {
+            if (!package.transformed_build.has_value()) {
                 continue;
             }
-            const Build& build         = *package.database_config->build;
+            const Build& build         = *package.transformed_build;
             const bool use_user_values = (package.database_config->type != PackageType::Compiler &&
                                           package.database_config->type != PackageType::Mpi) ||
                                          yaml_has(package.user_config, "build");
@@ -248,8 +316,8 @@ namespace {
                                        const std::string& command, UserConfigParserContext& context,
                                        std::vector<std::string>& commands) {
         std::string resolved_command = resolve_parser_scalar(command, context);
-        const std::string options =
-            parser::transform_configuration(configuration, package, toolchain, context);
+        (void) package;
+        const std::string options = render_configuration_options(configuration, toolchain, context);
         if (!options.empty()) {
             resolved_command += (resolved_command.empty() ? "" : " ") + options;
         }
@@ -313,7 +381,7 @@ namespace {
                                                        UserConfigParserContext& context) {
         std::vector<std::string> commands;
         context.current_package = package.requested_name;
-        if (!package.database_config->build.has_value()) {
+        if (!package.transformed_build.has_value()) {
             return commands;
         }
         if ((package.database_config->type == PackageType::Compiler ||
@@ -333,7 +401,7 @@ namespace {
         append_source_commands(package, context, commands);
         append_patch_commands(package, context, commands);
 
-        const Build& build = *package.database_config->build;
+        const Build& build = *package.transformed_build;
         if (build.preprocessing.has_value()) {
             commands.push_back(resolve_parser_scalar(*build.preprocessing, context));
         }
@@ -378,6 +446,12 @@ namespace {
         std::string version         = yaml_scalar(user_package["version"], "package version");
         const std::size_t separator = version.find('@');
         return separator == std::string::npos ? version : version.substr(0, separator);
+    }
+
+    std::string package_compiler(const YAML::Node& user_package) {
+        return yaml_has(user_package, "compiler")
+                   ? yaml_scalar(user_package["compiler"], "package compiler")
+                   : "system";
     }
 
     void load_parser_context(const YAML::Node& user_config,
@@ -452,10 +526,14 @@ namespace {
                 user_config_error("package '" + dependency + "' must be a map");
             }
             PackageConfigPtr config = get_db_config(dependency, database_version(user_package));
+            std::optional<Build> transformed_build = user_config_generator::transformed_build(
+                *config, context.dependencies, context.abstract_packages,
+                package_compiler(user_package));
             const std::size_t index = context.packages.size();
             context.package_indices.emplace(dependency, index);
             context.package_aliases.emplace(config->name, dependency);
-            context.packages.push_back({dependency, user_package, std::move(config)});
+            context.packages.push_back(
+                {dependency, user_package, std::move(config), std::move(transformed_build)});
         }
     }
 

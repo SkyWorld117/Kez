@@ -6,7 +6,6 @@
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <filesystem>
-#include <parser/config_transformer.hpp>
 #include <parser/parser_internal.hpp>
 #include <string>
 #include <utility>
@@ -266,6 +265,23 @@ namespace {
         return {specification.substr(0, separator), specification.substr(separator + 1)};
     }
 
+    bool is_nvidia_compiler(const std::string& compiler) {
+        return compiler.find("nvhpc") != std::string::npos || compiler == "nvc" ||
+               compiler == "nvcc";
+    }
+
+    std::string format_include_path(const std::string& path) { return "-I" + path; }
+
+    std::string format_nvidia_library_path(const std::string& path) {
+        return "-L" + path + " -Xlinker -rpath," + path;
+    }
+
+    std::string format_library_path(const std::string& path, UserConfigParserContext& context) {
+        return is_nvidia_compiler(current_compiler(context).first)
+                   ? format_nvidia_library_path(path)
+                   : "-L" + path + " -Wl,-rpath," + path;
+    }
+
     const Property* find_property(const PackageConfig& config, const std::string& name) {
         const auto property =
             std::find_if(config.properties.begin(), config.properties.end(),
@@ -390,6 +406,9 @@ namespace {
         if (name == "source") {
             return (context.settings.install_prefix / ".tmp" / "source").string();
         }
+        if (name == "kez.prefix") {
+            return context.settings.install_prefix.string();
+        }
         if (name == "kez.arch") {
             const auto selected = context.settings.architecture_variants.find("default");
             return selected == context.settings.architecture_variants.end()
@@ -424,15 +443,14 @@ namespace {
                 compiler_name, compiler_version == "system" ? "latest" : compiler_version);
             if (find_property(*compiler, property_name) == nullptr) {
                 if (property_name == "includes" && find_property(*compiler, "include") != nullptr) {
-                    return parser::format_include_path(
+                    return format_include_path(
                         resolve_parser_scalar("${compiler.include}", context));
                 }
                 if ((property_name == "ldflags" || property_name == "nvldflags") &&
                     find_property(*compiler, "lib") != nullptr) {
                     const std::string path = resolve_parser_scalar("${compiler.lib}", context);
-                    return property_name == "nvldflags"
-                               ? parser::format_nvidia_library_path(path)
-                               : parser::format_library_path(path, context);
+                    return property_name == "nvldflags" ? format_nvidia_library_path(path)
+                                                        : format_library_path(path, context);
                 }
             }
             return resolve_declared_property(name, *compiler, property_name, context);
@@ -478,15 +496,15 @@ namespace {
         const PackageConfigPtr config = parser_package_config(context, package_name);
         if (find_property(*config, property_name) == nullptr) {
             if (property_name == "includes" && find_property(*config, "include") != nullptr) {
-                return parser::format_include_path(
+                return format_include_path(
                     resolve_parser_scalar("${" + template_package_name + ".include}", context));
             }
             if ((property_name == "ldflags" || property_name == "nvldflags") &&
                 find_property(*config, "lib") != nullptr) {
                 const std::string path =
                     resolve_parser_scalar("${" + template_package_name + ".lib}", context);
-                return property_name == "nvldflags" ? parser::format_nvidia_library_path(path)
-                                                    : parser::format_library_path(path, context);
+                return property_name == "nvldflags" ? format_nvidia_library_path(path)
+                                                    : format_library_path(path, context);
             }
         }
         return resolve_declared_property(name, *config, property_name, context);

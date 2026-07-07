@@ -110,6 +110,16 @@ recipe:
         std::optional<std::string> previous_cflags_;
     };
 
+    YAML::Node find_option(YAML::Node options, const std::string& name) {
+        for (YAML::Node option : options) {
+            if (option["name"].as<std::string>() == name) {
+                return option;
+            }
+        }
+        ADD_FAILURE() << "Missing option: " << name;
+        return YAML::Node();
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase,
            GeneratesDependencyOrderedCommandsFromTypedRecipesAndUserValues) {
         write_file(path_ / "patches" / "application" / "fix.patch", "patch");
@@ -209,7 +219,6 @@ recipe:
         EXPECT_EQ(commands[7], "cmake -B build -DFEATURE=ON "
                                "-DLINK_FLAGS=\"-lbase -lfeature -loverride\" "
                                "-DCMAKE_INSTALL_PREFIX=\"/opt/env/application\" "
-                               "-DCMAKE_PREFIX_PATH=\"/opt/env;/opt/env/library\" "
                                "-DCMAKE_BUILD_TYPE=\"Release\" -DCMAKE_C_COMPILER=\"/usr/bin/gcc\" "
                                "-DCMAKE_CXX_COMPILER=\"/usr/bin/g++\" "
                                "-DCMAKE_Fortran_COMPILER=\"/usr/bin/gfortran\" "
@@ -313,17 +322,9 @@ recipe:
             default: -O2
 )");
 
-        const YAML::Node user_config = YAML::Load(R"(
-kez:
-  application:
-    compiler: system
-  library:
-    compiler: system
-recipe:
-  abstract_packages: {}
-  dependencies: [application, library]
-  targets: [application]
-)");
+        YAML::Node user_config = gen_user_config({"application"}, false, "system");
+        find_option(user_config["kez"]["application"]["build"]["configurations"]["options"],
+                    "CMAKE_CXX_FLAGS")["enabled_value"] = "-Og ${library.includes}";
 
         const BashCommandPlan plan = parse_user_config(user_config, settings());
 
@@ -339,7 +340,7 @@ recipe:
                   std::string::npos);
         EXPECT_NE(command.find("-DCMAKE_C_FLAGS=\"-O2\""), std::string::npos);
         EXPECT_EQ(command.find("-DCMAKE_C_FLAGS=\"-I/opt/env/include\""), std::string::npos);
-        EXPECT_NE(command.find("-DCMAKE_CXX_FLAGS=\"-O3 -I/opt/env/library/include\""),
+        EXPECT_NE(command.find("-DCMAKE_CXX_FLAGS=\"-Og -I/opt/env/library/include\""),
                   std::string::npos);
         EXPECT_NE(command.find("-DCMAKE_EXE_LINKER_FLAGS=\"-L/opt/env/library/lib64 "
                                "-Wl,-rpath,/opt/env/library/lib64 -lexample\""),
@@ -380,17 +381,8 @@ recipe:
         - name: enable-feature
 )");
 
-        const YAML::Node user_config = YAML::Load(R"(
-kez:
-  application:
-    compiler: nvhpc-compilers@1.0
-  library:
-    compiler: nvhpc-compilers@1.0
-recipe:
-  abstract_packages: {}
-  dependencies: [application, library]
-  targets: [application]
-)");
+        const YAML::Node user_config =
+            gen_user_config({"application"}, false, "nvhpc-compilers@1.0");
 
         const BashCommandPlan plan = parse_user_config(user_config, settings());
 

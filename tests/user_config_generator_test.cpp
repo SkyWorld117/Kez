@@ -95,6 +95,25 @@ paths:
         return {values.begin(), values.end()};
     }
 
+    YAML::Node find_option(const YAML::Node& options, const std::string& name) {
+        for (YAML::Node option : options) {
+            if (option["name"].as<std::string>() == name) {
+                return option;
+            }
+        }
+        ADD_FAILURE() << "Missing option: " << name;
+        return YAML::Node();
+    }
+
+    bool has_option(const YAML::Node& options, const std::string& name) {
+        for (YAML::Node option : options) {
+            if (option["name"].as<std::string>() == name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     TEST(UserConfigFilters, ConvertTypedUserConfigurableFieldsAndResolveAbstractRequirements) {
         BuildConfiguration configuration;
 
@@ -286,6 +305,69 @@ recipe:
         EXPECT_EQ(result["kez"]["library"]["version"].as<std::string>(), "main");
         EXPECT_EQ(result["kez"]["library"]["compiler"].as<std::string>(), "gcc@13.4.0");
         EXPECT_FALSE(result["kez"]["external-tool"]["compiler"].IsDefined());
+    }
+
+    TEST_F(TemporaryGeneratorDatabase, ExposesToolchainGeneratedOptionsAsEditableTemplates) {
+        write_package("gcc", R"(
+recipe:
+  name: gcc
+  type: compiler
+  properties:
+    c: /usr/bin/gcc
+    cxx: /usr/bin/g++
+    fort: /usr/bin/gfortran
+)");
+        write_package("library", R"(
+recipe:
+  name: library
+  type: package
+  properties:
+    include: ${library.prefix}/include
+    lib: ${library.prefix}/lib
+    libs: -lexample
+)");
+        write_package("cmake-application", R"(
+recipe:
+  name: cmake-application
+  type: package
+  toolchain: cmake
+  dependencies: [library]
+  build:
+    configurations: {}
+)");
+        write_package("autotools-application", R"(
+recipe:
+  name: autotools-application
+  type: package
+  toolchain: autotools
+  dependencies: [library]
+  build:
+    configurations: {}
+)");
+
+        const YAML::Node cmake = gen_user_config({"cmake-application"}, false, "system");
+        const YAML::Node cmake_options =
+            cmake["kez"]["cmake-application"]["build"]["configurations"]["options"];
+        EXPECT_EQ(
+            find_option(cmake_options, "CMAKE_INSTALL_PREFIX")["enabled_value"].as<std::string>(),
+            "${cmake-application.prefix}");
+        EXPECT_EQ(find_option(cmake_options, "CMAKE_C_FLAGS")["enabled_value"].as<std::string>(),
+                  "-O3 ${library.includes}");
+        EXPECT_EQ(
+            find_option(cmake_options, "CMAKE_EXE_LINKER_FLAGS")["enabled_value"].as<std::string>(),
+            "${library.ldflags} ${library.libs}");
+        EXPECT_FALSE(has_option(cmake_options, "CMAKE_PREFIX_PATH"));
+
+        const YAML::Node autotools = gen_user_config({"autotools-application"}, false, "system");
+        const YAML::Node autotools_options =
+            autotools["kez"]["autotools-application"]["build"]["configurations"]["options"];
+        EXPECT_EQ(find_option(autotools_options, "prefix")["enabled_value"].as<std::string>(),
+                  "${autotools-application.prefix}");
+        EXPECT_EQ(find_option(autotools_options, "CFLAGS")["enabled_value"].as<std::string>(),
+                  "-O3 ${library.includes}");
+        EXPECT_EQ(find_option(autotools_options, "LDFLAGS")["enabled_value"].as<std::string>(),
+                  "${library.ldflags}");
+        EXPECT_FALSE(has_option(autotools_options, "LIBS"));
     }
 
     TEST_F(TemporaryGeneratorDatabase, RecordsAbstractSelectionAndConfiguresItsConcreteTarget) {
