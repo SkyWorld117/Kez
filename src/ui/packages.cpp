@@ -186,7 +186,9 @@ void execute_selfcheck(const CommandArguments& arguments) {
         get_db_config(package);  // Also validates version-range selection and overlap.
         for (const auto& entry : std::filesystem::directory_iterator(database / package)) {
             if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
-                parse_db_config(entry.path());
+                if (entry.path().filename() != "latest.yaml") {
+                    parse_db_config(entry.path());
+                }
                 ++configurations;
             }
         }
