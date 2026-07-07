@@ -98,6 +98,7 @@ recipe:
             result.compilers_prefix = "/opt/compilers";
             result.mpis_prefix      = "/opt/mpis";
             result.vendors_prefix   = "/opt/vendors";
+            result.cache_prefix     = "/opt/.cache";
             result.parallel_jobs    = 8;
             result.architecture     = "x86_64";
             return result;
@@ -196,27 +197,32 @@ recipe:
 
         ASSERT_EQ(plan.size(), 2U);
         EXPECT_EQ(plan[0].package, "library");
-        EXPECT_EQ(
-            plan[0].commands,
-            std::vector<std::string>({"bash '" + (path_ / "tools" / "shallow_clone.sh").string() +
-                                          "' 'https://example.invalid/library.git' 'v1' source",
-                                      "cd source", "make -j8", "make -j8 install"}));
+        EXPECT_EQ(plan[0].commands,
+                  std::vector<std::string>(
+                      {"bash '" + (path_ / "tools" / "shallow_clone.sh").string() +
+                           "' 'https://example.invalid/library.git' 'v1' source",
+                       "mkdir -p '/opt/.cache'",
+                       "tar -czf '/opt/.cache/library-v1.tar.gz' --format=posix -z source",
+                       "cd source", "make -j8", "make -j8 install"}));
 
         EXPECT_EQ(plan[1].package, "application");
         const std::vector<std::string>& commands = plan[1].commands;
-        ASSERT_EQ(commands.size(), 12U);
+        ASSERT_EQ(commands.size(), 14U);
         EXPECT_EQ(commands[0], "wget --quiet --show-progress --no-check-certificate "
                                "--output-document='source.tar.gz' "
                                "'https://example.invalid/application-x86_64.tar.gz'");
         EXPECT_EQ(commands[1],
                   "bash '" + (path_ / "tools" / "unpack.sh").string() + "' 'source.tar.gz' source");
         EXPECT_EQ(commands[2], "rm 'source.tar.gz'");
-        EXPECT_EQ(commands[3], "cd source");
+        EXPECT_EQ(commands[3], "mkdir -p '/opt/.cache'");
         EXPECT_EQ(commands[4],
+                  "tar -czf '/opt/.cache/application-2.0.tar.gz' --format=posix -z source");
+        EXPECT_EQ(commands[5], "cd source");
+        EXPECT_EQ(commands[6],
                   "git apply '" + (path_ / "patches" / "application" / "fix.patch").string() + "'");
-        EXPECT_EQ(commands[5], "prepare /opt/env/.tmp/source");
-        EXPECT_EQ(commands[6], "export CFLAGS=\"-O2 ${PATH}\"");
-        EXPECT_EQ(commands[7], "cmake -B build -DFEATURE=ON "
+        EXPECT_EQ(commands[7], "prepare /opt/env/.tmp/source");
+        EXPECT_EQ(commands[8], "export CFLAGS=\"-O2 ${PATH}\"");
+        EXPECT_EQ(commands[9], "cmake -B build -DFEATURE=ON "
                                "-DLINK_FLAGS=\"-lbase -lfeature -loverride\" "
                                "-DCMAKE_INSTALL_PREFIX=\"/opt/env/application\" "
                                "-DCMAKE_BUILD_TYPE=\"Release\" -DCMAKE_C_COMPILER=\"/usr/bin/gcc\" "
@@ -227,10 +233,10 @@ recipe:
                                "-DCMAKE_EXE_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
                                "-DCMAKE_SHARED_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
                                "-DCMAKE_MODULE_LINKER_FLAGS=\"-lbase -lfeature -loverride\"");
-        EXPECT_EQ(commands[8], "export CFLAGS='host flags'");
-        EXPECT_EQ(commands[9], "cmake --build build --parallel 8 --target build");
-        EXPECT_EQ(commands[10], "cmake --install build");
-        EXPECT_EQ(commands[11], "finish /opt/env/application");
+        EXPECT_EQ(commands[10], "export CFLAGS='host flags'");
+        EXPECT_EQ(commands[11], "cmake --build build --parallel 8 --target build");
+        EXPECT_EQ(commands[12], "cmake --install build");
+        EXPECT_EQ(commands[13], "finish /opt/env/application");
 
         const std::filesystem::path local_source = path_ / "local source";
         std::filesystem::create_directories(local_source);
