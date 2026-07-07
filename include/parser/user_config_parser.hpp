@@ -19,6 +19,7 @@ struct UserConfigParserSettings {
     std::filesystem::path compilers_prefix;
     std::filesystem::path mpis_prefix;
     std::filesystem::path vendors_prefix;
+    std::filesystem::path cache_prefix;
     unsigned int parallel_jobs = 1;
     std::string architecture;
     std::unordered_map<std::string, std::string> architecture_variants;

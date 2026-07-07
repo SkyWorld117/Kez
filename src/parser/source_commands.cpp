@@ -30,14 +30,43 @@ namespace {
     void append_remote_source_commands(const ParsedUserPackage& package, const Release& release,
                                        UserConfigParserContext& context,
                                        std::vector<std::string>& commands) {
+        auto use_cache = [&](bool source_is_file) {
+            std::string cache_name = package.requested_name + "-" + release.version;
+            const std::filesystem::path cache_path =
+                context.settings.cache_prefix / (cache_name + ".tar.gz");
+            if (!std::filesystem::exists(cache_path)) {
+                return false;
+            }
+            if (std::filesystem::is_directory(cache_path)) {
+                user_config_error("cache path exists but is not a file: " + cache_path.string());
+            }
+            commands.push_back("tar -xzf " + shell_single_quote(cache_path.string()));
+            if (!source_is_file) {
+                commands.push_back("cd source");
+            }
+            return true;
+        };
+
+        auto pack_as_cache = [&]() {
+            std::string cache_name = package.requested_name + "-" + release.version;
+            const std::filesystem::path cache_path =
+                context.settings.cache_prefix / (cache_name + ".tar.gz");
+            commands.push_back("mkdir -p " +
+                               shell_single_quote(context.settings.cache_prefix.string()));
+            commands.push_back("tar -czf " + shell_single_quote(cache_path.string()) +
+                               " --format=posix -z source");
+        };
+
         const Source& source = *package.database_config->source;
         if (source.type == SourceType::Git) {
+            if (use_cache(false)) return;
             const std::string url = resolve_parser_scalar(*source.url, context);
             const std::string tag = resolve_parser_scalar(*release.tag, context);
             const std::filesystem::path helper =
                 context.settings.kez_home / "tools" / "shallow_clone.sh";
             commands.push_back("bash " + shell_single_quote(helper.string()) + " " +
                                shell_single_quote(url) + " " + shell_single_quote(tag) + " source");
+            pack_as_cache();
             commands.push_back("cd source");
             return;
         }
@@ -52,24 +81,29 @@ namespace {
 
         const std::string url = resolve_parser_scalar(*release.url, context);
         if (source.type == SourceType::Script) {
+            if (use_cache(true)) return;
             commands.push_back(
                 "wget --quiet --show-progress --no-check-certificate --output-document=source " +
                 shell_single_quote(url));
+            pack_as_cache();
             return;
         }
 
         const std::filesystem::path helper = context.settings.kez_home / "tools" / "unpack.sh";
         if (source.type == SourceType::Zip) {
+            if (use_cache(false)) return;
             commands.push_back("wget --quiet --show-progress --no-check-certificate "
                                "--output-document=source.zip " +
                                shell_single_quote(url));
             commands.push_back("bash " + shell_single_quote(helper.string()) +
                                " source.zip source");
             commands.push_back("rm source.zip");
+            pack_as_cache();
             commands.push_back("cd source");
             return;
         }
 
+        if (use_cache(false)) return;
         const std::string extension = tarball_extension(url);
         const std::string archive   = "source" + extension;
         commands.push_back("wget --quiet --show-progress --no-check-certificate "
@@ -78,6 +112,7 @@ namespace {
         commands.push_back("bash " + shell_single_quote(helper.string()) + " " +
                            shell_single_quote(archive) + " source");
         commands.push_back("rm " + shell_single_quote(archive));
+        pack_as_cache();
         commands.push_back("cd source");
     }
 

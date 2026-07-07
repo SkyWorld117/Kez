@@ -559,6 +559,7 @@ UserConfigParserSettings load_user_config_parser_settings(
     result.compilers_prefix   = configured_path(manifest, work_directory, "compilers");
     result.mpis_prefix        = configured_path(manifest, work_directory, "mpis");
     result.vendors_prefix     = configured_path(manifest, work_directory, "vendors");
+    result.cache_prefix       = configured_path(manifest, work_directory, "cache");
 
     const YAML::Node config = YAML::LoadFile((work_directory / "config.yaml").string());
     if (yaml_has(config, "settings")) {
