@@ -418,7 +418,8 @@ namespace {
     std::string resolve_parser_template_base(const std::string& name,
                                              UserConfigParserContext& context) {
         if (name == "source") {
-            return (context.settings.install_prefix / ".tmp" / "source").string();
+            return (context.settings.install_prefix / ".tmp" / context.current_package / "source")
+                .string();
         }
         if (name == "kez.prefix") {
             return context.settings.install_prefix.string();
