@@ -69,9 +69,6 @@ void run_ui(int argc, char* argv[]) {
         execute_info(arguments);
     } else if (command == "selfcheck") {
         execute_selfcheck(arguments);
-    } else if (command == "rt") {
-        ERROR("The RT module has not been implemented yet");
-        exit(EXIT_FAILURE);
     } else {
         ERROR("Unknown command: " + command);
         print_help();
