@@ -176,9 +176,29 @@ namespace {
         return value.has_value() ? value->default_value.value_or("") : "";
     }
 
-    void precompute_environment(const BuildConfiguration& configuration,
-                                const YAML::Node& user_configuration, const PackageConfig& package,
-                                UserConfigParserContext& context, bool use_user_values) {
+    bool option_state_equal(const ParsedOptionState& left, const ParsedOptionState& right) {
+        return left.enabled == right.enabled && left.enabled_value == right.enabled_value &&
+               left.disabled_value == right.disabled_value;
+    }
+
+    bool option_values_equal(const std::unordered_map<std::string, ParsedOptionState>& left,
+                             const std::unordered_map<std::string, ParsedOptionState>& right) {
+        if (left.size() != right.size()) {
+            return false;
+        }
+        for (const auto& [name, value] : left) {
+            const auto parsed = right.find(name);
+            if (parsed == right.end() || !option_state_equal(value, parsed->second)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void compute_environment(const BuildConfiguration& configuration,
+                             const YAML::Node& user_configuration, const PackageConfig& package,
+                             UserConfigParserContext& context, bool use_user_values,
+                             bool apply_conditions) {
         const YAML::Node user_environment = yaml_has(user_configuration, "environment")
                                                 ? user_configuration["environment"]
                                                 : YAML::Node();
@@ -201,7 +221,7 @@ namespace {
             } else if (required) {
                 value = variable.value.default_value.value_or("");
             }
-            if (required) {
+            if (required && apply_conditions) {
                 value = apply_parser_conditions(variable.value, value, context);
             }
             context.environment_values[&variable]                                    = value;
@@ -209,9 +229,10 @@ namespace {
         }
     }
 
-    void precompute_options(const BuildConfiguration& configuration,
-                            const YAML::Node& user_configuration, const PackageConfig& package,
-                            UserConfigParserContext& context, bool use_user_values) {
+    void compute_options(const BuildConfiguration& configuration,
+                         const YAML::Node& user_configuration, const PackageConfig& package,
+                         UserConfigParserContext& context, bool use_user_values,
+                         bool apply_conditions) {
         const YAML::Node user_options =
             yaml_has(user_configuration, "options") ? user_configuration["options"] : YAML::Node();
         for (const BuildOption& option : configuration.options) {
@@ -245,7 +266,7 @@ namespace {
                                     : true;
             }
 
-            if (required && option.enabled.has_value()) {
+            if (required && option.enabled.has_value() && apply_conditions) {
                 state.enabled = apply_parser_conditions(*option.enabled, state.enabled, context);
             }
             const std::string key            = package.name + ".config." + option.name;
@@ -264,11 +285,11 @@ namespace {
                                            ? option.disabled_value->default_value.value_or("")
                                            : "";
             }
-            if (required && option.enabled_value.has_value()) {
+            if (required && option.enabled_value.has_value() && apply_conditions) {
                 state.enabled_value =
                     apply_parser_conditions(*option.enabled_value, state.enabled_value, context);
             }
-            if (required && option.disabled_value.has_value()) {
+            if (required && option.disabled_value.has_value() && apply_conditions) {
                 state.disabled_value =
                     apply_parser_conditions(*option.disabled_value, state.disabled_value, context);
             }
@@ -277,16 +298,20 @@ namespace {
         }
     }
 
-    void precompute_configuration(const BuildConfiguration& configuration,
-                                  const YAML::Node& user_configuration,
-                                  const PackageConfig& package, UserConfigParserContext& context,
-                                  bool use_user_values) {
-        precompute_environment(configuration, user_configuration, package, context,
-                               use_user_values);
-        precompute_options(configuration, user_configuration, package, context, use_user_values);
+    void compute_configuration(const BuildConfiguration& configuration,
+                               const YAML::Node& user_configuration, const PackageConfig& package,
+                               UserConfigParserContext& context, bool use_user_values,
+                               bool apply_conditions) {
+        compute_environment(configuration, user_configuration, package, context, use_user_values,
+                            apply_conditions);
+        compute_options(configuration, user_configuration, package, context, use_user_values,
+                        apply_conditions);
     }
 
-    void precompute_values(UserConfigParserContext& context) {
+    bool compute_values(UserConfigParserContext& context, bool apply_conditions) {
+        const auto previous_options     = context.named_option_values;
+        const auto previous_environment = context.named_environment_values;
+
         for (const ParsedUserPackage& package : context.packages) {
             context.current_package = package.requested_name;
             if (!package.transformed_build.has_value()) {
@@ -297,18 +322,33 @@ namespace {
                                           package.database_config->type != PackageType::Mpi) ||
                                          yaml_has(package.user_config, "build");
             if (build.configurations.has_value()) {
-                precompute_configuration(*build.configurations,
-                                         user_configuration(package.user_config),
-                                         *package.database_config, context, use_user_values);
+                compute_configuration(
+                    *build.configurations, user_configuration(package.user_config),
+                    *package.database_config, context, use_user_values, apply_conditions);
             }
             for (const BuildStage& stage : build.stages) {
                 if (stage.configurations.has_value()) {
-                    precompute_configuration(*stage.configurations,
-                                             user_configuration(package.user_config, &stage),
-                                             *package.database_config, context, use_user_values);
+                    compute_configuration(
+                        *stage.configurations, user_configuration(package.user_config, &stage),
+                        *package.database_config, context, use_user_values, apply_conditions);
                 }
             }
         }
+        return !option_values_equal(previous_options, context.named_option_values) ||
+               previous_environment != context.named_environment_values;
+    }
+
+    void precompute_values(UserConfigParserContext& context) {
+        compute_values(context, false);
+
+        const std::size_t max_passes =
+            context.named_option_values.size() + context.named_environment_values.size() + 1;
+        for (std::size_t pass = 0; pass < max_passes; ++pass) {
+            if (!compute_values(context, true)) {
+                return;
+            }
+        }
+        user_config_error("conditional configuration values did not converge");
     }
 
     void append_configuration_commands(const BuildConfiguration& configuration,

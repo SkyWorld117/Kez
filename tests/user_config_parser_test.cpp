@@ -440,6 +440,122 @@ recipe:
         EXPECT_EQ(plan[0].commands, std::vector<std::string>({"echo /opt/env/demo"}));
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase, ResolvesForwardConditionReferencesToOptionStates) {
+        write_package("helper", R"(
+recipe:
+  name: helper
+  type: package
+  build:
+    configurations:
+      options:
+        - name: use_cuda
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: ""
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [helper]
+  build:
+    configurations:
+      command: configure
+      options:
+        - name: FLAGS
+          enabled_value:
+            default: base
+            conditions:
+              - condition: ${helper.config.use_cuda} true
+                action: append
+                value: cuda
+)");
+
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  application:
+    compiler: system
+  helper:
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: use_cuda
+            enabled: true
+            enabled_value: ~
+            disabled_value: ~
+recipe:
+  abstract_packages: {}
+  dependencies: [application, helper]
+  targets: [application]
+)");
+
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        EXPECT_EQ(plan[0].package, "application");
+        ASSERT_EQ(plan[0].commands.size(), 1U);
+        EXPECT_EQ(plan[0].commands[0], "configure FLAGS=\"base cuda\"");
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, RejectsInvalidConfigOptionConditionNames) {
+        write_package("helper", R"(
+recipe:
+  name: helper
+  type: package
+  build:
+    configurations:
+      options:
+        - name: use_feature
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: ""
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [helper]
+  build:
+    configurations:
+      command: configure
+      options:
+        - name: FLAGS
+          enabled_value:
+            default: base
+            conditions:
+              - condition: ${helper.config.use-feature} true
+                action: append
+                value: typo
+)");
+
+        const YAML::Node user_config                   = YAML::Load(R"(
+kez:
+  application:
+    compiler: system
+  helper:
+    compiler: system
+    build:
+      configurations:
+        options:
+          - name: use_feature
+            enabled: true
+            enabled_value: ~
+            disabled_value: ~
+recipe:
+  abstract_packages: {}
+  dependencies: [application, helper]
+  targets: [application]
+)");
+        const UserConfigParserSettings parser_settings = settings();
+
+        EXPECT_EXIT(static_cast<void>(parse_user_config(user_config, parser_settings)),
+                    ::testing::ExitedWithCode(EXIT_FAILURE),
+                    "condition references unresolved option 'helper.config.use-feature'");
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase, ParsesARepositoryRecipeEndToEnd) {
         const std::filesystem::path source = KEZ_SOURCE_DIR;
         setenv("KEZ_DB", (source / "database").c_str(), 1);

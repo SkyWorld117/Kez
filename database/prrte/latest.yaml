@@ -42,7 +42,7 @@ recipe:
                   enabled_value:
                       default: ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags}
                       conditions:
-                          - condition: ${hwloc.config.use-cuda} true
+                          - condition: ${hwloc.config.use_cuda} true
                             action: append
                             value: ${cuda.ldflags}
         stages:

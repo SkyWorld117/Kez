@@ -97,6 +97,27 @@ namespace {
         return value;
     }
 
+    bool is_declared_abstract_selector(const std::string& option_name,
+                                       UserConfigParserContext& context) {
+        const std::size_t separator = option_name.find('.');
+        if (separator == std::string::npos ||
+            option_name.find('.', separator + 1) != std::string::npos) {
+            return false;
+        }
+
+        const std::string selector = option_name.substr(separator + 1);
+        if (selector.rfind("use-", 0) != 0 || selector.size() == 4) {
+            return false;
+        }
+
+        const std::string package_name   = option_name.substr(0, separator);
+        const std::string implementation = selector.substr(4);
+        const PackageConfigPtr config    = parser_package_config(context, package_name);
+        return config->type == PackageType::Abstract &&
+               std::find(config->implementations.begin(), config->implementations.end(),
+                         implementation) != config->implementations.end();
+    }
+
     bool compare_version_expression(const std::string& expression,
                                     UserConfigParserContext& context) {
         if (expression.rfind("${", 0) != 0) {
@@ -198,7 +219,7 @@ namespace {
         const std::string expected_state = cursor.tokens[cursor.position++];
         const auto option                = cursor.context.named_option_values.find(option_name);
         if (option == cursor.context.named_option_values.end()) {
-            if (option_name.find(".use-") != std::string::npos) {
+            if (is_declared_abstract_selector(option_name, cursor.context)) {
                 return false;
             }
             user_config_error("condition references unresolved option '" + option_name + "'");
