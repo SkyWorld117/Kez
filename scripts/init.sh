@@ -215,34 +215,46 @@ fi
 # ----------------------------------------------------
 
 # binutils (without headers)
-version=$(yq -r '.system-stack.binutils' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "binutils" "${version}")
-if [[ -n "$folder_and_version" ]]; then
-    echo "Installing binutils..."
-    folder="${folder_and_version%%::*}"
-    version="${folder_and_version##*::}"
-    cd "${KEZ_SYSTEM_TMP}/${folder}"
-    ./configure \
-        --prefix="${KEZ_SYSTEM}" \
-        --includedir="${KEZ_SYSTEM_TMP}/include" \
-        --disable-multilib \
-        --disable-nls \
-        --enable-gold \
-        --enable-ld \
-        --enable-compressed-debug-sections=all \
-        --enable-default-compressed-debug-sections-algorithm=zstd \
-        --with-gmp="${KEZ_SYSTEM}" \
-        --with-mpfr="${KEZ_SYSTEM}" \
-        --with-mpc="${KEZ_SYSTEM}" \
-        --with-isl="${KEZ_SYSTEM}" \
-        --with-zstd="${KEZ_SYSTEM}" \
-        LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
-    make -j"${KEZ_NPROC}"
-    make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  binutils: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
+if [[ use_distro_compiler -eq 1 ]]; then
+    echo "Using the system's default compiler, skipping binutils installation..."
+    if check_installation "ld"; then
+        ln -sf /usr/bin/ld "${KEZ_SYSTEM}/bin/ld"
+        ln -sf /usr/bin/ar "${KEZ_SYSTEM}/bin/ar"
+        ln -sf /usr/bin/nm "${KEZ_SYSTEM}/bin/nm"
+        ln -sf /usr/bin/objdump "${KEZ_SYSTEM}/bin/objdump"
+        ln -sf /usr/bin/strip "${KEZ_SYSTEM}/bin/strip"
+        echo -e "  binutils: distro" >> "${KEZ_SYSTEM}/state.yaml"
+    fi
 else
-    echo "binutils is already installed, skipping..."
+    version=$(yq -r '.system-stack.binutils' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "binutils" "${version}")
+    if [[ -n "$folder_and_version" ]]; then
+        echo "Installing binutils..."
+        folder="${folder_and_version%%::*}"
+        version="${folder_and_version##*::}"
+        cd "${KEZ_SYSTEM_TMP}/${folder}"
+        ./configure \
+            --prefix="${KEZ_SYSTEM}" \
+            --includedir="${KEZ_SYSTEM_TMP}/include" \
+            --disable-multilib \
+            --disable-nls \
+            --enable-gold \
+            --enable-ld \
+            --enable-compressed-debug-sections=all \
+            --enable-default-compressed-debug-sections-algorithm=zstd \
+            --with-gmp="${KEZ_SYSTEM}" \
+            --with-mpfr="${KEZ_SYSTEM}" \
+            --with-mpc="${KEZ_SYSTEM}" \
+            --with-isl="${KEZ_SYSTEM}" \
+            --with-zstd="${KEZ_SYSTEM}" \
+            LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
+        make -j"${KEZ_NPROC}"
+        make install -j"${KEZ_NPROC}"
+        cd "${KEZ_SYSTEM_TMP}" && rm -rf *
+        echo -e "  binutils: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
+    else
+        echo "binutils is already installed, skipping..."
+    fi
 fi
 
 # gcc
