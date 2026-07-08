@@ -16,6 +16,7 @@
 #include <user_config_generator/config_transformer.hpp>
 #include <utility>
 #include <utils/bash_utils.hpp>
+#include <utils/string_utils.hpp>
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
@@ -65,17 +66,6 @@ namespace {
         return user_target.IsScalar() && user_target.Scalar() == *database_target;
     }
 
-    bool is_shell_assignment(const std::string& name) {
-        if (name.empty() ||
-            (name[0] != '_' && !std::isupper(static_cast<unsigned char>(name[0])))) {
-            return false;
-        }
-        return std::all_of(name.begin() + 1, name.end(), [](const char character) {
-            return character == '_' || std::isupper(static_cast<unsigned char>(character)) ||
-                   std::isdigit(static_cast<unsigned char>(character));
-        });
-    }
-
     std::string option_name(const std::string& name, Toolchain toolchain) {
         if (toolchain == Toolchain::Autotools) {
             if (name.rfind("--", 0) == 0 || name.rfind('-', 0) == 0 || is_shell_assignment(name)) {
@@ -87,14 +77,6 @@ namespace {
             return name.rfind('-', 0) == 0 ? name : "-D" + name;
         }
         return name;
-    }
-
-    std::string join(const std::vector<std::string>& values, const std::string& separator = " ") {
-        std::string result;
-        for (const std::string& value : values) {
-            result += (result.empty() ? "" : separator) + value;
-        }
-        return result;
     }
 
     std::string render_option(const BuildOption& option, const ParsedOptionState& state,
@@ -477,12 +459,6 @@ namespace {
             commands.push_back(resolve_parser_scalar(*build.postprocessing, context));
         }
         return commands;
-    }
-
-    void append_unique(std::vector<std::string>& values, const std::string& value) {
-        if (!value.empty() && std::find(values.begin(), values.end(), value) == values.end()) {
-            values.push_back(value);
-        }
     }
 
     std::string plan_dependency_name(const std::string& dependency,

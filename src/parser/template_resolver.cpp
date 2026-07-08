@@ -303,13 +303,6 @@ namespace {
                    : "-L" + path + " -Wl,-rpath," + path;
     }
 
-    const Property* find_property(const PackageConfig& config, const std::string& name) {
-        const auto property =
-            std::find_if(config.properties.begin(), config.properties.end(),
-                         [&name](const Property& candidate) { return candidate.name == name; });
-        return property == config.properties.end() ? nullptr : &*property;
-    }
-
     PackageConfigPtr property_package_config(const std::string& package_name,
                                              UserConfigParserContext& context) {
         if (package_name == "compiler") {
@@ -673,14 +666,5 @@ std::string parser_package_prefix(const std::string& package_name,
 bool parser_package_has_property(const std::string& package_name, const std::string& property_name,
                                  UserConfigParserContext& context) {
     const PackageConfigPtr config = property_package_config(package_name, context);
-    if (find_property(*config, property_name) != nullptr) {
-        return true;
-    }
-    if (property_name == "includes") {
-        return find_property(*config, "include") != nullptr;
-    }
-    if (property_name == "ldflags" || property_name == "nvldflags") {
-        return find_property(*config, "lib") != nullptr;
-    }
-    return false;
+    return has_property(*config, property_name);
 }

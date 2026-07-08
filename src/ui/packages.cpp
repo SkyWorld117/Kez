@@ -19,19 +19,6 @@
 #include <vector>
 
 namespace {
-    std::string package_type_name(PackageType type) {
-        switch (type) {
-            case PackageType::Package: return "package";
-            case PackageType::System: return "system";
-            case PackageType::Compiler: return "compiler";
-            case PackageType::Mpi: return "mpi";
-            case PackageType::Vendor: return "vendor";
-            case PackageType::Abstract: return "abstract";
-            case PackageType::External: return "external";
-        }
-        return "unknown";
-    }
-
     std::string toolchain_name(Toolchain toolchain) {
         switch (toolchain) {
             case Toolchain::None: return "none";

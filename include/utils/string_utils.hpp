@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include <type_traits>
 #include <utils/dump.hpp>
@@ -26,3 +27,7 @@ int compare_versions(const std::string& left, const std::string& right);
 std::string trim(const std::string& input);
 
 void append_unique(std::vector<std::string>& values, const std::string& value);
+
+std::string join(const std::vector<std::string>& values, const std::string& separator = " ");
+
+bool is_shell_assignment(const std::string& name);

@@ -6,20 +6,10 @@
 #include <unordered_set>
 #include <user_config_generator/config_transformer.hpp>
 #include <utility>
+#include <utils/string_utils.hpp>
 #include <vector>
 
 namespace {
-
-    bool is_shell_assignment(const std::string& name) {
-        if (name.empty() ||
-            (name[0] != '_' && !std::isupper(static_cast<unsigned char>(name[0])))) {
-            return false;
-        }
-        return std::all_of(name.begin() + 1, name.end(), [](const char character) {
-            return character == '_' || std::isupper(static_cast<unsigned char>(character)) ||
-                   std::isdigit(static_cast<unsigned char>(character));
-        });
-    }
 
     std::string option_key(std::string name, Toolchain toolchain) {
         if (toolchain == Toolchain::Autotools && name.rfind("--", 0) == 0) {
@@ -33,40 +23,6 @@ namespace {
         }
         const std::size_t value = name.find('=');
         return value == std::string::npos ? name : name.substr(0, value);
-    }
-
-    void append_unique(std::vector<std::string>& values, const std::string& value) {
-        if (!value.empty() && std::find(values.begin(), values.end(), value) == values.end()) {
-            values.push_back(value);
-        }
-    }
-
-    std::string join(const std::vector<std::string>& values, const std::string& separator = " ") {
-        std::string result;
-        for (const std::string& value : values) {
-            result += (result.empty() ? "" : separator) + value;
-        }
-        return result;
-    }
-
-    const Property* find_property(const PackageConfig& config, const std::string& name) {
-        const auto property =
-            std::find_if(config.properties.begin(), config.properties.end(),
-                         [&name](const Property& candidate) { return candidate.name == name; });
-        return property == config.properties.end() ? nullptr : &*property;
-    }
-
-    bool has_property(const PackageConfig& config, const std::string& property) {
-        if (find_property(config, property) != nullptr) {
-            return true;
-        }
-        if (property == "includes") {
-            return find_property(config, "include") != nullptr;
-        }
-        if (property == "ldflags" || property == "nvldflags") {
-            return find_property(config, "lib") != nullptr;
-        }
-        return false;
     }
 
     std::pair<std::string, std::string> parse_compiler(const std::string& compiler) {

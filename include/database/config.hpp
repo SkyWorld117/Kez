@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <variant>
@@ -161,3 +162,26 @@ class MakePackageConfig final : public PackageConfig {
     std::optional<std::string> default_stage_command(const BuildStage& stage,
                                                      unsigned int parallel_jobs) const override;
 };
+
+// Utility: find a property by name in a PackageConfig. Returns nullptr if not found.
+inline const Property* find_property(const PackageConfig& config, const std::string& name) {
+    const auto property =
+        std::find_if(config.properties.begin(), config.properties.end(),
+                     [&name](const Property& candidate) { return candidate.name == name; });
+    return property == config.properties.end() ? nullptr : &*property;
+}
+
+// Utility: check if a PackageConfig has a property, with aliases for "includes" → "include"
+// and "ldflags"/"nvldflags" → "lib".
+inline bool has_property(const PackageConfig& config, const std::string& property) {
+    if (find_property(config, property) != nullptr) {
+        return true;
+    }
+    if (property == "includes") {
+        return find_property(config, "include") != nullptr;
+    }
+    if (property == "ldflags" || property == "nvldflags") {
+        return find_property(config, "lib") != nullptr;
+    }
+    return false;
+}

@@ -2,6 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <database/config.hpp>
 #include <filesystem>
 #include <parser/user_config_parser.hpp>
 #include <string>
@@ -20,5 +21,7 @@ void emit_environment_deactivation(const std::filesystem::path& prefix,
                                    const std::string& variable);
 
 void print_command_plan(const BashCommandPlan& plan);
+
+std::string package_type_name(PackageType type);
 
 std::vector<std::string> user_config_targets(const YAML::Node& user_config);

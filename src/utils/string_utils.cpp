@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
@@ -173,7 +174,25 @@ std::string trim(const std::string& input) {
 }
 
 void append_unique(std::vector<std::string>& values, const std::string& value) {
-    if (std::find(values.begin(), values.end(), value) == values.end()) {
+    if (!value.empty() && std::find(values.begin(), values.end(), value) == values.end()) {
         values.push_back(value);
     }
+}
+
+std::string join(const std::vector<std::string>& values, const std::string& separator) {
+    std::string result;
+    for (const std::string& value : values) {
+        result += (result.empty() ? "" : separator) + value;
+    }
+    return result;
+}
+
+bool is_shell_assignment(const std::string& name) {
+    if (name.empty() || (name[0] != '_' && !std::isupper(static_cast<unsigned char>(name[0])))) {
+        return false;
+    }
+    return std::all_of(name.begin() + 1, name.end(), [](const char character) {
+        return character == '_' || std::isupper(static_cast<unsigned char>(character)) ||
+               std::isdigit(static_cast<unsigned char>(character));
+    });
 }

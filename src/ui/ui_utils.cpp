@@ -50,19 +50,20 @@ namespace {
         return compiler;
     }
 
-    std::string package_type_name(PackageType type) {
-        switch (type) {
-            case PackageType::Package: return "package";
-            case PackageType::System: return "system";
-            case PackageType::Compiler: return "compiler";
-            case PackageType::Mpi: return "mpi";
-            case PackageType::Vendor: return "vendor";
-            case PackageType::Abstract: return "abstract";
-            case PackageType::External: return "external";
-        }
-        return "unknown";
-    }
 }  // namespace
+
+std::string package_type_name(PackageType type) {
+    switch (type) {
+        case PackageType::Package: return "package";
+        case PackageType::System: return "system";
+        case PackageType::Compiler: return "compiler";
+        case PackageType::Mpi: return "mpi";
+        case PackageType::Vendor: return "vendor";
+        case PackageType::Abstract: return "abstract";
+        case PackageType::External: return "external";
+    }
+    return "unknown";
+}
 
 std::filesystem::path configured_work_path(const std::string& name) {
     const std::filesystem::path home = get_env_var("KEZ_HOME");

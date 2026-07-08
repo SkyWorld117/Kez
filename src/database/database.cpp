@@ -1,13 +1,11 @@
 #include <cstdlib>
 #include <database/config_selector.hpp>
 #include <database/database.hpp>
-#include <mutex>
 #include <unordered_map>
 #include <utils/bash_utils.hpp>
 
 namespace {
     std::unordered_map<std::string, PackageConfigPtr> db_cache;
-    std::mutex db_cache_mutex;
 }  // namespace
 
 PackageConfigPtr get_db_config(const std::string& package_name, const std::string& version) {
@@ -19,16 +17,12 @@ PackageConfigPtr get_db_config(const std::string& package_name, const std::strin
     const std::string cache_key =
         std::filesystem::absolute(config_path).lexically_normal().string();
 
-    {
-        std::lock_guard<std::mutex> lock(db_cache_mutex);
-        const auto cached = db_cache.find(cache_key);
-        if (cached != db_cache.end()) {
-            return cached->second;
-        }
+    const auto cached = db_cache.find(cache_key);
+    if (cached != db_cache.end()) {
+        return cached->second;
     }
 
-    PackageConfigPtr config = parse_db_config(config_path);
-    std::lock_guard<std::mutex> lock(db_cache_mutex);
+    PackageConfigPtr config         = parse_db_config(config_path);
     const auto [iterator, inserted] = db_cache.emplace(cache_key, config);
     return inserted ? config : iterator->second;
 }
@@ -37,7 +31,4 @@ PackageConfigPtr get_db_config(const std::string& package_name) {
     return get_db_config(package_name, "latest");
 }
 
-void clear_db_cache() {
-    std::lock_guard<std::mutex> lock(db_cache_mutex);
-    db_cache.clear();
-}
+void clear_db_cache() { db_cache.clear(); }
