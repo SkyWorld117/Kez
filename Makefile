@@ -45,6 +45,7 @@ LIB_SOURCES := \
 	$(SRC_DIR)/parser/source_commands.cpp \
 	$(SRC_DIR)/parser/template_resolver.cpp \
 	$(SRC_DIR)/parser/user_config_parser.cpp \
+	$(SRC_DIR)/rebuild/rebuild.cpp \
 	$(SRC_DIR)/user_config_generator/config_transformer.cpp \
 	$(SRC_DIR)/user_config_generator/configurations_filter.cpp \
 	$(SRC_DIR)/user_config_generator/environment_filter.cpp \
@@ -75,6 +76,7 @@ TEST_SOURCES := \
 	tests/database_test.cpp \
 	tests/dependency_resolver_test.cpp \
 	tests/factory_test.cpp \
+	tests/rebuild_test.cpp \
 	tests/utils_test.cpp \
 	tests/user_config_parser_test.cpp \
 	tests/user_config_generator_test.cpp

@@ -180,6 +180,9 @@ namespace {
             append(result, {"--read", "-r"});
             append(result, database_packages());
         }
+        if (!contains_any(words, {"--rebuild", "-R"})) {
+            append(result, {"--rebuild", "-R"});
+        }
         if (!contains_any(words, {"--config", "-c"})) {
             append(result, {"--config", "-c"});
         }

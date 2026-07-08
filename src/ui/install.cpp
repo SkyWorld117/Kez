@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <parser/user_config_parser.hpp>
+#include <rebuild/rebuild.hpp>
 #include <string>
 #include <system_error>
 #include <ui/commands.hpp>
@@ -20,7 +22,9 @@ namespace {
         bool dry_run    = false;
         bool force      = false;
         bool with_slurm = false;
+        bool rebuild    = false;
         std::string environment;
+        std::string rebuild_package;
         std::vector<std::string> overrides;
         std::vector<std::string> positional;
     };
@@ -34,7 +38,8 @@ namespace {
                    "  -d, --dry-run          Show the commands that would be executed\n"
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
-                   "  -S, --with-slurm       Run scripts/install.sh through sbatch\n";
+                   "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
+                   "  -R,  --rebuild PACKAGE  Rebuild a package and its dependents in the env\n";
         } else {
             std::cout
                 << "Usage: kez install [options] <package>...\n"
@@ -45,7 +50,8 @@ namespace {
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
                    "  -e, --env NAME         Target application environment\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
-                   "  -S, --with-slurm       Run scripts/install.sh through sbatch\n";
+                   "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
+                   "      --rebuild PACKAGE  Rebuild a package and its dependents in the env\n";
         }
     }
 
@@ -81,6 +87,20 @@ namespace {
                 result.force = true;
             } else if (argument == "-S" || argument == "--with-slurm") {
                 result.with_slurm = true;
+            } else if (argument == "-R" || argument == "--rebuild") {
+                if (utility) {
+                    ERROR("--rebuild is not valid for utility installation");
+                    exit(EXIT_FAILURE);
+                }
+                result.rebuild         = true;
+                result.rebuild_package = required_value(arguments, index, argument);
+            } else if (argument.rfind("--rebuild=", 0) == 0) {
+                if (utility) {
+                    ERROR("--rebuild is not valid for utility installation");
+                    exit(EXIT_FAILURE);
+                }
+                result.rebuild         = true;
+                result.rebuild_package = argument.substr(10);
             } else if (argument == "-e" || argument == "--env") {
                 if (utility) {
                     ERROR(argument + " is not valid for utility installation");
@@ -132,26 +152,23 @@ namespace {
         return gen_user_config(options.positional, false);
     }
 
-    void install(const CommandArguments& arguments, bool utility) {
-        bool help                    = false;
-        const InstallOptions options = parse_install_options(arguments, utility, help);
-        if (help) {
-            print_install_help(utility);
-            return;
+    std::filesystem::path resolve_application_prefix(const std::string& environment) {
+        std::string selected = environment;
+        if (selected.empty()) {
+            selected = get_env_var_noerr("KEZ_ACTIVE_ENV");
         }
-
-        YAML::Node user_config = load_install_config(options);
-        apply_cmdline_config(user_config, options.overrides);
-        const std::filesystem::path prefix =
-            installation_prefix(user_config, options.environment, utility);
-
-        const UserConfigParserSettings parser_settings = load_user_config_parser_settings(prefix);
-        const BashCommandPlan plan = parse_user_config(user_config, parser_settings);
-        if (options.dry_run) {
-            print_command_plan(plan);
-            return;
+        if (selected.empty()) {
+            ERROR("A target environment is required; pass --env <name> or run 'kez env enter "
+                  "<name>'");
+            exit(EXIT_FAILURE);
         }
+        validate_path_component(selected, "environment name");
+        return configured_work_path("applications") / selected;
+    }
 
+    void run_install_plan(const std::filesystem::path& prefix, const BashCommandPlan& plan,
+                          const UserConfigParserSettings& parser_settings, bool force,
+                          bool with_slurm) {
         std::error_code error;
         std::filesystem::create_directories(prefix / ".tmp", error);
         if (error) {
@@ -176,10 +193,10 @@ namespace {
                               shell_single_quote(script.string()) + " " +
                               shell_single_quote(prefix.string()) + " " +
                               shell_single_quote(plan_path.string());
-        if (options.force) {
+        if (force) {
             command += " --force";
         }
-        if (options.with_slurm) {
+        if (with_slurm) {
             command = "sbatch --wait --job-name=kez-install --wrap=" + shell_single_quote(command);
         }
         run_external_command(command);
@@ -187,6 +204,85 @@ namespace {
         if (error) {
             WARNING("Could not remove installation plan: " + error.message());
         }
+    }
+
+    void rebuild(const InstallOptions& options) {
+        if (options.read_file) {
+            ERROR("--rebuild cannot be combined with --read");
+            exit(EXIT_FAILURE);
+        }
+        if (!options.positional.empty()) {
+            ERROR("--rebuild does not accept package arguments");
+            exit(EXIT_FAILURE);
+        }
+        if (options.rebuild_package.empty()) {
+            ERROR("--rebuild requires a package name");
+            exit(EXIT_FAILURE);
+        }
+
+        const std::filesystem::path prefix = resolve_application_prefix(options.environment);
+        if (!std::filesystem::is_directory(prefix)) {
+            ERROR("Environment does not exist: " + prefix.string());
+            exit(EXIT_FAILURE);
+        }
+
+        const std::vector<std::string> installed = load_installed_packages(prefix);
+        if (std::find(installed.begin(), installed.end(), options.rebuild_package) ==
+            installed.end()) {
+            ERROR("Package '" + options.rebuild_package + "' is not installed in " +
+                  prefix.string());
+            exit(EXIT_FAILURE);
+        }
+
+        const YAML::Node user_config            = gen_user_config(installed, false);
+        const UserConfigParserSettings settings = load_user_config_parser_settings(prefix);
+        const BashCommandPlan plan              = parse_user_config(user_config, settings);
+
+        const std::vector<std::string> rebuild_set =
+            compute_rebuild_set(plan, options.rebuild_package);
+        std::string rebuild_list;
+        for (const std::string& package : rebuild_set) {
+            rebuild_list += (rebuild_list.empty() ? "" : " ") + package;
+        }
+        INFO("Rebuilding: " + rebuild_list);
+        const BashCommandPlan filtered = filter_plan(plan, rebuild_set);
+
+        if (options.dry_run) {
+            print_command_plan(filtered);
+            return;
+        }
+
+        // --force is required: every rebuild-set member is already recorded in state.yaml and
+        // would otherwise be skipped. The filtered plan contains only the rebuild set.
+        run_install_plan(prefix, filtered, settings, true, options.with_slurm);
+    }
+
+    void install(const CommandArguments& arguments, bool utility) {
+        bool help                    = false;
+        const InstallOptions options = parse_install_options(arguments, utility, help);
+        if (help) {
+            print_install_help(utility);
+            return;
+        }
+
+        if (options.rebuild) {
+            rebuild(options);
+            return;
+        }
+
+        YAML::Node user_config = load_install_config(options);
+        apply_cmdline_config(user_config, options.overrides);
+        const std::filesystem::path prefix =
+            installation_prefix(user_config, options.environment, utility);
+
+        const UserConfigParserSettings parser_settings = load_user_config_parser_settings(prefix);
+        const BashCommandPlan plan = parse_user_config(user_config, parser_settings);
+        if (options.dry_run) {
+            print_command_plan(plan);
+            return;
+        }
+
+        run_install_plan(prefix, plan, parser_settings, options.force, options.with_slurm);
     }
 
     void empty_utilities() {
