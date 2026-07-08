@@ -29,7 +29,7 @@ recipe:
         - zstd
 
     build:
-        postprocessing: $KEZ_HOME/tools/gcc_patch_linking.sh ${gcc.prefix}
+        postprocessing: $KEZ_HOME/tools/patch_gcc_linking.sh ${gcc.prefix}
 
         configurations:
             options:
