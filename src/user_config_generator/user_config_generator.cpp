@@ -32,7 +32,7 @@ namespace {
             return "system";
         }
 
-        const YAML::Node document = YAML::LoadFile(path.string());
+        const YAML::Node document = cached_yaml_load(path);
         if (!yaml_has(document, "settings")) {
             return "system";
         }

@@ -14,7 +14,7 @@ std::string advise(const std::string& abstract_package) {
     const std::filesystem::path advice_path =
         std::filesystem::path(kez_home) / "heuristics" / "advice.yaml";
 
-    const YAML::Node advice = YAML::LoadFile(advice_path.string())["advice"];
+    const YAML::Node advice = cached_yaml_load(advice_path)["advice"];
     if (yaml_has(advice, abstract_package) && yaml_has(advice[abstract_package], architecture)) {
         return yaml_scalar(advice[abstract_package][architecture],
                            "dependency advice for " + abstract_package);

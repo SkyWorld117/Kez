@@ -641,14 +641,14 @@ UserConfigParserSettings load_user_config_parser_settings(
     result.architecture   = arch_value;
 
     const std::filesystem::path work_directory = work_value;
-    const YAML::Node manifest = YAML::LoadFile((result.kez_home / "manifest.yaml").string());
+    const YAML::Node manifest = cached_yaml_load(result.kez_home / "manifest.yaml");
     result.system_prefix      = configured_path(manifest, work_directory, "system");
     result.compilers_prefix   = configured_path(manifest, work_directory, "compilers");
     result.mpis_prefix        = configured_path(manifest, work_directory, "mpis");
     result.vendors_prefix     = configured_path(manifest, work_directory, "vendors");
     result.cache_prefix       = configured_path(manifest, work_directory, "cache");
 
-    const YAML::Node config = YAML::LoadFile((work_directory / "config.yaml").string());
+    const YAML::Node config = cached_yaml_load(work_directory / "config.yaml");
     if (yaml_has(config, "settings")) {
         const YAML::Node settings = config["settings"];
         if (yaml_has(settings, "n_proc_for_build")) {
@@ -680,7 +680,7 @@ UserConfigParserSettings load_user_config_parser_settings(
     const std::filesystem::path architecture_path =
         result.kez_home / "heuristics" / "architecture.yaml";
     if (std::filesystem::is_regular_file(architecture_path)) {
-        const YAML::Node architecture = YAML::LoadFile(architecture_path.string());
+        const YAML::Node architecture = cached_yaml_load(architecture_path);
         if (yaml_has(architecture, "architecture")) {
             for (const auto& entry : architecture["architecture"]) {
                 const std::string variant = yaml_scalar(entry.first, "architecture variant");

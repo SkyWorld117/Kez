@@ -68,7 +68,7 @@ std::string package_type_name(PackageType type) {
 std::filesystem::path configured_work_path(const std::string& name) {
     const std::filesystem::path home = get_env_var("KEZ_HOME");
     const std::filesystem::path work = get_env_var("KEZ_WORKDIR");
-    const YAML::Node manifest        = YAML::LoadFile((home / "manifest.yaml").string());
+    const YAML::Node manifest        = cached_yaml_load(home / "manifest.yaml");
     if (!yaml_has(manifest, "paths") || !manifest["paths"].IsMap() ||
         !yaml_has(manifest["paths"], name)) {
         ERROR("Invalid manifest: paths." + name + " is missing");
