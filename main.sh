@@ -20,7 +20,7 @@ kez () {
 
     if [ ! -f "${KEZ_HOME}/bin/kez" ]; then
         if [ "${1:-}" == "init" ]; then
-            echo "[W]: ${PROJECT} is not initialized. Running initialization process..."
+            echo "[W]: Kez is not initialized. Running initialization process..."
 
             local cmd="bash ${KEZ_HOME}/scripts/init.sh"
 
