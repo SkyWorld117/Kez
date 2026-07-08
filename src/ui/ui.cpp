@@ -13,7 +13,7 @@ namespace {
                      "  init        Initialize or refresh the Kez toolchain\n"
                      "  update      Update the source tree and rebuild Kez\n"
                      "  install     Install packages into an environment\n"
-                     "  template    Generate or inspect a user configuration\n"
+                     "  uconf       Generate or inspect a user configuration\n"
                      "  utilities   Manage the shared utilities environment\n"
                      "  env         Manage application environments\n"
                      "  compiler    Manage installed compiler environments\n"
@@ -55,8 +55,8 @@ void run_ui(int argc, char* argv[]) {
         execute_install(arguments);
     } else if (command == "utilities") {
         execute_utilities(arguments);
-    } else if (command == "template") {
-        execute_template(arguments);
+    } else if (command == "config") {
+        execute_uconf(arguments);
     } else if (command == "env") {
         execute_environment(arguments);
     } else if (command == "compiler") {

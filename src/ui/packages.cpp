@@ -42,7 +42,7 @@ namespace {
         return "unknown";
     }
 
-    void print_template_help() { std::cout << "Usage: kez template <package>... [--save FILE]\n"; }
+    void print_uconf_help() { std::cout << "Usage: kez uconf <package>... [--save FILE]\n"; }
 
     std::string property_value(const Property& property) {
         if (std::holds_alternative<std::string>(property.data)) {
@@ -54,9 +54,9 @@ namespace {
     }
 }  // namespace
 
-void execute_template(const CommandArguments& arguments) {
+void execute_uconf(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
-        print_template_help();
+        print_uconf_help();
         return;
     }
 
