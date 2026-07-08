@@ -55,7 +55,7 @@ void run_ui(int argc, char* argv[]) {
         execute_install(arguments);
     } else if (command == "utilities") {
         execute_utilities(arguments);
-    } else if (command == "config") {
+    } else if (command == "uconf") {
         execute_uconf(arguments);
     } else if (command == "env") {
         execute_environment(arguments);
