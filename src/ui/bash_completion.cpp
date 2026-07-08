@@ -90,9 +90,6 @@ namespace {
         for (std::filesystem::directory_iterator current(directory, error), end;
              !error && current != end; current.increment(error)) {
             std::string suggestion = prefix + current->path().filename().string();
-            if (current->is_directory(error)) {
-                suggestion += "/";
-            }
             result.push_back(std::move(suggestion));
         }
         return result;
