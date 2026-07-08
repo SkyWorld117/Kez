@@ -71,7 +71,7 @@ settings:
       version:
 ```
 
-`n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes. We will talk about this more in the [`stages`](03-Database_Configuration_Format.md#stages) section.
+`n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes.
 
 `default_compiler` specifies the default compiler to use when building packages. It can be set to `system` or a specific compiler in the `compilers` environment in the format of `<vendor>@<version>`. For example, if you have a GCC 11.4.0 installed in the `compilers` environment, you can set it to `gcc@11.4.0`.
 
@@ -125,15 +125,13 @@ You can find all available commands and their documentation by running
 kez --help
 ```
 
+See the [CLI Reference](cli-reference.md) for a complete list of commands.
+
 ### Logic and Terminologies
 
-We first introduce the non-conventional terminologies:
-
-- Kez, or in commands as `kez` for short, refers to the package manager
-- Environment, an isolated folder that contains the target packages
-- Recipe, a configuration file for a package, appears as the root key in user configuration files and database configuration files
-
-In HPC workflow, we would like to achieve coexistence of multiple versions and configurations of one single application.
+- **Kez**: The package manager (the `kez` command).
+- **Environment**: An isolated folder that contains the target packages.
+- **Recipe**: A configuration file for a package, appears as the root key in user configuration files and database configuration files.
 
 ## Uninstalling and Reinstalling Kez
 

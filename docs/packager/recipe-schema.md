@@ -1,0 +1,303 @@
+# Recipe Schema
+
+This document describes the YAML schema for package recipes in the database. Each package has a directory under `database/<package_name>/` containing a `latest.yaml` file.
+
+```
+database/
+ ├── gcc/
+ │   └── latest.yaml
+ ├── openmpi/
+ │   └── latest.yaml
+ ├── zlib/
+ │   └── latest.yaml
+ ├── scotch/
+ │   ├── latest.yaml
+ │   └── 6.1.3-6.1.3.yaml   # Version-specific recipe
+ ...
+```
+
+Most packages contain a single `latest.yaml` file. A package may also hold
+version-specific files named `<version>.yaml` alongside `latest.yaml`. Both
+formats are parsed identically.
+
+
+## Concrete Package Format
+
+All concrete (non-abstract) packages share this structure. Optional fields are marked
+with _(optional)_.
+
+```yaml
+recipe:
+  name: <package_name>
+  description: <package_description>       # _(optional)_
+  author: <author_name>                    # _(optional)_
+  type: <package_type>
+  toolchain: <toolchain_name>              # _(optional)_
+  source: <source_definition>              # _(optional)_
+  dependencies: <dependencies>             # _(optional)_
+  overrides: <overrides>                   # _(optional)_
+  build:                                   # _(optional)_
+    preprocessing: <preprocessing_commands>
+    postprocessing: <postprocessing_commands>
+    configurations: <configuration_definition>
+    stages: <build_stages>
+  properties: <properties_definition>      # _(optional)_
+```
+
+### `type`
+
+Determines where the package is installed:
+
+| Type | Installation path | Notes |
+|---|---|---|
+| `package` | `env/applications/<env_name>` | Regular applications (90 packages) |
+| `system` | `env/system` | Core toolchain libraries (8 packages) |
+| `compiler` | `env/compilers/<name>-<version>` | Compiler installations (2 packages) |
+| `mpi` | `env/mpis/<name>-<version>-<compiler>` | MPI implementations (2 packages) |
+| `vendor` | `env/vendors/<name>-<version>` | Vendor SDKs (8 packages) |
+| `external` | (configured in `config.yaml`) | System-provided packages (4 packages) |
+| `abstract` | Not installed directly | Interface to concrete packages (see below) |
+
+### `source`
+
+Describes how Kez fetches the source code or prebuilt binaries.
+
+| Source type | Count | Description |
+|---|---|---|
+| `tarball` | 79 | `.tar.gz`, `.tar.xz`, `.tgz` archives |
+| `git` | 22 | Git repository (uses `tag` field) |
+| `script` | 3 | Self-contained installer script |
+| `zip` | 2 | `.zip` archives |
+
+```yaml
+source:
+  type: git | tarball | zip | script
+  url: <repository_or_download_url>          # Used for git repos, or as fallback URL
+  releases:
+    - version: <release_version>
+      url: <release_specific_url>            # Overrides top-level url for tarball/zip/script
+      tag: <release_tag>                     # Used if type is `git`
+```
+
+For `script` type, `url` is optional — the script logic goes in `preprocessing`/`postprocessing`.
+
+### `dependencies`
+
+A simple YAML list of package names. Version constraints are not yet supported.
+
+```yaml
+dependencies:
+  - zlib
+  - hdf5
+  - boost
+```
+
+### `toolchain`
+
+| Toolchain | Count | Behaviour |
+|---|---|---|
+| `autotools` | 50 | Generates `./configure` commands with `--`-prefixed options |
+| `cmake` | 29 | Generates `cmake ..` commands with `-D`-prefixed options |
+| `make` | 11 | Plain `make`; options are injected as environment variables |
+| _(none)_ | 30 | No standard build-system wrappers; use `preprocessing`/`postprocessing` |
+
+Abstract and external packages do not have a toolchain. Vendor packages using a
+`script` source type also typically have no toolchain — their installation logic
+goes in `preprocessing`/`postprocessing`.
+
+### `overrides`
+
+Modifies build parameters of dependencies. Defined in the schema but not currently
+used by any package in the database. The `target` can be any template variable.
+
+```yaml
+overrides:
+  - condition: <condition>
+    target: <template_variable>
+    action: append | prepend | set    # default: set
+    value: <value>
+```
+
+### `build`
+
+#### `configurations`
+
+```yaml
+configurations:
+  command: <configuration_command>          # Overrides the default build command (rare)
+  environment:
+    - <environment_variable_definition>
+  options:
+    - <option_definition>
+```
+
+The `command` field overrides the build command for the toolchain entirely.
+Used by a few packages with custom build systems (e.g., `boost` uses `./b2`,
+`openfoam` sources a setup script before building).
+
+If `configurations` is empty (`{}`), the toolchain default is used with no
+custom options or environment variables.
+
+#### `stages`
+
+```yaml
+stages:
+  - target: <make_target>
+    multithreaded: true | false        # default: true
+    configurations: <configurations_list>
+  - ...
+```
+
+A `target` of `~` (null) means the default target.
+
+Some packages have no `stages` at all, only `preprocessing`/`postprocessing`.
+These are typically binary installers that copy prebuilt files rather than
+compiling from source (e.g., `cmake`, `cuda`, `nodejs`).
+
+#### `environment`
+
+```yaml
+environment:
+  - name: <variable_name>
+    description: <variable_description>
+    user_configurable: true | false    # default: false
+    default: <value>
+    conditions: <conditions_block>
+```
+
+#### `options`
+
+```yaml
+options:
+  - name: <option_name>
+    description: <option_description>
+    user_configurable: true | false    # default: false
+    enabled:
+      default: true | false
+      conditions: <conditions_block>
+    enabled_format: <format_string>    # e.g., "enable-feature" — default: <option_name>
+    disabled_format: <format_string>   # e.g., "disable-feature" — default: empty (skip flag)
+    requires: [<dependency_name>]
+    enabled_value:
+      default: <value>
+      conditions: <conditions_block>
+    disabled_value:
+      default: <value>
+      conditions: <conditions_block>
+```
+
+**Naming rules:**
+
+| Toolchain | Prefix added | Example |
+|---|---|---|
+| Autotools | `--` | `enable-mpi` → `--enable-mpi` |
+| CMake | `-D` | `BUILD_SHARED_LIBS` → `-DBUILD_SHARED_LIBS` |
+| Make / _(none)_ | (none) | `CFLAGS` stays `CFLAGS=...` |
+
+Existing leading prefixes in option names are accepted for custom commands and
+backward compatibility. The user-config generator supplies standard toolchain options
+(install prefix, compilers, language flags, linker flags) when the database does not
+declare them; a database option with the same logical name takes precedence.
+
+#### `conditions`
+
+```yaml
+conditions:
+  - condition: <condition_expression>
+    action: append | prepend | set    # default: set
+    value: <value>
+```
+
+Conditions are evaluated top-to-bottom. The value of the first `set` action whose
+condition matches is used. Actions `append` and `prepend` modify the value from previous
+matching conditions.
+
+**Condition syntax (EBNF):**
+
+```ebnf
+condition =
+    "environment" <variable> |
+    <option> <enabled> [<enabled_value>] |
+    <option> <disabled> [<disabled_value>] |
+    "version" <self.version><op><version>[,<op><version>] |
+    <condition> && <condition> |
+    <condition> || <condition> |
+    "not" <condition> |
+    "(" <condition> ")" |
+    true | false
+```
+
+### `properties`
+
+```yaml
+properties:
+  parent: <parent_package>              # For submodules of vendor packages
+  prefix: <custom_prefix>               # Overrides the default package prefix
+  c: <c_compiler>                       # For compiler or mpi types
+  cxx: <cxx_compiler>                   # For compiler or mpi types
+  fort: <fortran_compiler>              # For compiler or mpi types
+  omp_flags: <omp_flags>                # For compiler or mpi types
+  include: ${package.prefix}/include
+  lib: ${package.prefix}/lib
+  libs:
+    default: <default_libs>
+    conditions:
+      - condition: <condition>
+        value: <libs_value>
+```
+
+`include` and `lib` contain paths, not compiler flags. The parser derives
+`${package.includes}`, `${package.ldflags}`, and `${package.nvldflags}` from them.
+Explicit `includes`, `ldflags`, or `nvldflags` properties override the derived form.
+
+For Autotools and CMake configurations, raw include/library paths from selected
+dependencies are written to generated compile/link options automatically. Linker/RPATH
+syntax is selected from the package's configured compiler (`-Wl,...` for GNU-compatible
+drivers, `-Xlinker ...` for NVIDIA).
+
+
+## Abstract Package Format
+
+Abstract packages serve as interfaces that redirect to concrete implementations.
+They live in the same database directory structure.
+
+```yaml
+recipe:
+  name: <abstract_package_name>
+  description: <abstract_package_description>
+  type: abstract
+  implementations:
+    - <concrete_package_1>
+    - <concrete_package_2>
+```
+
+Abstract packages typically have no `source`, `build`, `dependencies`, or `properties`
+sections. The concrete packages define their properties under the abstract package name
+to provide a unified interface. For example, `openmpi` defines `mpi.c`, `mpi.cxx`,
+`mpi.fort` so that dependencies can reference `mpi.cxx` regardless of which MPI is
+selected.
+
+When generating a user configuration, the system asks the user to choose an
+implementation. When installing via command line, the system uses the
+[advisor lookup table](../../src/dependency_resolver/advisor.cpp) for automatic selection.
+
+
+## Configuration Guidelines
+
+1. **Use a field only if it is necessary.** Omit optional sections that are not needed.
+2. **Use default values.** Skip `conditions` if the default value suffices.
+3. **Use conditions wisely.** Within a package, conditions must only depend on entries
+   defined earlier in the same package. Conditions in `build` must not depend on
+   non-leaf `properties` entries.
+4. **Keep it simple.** Avoid unnecessary complexity.
+5. **Write descriptions.** Every description field helps users understand the purpose
+   of a configuration item.
+
+## Notes
+
+- **YAML anchors** (`&name` / `*name`) may be used within a recipe to reuse the same
+  configuration block across multiple stages. See `database/ascot5/latest.yaml` for an
+  example.
+- **The `recipe:` root key** distinguishes database files from user configuration files,
+  which use a `kez:` root key. Archived example configurations in `archive/` use the
+  `kez:` format — see [User Configuration Format](user-config-format.md) for details.
