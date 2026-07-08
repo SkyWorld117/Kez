@@ -1,6 +1,19 @@
 # Database Configuration Format
 
-This document outlines the general format for configuration files used in the database. The configuration files are typically written in YAML format and are used to define various aspects of the build environment, configurations, properties etc. 
+This document outlines the general format for configuration files used in the database. The configuration files are typically written in YAML format and are used to define various aspects of the build environment, configurations, properties etc.
+
+The database is organized as one directory per package under `database/`, each containing a `latest.yaml` file. For example:
+
+```
+database/
+ ├── gcc/
+ │   └── latest.yaml
+ ├── openmpi/
+ │   └── latest.yaml
+ ├── zlib/
+ │   └── latest.yaml
+ ...
+```
 
 
 ## General Structure
@@ -43,7 +56,7 @@ source:
     - ...
 ```
 
-Notice that if the type is `script`, `url` does not have to exist. This is due to the consideration that some installation methods may already exist as a helper script under `bin/`, e.g. the NVPL installer. In such cases, package developers can ignore the `url` entry and use the script in the `preprocessing` or `postprocessing` stage instead.
+Notice that if the type is `script`, `url` does not have to exist. This is due to the consideration that some installation methods may already exist as a helper script under `scripts/`, e.g. the NVPL installer. In such cases, package developers can ignore the `url` entry and use the script in the `preprocessing` or `postprocessing` stage instead.
 
 ### `dependencies`
 
@@ -65,7 +78,7 @@ overrides:
 
 #### `configurations`
 
-A configuration blocks is defined as follows
+A configuration block is defined as follows
 
 ```yaml
 configurations:
@@ -155,14 +168,14 @@ Actions change the behavior of the value of a variable or an option. Notice that
 At last, we define the format of a `condition` using EBNF:
 
 ```ebnf
-condition = 
-    "environment" <variable> | 
-    <option> <enabled> [<enabled_value>] | 
-    <option> <disabled> [<disabled_value>] | 
+condition =
+    "environment" <variable> |
+    <option> <enabled> [<enabled_value>] |
+    <option> <disabled> [<disabled_value>] |
     "version" <self.version><op><version>[,<op><version>] |
-    <condition> && <condition> | 
-    <condition> || <condition> | 
-    "not" <condition> | 
+    <condition> && <condition> |
+    <condition> || <condition> |
+    "not" <condition> |
     "(" <condition> ")" |
     true | false
 ```

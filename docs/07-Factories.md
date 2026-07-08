@@ -11,26 +11,44 @@ A factory is a module that performs batch instantiation of configurations and pr
 ```
 ${KEZ_WORKDIR}/factories/
  ├── factory_A/
-     ├── recipes/
-     ├── buildspace/
-     ├── runspace/
-         ├── config.yaml
- ├── factory_B/
- ├── ...
+     ├── recipes/           # User configuration YAML files (one per build)
+     ├── buildspace/        # Instantiated packages based on the recipes
+     ├── runspace/          # Profiling results of the instantiated configurations
+         ├── config.yaml    # Runtime configuration (profile definitions)
+     ├── factory_B/
+     ├── ...
 ```
 
-- `config.yaml`: This file contains the profile (runtime configuration) for the factory.
-- `recipes/`: This directory contains the user configuration files to be processed by the factory.
-- `buildspace/`: This directory contains the instantiated packages (buildspace) based on the user configurations.
-- `runspace/`: This directory contains the profiling results of the instantiated configurations.
+- `recipes/`: This directory contains the user configuration files to be processed by the factory. Each YAML file becomes a named buildspace.
+- `buildspace/`: This directory contains the installed packages (one subdirectory per recipe) based on the user configurations.
+- `runspace/`: This directory contains the profiling results of the instantiated configurations, organized as `buildspace_profile` subdirectories.
+- `config.yaml` (`runspace/config.yaml`): This file contains the runtime profile configuration for the factory.
 
 ## Factory Workflow
 
 Users are expected to create a factory first with `kez factory create <factory_name>`. After populating the `recipes/` directory with [user configuration files](06-User_Configuration_Format.md), one can enter the factory directory (`kez factory enter <factory_name>`) and instantiate all configurations with `kez factory build` and profile them with `kez factory run`.
 
+```bash
+kez factory create my-factory
+# Place recipe YAML files into $KEZ_WORKDIR/factories/my-factory/recipes/
+kez factory enter my-factory
+kez factory build                  # Build all recipes
+kez factory run                    # Run all profiles
+kez factory summarize              # Extract summary lines from output
+kez factory exit
+```
+
+Build options:
+
+| Option | Description |
+|---|---|
+| `-d, --dry-run` | Show installation commands without executing them |
+| `-f, --force` | Reinstall packages already recorded in state.yaml |
+| `-S, --with-slurm` | Run the installation script through sbatch |
+
 ## Runtime Profile Format
 
-The `config.yaml` file describes the runtime configuration for each buildspace in the factory. In general, it follows the following format:
+The `runspace/config.yaml` file (or, for backward compatibility, `config.yaml` at the factory root) describes the runtime configuration for each buildspace in the factory. In general, it follows the following format:
 
 ```yaml
 factory:
@@ -54,7 +72,7 @@ Where the `run_configuration` contains the specific launch parameters for profil
 
 ```yaml
 name: <profile_name> # A unique name for this profile. A runspace directory with `<buildspace_name>_<profile_name>` will be created to store the profiling results.
-sibling: <profile_sibling> # (Optional) The name of another profile in the same cellar, will ignore all the other fields and use the same configuration as the sibling profile
+sibling: <profile_sibling> # (Optional) The name of another profile in the same buildspace, will ignore all the other fields and use the same configuration as the sibling profile
 inputs: <input_directory> # Files in this directory will be copied to the runspace before running
 prerun: <prerun_script> # A one-liner script to be executed before running the main command
 target: <main_launch_command> # The main command to be executed, will be wrapped around with Slurm or MPI if specified
@@ -72,3 +90,5 @@ gpus_per_proc: <number_of_GPUs_per_process> # Number of GPUs per process (if app
 ```
 
 Since certain fields may share the same configuration, both `factory` and `buildspace` levels support `inputs`, `prerun`, `target`, `postrun`, `summary_regex`, `launcher`, `launcher_opts`, `scheduler` and `scheduler_opts`. Their values can be overwritten at the lower level, but if a field is not specified at the lower level, it will inherit the value from the higher level.
+
+Profile siblings are resolved by name within the same buildspace. Buildspace siblings are resolved across the top-level `buildspace` list. Cycle detection prevents infinite sibling recursion in both cases.

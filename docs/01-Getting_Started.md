@@ -12,7 +12,7 @@ Kez is supposed to run on Linux systems. It heavily relies on the GNU toolchain.
 - tar
 - gettext (autopoint)
 
-Since Kez is an HPC-focused package manager, it is designed to work seamlessly with HPC Linux distributions such as CentOS, Rocky Linux, and RHEL. It is tested on Rocky Linux. 
+Since Kez is an HPC-focused package manager, it is designed to work seamlessly with HPC Linux distributions such as CentOS, Rocky Linux, and RHEL. It is tested on Rocky Linux.
 
 ## Download
 
@@ -26,7 +26,7 @@ After cloning the repository, you can place it anywhere you like, including your
 
 ## Initialization of Kez Environment
 
-Kez requires a directory to store its configurations and cellars (which contain all the packages you install). You can specify it using the environment variable `KEZ_WORKDIR`. 
+Kez requires a directory to store its configurations and environments (which contain all the packages you install). You can specify it using the environment variable `KEZ_WORKDIR`.
 
 For example, it can be a good choice to set it to a directory with ample space, such as the scratch filesystem:
 ```bash
@@ -42,7 +42,7 @@ source setup-env.sh
 
 For the first time you run `setup-env.sh`, you will be asked to configure the configuration file listed in the next section. After that, you can simply run `source setup-env.sh` again to load the Kez environment variables and functions.
 
-It is recommended to add both of the commands to your `.bashrc`. 
+It is recommended to add both of the commands to your `.bashrc`.
 
 ## Configuring
 
@@ -56,35 +56,26 @@ settings:
 
   default_compiler: system
 
-  paths:
-    cellars: cellars
-    system: cellars/system
-    utilities: cellars/utilities
-    compilers: cellars/compilers
-    mpis: cellars/mpis
-    vendors: cellars/vendors
-    factories: factories
-
   external:
     rdma-core:
-      prefix: ~
-      version: ~
+      prefix:
+      version:
     hcoll:
-      prefix: ~
-      version: ~
+      prefix:
+      version:
     gdrcopy:
-      prefix: ~
-      version: ~
+      prefix:
+      version:
     slurm:
-      prefix: ~
-      version: ~
+      prefix:
+      version:
 ```
 
-`n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes. We will talk about this more in the [`stages`](03-Database_Configuration_Format.md#stages) section. 
+`n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes. We will talk about this more in the [`stages`](03-Database_Configuration_Format.md#stages) section.
 
-`default_compiler` specifies the default compiler to use when building packages. It can be set to `system` or a specific compiler in the `compilers` cellar in the format of `<vendor>@<version>`. For example, if you have a GCC 11.4.0 installed in the `compilers` cellar, you can set it to `gcc@11.4.0`.
+`default_compiler` specifies the default compiler to use when building packages. It can be set to `system` or a specific compiler in the `compilers` environment in the format of `<vendor>@<version>`. For example, if you have a GCC 11.4.0 installed in the `compilers` environment, you can set it to `gcc@11.4.0`.
 
-`external` contains a list of external dependencies that Kez is supposed to use. These are usually libraries that are not supposed to be built by the users of a cluster, as they may cause ABI incompatibilities if the package versions mismatch the driver versions. Kez will not use them if the entries are left as `~`, which means "null". 
+`external` contains a list of external dependencies that Kez is supposed to use. These are usually libraries that are not supposed to be built by the users of a cluster, as they may cause ABI incompatibilities if the package versions mismatch the driver versions. Kez will not use them if the entries are left empty (null).
 
 Users are supposed to find the packages installed by their system administrators or contact them if certain packages are not available.
 
@@ -102,8 +93,8 @@ settings:
       prefix: /opt/mellanox/hcoll
       version: 4.8.3227
     gdrcopy:
-      prefix: ~
-      version: ~
+      prefix:
+      version:
 ```
 
 ## Initialization of Kez Toolchain
@@ -115,32 +106,38 @@ This process takes however quite some time and compute power, so it is recommend
 You can initialize the toolchain by running the following command:
 
 ```bash
-fgr init
+kez init
 ```
 
-It is recommended to run this command on the login node or a compute node with full compiling toolchain installed. The essential packages are listed above.
+You can also initialize using a distro-provided compiler instead of building one from scratch:
+
+```bash
+kez init --use-distro-compiler
+```
+
+It is recommended to run this command on the login node or a compute node with full compiling toolchain installed. The essential packages are listed in `manifest.yaml`.
 
 ## Usage
 
 You can find all available commands and their documentation by running
 
 ```bash
-fgr --help
+kez --help
 ```
 
 ### Logic and Terminologies
 
 We first introduce the non-conventional terminologies:
 
-- Kez, or in commands as `fgr` for short, refers to the package manager
-- Cellar, an isolated folder that contains the target packages
-- Cheese, a configuration file for a package, appears as the header in user configuration files and database configuration files
+- Kez, or in commands as `kez` for short, refers to the package manager
+- Environment, an isolated folder that contains the target packages
+- Recipe, a configuration file for a package, appears as the root key in user configuration files and database configuration files
 
-In HPC workflow, we would like to achieve coexistence of multiple versions and configurations of one single application, thus it is 
+In HPC workflow, we would like to achieve coexistence of multiple versions and configurations of one single application.
 
 ## Uninstalling and Reinstalling Kez
 
-To uninstall Kez, you can simply remove the cloned repository and the `Kez_WORKDIR`:
+To uninstall Kez, you can simply remove the cloned repository and the `KEZ_WORKDIR`:
 
 ```bash
 rm -rf Kez
