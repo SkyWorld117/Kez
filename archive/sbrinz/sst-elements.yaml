@@ -1,0 +1,116 @@
+---
+kez:
+    sst-elements:
+        description: Structural Simulation Toolkit Elements
+        version: scc25
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${sst-elements.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${sst-core.includes} ${mpi.includes} ${python.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${sst-core.includes} ${mpi.includes} ${python.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${sst-core.includes} ${mpi.includes} ${python.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${sst-core.includes} ${mpi.includes} ${python.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${sst-core.ldflags} ${mpi.ldflags} ${python.ldflags}
+    sst-core:
+        description: Structural Simulation Toolkit Core
+        version: scc25
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: CXXFLAGS
+                      description: C++ compiler flags
+                      enabled: true
+                      enabled_value: -O3
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${sst-core.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.includes} ${python.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${mpi.includes} ${python.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${mpi.includes} ${python.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${python.ldflags}
+    python:
+        description: Python Programming Language
+        version: 3.13.9
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${python.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags}
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+recipe:
+    abstract_packages:
+        mpi: openmpi
+    dependencies:
+        - sst-elements
+        - sst-core
+        - python
+        - openmpi
+    targets:
+        - sst-elements

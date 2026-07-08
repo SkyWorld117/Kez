@@ -1,0 +1,369 @@
+---
+kez:
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-memchecker
+                      description: Enable memory and buffer checks
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: with-mpi-param-check
+                      description: Enable MPI parameter checking [always | runtime | never]
+                      enabled: true
+                      enabled_value: never
+                    - name: with-oshmem-param-check
+                      description: Enable OpenSHMEM parameter checking [always | never]
+                      enabled: true
+                      enabled_value: never
+                    - name: with-cuda
+                      description: Build with CUDA support
+                      enabled: false
+                      enabled_value: ${cuda.prefix}
+                      requires:
+                          - cuda
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${openmpi.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes} 
+                          ${cuda.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes}
+                          ${cuda.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes}
+                          ${cuda.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes}
+                          ${cuda.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} 
+                          ${numactl.ldflags} ${cuda.ldflags}
+    ucx:
+        description: Unified Communication X
+        version: 1.20.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: use_cuda
+                      description: Enable CUDA support
+                      enabled: false
+                      enabled_value: ${cuda.prefix}
+                      requires:
+                          - cuda
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${ucx.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${rdma-core.includes} ${cuda.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${rdma-core.ldflags} ${cuda.ldflags}
+    rdma-core:
+        description: RDMA core userspace libraries and daemons
+    prrte:
+        description: PMIx Reference RunTime Environment
+        version: 4.0.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${prrte.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+    pmix:
+        description: Process Management Interface for Exascale
+        version: 6.0.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${pmix.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${hwloc.includes} ${libevent.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags}
+    numactl:
+        description: NUMA support for Linux
+        version: 2.0.19
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${numactl.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags}
+    libevent:
+        description: Event notification library
+        version: 2.1.12
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libevent.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${openssl.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${openssl.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${openssl.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${openssl.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${openssl.ldflags}
+    openssl:
+        description: OpenSSL is a robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication over 
+            computer networks.
+        version: 3.5.2
+        compiler: system
+    hwloc:
+        description: Hardware Locality
+        version: 2.12.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: use_cuda
+                      description: Use CUDA support
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${hwloc.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags} ${cuda.ldflags}
+    libxml2:
+        description: A library for parsing XML documents.
+        version: 2.14.5
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libxml2.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${zlib.includes} ${xz.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes} ${xz.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes} ${xz.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes} ${xz.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${xz.ldflags}
+    libpciaccess:
+        description: Generic PCI access library.
+        version: 0.17
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libpciaccess.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${zlib.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${zlib.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags}
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
+recipe:
+    abstract_packages: {}
+    dependencies:
+        - openmpi
+        - ucx
+        - rdma-core
+        - prrte
+        - pmix
+        - numactl
+        - libevent
+        - openssl
+        - hwloc
+        - libxml2
+        - xz
+        - libpciaccess
+        - lz4
+        - zlib
+        - cuda
+    targets:
+        - openmpi

@@ -1,0 +1,48 @@
+---
+kez:
+    osu:
+        description: Ohio State University Micro-Benchmarks
+        version: 7.5.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${osu.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.includes}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${mpi.includes}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${mpi.includes}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 ${mpi.includes}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags}
+    mvapich:
+        description: High-Performance MPI Library for InfiniBand and RDMA
+        version: 4.1
+        compiler: system
+recipe:
+    abstract_packages:
+        mpi: mvapich
+    dependencies:
+        - osu
+        - mvapich
+    targets:
+        - osu

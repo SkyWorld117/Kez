@@ -20,7 +20,7 @@ recipe:
         - fftw3-api
         - kahip
         - metis
-        - scotch6
+        - scotch
         - gmp
         - mpfr
 
@@ -34,7 +34,7 @@ recipe:
               -fftw-path ${fftw3-api.prefix} \
               -kahip-path ${kahip.prefix} \
               -metis-path ${metis.prefix} \
-              -scotch-path ${scotch6.prefix}
+              -scotch-path ${scotch.prefix}
             set -u
 
         configurations:
