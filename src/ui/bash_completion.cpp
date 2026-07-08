@@ -235,7 +235,7 @@ namespace {
     }
 
     std::vector<std::string> uconf_suggestions(int current_word_index,
-                                                  const std::vector<std::string>& words) {
+                                               const std::vector<std::string>& words) {
         const std::string current  = word_at(words, current_word_index);
         const std::string previous = word_at(words, current_word_index - 1);
 
