@@ -7,7 +7,7 @@ recipe:
         type: tarball
         releases:
             - version: 26.5
-              url: https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_x86_64_cuda_13.2.tar.gz
+              url: https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_${kez.arch}_cuda_13.2.tar.gz
             - version: 26.3
               url: https://developer.download.nvidia.com/hpc-sdk/26.3/nvhpc_2026_263_Linux_${kez.arch}_cuda_13.1.tar.gz
             - version: 25.7
