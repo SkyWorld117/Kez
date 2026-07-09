@@ -1,0 +1,15 @@
+---
+recipe:
+    name: nvhpc-nccl
+    description: NVIDIA Communications Collective Library (NCCL) for NVIDIA HPC SDK
+    type: vendor
+
+    dependencies:
+        - nvhpc
+
+    properties:
+        parent: nvhpc
+        prefix: ${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/comm_libs/nccl
+        lib: ${nvhpc-nccl.prefix}/lib
+        libs:
+            default: -lnccl

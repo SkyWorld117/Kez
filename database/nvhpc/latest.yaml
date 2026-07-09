@@ -6,6 +6,8 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 26.5
+              url: https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_x86_64_cuda_13.2.tar.gz
             - version: 26.3
               url: https://developer.download.nvidia.com/hpc-sdk/26.3/nvhpc_2026_263_Linux_${kez.arch}_cuda_13.1.tar.gz
             - version: 25.7
@@ -17,15 +19,3 @@ recipe:
             NVHPC_SILENT=true NVHPC_INSTALL_DIR=${nvhpc.prefix} ${source}/install
 
     properties:
-        nccl_ldflags:
-            default: -L${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/comm_libs/nccl/lib 
-                -Wl,-rpath,${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/comm_libs/nccl/lib
-        nccl_libs:
-            default: -lnccl
-        nccl_prefix:
-            default: ${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/comm_libs/nccl
-        nvshmem_ldflags:
-            default: -L${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/comm_libs/nvshmem/lib 
-                -Wl,-rpath,${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/comm_libs/nvshmem/lib
-        nvshmem_libs:
-            default: -lnvshmem

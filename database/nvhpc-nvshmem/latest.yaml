@@ -1,0 +1,16 @@
+---
+recipe:
+    name: nvhpc-nvshmem
+    description: NVIDIA SHMEM library for high-performance shared memory programming
+    type: vendor
+
+    dependencies:
+        - nvhpc
+
+    properties:
+        parent: nvhpc
+        prefix: ${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/comm_libs/nvshmem
+        lib: ${nvhpc-nvshmem.prefix}/lib
+        libs:
+            default: -lnvshmem
+        include: ${nvhpc-nvshmem.prefix}/include
