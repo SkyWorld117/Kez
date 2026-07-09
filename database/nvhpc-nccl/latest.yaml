@@ -13,3 +13,4 @@ recipe:
         lib: ${nvhpc-nccl.prefix}/lib
         libs:
             default: -lnccl
+        include: ${nvhpc-nccl.prefix}/include
