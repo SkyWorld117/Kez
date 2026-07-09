@@ -109,4 +109,4 @@ Testing is done similarly via `make -j test`. Notice that running the tests does
 
 The documentation is located in the `docs/` directory. It contains structured guides and references for both users and developers. 
 
-Next to the documentation, it is also required to write doxygen-style comments in the codebase. This will allow for automatic generation of API documentation. Run `doxygen` at the root of the project to generate the documentation. DO NOT PUSH THE GENERATED DOCUMENTATION TO THE REPOSITORY. It is only meant for local use.
+Next to the documentation, it is also required to write doxygen-style comments in the codebase. This will allow for automatic generation of API documentation. Run `doxygen` at the root of the project to generate the documentation. DO NOT PUSH THE GENERATED DOCUMENTATION TO THE REPOSITORY. It is only meant for local use. The detailed documentation should be placed in the header files, and in the source files only if the interface is not exposed in the header files.
