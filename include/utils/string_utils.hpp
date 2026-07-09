@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <string>
 #include <type_traits>
 #include <utils/dump.hpp>
