@@ -5,12 +5,6 @@
 #include <utils/string_utils.hpp>
 #include <vector>
 
-/**
- * @brief Describes a version-range config file for a package.
- *
- * Each instance represents one `<start>-<end>.yaml` file found inside a
- * package's database directory.  The range is inclusive on both ends.
- */
 struct ConfigRange {
     std::string start;           ///< Lower bound of the version range (inclusive).
     std::string end;             ///< Upper bound of the version range (inclusive).
@@ -53,14 +47,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Select the best-matching config YAML for a given package and version.
- *
- * Searches the package's database directory for version-range files
- * (`<start>-<end>.yaml`), validates they are disjoint and sorted, then
- * returns the path whose range contains @p version.  Falls back to
- * `latest.yaml` if no range matches or @p version is empty / "latest".
- */
 std::filesystem::path select_config_path(const std::filesystem::path& database_path,
                                          const std::string& package_name,
                                          const std::string& version) {
@@ -121,12 +107,6 @@ std::filesystem::path select_config_path(const std::filesystem::path& database_p
     return latest_path;
 }
 
-/**
- * @brief Validate that a package name is a plain, non-empty leaf name.
- *
- * Rejects empty strings, `.`, `..`, names with a parent path, and names
- * that the filesystem would interpret as a path (e.g. containing `/`).
- */
 void validate_package_name(const std::string& package_name) {
     const std::filesystem::path path(package_name);
     if (package_name.empty() || package_name == "." || package_name == ".." ||

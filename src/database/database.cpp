@@ -23,7 +23,6 @@ namespace {
     std::unordered_map<std::string, PackageConfigPtr> db_cache;
 }  // namespace
 
-/** @brief Parses the configuration for a specific version of a package, consulting the module-level cache to avoid re-parsing the same filesystem path. */
 PackageConfigPtr get_db_config(const std::string& package_name, const std::string& version) {
     validate_package_name(package_name);
     std::filesystem::path database_env = get_env_var("KEZ_DB");
@@ -43,10 +42,8 @@ PackageConfigPtr get_db_config(const std::string& package_name, const std::strin
     return inserted ? config : iterator->second;
 }
 
-/** @brief Overload that defaults the version to "latest" before delegating to the two-parameter overload. */
 PackageConfigPtr get_db_config(const std::string& package_name) {
     return get_db_config(package_name, "latest");
 }
 
-/** @brief Evicts all entries from the module-level cache, forcing re-parsing on the next lookup. */
 void clear_db_cache() { db_cache.clear(); }

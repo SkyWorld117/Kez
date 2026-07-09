@@ -56,13 +56,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Checks whether a list of abstract package requirements is satisfied
- *        against a vector of resolved concrete dependencies.
- *
- * Delegates to the templated @c requirements_satisfied_impl, wrapping
- * @c std::find as the contains functor.
- */
 bool requirements_satisfied(const std::vector<std::string>& requirements,
                             const std::vector<std::string>& dependencies,
                             const AbstractPackageSelections& abstract_packages) {
@@ -73,13 +66,6 @@ bool requirements_satisfied(const std::vector<std::string>& requirements,
         });
 }
 
-/**
- * @brief Checks whether a list of abstract package requirements is satisfied
- *        against an unordered_set of resolved concrete dependencies.
- *
- * Delegates to the templated @c requirements_satisfied_impl, wrapping
- * @c unordered_set::find as the contains functor.
- */
 bool requirements_satisfied(const std::vector<std::string>& requirements,
                             const std::unordered_set<std::string>& dependencies,
                             const AbstractPackageSelections& abstract_packages) {

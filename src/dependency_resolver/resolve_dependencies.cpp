@@ -49,14 +49,6 @@ namespace {
         return selected == state.abstract_packages.end() ? package_name : selected->second;
     }
 
-    /**
-     * @brief Select a concrete implementation for an abstract package.
-     *
-     * If the abstract package already has a chosen implementation in the
-     * resolution state it is returned immediately.  Otherwise the user is
-     * prompted (interactive mode) or the heuristic advisor is consulted
-     * (non-interactive mode) to pick one from the available implementations.
-     */
     std::string select_implementation(ResolutionState& state, const std::string& abstract_package,
                                       const PackageConfig& config) {
         const auto selected = state.abstract_packages.find(abstract_package);
@@ -101,14 +93,6 @@ namespace {
         return implementation;
     }
 
-    /**
-     * @brief Collect the full dependency list for a package, including optional ones.
-     *
-     * Starts with the essential dependencies, then iterates through the
-     * optional dependencies.  Each optional dependency whose inclusion has not
-     * yet been decided is offered to the user (interactive) or excluded
-     * (non-interactive).  Already-recorded choices are reused.
-     */
     std::vector<std::string> select_dependencies(ResolutionState& state,
                                                  const std::string& package_name) {
         std::vector<std::string> dependencies = get_essential_dependencies(package_name);
@@ -151,14 +135,6 @@ namespace {
         return dependencies;
     }
 
-    /**
-     * @brief Recursively build the dependency adjacency list for a package.
-     *
-     * Skips already-visited packages.  Abstract packages are resolved to a
-     * concrete implementation first.  System-type packages and compiler/MPI
-     * packages not in the target set are treated as leaves (no dependencies
-     * expanded).
-     */
     void build_adjacency_list(ResolutionState& state, const std::string& package_name) {
         if (state.adjacency_list.find(package_name) != state.adjacency_list.end()) {
             return;
@@ -192,10 +168,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Merge the per-package adjacency lists into a single graph with
-     *        abstract names resolved to concrete implementations.
-     */
     DependencyGraph unify_adjacency_list(const ResolutionState& state) {
         DependencyGraph unified_adjacency_list;
         for (const auto& [package, dependencies] : state.adjacency_list) {
@@ -208,12 +180,6 @@ namespace {
         return unified_adjacency_list;
     }
 
-    /**
-     * @brief Remove system-type packages from an ordered package list.
-     *
-     * System packages are installed by the host OS rather than managed by Kez,
-     * so they should not appear in the user-visible install plan.
-     */
     std::vector<std::string> filter_system_packages(
         const std::vector<std::string>& packages,
         const std::unordered_set<std::string>& system_packages) {
@@ -228,13 +194,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Resolve dependencies for the given set of target packages.
- *
- * Builds a dependency graph, topologically sorts it, filters out system
- * packages, and returns the ordered install plan together with any abstract-
- * to-concrete implementation mappings that were selected.
- */
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
                                           bool interactive) {
     if (package_names.empty()) {

@@ -4,7 +4,6 @@
 #include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
 
-/** @brief Splits a string on a single character delimiter, discarding empty tokens. */
 std::vector<std::string> split(const std::string& str, char delimiter) {
     std::vector<std::string> tokens;
     size_t pos = 0;
@@ -23,7 +22,6 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
     return tokens;
 }
 
-/** @brief Splits a string on any of the given delimiter characters, discarding empty tokens. */
 std::vector<std::string> split(const std::string& str, const std::vector<char>& delimiters) {
     std::vector<std::string> tokens;
     size_t pos = 0;
@@ -56,7 +54,6 @@ std::vector<std::string> split(const std::string& str, const std::vector<char>& 
     return tokens;
 }
 
-/** @brief Splits a string on the earliest of the given delimiter characters, keeping each delimiter as its own token. */
 std::vector<std::string> split_keep_delimiters(const std::string& str,
                                                const std::vector<char>& delimiters) {
     std::vector<std::string> tokens;
@@ -93,7 +90,6 @@ std::vector<std::string> split_keep_delimiters(const std::string& str,
     return tokens;
 }
 
-/** @brief Checks whether every character in the string is alphabetic. */
 bool is_alphabetic(const std::string& str) {
     for (char c : str) {
         if (!is_alphabetic(c)) {
@@ -103,10 +99,8 @@ bool is_alphabetic(const std::string& str) {
     return true;
 }
 
-/** @brief Checks whether a single character is alphabetic using the C locale. */
 bool is_alphabetic(char c) { return std::isalpha(static_cast<unsigned char>(c)); }
 
-/** @brief Checks whether every character in the string is a digit. */
 bool is_numeric(const std::string& str) {
     for (char c : str) {
         if (!is_numeric(c)) {
@@ -116,10 +110,8 @@ bool is_numeric(const std::string& str) {
     return true;
 }
 
-/** @brief Checks whether a single character is a digit using the C locale. */
 bool is_numeric(char c) { return std::isdigit(static_cast<unsigned char>(c)); }
 
-/** @brief Returns the length of the string with ANSI escape sequences stripped out. */
 int get_length_without_color(const std::string& str) {
     char delim = '\033';
 
@@ -141,7 +133,6 @@ int get_length_without_color(const std::string& str) {
     return size;
 }
 
-/** @brief Compares two version strings segment-by-segment, returning -1, 0, or 1. */
 int compare_versions(const std::string& left, const std::string& right) {
     std::vector<std::string> left_parts  = split(left, '.');
     std::vector<std::string> right_parts = split(right, '.');
@@ -190,7 +181,6 @@ int compare_versions(const std::string& left, const std::string& right) {
     return 0;
 }
 
-/** @brief Strips leading and trailing whitespace (space, newline, carriage-return, tab) from the input string. */
 std::string trim(const std::string& input) {
     const std::size_t first = input.find_first_not_of(" \n\r\t");
     if (first == std::string::npos) {
@@ -200,14 +190,12 @@ std::string trim(const std::string& input) {
     return input.substr(first, last - first + 1);
 }
 
-/** @brief Appends @p value to @p values if it is non-empty and not already present. */
 void append_unique(std::vector<std::string>& values, const std::string& value) {
     if (!value.empty() && std::find(values.begin(), values.end(), value) == values.end()) {
         values.push_back(value);
     }
 }
 
-/** @brief Concatenates all strings in @p values separated by @p separator. */
 std::string join(const std::vector<std::string>& values, const std::string& separator) {
     std::string result;
     for (const std::string& value : values) {
@@ -216,7 +204,6 @@ std::string join(const std::vector<std::string>& values, const std::string& sepa
     return result;
 }
 
-/** @brief Checks whether @p name is a valid uppercase-underscore shell assignment variable name. */
 bool is_shell_assignment(const std::string& name) {
     if (name.empty() || (name[0] != '_' && !std::isupper(static_cast<unsigned char>(name[0])))) {
         return false;

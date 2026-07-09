@@ -6,7 +6,6 @@
 #include <utils/colored_io.hpp>
 #include <utils/file_utils.hpp>
 
-/** @brief Reads the entire contents of a file into a string, returning an empty string on failure. */
 std::string read_file(const std::string& path) {
     std::ifstream ifs(path);
     if (!ifs) {
@@ -17,7 +16,6 @@ std::string read_file(const std::string& path) {
     return buffer.str();
 }
 
-/** @brief Serializes a YAML::Node to a file, creating parent directories if the path is missing. */
 void write_yaml(const YAML::Node& node, const std::string& path) {
     std::filesystem::path fs_path(path);
     if (fs_path.is_absolute()) {
@@ -41,7 +39,6 @@ void write_yaml(const YAML::Node& node, const std::string& path) {
     ofs.close();
 }
 
-/** @brief Serializes a YAML::Node to a file and prints a success message on completion. */
 void write_yaml(const YAML::Node& node, const std::string& path,
                 const std::string& success_message) {
     write_yaml(node, path);

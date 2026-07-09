@@ -37,9 +37,6 @@ namespace {
         return target;
     }
 
-    /**
-     * @brief Retrieves the version string for a given package from the user configuration.
-     */
     std::string package_version(const YAML::Node& user_config, const std::string& package) {
         const YAML::Node kez = user_config["kez"];
         if (!kez.IsMap() || !kez[package].IsMap() || !yaml_has(kez[package], "version")) {
@@ -55,9 +52,6 @@ namespace {
         return version;
     }
 
-    /**
-     * @brief Retrieves the compiler specification for a given package from the user configuration.
-     */
     std::string package_compiler(const YAML::Node& user_config, const std::string& package) {
         const YAML::Node kez = user_config["kez"];
         if (!kez.IsMap() || !kez[package].IsMap() || !yaml_has(kez[package], "compiler")) {
@@ -71,9 +65,6 @@ namespace {
 
 }  // namespace
 
-/**
- * @brief Returns a human-readable string representation of a PackageType enum value.
- */
 std::string package_type_name(PackageType type) {
     switch (type) {
         case PackageType::Package: return "package";
@@ -87,9 +78,6 @@ std::string package_type_name(PackageType type) {
     return "unknown";
 }
 
-/**
- * @brief Resolves a configured filesystem path from the manifest for a named path entry.
- */
 std::filesystem::path configured_work_path(const std::string& name) {
     const std::filesystem::path home = get_env_var("KEZ_HOME");
     const std::filesystem::path work = get_env_var("KEZ_WORKDIR");
@@ -103,9 +91,6 @@ std::filesystem::path configured_work_path(const std::string& name) {
     return configured.is_absolute() ? configured : work / configured;
 }
 
-/**
- * @brief Extracts the list of target package names from the user configuration.
- */
 std::vector<std::string> user_config_targets(const YAML::Node& user_config) {
     if (!yaml_has(user_config, "recipe") || !user_config["recipe"].IsMap() ||
         !yaml_has(user_config["recipe"], "targets") ||
@@ -125,9 +110,6 @@ std::vector<std::string> user_config_targets(const YAML::Node& user_config) {
     return result;
 }
 
-/**
- * @brief Determines the installation prefix path based on package types and environment.
- */
 std::filesystem::path installation_prefix(const YAML::Node& user_config,
                                           const std::string& environment_name, bool utilities) {
     const std::vector<std::string> targets = user_config_targets(user_config);
@@ -199,9 +181,6 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
     return configured_work_path("applications") / selected_environment;
 }
 
-/**
- * @brief Validates that a path component is a simple, non-empty name without parent references.
- */
 void validate_path_component(const std::string& value, const std::string& description) {
     const std::filesystem::path path(value);
     if (value.empty() || value == "." || value == ".." || path.has_parent_path() ||
@@ -211,9 +190,6 @@ void validate_path_component(const std::string& value, const std::string& descri
     }
 }
 
-/**
- * @brief Executes a shell command and terminates on failure.
- */
 void run_external_command(const std::string& command) {
     const int status = std::system(command.c_str());
     if (status == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
@@ -222,9 +198,6 @@ void run_external_command(const std::string& command) {
     }
 }
 
-/**
- * @brief Lists the subdirectories of a given root path under a section heading.
- */
 void list_directories(const std::filesystem::path& root, const std::string& heading) {
     if (!std::filesystem::is_directory(root)) {
         INFO("No " + heading + " found.");
@@ -247,18 +220,12 @@ void list_directories(const std::filesystem::path& root, const std::string& head
     }
 }
 
-/**
- * @brief Prints shell commands to activate an environment by prepending to PATH and setting a variable.
- */
 void emit_environment_activation(const std::filesystem::path& prefix, const std::string& variable,
                                  const std::string& value) {
     std::cout << "export PATH=" << shell_single_quote((prefix / "bin").string())
               << ":\"${PATH}\"; export " << variable << '=' << shell_single_quote(value) << '\n';
 }
 
-/**
- * @brief Prints shell commands to deactivate an environment by removing its bin directory from PATH and unsetting a variable.
- */
 void emit_environment_deactivation(const std::filesystem::path& prefix,
                                    const std::string& variable) {
     std::cout << "kez_remove_path=" << shell_single_quote((prefix / "bin").string())
@@ -273,9 +240,6 @@ void emit_environment_deactivation(const std::filesystem::path& prefix,
               << "; unset kez_remove_path kez_new_path kez_old_ifs kez_path_entry kez_path_parts\n";
 }
 
-/**
- * @brief Prints a human-readable summary of a BashCommandPlan to stdout.
- */
 void print_command_plan(const BashCommandPlan& plan) {
     for (const PackageCommands& package : plan) {
         INFO("Instructions for " + package.package + ":");

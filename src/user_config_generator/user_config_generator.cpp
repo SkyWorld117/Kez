@@ -66,14 +66,6 @@ namespace {
         return yaml_scalar(compiler, "settings.default_compiler");
     }
 
-    /**
-     * @brief Resolve abstract target package names to concrete package names
-     *        using the provided abstract-package selections map.
-     *
-     * For each entry in @p target_packages, looks up the name in @p
-     * abstract_packages.  If found, the concrete substitute is used;
-     * otherwise the original target name is kept as-is.
-     */
     std::unordered_set<std::string> resolved_targets(
         const std::vector<std::string>& target_packages,
         const AbstractPackageSelections& abstract_packages) {
@@ -86,14 +78,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief List patch file names available for a given package under
-     *        KEZ_HOME/patches/<package_name>.
-     *
-     * Returns the filenames (not full paths) of every regular file in the
-     * patch directory, sorted alphabetically.  Returns an empty vector if
-     * the directory does not exist or KEZ_HOME is unset.
-     */
     std::vector<std::string> available_patches(const std::string& package_name) {
         const std::string home = get_env_var_noerr("KEZ_HOME");
         if (home.empty()) {
@@ -116,15 +100,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief Find the highest installed version of a package under a given
-     *        work path (vendors, mpis, etc.).
-     *
-     * Scans subdirectories matching `package_name-*` under the configured
-     * root, parses the version from the directory name, and returns the
-     * greatest one according to #compare_versions.  Returns an empty string
-     * if no installed version exists.
-     */
     std::string get_latest_existing_version(const std::string& package_name,
                                             const std::string& path_name, PackageType type) {
         const std::filesystem::path root = configured_work_path(path_name);
@@ -156,14 +131,6 @@ namespace {
         return latest_version;
     }
 
-    /**
-     * @brief Populate a YAML node with the user-facing configuration for a
-     *        single resolved package.
-     *
-     * Writes the package's description, version, compiler assignment,
-     * available patches, and filtered build steps (configurations + stages)
-     * into the output YAML under `kez/<package_name>`.
-     */
     void append_package_config(YAML::Node& output, const PackageConfig& package,
                                const std::vector<std::string>& all_dependencies,
                                const std::unordered_set<std::string>& all_dependency_set,
@@ -231,26 +198,10 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Generate the user configuration YAML for the given package names
- *        using the default compiler from environment settings.
- *
- * Delegates to the three-argument overload after resolving the default
- * compiler via ``configured_default_compiler()``.
- */
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive) {
     return gen_user_config(package_names, interactive, configured_default_compiler());
 }
 
-/**
- * @brief Generate the user configuration YAML for the given package names
- *        with an explicit default compiler.
- *
- * Resolves dependencies for the named packages, builds the full user-editable
- * YAML document (including recipe metadata and per-package configuration), and
- * returns it.  Terminates with an error if no dependencies are found for any
- * of the requested packages.
- */
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
                            const std::string& default_compiler) {
     DependencyResolution resolution = resolve_dependencies(package_names, interactive);

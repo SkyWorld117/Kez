@@ -64,14 +64,6 @@ namespace {
         return tokens;
     }
 
-    /**
-     * @brief Validates a version-comparison token in a condition expression.
-     *
-     * Checks that the token begins with a template variable (`${...}`), that the
-     * template is well-formed, and that the comparison portion following the
-     * closing brace consists of one or more valid relational operators
-     * (>=, <=, ==, !=, >, <) each followed by a version string.
-     */
     void validate_version_condition(const std::string& token, const YAML::Node& node,
                                     const std::string& path, const DatabaseParserContext& context) {
         if (token.rfind("${", 0) != 0) {
@@ -111,15 +103,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Validates a logical condition expression string.
- *
- * Tokenizes the expression and then performs a recursive-descent parse
- * (disjunction, conjunction, unary, primary) to verify syntactic correctness.
- * Reports a configuration error via `fail_config` if the expression is empty,
- * contains unmatched parentheses, incomplete operators, or any other invalid
- * token sequence.
- */
 void validate_condition(const std::string& expression, const YAML::Node& node,
                         const std::string& path, const DatabaseParserContext& context) {
     const std::vector<std::string> tokens = tokenize_condition(expression, node, path, context);
@@ -224,14 +207,6 @@ void validate_condition(const std::string& expression, const YAML::Node& node,
     }
 }
 
-/**
- * @brief Recursively validates all template variable references (`${...}`) in a
- *        YAML subtree.
- *
- * Walks maps, sequences, and scalar values. For each scalar, checks that
- * every `${...}` occurrence is properly closed, is not empty (`${}`), and
- * does not contain nested braces. Reports invalid findings via `fail_config`.
- */
 void validate_templates(const YAML::Node& node, const std::string& path,
                         const DatabaseParserContext& context) {
     if (node.IsMap()) {

@@ -32,10 +32,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Append requirements from a BuildConfiguration's environment
-     *        variables and build options to a dependency list.
-     */
     void append_requirements(const BuildConfiguration& configuration,
                              std::vector<std::string>& dependencies,
                              std::unordered_set<std::string>& seen) {
@@ -48,10 +44,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Collect optional dependencies for a package by traversing its build
- *        configurations and stage-level configurations.
- */
 std::vector<std::string> get_optional_dependencies(const std::string& package_name) {
     const PackageConfigPtr config = get_db_config(package_name);
     std::vector<std::string> dependencies;

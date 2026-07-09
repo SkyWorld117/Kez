@@ -53,12 +53,6 @@ namespace {
         return value == std::string::npos ? name : name.substr(0, value);
     }
 
-    /**
-     * @brief Parse a compiler spec string into a name/version pair.
-     *
-     * Accepts formats "package@version", "package", or empty/"system".
-     * Defaults to gcc@latest when the input is empty or "system".
-     */
     std::pair<std::string, std::string> parse_compiler(const std::string& compiler) {
         if (compiler.empty() || compiler == "system") {
             return {"gcc", "latest"};
@@ -70,12 +64,6 @@ namespace {
         return {compiler.substr(0, separator), compiler.substr(separator + 1)};
     }
 
-    /**
-     * @brief Retrieve the database configuration for a package.
-     *
-     * The "compiler" package is resolved via parse_compiler; all other packages
-     * are looked up directly or through abstract package mappings.
-     */
     PackageConfigPtr property_config(const std::string& package,
                                      const AbstractPackageSelections& abstract_packages,
                                      const std::string& compiler) {
@@ -87,44 +75,21 @@ namespace {
         return get_db_config(abstract == abstract_packages.end() ? package : abstract->second);
     }
 
-    /**
-     * @brief Check whether a package's database configuration has a given template property.
-     *
-     * Delegates to has_property on the PackageConfig obtained via property_config.
-     */
     bool has_template_property(const std::string& package, const std::string& property,
                                const AbstractPackageSelections& abstract_packages,
                                const std::string& compiler) {
         return has_property(*property_config(package, abstract_packages, compiler), property);
     }
 
-    /**
-     * @brief Produce a template variable reference string for a package property.
-     *
-     * Returns "${package.property}" which is resolved later during template expansion.
-     */
     std::string template_value(const std::string& package, const std::string& property) {
         return "${" + package + "." + property + "}";
     }
 
-    /**
-     * @brief Determine whether a package's requirements are satisfied.
-     *
-     * Wraps requirements_satisfied for a single-package requirement vector,
-     * checking it against the current dependency set and abstract mappings.
-     */
     bool selected(const std::string& package, const std::unordered_set<std::string>& dependencies,
                   const AbstractPackageSelections& abstract_packages) {
         return requirements_satisfied({package}, dependencies, abstract_packages);
     }
 
-    /**
-     * @brief Filter a package's dependency list to those whose requirements are satisfied.
-     *
-     * Iterates over the package's declared dependencies, keeping only those
-     * whose full requirement set (including any additional requirements from
-     * environment variables and build options) is met by the selected dependencies.
-     */
     std::vector<std::string> active_dependencies(
         const BuildConfiguration& configuration, const PackageConfig& package,
         const std::unordered_set<std::string>& dependencies,
@@ -163,12 +128,6 @@ namespace {
         std::vector<std::string> library_paths;
     };
 
-    /**
-     * @brief Collect default include, linker, library, and library-path flags from dependencies.
-     *
-     * Gathers template-based properties from the compiler and from each active
-     * dependency, then appends the package's own linker flags and library paths.
-     */
     DependencyDefaults dependency_defaults(const BuildConfiguration& configuration,
                                            const PackageConfig& package,
                                            const std::unordered_set<std::string>& dependencies,
@@ -210,12 +169,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief Return the template value for a compiler property, preferring MPI's value when present.
-     *
-     * If MPI is among the dependencies and has the requested template property,
-     * the MPI property value is used instead of the compiler's own value.
-     */
     std::string compiler_property(const std::string& property,
                                   const std::vector<std::string>& dependencies,
                                   const AbstractPackageSelections& abstract_packages,
@@ -230,12 +183,6 @@ namespace {
         return {};
     }
 
-    /**
-     * @brief Collect canonical keys of all options explicitly set in a build configuration.
-     *
-     * For each option, the key as well as any enabled/disabled format keys are
-     * canonicalised via option_key and inserted into the result set.
-     */
     std::unordered_set<std::string> explicit_option_keys(const BuildConfiguration& configuration,
                                                          Toolchain toolchain) {
         std::unordered_set<std::string> result;
@@ -251,13 +198,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief Append a default build option to the configuration if not already explicitly set.
-     *
-     * Skips appending when @p value is empty or the canonical option key already
-     * appears in @p explicit_options, preventing user-specified options from
-     * being overridden by generated defaults.
-     */
     void append_default(BuildConfiguration& configuration,
                         const std::unordered_set<std::string>& explicit_options,
                         Toolchain toolchain, const std::string& name, const std::string& value) {
@@ -278,15 +218,6 @@ namespace {
 
 namespace user_config_generator {
 
-    /**
-     * @brief Transform a build configuration by injecting default compiler flags, linker flags,
-     *        and install paths derived from the package's dependencies.
-     *
-     * For Autotools and CMake toolchains, appends defaults for common variables
-     * (CC, CXX, CFLAGS, LDFLAGS, CMAKE_INSTALL_PREFIX, etc.) using template
-     * property values from the compiler, MPI, and active dependencies. Options
-     * already explicitly present in the input configuration are preserved.
-     */
     BuildConfiguration transformed_configuration(
         const BuildConfiguration& configuration, const PackageConfig& package, Toolchain toolchain,
         const std::unordered_set<std::string>& dependencies,
@@ -356,13 +287,6 @@ namespace user_config_generator {
         return result;
     }
 
-    /**
-     * @brief Transform a package's build specification by applying default configuration options.
-     *
-     * If the package has a build specification with configurations, they are
-     * passed through transformed_configuration to inject dependency-derived
-     * defaults. Returns std::nullopt when the package has no build spec.
-     */
     std::optional<Build> transformed_build(const PackageConfig& package,
                                            const std::unordered_set<std::string>& dependencies,
                                            const AbstractPackageSelections& abstract_packages,

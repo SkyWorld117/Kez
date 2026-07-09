@@ -13,7 +13,6 @@
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
-/** @brief Load the list of installed package names from an environment's state.yaml. */
 std::vector<std::string> load_installed_packages(const std::filesystem::path& env_prefix) {
     const std::filesystem::path state_file = env_prefix / "state.yaml";
     if (!std::filesystem::is_regular_file(state_file)) {
@@ -51,7 +50,6 @@ std::vector<std::string> load_installed_packages(const std::filesystem::path& en
     return packages;
 }
 
-/** @brief Build a map from each package to the list of packages that directly depend on it. */
 std::unordered_map<std::string, std::vector<std::string>> build_dependents_map(
     const BashCommandPlan& plan) {
     std::unordered_map<std::string, std::vector<std::string>> dependents;
@@ -63,7 +61,6 @@ std::unordered_map<std::string, std::vector<std::string>> build_dependents_map(
     return dependents;
 }
 
-/** @brief Compute the transitive closure of packages that depend on the target, in plan order. */
 std::vector<std::string> compute_rebuild_set(const BashCommandPlan& plan,
                                              const std::string& target) {
     const std::unordered_map<std::string, std::vector<std::string>> dependents =
@@ -99,7 +96,6 @@ std::vector<std::string> compute_rebuild_set(const BashCommandPlan& plan,
     return rebuild_set;
 }
 
-/** @brief Filter a BashCommandPlan to only the packages named in the keep list, preserving order. */
 BashCommandPlan filter_plan(const BashCommandPlan& plan, const std::vector<std::string>& keep) {
     const std::unordered_set<std::string> keep_set(keep.begin(), keep.end());
     BashCommandPlan filtered;

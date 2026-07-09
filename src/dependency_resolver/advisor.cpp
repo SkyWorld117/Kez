@@ -7,9 +7,6 @@
 #include <utils/colored_io.hpp>
 #include <utils/yaml_utils.hpp>
 
-/** @brief Looks up the concrete package substitution for an abstract package in the
- *         heuristics/advice.yaml table, keyed by the current KEZ_ARCH architecture.
- *         Terminates with an error if no matching advice entry is found. */
 std::string advise(const std::string& abstract_package) {
     const std::string kez_home     = get_env_var("KEZ_HOME");
     const std::string architecture = get_env_var("KEZ_ARCH");

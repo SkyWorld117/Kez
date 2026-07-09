@@ -2,7 +2,6 @@
 #include <user_config_generator/environment_filter.hpp>
 #include <user_config_generator/options_filter.hpp>
 
-/** @brief Filters a BuildConfiguration's environment and options, assembling the surviving entries into a YAML map that omits empty sections. */
 YAML::Node filtered_configurations(const BuildConfiguration& configuration,
                                    const std::vector<std::string>& all_dependencies,
                                    const AbstractPackageSelections& abstract_packages) {

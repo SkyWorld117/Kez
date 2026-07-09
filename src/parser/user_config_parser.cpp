@@ -51,10 +51,6 @@ namespace {
                yaml_scalar(manifest["paths"][name], "manifest path '" + name + "'");
     }
 
-    /**
-     * @brief Return a scalar value from a YAML node if present and non-null,
-     *        otherwise return an empty string.
-     */
     std::string optional_scalar(const YAML::Node& node, const std::string& key) {
         if (!yaml_has(node, key) || node[key].IsNull()) {
             return {};
@@ -62,10 +58,6 @@ namespace {
         return yaml_scalar(node[key], "setting '" + key + "'");
     }
 
-    /**
-     * @brief Look up a named entry in a YAML sequence of maps by its \"name\"
-     *        field.
-     */
     YAML::Node find_named_user_value(const YAML::Node& sequence, const std::string& name,
                                      const std::string& description) {
         if (!sequence.IsDefined() || sequence.IsNull()) {
@@ -85,9 +77,6 @@ namespace {
         return YAML::Node();
     }
 
-    /**
-     * @brief Check whether a database target matches a user-specified target.
-     */
     bool targets_match(const std::optional<std::string>& database_target,
                        const YAML::Node& user_target) {
         if (!database_target.has_value()) {
@@ -96,10 +85,6 @@ namespace {
         return user_target.IsScalar() && user_target.Scalar() == *database_target;
     }
 
-    /**
-     * @brief Format an option name with the toolchain-appropriate prefix
-     *        (e.g., \"--\" for Autotools, \"-D\" for CMake).
-     */
     std::string option_name(const std::string& name, Toolchain toolchain) {
         if (toolchain == Toolchain::Autotools) {
             if (name.rfind("--", 0) == 0 || name.rfind('-', 0) == 0 || is_shell_assignment(name)) {
@@ -113,10 +98,6 @@ namespace {
         return name;
     }
 
-    /**
-     * @brief Render a single build option to its command-line string
-     *        representation, including any configured value.
-     */
     std::string render_option(const BuildOption& option, const ParsedOptionState& state,
                               Toolchain toolchain, UserConfigParserContext& context) {
         const std::string format = state.enabled ? option.enabled_format.value_or(option.name)
@@ -134,10 +115,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief Render all options of a build configuration into a single
-     *        space-joined command string.
-     */
     std::string render_configuration_options(const BuildConfiguration& configuration,
                                              Toolchain toolchain,
                                              UserConfigParserContext& context) {
@@ -155,10 +132,6 @@ namespace {
         return join(options);
     }
 
-    /**
-     * @brief Find the user-provided build stage entry that matches a given
-     *        database stage by target.
-     */
     YAML::Node find_user_stage(const YAML::Node& user_package, const BuildStage& stage) {
         if (!yaml_has(user_package, "build") || !yaml_has(user_package["build"], "stages")) {
             return YAML::Node();
@@ -180,10 +153,6 @@ namespace {
         return YAML::Node();
     }
 
-    /**
-     * @brief Retrieve the user's configurations YAML node for a package,
-     *        optionally scoped to a specific build stage.
-     */
     YAML::Node user_configuration(const YAML::Node& user_package,
                                   const BuildStage* stage = nullptr) {
         if (stage == nullptr) {
@@ -197,10 +166,6 @@ namespace {
         return yaml_has(user_stage, "configurations") ? user_stage["configurations"] : YAML::Node();
     }
 
-    /**
-     * @brief Resolve a configurable string value from user-provided YAML or
-     *        fall back to the default.
-     */
     std::string configurable_user_string(
         const YAML::Node& user_value, const std::string& key,
         const std::optional<ConfigurableValue<std::string>>& value) {
@@ -212,17 +177,11 @@ namespace {
         return value.has_value() ? value->default_value.value_or("") : "";
     }
 
-    /**
-     * @brief Compare two ParsedOptionState values for equality.
-     */
     bool option_state_equal(const ParsedOptionState& left, const ParsedOptionState& right) {
         return left.enabled == right.enabled && left.enabled_value == right.enabled_value &&
                left.disabled_value == right.disabled_value;
     }
 
-    /**
-     * @brief Compare two maps of named option states for equality.
-     */
     bool option_values_equal(const std::unordered_map<std::string, ParsedOptionState>& left,
                              const std::unordered_map<std::string, ParsedOptionState>& right) {
         if (left.size() != right.size()) {
@@ -237,10 +196,6 @@ namespace {
         return true;
     }
 
-    /**
-     * @brief Compute environment variable values for a build configuration
-     *        from user input or defaults, applying conditions when requested.
-     */
     void compute_environment(const BuildConfiguration& configuration,
                              const YAML::Node& user_configuration, const PackageConfig& package,
                              UserConfigParserContext& context, bool use_user_values,
@@ -275,10 +230,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Compute build option enabled/disabled states and their values
-     *        from user input or defaults, applying conditions when requested.
-     */
     void compute_options(const BuildConfiguration& configuration,
                          const YAML::Node& user_configuration, const PackageConfig& package,
                          UserConfigParserContext& context, bool use_user_values,
@@ -348,10 +299,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Compute both environment variables and options for a build
-     *        configuration in a single pass.
-     */
     void compute_configuration(const BuildConfiguration& configuration,
                                const YAML::Node& user_configuration, const PackageConfig& package,
                                UserConfigParserContext& context, bool use_user_values,
@@ -362,11 +309,6 @@ namespace {
                         apply_conditions);
     }
 
-    /**
-     * @brief Compute configuration values (options and environment) for all
-     *        packages, optionally applying conditional resolution, and return
-     *        whether any value changed.
-     */
     bool compute_values(UserConfigParserContext& context, bool apply_conditions) {
         const auto previous_options     = context.named_option_values;
         const auto previous_environment = context.named_environment_values;
@@ -397,10 +339,6 @@ namespace {
                previous_environment != context.named_environment_values;
     }
 
-    /**
-     * @brief Precompute configuration values by iterating conditional
-     *        resolution passes until convergence is reached.
-     */
     void precompute_values(UserConfigParserContext& context) {
         compute_values(context, false);
 
@@ -414,11 +352,6 @@ namespace {
         user_config_error("conditional configuration values did not converge");
     }
 
-    /**
-     * @brief Append shell commands that export configuration options and
-     *        environment variables, execute the build command, and restore
-     *        previous environment state.
-     */
     void append_configuration_commands(const BuildConfiguration& configuration,
                                        const PackageConfig& package, Toolchain toolchain,
                                        const std::string& command, UserConfigParserContext& context,
@@ -456,10 +389,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Append git-apply commands for patches the user has enabled in
-     *        their package configuration.
-     */
     void append_patch_commands(const ParsedUserPackage& package, UserConfigParserContext& context,
                                std::vector<std::string>& commands) {
         if (!yaml_has(package.user_config, "patches")) {
@@ -489,11 +418,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Generate the full sequence of shell commands to build a single
-     *        package: source extraction, patches, preprocessing,
-     *        configuration, stages, and postprocessing.
-     */
     std::vector<std::string> generate_package_commands(const ParsedUserPackage& package,
                                                        UserConfigParserContext& context) {
         std::vector<std::string> commands;
@@ -556,10 +480,6 @@ namespace {
         return commands;
     }
 
-    /**
-     * @brief Resolve a dependency name through abstract-package and alias
-     *        mappings to its final concrete name for the build plan.
-     */
     std::string plan_dependency_name(const std::string& dependency,
                                      const UserConfigParserContext& context) {
         const auto selected = context.abstract_packages.find(dependency);
@@ -569,10 +489,6 @@ namespace {
         return alias == context.package_aliases.end() ? resolved : alias->second;
     }
 
-    /**
-     * @brief Recursively traverse the dependency tree to collect packages
-     *        that have non-empty build commands.
-     */
     void collect_buildable_dependencies(const std::string& dependency,
                                         const UserConfigParserContext& context,
                                         const std::unordered_set<std::string>& buildable_packages,
@@ -597,10 +513,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Collect buildable dependencies for a set of requirements whose
-     *        conditions are satisfied.
-     */
     void append_plan_requirements(const std::vector<std::string>& requirements,
                                   const UserConfigParserContext& context,
                                   const std::unordered_set<std::string>& buildable_packages,
@@ -616,10 +528,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Collect buildable dependencies referenced by configuration
-     *        environment variables and options.
-     */
     void append_plan_configuration_dependencies(
         const BuildConfiguration& configuration, const UserConfigParserContext& context,
         const std::unordered_set<std::string>& buildable_packages,
@@ -633,10 +541,6 @@ namespace {
         }
     }
 
-    /**
-     * @brief Generate the list of buildable dependencies required by a
-     *        package, including those from its configuration.
-     */
     std::vector<std::string> generate_package_dependencies(
         const ParsedUserPackage& package, const UserConfigParserContext& context,
         const std::unordered_set<std::string>& buildable_packages) {
@@ -664,10 +568,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief Extract the database version string from a user package
-     *        configuration, defaulting to \"latest\".
-     */
     std::string database_version(const YAML::Node& user_package) {
         if (!yaml_has(user_package, "version")) {
             return "latest";
@@ -677,21 +577,12 @@ namespace {
         return separator == std::string::npos ? version : version.substr(0, separator);
     }
 
-    /**
-     * @brief Extract the compiler identifier from a user package
-     *        configuration, defaulting to \"system\".
-     */
     std::string package_compiler(const YAML::Node& user_package) {
         return yaml_has(user_package, "compiler")
                    ? yaml_scalar(user_package["compiler"], "package compiler")
                    : "system";
     }
 
-    /**
-     * @brief Populate a UserConfigParserContext from the user config YAML
-     *        and settings: validate structure, load dependencies, resolve
-     *        abstract packages, and parse each package entry.
-     */
     void load_parser_context(const YAML::Node& user_config,
                              const UserConfigParserSettings& settings,
                              UserConfigParserContext& context) {
@@ -777,11 +668,6 @@ namespace {
 
 }  // namespace
 
-/**
- * @brief Load parser settings from environment variables (KEZ_HOME,
- *        KEZ_WORKDIR, KEZ_ARCH), the manifest file, and the user config
- *        file under the work directory.
- */
 UserConfigParserSettings load_user_config_parser_settings(
     const std::filesystem::path& install_prefix) {
     const char* home_value = std::getenv("KEZ_HOME");
@@ -850,11 +736,6 @@ UserConfigParserSettings load_user_config_parser_settings(
     return result;
 }
 
-/**
- * @brief Parse a user configuration YAML node into a BashCommandPlan using
- *        the provided settings: load context, precompute values, and
- *        generate build commands in dependency order.
- */
 BashCommandPlan parse_user_config(const YAML::Node& user_config,
                                   const UserConfigParserSettings& settings) {
     UserConfigParserContext context;
@@ -896,19 +777,11 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
     return result;
 }
 
-/**
- * @brief Parse a user configuration YAML node into a BashCommandPlan,
- *        loading the settings from the given install prefix.
- */
 BashCommandPlan parse_user_config(const YAML::Node& user_config,
                                   const std::filesystem::path& install_prefix) {
     return parse_user_config(user_config, load_user_config_parser_settings(install_prefix));
 }
 
-/**
- * @brief Read a user configuration file from disk and parse it into a
- *        BashCommandPlan.
- */
 BashCommandPlan parse_user_config_file(const std::filesystem::path& path,
                                        const UserConfigParserSettings& settings) {
     if (!std::filesystem::is_regular_file(path)) {

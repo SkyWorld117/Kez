@@ -26,12 +26,6 @@ namespace {
         exit(EXIT_FAILURE);
     }
 
-    /**
-     * @brief Split a dot-separated configuration path into its component parts.
-     *
-     * Each segment between dots must be non-empty; an empty segment or an empty
-     * input triggers a fatal error via invalid_path().
-     */
     std::vector<std::string> split_path(const std::string& path) {
         if (path.empty()) {
             invalid_path(path);
@@ -54,14 +48,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief Determine whether a string is a non-negative decimal integer and
-     *        parse it into a size_t.
-     *
-     * Returns false on empty strings, non-digit characters, or overflow beyond
-     * SIZE_MAX.  On success stores the parsed value in @p result and returns
-     * true.
-     */
     bool numeric_index(const std::string& value, std::size_t& result) {
         if (value.empty()) {
             return false;
@@ -83,15 +69,6 @@ namespace {
         return true;
     }
 
-    /**
-     * @brief Resolve a path selector against a YAML sequence node and return
-     *        the matching index.
-     *
-     * If @p selector is a decimal number it is treated as a literal position;
-     * otherwise each sequence element is searched for a map with a "name" or
-     * "target" key whose scalar value matches @p selector.  A fatal error is
-     * raised when no match is found.
-     */
     std::size_t sequence_index(const YAML::Node& node, const std::string& selector,
                                const std::string& path) {
         std::size_t index = 0;
@@ -116,14 +93,6 @@ namespace {
         invalid_path(path);
     }
 
-    /**
-     * @brief Recursively walk a parsed path and assign a value at the target
-     *        YAML location.
-     *
-     * Operates on maps (descending by key) and sequences (resolving the
-     * selector via sequence_index()).  A fatal error is raised if an
-     * intermediate key is missing or the node type is unexpected.
-     */
     void assign(const std::vector<std::string>& parts, std::size_t position,
                 const std::string& value, YAML::Node node, const std::string& full_path) {
         if (node.IsMap()) {
@@ -153,14 +122,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Parse a dot-separated configuration path and assign a string value at
- *        the target YAML node.
- *
- * This is the sole public entry point.  It splits @p path into parts and
- * delegates to the anonymous-namespace assign() helper.  A fatal error is
- * raised for any malformed or unresolvable path.
- */
 void traverse(const std::string& path, const std::string& value, YAML::Node node) {
     const std::vector<std::string> parts = split_path(path);
     assign(parts, 0, value, node, path);

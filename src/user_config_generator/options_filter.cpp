@@ -1,7 +1,6 @@
 #include <dependency_resolver/requirements.hpp>
 #include <user_config_generator/options_filter.hpp>
 
-/** @brief Filters build options to keep only those that are user-configurable and whose requirements are satisfied by the resolved dependency set. */
 YAML::Node filtered_options(const std::vector<BuildOption>& options,
                             const std::vector<std::string>& all_dependencies,
                             const AbstractPackageSelections& abstract_packages) {

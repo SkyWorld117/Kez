@@ -88,13 +88,6 @@ namespace {
 
 }  // namespace
 
-/**
- * @brief Parse a YAML node into a configurable boolean value.
- *
- * Delegates to the generic @c parse_configurable template with a boolean
- * parser, then validates that every condition uses the @c Set action (the
- * only action supported for boolean configurables).
- */
 ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node, const std::string& path,
                                                 const DatabaseParserContext& context) {
     ConfigurableValue<bool> result = parse_configurable<bool>(
@@ -109,13 +102,6 @@ ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node, const st
     return result;
 }
 
-/**
- * @brief Parse a YAML node into a configurable string value.
- *
- * Delegates to the generic @c parse_configurable template with a scalar
- * string parser to handle both the default value and any condition-dependent
- * overrides.
- */
 ConfigurableValue<std::string> parse_string_configurable(const YAML::Node& node,
                                                          const std::string& path,
                                                          const DatabaseParserContext& context) {
@@ -193,14 +179,6 @@ namespace {
         return result;
     }
 
-    /**
-     * @brief Parse a YAML node into a @c BuildOption.
-     *
-     * Reads all option fields (name, description, user_configurable, enabled,
-     * enabled_format, disabled_format, requires, enabled_value, disabled_value)
-     * from the provided YAML mapping and populates the corresponding members
-     * of a @c BuildOption struct.
-     */
     BuildOption parse_option(const YAML::Node& node, const std::string& path,
                              const DatabaseParserContext& context) {
         expect_map(node, path, context);
@@ -238,14 +216,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Parse a YAML node into a @c BuildConfiguration.
- *
- * Extracts the optional @c command field, the @c environment variable list
- * (each parsed via @c parse_environment_variable), and the @c options list
- * (each parsed via @c parse_option).  Duplicate option names produce a
- * warning but are retained.
- */
 BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::string& path,
                                              const DatabaseParserContext& context) {
     expect_map(node, path, context);
@@ -281,15 +251,6 @@ BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::
     return result;
 }
 
-/**
- * @brief Parse the top-level @c build section of a package recipe into a
- *        @c Build struct.
- *
- * Reads the optional @c preprocessing and @c postprocessing scripts, the
- * @c configurations block (via @c parse_build_configuration), and the
- * @c stages list, where each stage specifies a target, multithreading flag,
- * and its own configurations block.
- */
 Build parse_build(const YAML::Node& node, const std::string& path,
                   const DatabaseParserContext& context) {
     expect_map(node, path, context);

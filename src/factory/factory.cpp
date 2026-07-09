@@ -40,7 +40,6 @@ namespace {
         return yaml_scalar(node[key], description + " " + key);
     }
 
-    /** @brief Replace every occurrence of @p pattern in @p value with @p replacement. */
     void replace_all(std::string& value, const std::string& pattern,
                      const std::string& replacement) {
         std::size_t position = 0;
@@ -50,8 +49,6 @@ namespace {
         }
     }
 
-    /** @brief Inherit a scalar value from the factory/buildspace/profile hierarchy,
-     *         expanding ${key} references with the parent value. */
     std::string inherited_scalar(const YAML::Node& factory_config,
                                  const YAML::Node& buildspace_config,
                                  const YAML::Node& profile_config, const std::string& key) {
@@ -72,7 +69,6 @@ namespace {
         return value;
     }
 
-    /** @brief Extract the "factory" sub-map from @p config, or return @p config itself. */
     YAML::Node factory_body(const YAML::Node& config) {
         if (yaml_has(config, "factory")) {
             return config["factory"];
@@ -80,7 +76,6 @@ namespace {
         return config;
     }
 
-    /** @brief Find a map element with the given @p name in a YAML sequence of maps. */
     YAML::Node find_named_entry(const YAML::Node& sequence, const std::string& name,
                                 const std::string& description) {
         if (!sequence.IsSequence()) {
@@ -98,7 +93,6 @@ namespace {
         return YAML::Node();
     }
 
-    /** @brief Terminate if @p name already appears in @p stack (circular sibling reference). */
     void reject_cycle(const std::vector<std::string>& stack, const std::string& name,
                       const std::string& description) {
         if (std::find(stack.begin(), stack.end(), name) != stack.end()) {
@@ -107,7 +101,6 @@ namespace {
         }
     }
 
-    /** @brief Parse @p value as a non-negative (or positive) unsigned long integer resource field. */
     unsigned long parse_unsigned_resource(const std::string& value, const std::string& key,
                                           bool allow_zero) {
         errno                      = 0;
@@ -121,7 +114,6 @@ namespace {
         return parsed;
     }
 
-    /** @brief Like inherited_scalar but falls back to @p default_value when the result is empty. */
     std::string inherited_resource(const YAML::Node& factory_config,
                                    const YAML::Node& buildspace_config,
                                    const YAML::Node& profile_config, const std::string& key,
@@ -131,12 +123,10 @@ namespace {
         return value.empty() ? default_value : value;
     }
 
-    /** @brief Build a cp command that copies the contents of @p inputs into the current directory. */
     std::string copy_inputs_command(const std::string& inputs) {
         return "cp -a " + inputs + "/. .";
     }
 
-    /** @brief Parse a single profile entry into a FactoryRun (commands + summary regex). */
     FactoryRun parse_profile_run(const YAML::Node& factory_config,
                                  const YAML::Node& buildspace_config,
                                  const YAML::Node& profile_config, std::vector<std::string> stack) {
@@ -224,7 +214,6 @@ namespace {
         return run;
     }
 
-    /** @brief Parse all profiles under a single buildspace entry. */
     std::vector<FactoryProfile> parse_buildspace_profiles(const YAML::Node& factory_config,
                                                           const YAML::Node& buildspace_config,
                                                           std::vector<std::string> stack) {
@@ -269,7 +258,6 @@ namespace {
         return profiles;
     }
 
-    /** @brief Append @p option and a trailing space to @p command if @p option is not empty. */
     void append_if_present(std::string& command, const std::string& option) {
         if (!option.empty()) {
             command += option + " ";
@@ -277,7 +265,6 @@ namespace {
     }
 }  // namespace
 
-/** @brief Parse the top-level factory configuration into a list of buildspace entries (each with profiles). */
 FactoryPlan parse_factory_config(const YAML::Node& config) {
     const YAML::Node factory_config = factory_body(config);
     if (!factory_config.IsMap()) {
@@ -301,7 +288,6 @@ FactoryPlan parse_factory_config(const YAML::Node& config) {
     return plan;
 }
 
-/** @brief Build the shell command that launches @p target under the given launcher/scheduler/resource constraints. */
 std::string wrap_factory_target(const std::string& target, const std::string& launcher,
                                 const std::string& launcher_opts, const std::string& scheduler,
                                 const std::string& scheduler_opts, const std::string& num_nodes,

@@ -1,7 +1,6 @@
 #include <dependency_resolver/requirements.hpp>
 #include <user_config_generator/environment_filter.hpp>
 
-/** @brief Filters environment variables using full dependency info (including abstract packages). */
 YAML::Node filtered_environment(const std::vector<EnvironmentVariable>& environment,
                                 const std::vector<std::string>& all_dependencies,
                                 const AbstractPackageSelections& abstract_packages) {
@@ -29,7 +28,6 @@ YAML::Node filtered_environment(const std::vector<EnvironmentVariable>& environm
     return result;
 }
 
-/** @brief Filters environment variables using only dependency names (no abstract package resolution). */
 YAML::Node filtered_environment(const std::vector<EnvironmentVariable>& environment,
                                 const std::vector<std::string>& all_dependencies) {
     return filtered_environment(environment, all_dependencies, {});

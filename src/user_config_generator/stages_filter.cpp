@@ -1,8 +1,6 @@
 #include <user_config_generator/configurations_filter.hpp>
 #include <user_config_generator/stages_filter.hpp>
 
-/** @brief Prune build stages whose per-stage configurations have no satisfied
- *         dependencies, emitting only stages with at least one surviving entry. */
 YAML::Node filtered_stages(const std::vector<BuildStage>& stages,
                            const std::vector<std::string>& all_dependencies,
                            const AbstractPackageSelections& abstract_packages) {

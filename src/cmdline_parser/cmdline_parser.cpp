@@ -9,8 +9,6 @@
 #include <utils/colored_io.hpp>
 #include <utils/yaml_utils.hpp>
 
-/** @brief Applies command-line configuration overrides to the user config YAML node by parsing
- *         ``<path>=<value>`` pairs and traversing the config tree. */
 void apply_cmdline_config(YAML::Node user_config, const std::vector<std::string>& config_options) {
     if (!yaml_has(user_config, "kez") || !user_config["kez"].IsMap()) {
         ERROR("Invalid user configuration: kez must be a map");
@@ -27,8 +25,6 @@ void apply_cmdline_config(YAML::Node user_config, const std::vector<std::string>
     }
 }
 
-/** @brief Loads a user configuration from a YAML file and delegates to the YAML::Node overload
- *         after verifying that the file exists on disk. */
 BashCommandPlan parse_cmdline(const std::filesystem::path& file,
                               const std::filesystem::path& install_prefix,
                               const std::vector<std::string>& config_options) {
@@ -39,8 +35,6 @@ BashCommandPlan parse_cmdline(const std::filesystem::path& file,
     return parse_cmdline(YAML::LoadFile(file.string()), install_prefix, config_options);
 }
 
-/** @brief Generates a user configuration from the given list of target packages and delegates to
- *         the YAML::Node overload, requiring at least one target. */
 BashCommandPlan parse_cmdline(const std::vector<std::string>& targets,
                               const std::filesystem::path& install_prefix,
                               const std::vector<std::string>& config_options) {
@@ -51,16 +45,12 @@ BashCommandPlan parse_cmdline(const std::vector<std::string>& targets,
     return parse_cmdline(gen_user_config(targets, false), install_prefix, config_options);
 }
 
-/** @brief Applies command-line config overrides to the user config node and delegates to the
- *         user config parser for full plan generation. */
 BashCommandPlan parse_cmdline(YAML::Node user_config, const std::filesystem::path& install_prefix,
                               const std::vector<std::string>& config_options) {
     apply_cmdline_config(user_config, config_options);
     return parse_user_config(user_config, install_prefix);
 }
 
-/** @brief Serializes a BashCommandPlan to a shell-sourced install script at the given path with
- *         secure file permissions. */
 void write_install_plan(const BashCommandPlan& plan, const std::filesystem::path& path) {
     std::error_code error;
     std::filesystem::create_directories(path.parent_path(), error);

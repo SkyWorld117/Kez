@@ -42,15 +42,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Parses a single source block (type, URL, and releases) from a recipe's
- *        YAML configuration.
- *
- * Expects a map node containing at least "type" and "releases".  For git
- * sources the top-level "url" is required; for tarball/zip sources each
- * release entry must supply its own "url".  Duplicate version strings
- * across releases are rejected, and the releases sequence must not be empty.
- */
 Source parse_source(const YAML::Node& node, const std::string& path,
                     const DatabaseParserContext& context) {
     expect_map(node, path, context);
@@ -106,13 +97,6 @@ Source parse_source(const YAML::Node& node, const std::string& path,
     return result;
 }
 
-/**
- * @brief Parses a YAML sequence node into a vector of scalar strings.
- *
- * Validates that the node is a sequence, then extracts each element as a
- * scalar string.  Any element that is not a scalar triggers a fatal
- * configuration error via fail_config.
- */
 std::vector<std::string> parse_scalar_sequence(const YAML::Node& node, const std::string& path,
                                                const DatabaseParserContext& context) {
     expect_sequence(node, path, context);

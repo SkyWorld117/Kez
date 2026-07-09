@@ -4,7 +4,6 @@
 #include <utils/colored_io.hpp>
 #include <utils/yaml_utils.hpp>
 
-/** @brief Terminates the program with an error message pointing to the exact YAML location and the given message. */
 [[noreturn]] void fail_config(const YAML::Node& node, const std::string& yaml_path,
                               const std::string& message, const DatabaseParserContext& context) {
     std::string error_smg = context.source_path.string();
@@ -18,7 +17,6 @@
     exit(EXIT_FAILURE);
 }
 
-/** @brief Prints a configuration warning with source location to stderr without terminating. */
 void warn_config(const YAML::Node& node, const std::string& yaml_path, const std::string& message,
                  const DatabaseParserContext& context) {
     std::string warning_msg = context.source_path.string();
@@ -30,7 +28,6 @@ void warn_config(const YAML::Node& node, const std::string& yaml_path, const std
     WARNING(warning_msg);
 }
 
-/** @brief Asserts that the given YAML node is a map, otherwise fails with a formatted error. */
 void expect_map(const YAML::Node& node, const std::string& path,
                 const DatabaseParserContext& context) {
     if (!node.IsMap()) {
@@ -38,7 +35,6 @@ void expect_map(const YAML::Node& node, const std::string& path,
     }
 }
 
-/** @brief Asserts that the given YAML node is a sequence, otherwise fails with a formatted error. */
 void expect_sequence(const YAML::Node& node, const std::string& path,
                      const DatabaseParserContext& context) {
     if (!node.IsSequence()) {
@@ -46,7 +42,6 @@ void expect_sequence(const YAML::Node& node, const std::string& path,
     }
 }
 
-/** @brief Validates that every key in the map is from an allowed set and that no key is duplicated; warns on unexpected keys. */
 void check_keys(const YAML::Node& node, std::initializer_list<const char*> allowed_keys,
                 const std::string& path, const DatabaseParserContext& context) {
     expect_map(node, path, context);
@@ -70,7 +65,6 @@ void check_keys(const YAML::Node& node, std::initializer_list<const char*> allow
     }
 }
 
-/** @brief Returns the child node for a required key, failing if the key is absent from the map. */
 YAML::Node required_node(const YAML::Node& map, const std::string& key, const std::string& path,
                          const DatabaseParserContext& context) {
     if (!yaml_has(map, key)) {
@@ -79,7 +73,6 @@ YAML::Node required_node(const YAML::Node& map, const std::string& key, const st
     return map[key];
 }
 
-/** @brief Extracts and returns the scalar string value from a node, optionally allowing null (returns empty string). */
 std::string parse_scalar(const YAML::Node& node, const std::string& path,
                          const DatabaseParserContext& context, bool allow_null) {
     if (node.IsNull() && allow_null) {
@@ -92,13 +85,11 @@ std::string parse_scalar(const YAML::Node& node, const std::string& path,
     return node.Scalar();
 }
 
-/** @brief Shortcut: requires a map key and parses its value as a scalar string. */
 std::string required_scalar(const YAML::Node& map, const std::string& key, const std::string& path,
                             const DatabaseParserContext& context) {
     return parse_scalar(required_node(map, key, path, context), path + "." + key, context);
 }
 
-/** @brief Optionally reads a scalar string from a map entry, returning std::nullopt when the key is absent. */
 std::optional<std::string> optional_scalar(const YAML::Node& map, const std::string& key,
                                            const std::string& path,
                                            const DatabaseParserContext& context) {
@@ -108,7 +99,6 @@ std::optional<std::string> optional_scalar(const YAML::Node& map, const std::str
     return parse_scalar(map[key], path + "." + key, context);
 }
 
-/** @brief Parses a YAML scalar node as a boolean ("true" / "false"), failing on any other value. */
 bool parse_boolean(const YAML::Node& node, const std::string& path,
                    const DatabaseParserContext& context) {
     const std::string value = parse_scalar(node, path, context);
@@ -121,7 +111,6 @@ bool parse_boolean(const YAML::Node& node, const std::string& path,
     fail_config(node, path, "must be either true or false", context);
 }
 
-/** @brief Parses a YAML scalar node into a ValueAction enum (set / append / prepend), failing on any other value. */
 ValueAction parse_action(const YAML::Node& node, const std::string& path,
                          const DatabaseParserContext& context) {
     const std::string value = parse_scalar(node, path, context);
