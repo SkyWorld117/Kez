@@ -7,17 +7,14 @@ recipe:
 
     source:
         type: git
-        # url: https://github.com/ggml-org/llama.cpp
-        url: https://github.com/ynkrue/llama.cpp
+        url: https://github.com/ggml-org/llama.cpp
         releases:
             - version: master
               tag: master
-            - version: isc26
-              tag: yr/isc26
 
     dependencies:
         - cuda
-        - nvhpc
+        - nvhpc-nccl
 
     build:
         configurations:
@@ -62,11 +59,7 @@ recipe:
 
                 - name: NCCL_ROOT
                   enabled_value:
-                      default: ${nvhpc.nccl_prefix}
-
-                - name: CMAKE_EXE_LINKER_FLAGS
-                  enabled_value:
-                      default: ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+                      default: ${nvhpc-nccl.prefix}
 
                 - name: BUILD_SHARED_LIBS
                   enabled_value:
