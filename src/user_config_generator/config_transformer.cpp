@@ -127,6 +127,15 @@ namespace {
                 append_unique(result.libraries, template_value(dependency, "libs"));
             }
         }
+
+        // The package itself should be added to the library paths
+        if (has_template_property(package.name, "ldflags", abstract_packages, compiler)) {
+            append_unique(result.linker_flags, template_value(package.name, "ldflags"));
+        }
+        if (has_template_property(package.name, "lib", abstract_packages, compiler)) {
+            append_unique(result.library_paths, template_value(package.name, "lib"));
+        }
+
         return result;
     }
 
