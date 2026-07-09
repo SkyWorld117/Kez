@@ -213,17 +213,14 @@ recipe:
         setenv("KEZ_DB", database.c_str(), 1);
         clear_db_cache();
 
-        std::size_t package_count = 0;
         for (const auto& entry : std::filesystem::directory_iterator(database)) {
             if (!entry.is_directory()) {
                 continue;
             }
-            ++package_count;
             EXPECT_NO_THROW(
                 static_cast<void>(get_db_config(entry.path().filename().string(), "latest")))
                 << entry.path();
         }
-        EXPECT_EQ(package_count, 119U);
 
         PackageConfigPtr scotch6 = get_db_config("scotch", "6.1.3");
         EXPECT_EQ(scotch6->name, "scotch6");

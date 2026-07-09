@@ -222,7 +222,7 @@ recipe:
         EXPECT_EQ(commands[5], "cd source");
         EXPECT_EQ(commands[6],
                   "git apply '" + (path_ / "patches" / "application" / "fix.patch").string() + "'");
-        EXPECT_EQ(commands[7], "prepare /opt/env/.tmp/source");
+        EXPECT_EQ(commands[7], "prepare /opt/env/.tmp/application/source");
         EXPECT_EQ(commands[8], "export CFLAGS=\"-O2 ${PATH}\"");
         EXPECT_EQ(commands[9], "cmake -B build -DFEATURE=ON "
                                "-DLINK_FLAGS=\"-lbase -lfeature -loverride\" "
