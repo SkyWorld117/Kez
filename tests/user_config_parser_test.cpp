@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <database/database.hpp>
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <parser/user_config_parser.hpp>
+#include <rebuild/rebuild.hpp>
 #include <string>
 #include <user_config_generator/user_config_generator.hpp>
 #include <vector>
@@ -597,6 +599,73 @@ recipe:
                 }
             }
         }
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase,
+           SchedulesBuildableDependenciesReachableThroughPropertyOnlyFacade) {
+        const std::filesystem::path source = KEZ_SOURCE_DIR;
+        setenv("KEZ_DB", (source / "database").c_str(), 1);
+        setenv("KEZ_HOME", source.c_str(), 1);
+        clear_db_cache();
+
+        // llamacpp -> {cuda, nvhpc-nccl}, and nvhpc-nccl -> nvhpc. nvhpc-nccl is a
+        // property-only facade (no source/build) so it emits no commands and is absent
+        // from the plan; llamacpp must still wait on nvhpc, the buildable package the
+        // facade depends on, so that parallel installation orders nvhpc before llamacpp.
+        const YAML::Node user_config             = gen_user_config({"llamacpp"}, false, "system");
+        UserConfigParserSettings parser_settings = settings();
+        parser_settings.kez_home                 = source;
+        const BashCommandPlan plan               = parse_user_config(user_config, parser_settings);
+
+        std::vector<std::string> plan_packages;
+        std::vector<std::string> llamacpp_dependencies;
+        for (const PackageCommands& package : plan) {
+            plan_packages.push_back(package.package);
+            if (package.package == "llamacpp") {
+                llamacpp_dependencies = package.dependencies;
+            }
+        }
+
+        ASSERT_NE(std::find(plan_packages.begin(), plan_packages.end(), "nvhpc"),
+                  plan_packages.end())
+            << "nvhpc must be built as part of the llamacpp plan";
+        ASSERT_NE(std::find(plan_packages.begin(), plan_packages.end(), "llamacpp"),
+                  plan_packages.end())
+            << "llamacpp must be built as part of the plan";
+        // The facade itself produces no commands and must not appear as a plan package.
+        EXPECT_EQ(std::find(plan_packages.begin(), plan_packages.end(), "nvhpc-nccl"),
+                  plan_packages.end())
+            << "nvhpc-nccl is a property-only facade and should not be a plan package";
+        EXPECT_NE(std::find(llamacpp_dependencies.begin(), llamacpp_dependencies.end(), "cuda"),
+                  llamacpp_dependencies.end())
+            << "llamacpp must depend on cuda";
+        EXPECT_NE(std::find(llamacpp_dependencies.begin(), llamacpp_dependencies.end(), "nvhpc"),
+                  llamacpp_dependencies.end())
+            << "llamacpp must depend on nvhpc transitively via the nvhpc-nccl facade";
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase,
+           RebuildSetIncludesDependentsReachedThroughPropertyOnlyFacade) {
+        const std::filesystem::path source = KEZ_SOURCE_DIR;
+        setenv("KEZ_DB", (source / "database").c_str(), 1);
+        setenv("KEZ_HOME", source.c_str(), 1);
+        clear_db_cache();
+
+        const YAML::Node user_config             = gen_user_config({"llamacpp"}, false, "system");
+        UserConfigParserSettings parser_settings = settings();
+        parser_settings.kez_home                 = source;
+        const BashCommandPlan plan               = parse_user_config(user_config, parser_settings);
+
+        // Rebuilding nvhpc must rebuild llamacpp, which reaches nvhpc only through the
+        // nvhpc-nccl facade. Without the transitive scheduling edge, nvhpc would have no
+        // dependents in the plan and llamacpp would be wrongly omitted from the rebuild set.
+        const std::vector<std::string> rebuild_set = compute_rebuild_set(plan, "nvhpc");
+        EXPECT_NE(std::find(rebuild_set.begin(), rebuild_set.end(), "nvhpc"), rebuild_set.end())
+            << "the rebuilt package must be in its own rebuild set";
+        EXPECT_NE(std::find(rebuild_set.begin(), rebuild_set.end(), "llamacpp"), rebuild_set.end())
+            << "llamacpp must be rebuilt when nvhpc changes";
+        EXPECT_EQ(std::find(rebuild_set.begin(), rebuild_set.end(), "cuda"), rebuild_set.end())
+            << "cuda is independent of nvhpc and must not be rebuilt";
     }
 
 }  // namespace

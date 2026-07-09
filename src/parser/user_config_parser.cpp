@@ -470,31 +470,63 @@ namespace {
         return alias == context.package_aliases.end() ? resolved : alias->second;
     }
 
+    // A package may depend on a property-only "facade" package (e.g. nvhpc-nccl) that
+    // declares no source or build and therefore emits no commands, so it is absent from
+    // the plan. Such a package imposes no scheduling constraint itself, but the buildable
+    // packages reachable through it do: a dependent must still wait for them. This collects
+    // the nearest buildable packages reachable from `dependency`, recursing only through
+    // non-buildable intermediates and stopping at buildable ones (whose own plan edges
+    // already encode their deeper dependencies). `visited` bounds the traversal and breaks
+    // any accidental cycles.
+    void collect_buildable_dependencies(const std::string& dependency,
+                                        const UserConfigParserContext& context,
+                                        const std::unordered_set<std::string>& buildable_packages,
+                                        std::unordered_set<std::string>& visited,
+                                        std::vector<std::string>& result) {
+        const std::string resolved = plan_dependency_name(dependency, context);
+        if (!visited.insert(resolved).second) {
+            return;
+        }
+        if (buildable_packages.find(resolved) != buildable_packages.end()) {
+            append_unique(result, resolved);
+            return;
+        }
+        const auto parsed = context.package_indices.find(resolved);
+        if (parsed == context.package_indices.end()) {
+            return;
+        }
+        for (const std::string& sub_dependency :
+             context.packages[parsed->second].database_config->dependencies) {
+            collect_buildable_dependencies(sub_dependency, context, buildable_packages, visited,
+                                           result);
+        }
+    }
+
     void append_plan_requirements(const std::vector<std::string>& requirements,
                                   const UserConfigParserContext& context,
                                   const std::unordered_set<std::string>& buildable_packages,
+                                  std::unordered_set<std::string>& visited,
                                   std::vector<std::string>& result) {
         if (!requirements_satisfied(requirements, context.dependencies,
                                     context.abstract_packages)) {
             return;
         }
         for (const std::string& requirement : requirements) {
-            const std::string dependency = plan_dependency_name(requirement, context);
-            if (buildable_packages.find(dependency) != buildable_packages.end()) {
-                append_unique(result, dependency);
-            }
+            collect_buildable_dependencies(requirement, context, buildable_packages, visited,
+                                           result);
         }
     }
 
     void append_plan_configuration_dependencies(
         const BuildConfiguration& configuration, const UserConfigParserContext& context,
         const std::unordered_set<std::string>& buildable_packages,
-        std::vector<std::string>& result) {
+        std::unordered_set<std::string>& visited, std::vector<std::string>& result) {
         for (const EnvironmentVariable& variable : configuration.environment) {
-            append_plan_requirements(variable.requires, context, buildable_packages, result);
+            append_plan_requirements(variable.requires, context, buildable_packages, visited,
+                                     result);
         }
         for (const BuildOption& option : configuration.options) {
-            append_plan_requirements(option.requires, context, buildable_packages, result);
+            append_plan_requirements(option.requires, context, buildable_packages, visited, result);
         }
     }
 
@@ -502,11 +534,10 @@ namespace {
         const ParsedUserPackage& package, const UserConfigParserContext& context,
         const std::unordered_set<std::string>& buildable_packages) {
         std::vector<std::string> result;
+        std::unordered_set<std::string> visited;
         for (const std::string& dependency : package.database_config->dependencies) {
-            const std::string resolved = plan_dependency_name(dependency, context);
-            if (buildable_packages.find(resolved) != buildable_packages.end()) {
-                append_unique(result, resolved);
-            }
+            collect_buildable_dependencies(dependency, context, buildable_packages, visited,
+                                           result);
         }
 
         if (!package.transformed_build.has_value()) {
@@ -515,12 +546,12 @@ namespace {
         const Build& build = *package.transformed_build;
         if (build.configurations.has_value()) {
             append_plan_configuration_dependencies(*build.configurations, context,
-                                                   buildable_packages, result);
+                                                   buildable_packages, visited, result);
         }
         for (const BuildStage& stage : build.stages) {
             if (stage.configurations.has_value()) {
                 append_plan_configuration_dependencies(*stage.configurations, context,
-                                                       buildable_packages, result);
+                                                       buildable_packages, visited, result);
             }
         }
         return result;
