@@ -41,5 +41,5 @@ recipe:
     properties:
         lib: ${cuda.prefix}/lib64
         libs:
-            default: -lcudart -lcublas -lcufft -lcusolver -lcudnn -lcusparse -lcurand
+            default: -lcudart -lcublas -lcufft -lcusolver -lcusparse -lcurand
         include: ${cuda.prefix}/include
