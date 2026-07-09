@@ -1,13 +1,64 @@
 #pragma once
 
+/**
+ * @file colored_io.hpp
+ * @brief Colored terminal output utilities with compile-time ANSI code generation.
+ *
+ * Provides a compile-time color-wrapping template, convenience macros, and
+ * formatted printing functions (word-wrapping, two-column layout) that
+ * automatically strip ANSI codes when output is not a TTY.
+ */
+
 #include <utils/colors.h>
 
 #include <utils/string_utils.hpp>
 
-#define INFO(message)    print_info(message)
+/**
+ * @def INFO(message)
+ * @brief Print an informational message prefixed with "[I]:".
+ *
+ * @param message The text to print.
+ * @see print_info
+ */
+#define INFO(message) print_info(message)
+
+/**
+ * @def WARNING(message)
+ * @brief Print a warning message prefixed with "[W]:".
+ *
+ * @param message The text to print.
+ * @see print_warning
+ */
 #define WARNING(message) print_warning(message)
-#define ERROR(message)   print_error(message)
+
+/**
+ * @def ERROR(message)
+ * @brief Print an error message to stderr, prefixed with "[E]:".
+ *
+ * @param message The text to print.
+ * @see print_error
+ */
+#define ERROR(message) print_error(message)
+
+/**
+ * @def SUCCESS(message)
+ * @brief Print a success message prefixed with "[S]:".
+ *
+ * @param message The text to print.
+ * @see print_success
+ */
 #define SUCCESS(message) print_success(message)
+
+/**
+ * @def DEBUG(message)
+ * @brief Print a debug message prefixed with "[D]:".
+ *
+ * This macro is only active when the `DDEBUG` preprocessor symbol is defined.
+ * In release builds it expands to a no-op, imposing zero runtime overhead.
+ *
+ * @param message The text to print.
+ * @see print_debug
+ */
 #ifdef DDEBUG
 #define DEBUG(message) print_debug(message)
 #else
@@ -23,12 +74,30 @@
 #include <sstream>
 #include <string>
 
-// Doing some proper fucking c++, witness the magic
-// This will wrap a text into the corresponding bash color codings, but the thing is that it does the
-// entire string creation during compile time (this is somewhat dependent on the c++ version you are using).
-// Usage: color<Comma separated list of colors and modifiers>(text to wrap);
-// E.g. std::cout << color<Colors::RED, Color::BOLD, Color::BLINK>("Hello World");
-// will print red bold flashing text.
+/**
+ * @brief Wraps a string in ANSI escape codes at (effectively) compile time.
+ *
+ * The template pack encodes the ANSI parameter codes (colors, modifiers) as
+ * integer template arguments. The entire escape sequence is assembled at
+ * runtime, but the code values are compile-time constants, allowing the
+ * compiler to inline and constant-fold the sequence construction.
+ *
+ * If `STDOUT_FILENO` is not a terminal (`isatty` returns false), the text
+ * is returned unmodified so that redirected output contains no escape codes.
+ *
+ * @tparam Last The last ANSI code in the sequence (e.g. `Color::RED`).
+ * @tparam Ts   Zero or more preceding ANSI codes (e.g. `Color::BOLD`).
+ * @param text  The plain-text string to wrap.
+ * @return The input string wrapped in `\033[...m ... \033[0m` when stdout is
+ *         a TTY, or the unchanged input otherwise.
+ *
+ * @par Usage example
+ * @code
+ *   std::cout << color<Color::RED, Color::BOLD>("Hello") << std::endl;
+ * @endcode
+ *
+ * @see Color (colors.h) for the available color and modifier constants.
+ */
 template <int Last, int... Ts> inline std::string color(const std::string& text) {
     if (isatty(STDOUT_FILENO)) {
         return "\033[" + ((std::to_string(Ts) + ";") + ... + std::string("")) +
@@ -38,26 +107,110 @@ template <int Last, int... Ts> inline std::string color(const std::string& text)
     }
 }
 
+/**
+ * @brief Print a debug-prefixed message to stdout.
+ *
+ * The message is formatted as `[D]: <message>` with the
+ * `Color::DEBUG` (cyan) ANSI foreground.
+ *
+ * @param message The text to print.
+ *
+ * @note This function is always defined; use the `DEBUG` macro to
+ *       conditionally compile the call site away in release builds.
+ *
+ * @see DEBUG macro
+ */
 inline void print_debug(const std::string& message) {
     std::cout << color<Color::DEBUG>("[D]: " + message) << std::endl;
 }
 
+/**
+ * @brief Print an info-prefixed message to stdout.
+ *
+ * The message is formatted as `[I]: <message>` with the
+ * `Color::INFO` (blue) ANSI foreground.
+ *
+ * @param message The text to print.
+ */
 inline void print_info(const std::string& message) {
     std::cout << color<Color::INFO>("[I]: " + message) << std::endl;
 }
 
+/**
+ * @brief Print a warning-prefixed message to stdout.
+ *
+ * The message is formatted as `[W]: <message>` with the
+ * `Color::WARNING` (yellow) ANSI foreground.
+ *
+ * @param message The text to print.
+ */
 inline void print_warning(const std::string& message) {
     std::cout << color<Color::WARNING>("[W]: " + message) << std::endl;
 }
 
+/**
+ * @brief Print an error-prefixed message to stderr.
+ *
+ * Unlike the other print helpers, this function writes to `std::cerr`
+ * rather than `std::cout`. The message is formatted as `[E]: <message>`
+ * with the `Color::ERROR` (red) ANSI foreground.
+ *
+ * @param message The text to print.
+ *
+ * @warning Output goes to stderr so that errors remain visible even when
+ *          stdout is redirected. The color check still uses `isatty` on
+ *          `STDOUT_FILENO`, so when only stderr is a TTY the colors will
+ *          be suppressed.
+ */
 inline void print_error(const std::string& message) {
     std::cerr << color<Color::ERROR>("[E]: " + message) << std::endl;
 }
 
+/**
+ * @brief Print a success-prefixed message to stdout.
+ *
+ * The message is formatted as `[S]: <message>` with the
+ * `Color::SUCCESS` (green) ANSI foreground.
+ *
+ * @param message The text to print.
+ */
 inline void print_success(const std::string& message) {
     std::cout << color<Color::SUCCESS>("[S]: " + message) << std::endl;
 }
 
+/**
+ * @brief Print text with optional word-wrapping, indentation, and
+ *        ANSI-aware column-width limits.
+ *
+ * Wraps text at word boundaries so that no line exceeds `max_width`
+ * visible characters (ANSI escape codes are not counted toward the
+ * width). Words longer than the available width are broken across
+ * lines at character boundaries.
+ *
+ * @param message          The text to print.
+ * @param max_width        Maximum visible characters per line. If 0 (the
+ *                         default), no wrapping is performed and the text
+ *                         is printed on a single line.
+ * @param indent           Number of spaces to indent each line (including
+ *                         the first line when `indent_first_line` is true).
+ *                         Must be less than `max_width` when both are
+ *                         non-zero (asserted). A negative value (the
+ *                         default) is treated as an uninitialized sentinel
+ *                         and must be replaced by the caller before use.
+ * @param indent_first_line Whether to indent the first line. When false,
+ *                         the first line starts at column 0 and subsequent
+ *                         wrapped lines use the full `indent`.
+ * @param start_offset     Horizontal offset already consumed on the first
+ *                         line before printing begins (used when this
+ *                         function is called mid-line from
+ *                         @ref print_two_columns). Only meaningful when
+ *                         `indent_first_line` is true.
+ *
+ * @warning The caller must ensure that `indent < max_width` when both
+ *          are non-zero; this is enforced by an assertion.
+ *
+ * @see print_two_columns
+ */
 inline void print_text(const std::string& message, int max_width = 0, int indent = -1,
                        bool indent_first_line = true, int start_offset = 0) {
     assert(!max_width || indent < max_width);
@@ -116,6 +269,22 @@ inline void print_text(const std::string& message, int max_width = 0, int indent
     std::cout << "\n";
 }
 
+/**
+ * @brief Print a two-column layout, with the second column starting at a
+ *        fixed tab stop and wrapping independently.
+ *
+ * If the first column (including a three-space gap) exceeds the tab stop,
+ * the second column starts on the next line. The second column's text is
+ * word-wrapped via @ref print_text.
+ *
+ * @param message1 Text for the left column.
+ * @param message2 Text for the right column.
+ * @param tab      Column (in characters) at which the right column starts.
+ * @param max_width Maximum visible width for the right column's text; passed
+ *                  through to @ref print_text. 0 means no wrapping.
+ *
+ * @see print_text
+ */
 inline void print_two_columns(const std::string& message1, const std::string& message2, int tab,
                               int max_width = 0) {
     std::cout << message1;

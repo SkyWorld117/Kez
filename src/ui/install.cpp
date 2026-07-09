@@ -1,3 +1,20 @@
+/**
+ * @file install.cpp
+ * @brief Implementation of the `kez install` and `kez utilities` commands.
+ *
+ * This file implements the two top-level install pathways:
+ *   - **install** – Installs packages into a named application environment.
+ *     Supports generating a user config from package names, reading an existing
+ *     YAML config (`--read`), dry-run mode, config-value overrides, Slurm
+ *     submission, and the `--rebuild` workflow.
+ *   - **utilities** – Manages the shared utilities environment via `add`
+ *     (forwarding to the install pipeline) and `empty` (removing all packages).
+ *
+ * Both paths converge on run_install_plan(), which writes the parsed
+ * BashCommandPlan to a temporary script and executes it through
+ * scripts/install.sh.
+ */
+
 #include <unistd.h>
 #include <yaml-cpp/yaml.h>
 
@@ -17,18 +34,62 @@
 #include <vector>
 
 namespace {
+    /**
+     * @brief Aggregated command-line options for the install / utilities add
+     *        commands.
+     *
+     * Populated by parse_install_options() and consumed by the various install
+     * subroutines.  Each field corresponds to a recognised CLI flag.
+     */
     struct InstallOptions {
-        bool read_file  = false;
-        bool dry_run    = false;
-        bool force      = false;
+        /** @brief Treat the positional argument as a YAML file path. */
+        bool read_file = false;
+
+        /** @brief Print the install plan without executing it. */
+        bool dry_run = false;
+
+        /** @brief Reinstall packages already recorded in state.yaml. */
+        bool force = false;
+
+        /** @brief Run scripts/install.sh through sbatch (Slurm). */
         bool with_slurm = false;
-        bool rebuild    = false;
+
+        /** @brief Whether --rebuild was passed (activates the rebuild path). */
+        bool rebuild = false;
+
+        /**
+         * @brief Name of the target environment (from `--env` or
+         *        `KEZ_ACTIVE_ENV`).
+         */
         std::string environment;
+
+        /**
+         * @brief Package to rebuild; set when `rebuild` is true (from
+         *        `--rebuild`).
+         */
         std::string rebuild_package;
+
+        /**
+         * @brief Config-value overrides from `--config` / `-c` in
+         *        `PATH=VAL` form.
+         */
         std::vector<std::string> overrides;
+
+        /** @brief Unparsed positional arguments (package names or a file path). */
         std::vector<std::string> positional;
     };
 
+    /**
+     * @brief Print the help text for `kez install` or `kez utilities add`.
+     *
+     * Displays the usage synopsis and a list of recognised options to stdout.
+     * Two variants are printed depending on whether the caller is the
+     * application-install command (`kez install`) or the utilities command
+     * (`kez utilities add`).
+     *
+     * @param utility  If true, print the `kez utilities add` help; otherwise
+     *                 print the `kez install` help.
+     */
     void print_install_help(bool utility) {
         if (utility) {
             std::cout
@@ -55,6 +116,23 @@ namespace {
         }
     }
 
+    /**
+     * @brief Extract the next positional argument as a required option value.
+     *
+     * Advances the index and returns the token at the new position.  If no
+     * further tokens exist, the program terminates with an error.
+     *
+     * @param arguments  The full list of command-line tokens.
+     * @param index      Current position in @p arguments; incremented by one on
+     *                   success.
+     * @param option     The option name that requires a value (used in the error
+     *                   message, e.g. "--rebuild").
+     *
+     * @return The value of the required option (the token following @p option).
+     *
+     * @warning Terminates the process via ERROR() and exit(EXIT_FAILURE) when
+     *          there is no next token.
+     */
     std::string required_value(const CommandArguments& arguments, std::size_t& index,
                                const std::string& option) {
         if (index + 1 >= arguments.size()) {
@@ -64,6 +142,26 @@ namespace {
         return arguments[++index];
     }
 
+    /**
+     * @brief Parse command-line arguments into an InstallOptions struct.
+     *
+     * Iterates over the argument vector once, recognising short and long forms
+     * of all supported flags.  After a bare `--` token, all remaining arguments
+     * are treated as positional values.  Unknown flags prefixed with `-` cause
+     * immediate termination.
+     *
+     * @param arguments  The command-line tokens to parse (excluding the leading
+     *                   subcommand name, e.g. "install" or "utilities").
+     * @param utility    If true, certain flags (`--env`, `--rebuild`) are
+     *                   rejected as invalid for utility installation.
+     * @param help       [out] Set to true if `-h` or `--help` was encountered.
+     *
+     * @return A fully populated InstallOptions reflecting the parsed flags and
+     *         positional arguments.
+     *
+     * @warning Terminates the process if `--rebuild` or `--env` is used in
+     *          utility mode, or if an unknown option is encountered.
+     */
     InstallOptions parse_install_options(const CommandArguments& arguments, bool utility,
                                          bool& help) {
         InstallOptions result;
@@ -115,6 +213,8 @@ namespace {
                 result.environment = argument.substr(6);
             } else if (argument == "-c" || argument == "--config") {
                 result.overrides.push_back(required_value(arguments, index, argument));
+                // Greedily consume subsequent tokens that look like key=value
+                // pairs (non-empty, contain '=', do not start with '-').
                 while (index + 1 < arguments.size() && !arguments[index + 1].empty() &&
                        arguments[index + 1].find('=') != std::string::npos &&
                        arguments[index + 1].front() != '-') {
@@ -132,6 +232,26 @@ namespace {
         return result;
     }
 
+    /**
+     * @brief Load or generate the user configuration YAML from the parsed
+     *        options.
+     *
+     * When `--read` was specified, the function validates that exactly one
+     * positional argument (a file path) was given, checks that the file exists,
+     * and loads it via YAML::LoadFile().  Otherwise it calls gen_user_config()
+     * to generate a configuration from the positional package names.
+     *
+     * @param options  The parsed install options (must contain at least one
+     *                 positional argument).
+     *
+     * @return A YAML::Node representing the user configuration.
+     *
+     * @warning Terminates the process if no positional argument was provided,
+     *          if `--read` was given with zero or more than one argument, or
+     *          if the config file does not exist.
+     *
+     * @see gen_user_config
+     */
     YAML::Node load_install_config(const InstallOptions& options) {
         if (options.positional.empty()) {
             ERROR("No package or configuration file was provided");
@@ -152,6 +272,27 @@ namespace {
         return gen_user_config(options.positional, false);
     }
 
+    /**
+     * @brief Resolve the installation prefix for a named application
+     *        environment.
+     *
+     * If @p environment is non-empty, it is used directly; otherwise the
+     * function falls back to the `KEZ_ACTIVE_ENV` environment variable.  The
+     * resulting name is validated as a safe filesystem path component and then
+     * joined under the configured work path's `applications/` subdirectory.
+     *
+     * @param environment  The environment name, or an empty string to use
+     *                     KEZ_ACTIVE_ENV.
+     *
+     * @return An absolute path `<workdir>/applications/<name>`.
+     *
+     * @warning Terminates the process if both @p environment and
+     *          KEZ_ACTIVE_ENV are empty, or if the resolved name contains
+     *          unsafe characters (slashes, null bytes, whitespace).
+     *
+     * @see configured_work_path
+     * @see validate_path_component
+     */
     std::filesystem::path resolve_application_prefix(const std::string& environment) {
         std::string selected = environment;
         if (selected.empty()) {
@@ -166,6 +307,37 @@ namespace {
         return configured_work_path("applications") / selected;
     }
 
+    /**
+     * @brief Write an install plan to a temporary file and execute it via
+     *        scripts/install.sh.
+     *
+     * Creates the `.tmp` directory inside @p prefix, serialises the plan to a
+     * unique temporary script (named with the current PID), constructs a shell
+     * command that invokes scripts/install.sh with the prefix and plan path,
+     * and runs it.  The temporary file is removed after execution completes.
+     *
+     * The `KEZ_INSTALL_JOBS` environment variable is set from the parser
+     * settings; its value can be overridden by the `KEZ_INSTALL_JOBS`
+     * environment variable if already present in the calling environment.
+     *
+     * @param prefix          The installation prefix (environment root).
+     * @param plan            The parsed BashCommandPlan to execute.
+     * @param parser_settings Settings providing the parallel-jobs count and
+     *                        other install parameters.
+     * @param force           If true, the `--force` flag is forwarded to
+     *                        install.sh, causing already-recorded packages to
+     *                        be reinstalled.
+     * @param with_slurm      If true, the install command is wrapped in
+     *                        `sbatch --wait` for Slurm submission.
+     *
+     * @warning Terminates the process if the `.tmp` directory cannot be
+     *          created, if scripts/install.sh does not exist, or if the
+     *          executed command returns a non-zero exit status (handled by
+     *          run_external_command).
+     *
+     * @see write_install_plan
+     * @see run_external_command
+     */
     void run_install_plan(const std::filesystem::path& prefix, const BashCommandPlan& plan,
                           const UserConfigParserSettings& parser_settings, bool force,
                           bool with_slurm) {
@@ -206,6 +378,37 @@ namespace {
         }
     }
 
+    /**
+     * @brief Rebuild a package and its transitive dependents within an
+     *        existing environment.
+     *
+     * This is the implementation of the `--rebuild <pkg>` / `-R <pkg>` flag.
+     * Validates that:
+     *   1. `--read` was not also specified (mutually exclusive).
+     *   2. No positional package arguments were given (the rebuild set is
+     *      derived from the installed state, not user-provided targets).
+     *   3. A rebuild package name was supplied.
+     *   4. The target environment exists.
+     *   5. The target package is recorded in the environment's state.yaml.
+     *
+     * On success, it loads the full set of installed packages, regenerates a
+     * configuration for all of them, parses it, computes the transitive closure
+     * of dependents of the target package via compute_rebuild_set(), and either
+     * prints the filtered plan (dry-run) or executes it.  The `--force` flag is
+     * always set when running the filtered plan because every member is already
+     * recorded in state.yaml.
+     *
+     * @param options  The parsed install options; must have `rebuild` true and
+     *                 `rebuild_package` non-empty.
+     *
+     * @warning Terminates the process on any validation failure, if the
+     *          environment does not exist, if the target package is not
+     *          installed, or if plan generation/parsing fails.
+     *
+     * @see compute_rebuild_set
+     * @see filter_plan
+     * @see run_install_plan
+     */
     void rebuild(const InstallOptions& options) {
         if (options.read_file) {
             ERROR("--rebuild cannot be combined with --read");
@@ -257,6 +460,31 @@ namespace {
         run_install_plan(prefix, filtered, settings, true, options.with_slurm);
     }
 
+    /**
+     * @brief Main install routine: parse options, load/generate config, and
+     *        execute the install plan.
+     *
+     * This is the shared implementation for both `kez install` and
+     * `kez utilities add`.  The flow is:
+     *   1. Parse command-line arguments into InstallOptions.
+     *   2. If `--help` was requested, print help and return.
+     *   3. If `--rebuild` was given, delegate to rebuild() and return.
+     *   4. Load or generate the user configuration (load_install_config()).
+     *   5. Apply any `--config` YAML overrides.
+     *   6. Resolve the installation prefix from the environment name.
+     *   7. Load parser settings from the prefix.
+     *   8. Parse the config into a BashCommandPlan.
+     *   9. Print the plan (dry-run) or execute it via run_install_plan().
+     *
+     * @param arguments  The command-line tokens after the subcommand name.
+     * @param utility    If true, the call originated from `kez utilities add`;
+     *                   influences help text and option validation.
+     *
+     * @see parse_install_options
+     * @see load_install_config
+     * @see installation_prefix
+     * @see run_install_plan
+     */
     void install(const CommandArguments& arguments, bool utility) {
         bool help                    = false;
         const InstallOptions options = parse_install_options(arguments, utility, help);
@@ -285,6 +513,19 @@ namespace {
         run_install_plan(prefix, plan, parser_settings, options.force, options.with_slurm);
     }
 
+    /**
+     * @brief Remove all installed packages from the utilities environment.
+     *
+     * Iterates over every entry in `configured_work_path("utilities")` and
+     * deletes it recursively.  If the utilities directory does not exist at
+     * all, an informational message is printed and the function returns
+     * without error.
+     *
+     * @warning Terminates the process if any individual removal fails (the
+     *          directory iterator encounters an error from remove_all).
+     *
+     * @see configured_work_path
+     */
     void empty_utilities() {
         const std::filesystem::path root = configured_work_path("utilities");
         if (!std::filesystem::is_directory(root)) {
@@ -303,8 +544,43 @@ namespace {
     }
 }  // namespace
 
+/**
+ * @brief Entry point for the `kez install` command.
+ *
+ * Delegates to the internal install() function with `utility = false`,
+ * which runs the full install pipeline: option parsing, config generation
+ * or loading, plan parsing, and execution.
+ *
+ * @param arguments  Command-line tokens after the `install` subcommand.
+ *
+ * @see execute_utilities
+ * @see install
+ */
 void execute_install(const CommandArguments& arguments) { install(arguments, false); }
 
+/**
+ * @brief Entry point for the `kez utilities` command.
+ *
+ * Dispatches to one of three paths:
+ *   - **No arguments / `-h` / `--help`**: Print usage and return.
+ *   - **`empty`**: Delete all packages from the utilities environment
+ *     (delegates to empty_utilities()).  No additional arguments are
+ *     accepted.
+ *   - **`add`**: Forward the remaining arguments to the install pipeline
+ *     with `utility = true`, which installs packages into the shared
+ *     utilities directory.
+ *
+ * @param arguments  Command-line tokens after the `utilities` subcommand.
+ *                   The first token must be `add`, `empty`, or absent
+ *                   (triggers help).
+ *
+ * @warning Terminates the process if the first token is not `add`, `empty`,
+ *          or a help flag, or if `empty` is given with additional arguments.
+ *
+ * @see execute_install
+ * @see empty_utilities
+ * @see install
+ */
 void execute_utilities(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
         std::cout << "Usage: kez utilities <add|empty> [options]\n";

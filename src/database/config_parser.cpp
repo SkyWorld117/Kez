@@ -9,6 +9,34 @@
 #include <utils/yaml_utils.hpp>
 
 namespace {
+    /**
+     * @brief Parse a YAML scalar into a PackageType enumerator.
+     *
+     * Reads the string value of @p node and maps it to the corresponding
+     * PackageType value.  The recognised strings are:
+     *
+     *   String       | Return value
+     *   :----------- | :-----------
+     *   `"package"`  | PackageType::Package
+     *   `"system"`   | PackageType::System
+     *   `"compiler"` | PackageType::Compiler
+     *   `"mpi"`      | PackageType::Mpi
+     *   `"vendor"`   | PackageType::Vendor
+     *   `"abstract"` | PackageType::Abstract
+     *   `"external"` | PackageType::External
+     *
+     * @param node    The YAML scalar node whose string value names the type.
+     * @param path    Logical YAML path (e.g. `"recipe.type"`) used in error
+     *                messages to identify the source location.
+     * @param context Parser context carrying the recipe file path for
+     *                diagnostic annotation.
+     * @return The corresponding PackageType enumerator.
+     *
+     * @warning If the scalar value does not match any known type, the function
+     *          calls @c fail_config() which prints an error and terminates the
+     *          program with @c exit(EXIT_FAILURE).  It never returns normally
+     *          on an unrecognised value.
+     */
     PackageType parse_package_type(const YAML::Node& node, const std::string& path,
                                    const DatabaseParserContext& context) {
         const std::string value = parse_scalar(node, path, context);
@@ -36,6 +64,32 @@ namespace {
         fail_config(node, path, "has unsupported package type '" + value + "'", context);
     }
 
+    /**
+     * @brief Factory that creates the appropriate PackageConfig subclass based
+     *        on the recipe's `toolchain` field.
+     *
+     * Inspects the `"toolchain"` key inside @p recipe and returns a
+     * concrete configuration object:
+     *
+     *   Recipe value  | Returned type
+     *   :------------ | :------------
+     *   absent        | GenericPackageConfig
+     *   `"autotools"` | AutotoolsPackageConfig
+     *   `"cmake"`     | CMakePackageConfig
+     *   `"make"`      | MakePackageConfig
+     *
+     * @param recipe  The YAML map node corresponding to the `"recipe"` key
+     *                of the package document.  Must be a map (already
+     *                validated by the caller).
+     * @param context Parser context used for error reporting.
+     * @return A heap-allocated PackageConfig of the concrete type determined
+     *         by the `toolchain` field.
+     *
+     * @warning If the `"toolchain"` value is present but not one of the
+     *          recognised strings, the function calls @c fail_config() which
+     *          terminates the program.  It never returns normally for an
+     *          unknown toolchain.
+     */
     std::unique_ptr<PackageConfig> make_package_config(const YAML::Node& recipe,
                                                        const DatabaseParserContext& context) {
         if (!yaml_has(recipe, "toolchain")) {
@@ -56,6 +110,36 @@ namespace {
         fail_config(node, "recipe.toolchain", "has unsupported toolchain '" + value + "'", context);
     }
 
+    /**
+     * @brief Parse a YAML sequence of override entries into a vector of
+     *        Override structs.
+     *
+     * Each element of the input sequence must be a YAML map with the
+     * following recognised keys:
+     *
+     *   Key         | Required? | Description
+     *   :---------- | :-------- | :----------
+     *   `condition` | No        | Optional condition expression.  If present it
+     *               |           | is validated via @c validate_condition().
+     *   `target`    | Yes       | Name of the dependency property to override.
+     *   `action`    | No        | How to combine the override value (parsed
+     *               |           | via @c parse_action()).  Defaults to Set.
+     *   `value`     | Yes       | The override value to apply.
+     *
+     * @param node    The YAML sequence node containing override entries.
+     * @param path    Logical YAML path for error messages (e.g.
+     *                `"recipe.overrides"`).
+     * @param context Parser context for diagnostic annotation.
+     * @return A vector of parsed Override structs, in the order they appear
+     *         in the sequence.
+     *
+     * @warning The function terminates the program if:
+     *         - @p node is not a YAML sequence,
+     *         - any entry is not a map,
+     *         - an entry contains unexpected keys,
+     *         - `target` or `value` is missing,
+     *         - the condition expression fails validation.
+     */
     std::vector<Override> parse_overrides(const YAML::Node& node, const std::string& path,
                                           const DatabaseParserContext& context) {
         expect_sequence(node, path, context);
@@ -84,6 +168,38 @@ namespace {
         return result;
     }
 
+    /**
+     * @brief Parse the `"properties"` map from a package recipe into a vector
+     *        of Property structs.
+     *
+     * Properties declare how a package is consumed by its dependents (e.g.
+     * include directories, link libraries, compiler flags).  Each entry in the
+     * map must have a scalar key (the property name) and a value that is
+     * either:
+     *
+     *   - a plain YAML scalar (stored directly as a string), or
+     *   - a YAML map conforming to the configurable-value schema (parsed via
+     *     @c parse_string_configurable()) that supplies a default value plus
+     *     condition-dependent overrides.
+     *
+     * Duplicate property names within the same package are rejected.
+     *
+     * @param node    The YAML node representing the `"properties"` map.  If
+     *                @p node is null, an empty vector is returned immediately
+     *                (properties are optional).
+     * @param path    Logical YAML path for error messages (e.g.
+     *                `"recipe.properties"`).
+     * @param context Parser context for diagnostic annotation.
+     * @return A vector of parsed Property structs.  The order is
+     *         deterministic (iteration order of the YAML map).
+     *
+     * @warning The function terminates the program if:
+     *         - @p node is non-null but not a YAML map,
+     *         - any key is not a scalar,
+     *         - the same property name appears more than once,
+     *         - a property value is neither a scalar nor a configurable-value
+     *           map.
+     */
     std::vector<Property> parse_properties(const YAML::Node& node, const std::string& path,
                                            const DatabaseParserContext& context) {
         if (node.IsNull()) {

@@ -7,6 +7,44 @@
 #include <utils/yaml_utils.hpp>
 
 namespace {
+    /**
+     * @brief Parse a generic YAML node into a @c ConfigurableValue<T>.
+     *
+     * Reads a mapping that must contain either a @c default key or a @c conditions
+     * key (or both).  The @c default key, when present and non-null, is parsed by
+     * the caller-supplied @p parse_value callback.  The @c conditions key, when
+     * present, must be a sequence of maps, each containing:
+     *   - @c condition  (string) -- an expression evaluated at resolution time.
+     *   - @c value      (T)      -- the value to apply when the condition matches.
+     *   - @c action     (string) -- optional; how to combine with the default
+     *     (parsed via @c parse_action; defaults to @c ValueAction::Set).
+     *
+     * At least one of @c default or @c conditions must be present; otherwise the
+     * function terminates with a fatal error via @c fail_config.
+     *
+     * @tparam T          The value type (e.g. @c bool, @c std::string).
+     * @tparam ValueParser Callable type invoked as
+     *                    @c T(const YAML::Node& value_node, const std::string& value_path).
+     * @param node        The YAML node (expected to be a map) to parse.
+     * @param path        Dot-separated YAML path used for error-reporting context
+     *                    (e.g. @c "build.configurations.options[0].enabled").
+     * @param context     The parser context providing the source file path for
+     *                    diagnostic messages.
+     * @param parse_value Callback that converts a YAML node into the target type
+     *                    @c T.  Called for both the default value and each
+     *                    condition value.
+     * @return A fully populated @c ConfigurableValue<T> containing the parsed
+     *         default value (if any) and the list of conditional values.
+     *
+     * @warning Terminates the process with @c exit(EXIT_FAILURE) if @p node is
+     *          not a map, contains unexpected keys, or lacks both a default and
+     *          any conditions.
+     *
+     * @see ConfigurableValue
+     * @see ConditionalValue
+     * @see parse_bool_configurable
+     * @see parse_string_configurable
+     */
     template <typename T, typename ValueParser>
     ConfigurableValue<T> parse_configurable(const YAML::Node& node, const std::string& path,
                                             const DatabaseParserContext& context,
@@ -50,6 +88,30 @@ namespace {
 
 }  // namespace
 
+/**
+ * @brief Parse a YAML node into a @c ConfigurableValue<bool>.
+ *
+ * Delegates to @c parse_configurable<bool> with a value parser that calls
+ * @c parse_boolean, then validates that every condition uses the
+ * @c ValueAction::Set action.  Any condition with a non-Set action triggers
+ * a fatal configuration error because appending or prepending to a boolean
+ * is semantically meaningless.
+ *
+ * @param node    The YAML node (expected to be a map) to parse.
+ * @param path    Dot-separated YAML path used for error-reporting context
+ *                (e.g. @c "build.configurations.options[0].enabled").
+ * @param context The parser context providing the source file path for
+ *                diagnostic messages.
+ * @return A fully populated @c ConfigurableValue<bool> containing the parsed
+ *         default value (if any) and the list of conditional values.
+ *
+ * @warning Terminates the process with @c exit(EXIT_FAILURE) if @p node is
+ *          not a map, contains unexpected keys, lacks both a default and any
+ *          conditions, or a condition uses a non-Set action.
+ *
+ * @see parse_configurable
+ * @see parse_string_configurable
+ */
 ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node, const std::string& path,
                                                 const DatabaseParserContext& context) {
     ConfigurableValue<bool> result = parse_configurable<bool>(
@@ -64,6 +126,29 @@ ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node, const st
     return result;
 }
 
+/**
+ * @brief Parse a YAML node into a @c ConfigurableValue<std::string>.
+ *
+ * Delegates to @c parse_configurable<std::string> with a value parser that
+ * calls @c parse_scalar (with @c allow_null=true).  Unlike the boolean
+ * variant, string configurables permit all @c ValueAction modes (Set,
+ * Append, Prepend).
+ *
+ * @param node    The YAML node (expected to be a map) to parse.
+ * @param path    Dot-separated YAML path used for error-reporting context
+ *                (e.g. @c "build.configurations.options[0].enabled_value").
+ * @param context The parser context providing the source file path for
+ *                diagnostic messages.
+ * @return A fully populated @c ConfigurableValue<std::string> containing the
+ *         parsed default value (if any) and the list of conditional values.
+ *
+ * @warning Terminates the process with @c exit(EXIT_FAILURE) if @p node is
+ *          not a map, contains unexpected keys, or lacks both a default and
+ *          any conditions.
+ *
+ * @see parse_configurable
+ * @see parse_bool_configurable
+ */
 ConfigurableValue<std::string> parse_string_configurable(const YAML::Node& node,
                                                          const std::string& path,
                                                          const DatabaseParserContext& context) {
@@ -74,6 +159,38 @@ ConfigurableValue<std::string> parse_string_configurable(const YAML::Node& node,
 }
 
 namespace {
+    /**
+     * @brief Parse a YAML node into an @c EnvironmentVariable.
+     *
+     * Reads a mapping with the following recognized keys:
+     *   - @c name              (string, required) -- the variable name.
+     *   - @c description       (string, optional) -- human-readable description.
+     *   - @c user_configurable (bool,   optional) -- whether end-users may
+     *     override this variable (default: @c false).
+     *   - @c requires          (sequence of strings, optional) -- packages that
+     *     must be resolvable before this variable can be evaluated.
+     *   - @c default           (string, optional) -- the variable's default
+     *     value when no condition matches.
+     *   - @c conditions        (sequence of maps, optional) -- condition-
+     *     dependent overrides.  If both @c default and @c conditions are
+     *     present, they are wrapped together into a single
+     *     @c ConfigurableValue<std::string> via
+     *     @c parse_string_configurable.
+     *
+     * @param node    The YAML node (expected to be a map) to parse.
+     * @param path    Dot-separated YAML path used for error-reporting context
+     *                (e.g. @c "build.configurations.environment[0]").
+     * @param context The parser context providing the source file path for
+     *                diagnostic messages.
+     * @return A fully populated @c EnvironmentVariable with the parsed name,
+     *         metadata, and configurable value.
+     *
+     * @warning Terminates the process with @c exit(EXIT_FAILURE) if the node is
+     *          not a map, contains unexpected keys, or a required key is missing.
+     *
+     * @see EnvironmentVariable
+     * @see parse_string_configurable
+     */
     EnvironmentVariable parse_environment_variable(const YAML::Node& node, const std::string& path,
                                                    const DatabaseParserContext& context) {
         expect_map(node, path, context);
@@ -97,6 +214,8 @@ namespace {
             result.value.default_value = parse_scalar(node["default"], path + ".default", context);
         }
         if (yaml_has(node, "conditions")) {
+            /* Wrap default + conditions into a synthetic map so that
+               parse_string_configurable can parse them as a single unit. */
             YAML::Node wrapper(YAML::NodeType::Map);
             if (yaml_has(node, "default")) {
                 wrapper["default"] = node["default"];
@@ -107,6 +226,45 @@ namespace {
         return result;
     }
 
+    /**
+     * @brief Parse a YAML node into a @c BuildOption.
+     *
+     * Reads a mapping with the following recognized keys:
+     *   - @c name              (string, required) -- short option name.
+     *   - @c description       (string, optional) -- human-readable description.
+     *   - @c user_configurable (bool,   optional) -- whether end-users may
+     *     override this option (default: @c false).
+     *   - @c enabled           (map,    optional) -- condition-dependent boolean
+     *     control for whether the option is enabled.  Parsed via
+     *     @c parse_bool_configurable.
+     *   - @c enabled_format    (string, optional) -- format string used when
+     *     the option is enabled.
+     *   - @c disabled_format   (string, optional) -- format string used when
+     *     the option is disabled.
+     *   - @c requires          (sequence of strings, optional) -- packages that
+     *     must be present for this option to be valid.
+     *   - @c enabled_value     (map,    optional) -- condition-dependent string
+     *     value applied when the option is enabled.  Parsed via
+     *     @c parse_string_configurable.
+     *   - @c disabled_value    (map,    optional) -- condition-dependent string
+     *     value applied when the option is disabled.  Parsed via
+     *     @c parse_string_configurable.
+     *
+     * @param node    The YAML node (expected to be a map) to parse.
+     * @param path    Dot-separated YAML path used for error-reporting context
+     *                (e.g. @c "build.configurations.options[0]").
+     * @param context The parser context providing the source file path for
+     *                diagnostic messages.
+     * @return A fully populated @c BuildOption with the parsed name, metadata,
+     *         and configurable values.
+     *
+     * @warning Terminates the process with @c exit(EXIT_FAILURE) if the node is
+     *          not a map or contains unrecognized keys.
+     *
+     * @see BuildOption
+     * @see parse_bool_configurable
+     * @see parse_string_configurable
+     */
     BuildOption parse_option(const YAML::Node& node, const std::string& path,
                              const DatabaseParserContext& context) {
         expect_map(node, path, context);
@@ -144,6 +302,35 @@ namespace {
     }
 }  // namespace
 
+/**
+ * @brief Parse a YAML node into a @c BuildConfiguration.
+ *
+ * Reads an optional map with the following recognized keys:
+ *   - @c command      (string)  -- the build-system command to invoke.
+ *   - @c environment  (sequence of maps) -- environment variables to set
+ *     during the build step.  Each entry is parsed by the internal
+ *     @c parse_environment_variable helper.
+ *   - @c options      (sequence of maps) -- user-configurable build options.
+ *     Each entry is parsed by the internal @c parse_option helper.  Duplicate
+ *     option names produce a warning (via @c warn_config) but are retained.
+ *
+ * @param node    The YAML node (expected to be a map) to parse.
+ * @param path    Dot-separated YAML path used for error-reporting context
+ *                (e.g. @c "build.configurations").
+ * @param context The parser context providing the source file path for
+ *                diagnostic messages.
+ * @return A @c BuildConfiguration with the parsed command, environment
+ *         variables, and options.  Unset optional fields are left
+ *         disengaged.
+ *
+ * @warning Terminates the process with @c exit(EXIT_FAILURE) if the node is
+ *          not a map or contains unrecognized keys.
+ *
+ * @see parse_build
+ * @see BuildConfiguration
+ * @see EnvironmentVariable
+ * @see BuildOption
+ */
 BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::string& path,
                                              const DatabaseParserContext& context) {
     expect_map(node, path, context);
@@ -179,6 +366,46 @@ BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::
     return result;
 }
 
+/**
+ * @brief Parse a YAML node into a @c Build description.
+ *
+ * Reads an optional map with the following recognized keys:
+ *   - @c preprocessing  (string) -- a shell command run before any stage.
+ *   - @c postprocessing (string) -- a shell command run after all stages.
+ *   - @c configurations (map)    -- build-wide configuration (command,
+ *     environment, options).  Delegates to
+ *     @c parse_build_configuration.
+ *   - @c stages         (sequence of maps) -- ordered build stages.  Each
+ *     stage map may contain:
+ *       - @c target        (string)        -- the build target (e.g.
+ *         @c "all" or @c "install").  May be null, in which case the
+ *         target is left disengaged.
+ *       - @c multithreaded (bool)          -- whether parallel jobs are
+ *         allowed (default @c true).
+ *       - @c configurations (map)          -- per-stage configuration
+ *         overrides (command, environment, options).
+ *
+ * If the @c stages key is present, every entry is validated as a map with
+ * only the allowed keys listed above.  The @c target key is required for
+ * each stage (via @c required_node), but its value is permitted to be null
+ * to indicate the toolchain default.
+ *
+ * @param node    The YAML node (expected to be a map) to parse.
+ * @param path    Dot-separated YAML path used for error-reporting context
+ *                (e.g. @c "build").
+ * @param context The parser context providing the source file path for
+ *                diagnostic messages.
+ * @return A @c Build with the parsed preprocessing/postprocessing scripts,
+ *         build-wide configuration, and ordered list of stages.
+ *
+ * @warning Terminates the process with @c exit(EXIT_FAILURE) if the node is
+ *          not a map, contains unrecognized keys, or a stage entry is
+ *          malformed.
+ *
+ * @see parse_build_configuration
+ * @see Build
+ * @see BuildStage
+ */
 Build parse_build(const YAML::Node& node, const std::string& path,
                   const DatabaseParserContext& context) {
     expect_map(node, path, context);

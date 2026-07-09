@@ -25,6 +25,14 @@ namespace {
         bool with_slurm = false;
     };
 
+    /**
+     * @brief Prints the factory subcommand usage message to stdout.
+     *
+     * Lists all valid factory commands (create, remove, list, enter, exit,
+     * which, build, run, summarize) and their build-specific options
+     * (--dry-run, --force, --with-slurm).  Does not terminate the program;
+     * the caller is expected to return or exit as appropriate.
+     */
     void factory_help() {
         std::cout << "Usage: kez factory <create|remove|list|enter|exit|which|build|run|summarize> "
                      "[options]\n\n"
@@ -44,6 +52,22 @@ namespace {
                      "  -S, --with-slurm   Run scripts/install.sh through sbatch\n";
     }
 
+    /**
+     * @brief Extracts and validates a single factory name from the command arguments.
+     *
+     * Expects exactly two tokens: the action word (already consumed) and the
+     * factory name.  The name is validated as a safe path component via
+     * validate_path_component() before being returned.
+     *
+     * @param arguments  The full command argument list.
+     * @param action     The human-readable action name used in error messages
+     *                   (e.g. "create", "remove").
+     * @return The validated factory name string.
+     *
+     * @note Terminates the program via ERROR()/exit(EXIT_FAILURE) if the
+     *       argument count is not exactly 2 or if the name contains unsafe
+     *       characters.
+     */
     std::string required_factory_name(const CommandArguments& arguments,
                                       const std::string& action) {
         if (arguments.size() != 2) {
@@ -54,19 +78,61 @@ namespace {
         return arguments[1];
     }
 
+    /**
+     * @brief Returns the root directory under which all factory directories live.
+     *
+     * The path is obtained by calling configured_work_path("factories"), which
+     * consults the work-dir hierarchy established during initialization.
+     *
+     * @return Absolute path to the factories root directory.
+     */
     std::filesystem::path factories_root() { return configured_work_path("factories"); }
 
+    /**
+     * @brief Builds the full filesystem path for a named factory.
+     *
+     * Validates the name as a safe path component before joining it under the
+     * factories root directory.
+     *
+     * @param name  The factory name (must be a valid path component).
+     * @return The path `<factories_root()>/<name>`.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the name is invalid.
+     */
     std::filesystem::path factory_path(const std::string& name) {
         validate_path_component(name, "factory name");
         return factories_root() / name;
     }
 
+    /**
+     * @brief Returns the path of the currently active (selected) factory.
+     *
+     * Reads the KEZ_FACTORY environment variable.  If the variable is unset
+     * or empty, the program terminates with an error telling the user to
+     * run 'kez factory enter <name>' first.
+     *
+     * @return The full path to the active factory directory.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if KEZ_FACTORY is not set.
+     */
     std::filesystem::path active_factory_path() {
         const std::string name = get_env_var(
             "KEZ_FACTORY", "No factory is currently selected. Run 'kez factory enter <name>'.");
         return factory_path(name);
     }
 
+    /**
+     * @brief Creates a new factory with the given name.
+     *
+     * The factory directory is created under the factories root with three
+     * standard subdirectories: recipes/, buildspace/, and runspace/.
+     * If the factory already exists, the program terminates with an error.
+     *
+     * @param name  The name for the new factory.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the factory already
+     *       exists or if any of the directories cannot be created.
+     */
     void create_factory(const std::string& name) {
         const std::filesystem::path path = factory_path(name);
         if (std::filesystem::exists(path)) {
@@ -88,6 +154,17 @@ namespace {
         SUCCESS("Factory created: " + name);
     }
 
+    /**
+     * @brief Removes an existing factory and all of its contents.
+     *
+     * The factory's directory tree is recursively deleted.  If the named
+     * factory does not exist or is not a directory, the program terminates.
+     *
+     * @param name  The name of the factory to remove.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the factory does not
+     *       exist or if the recursive removal fails.
+     */
     void remove_factory(const std::string& name) {
         const std::filesystem::path path = factory_path(name);
         if (!std::filesystem::is_directory(path)) {
@@ -103,6 +180,20 @@ namespace {
         SUCCESS("Factory removed: " + name);
     }
 
+    /**
+     * @brief Parses the build-specific command-line options from the argument list.
+     *
+     * Iterates over all arguments (skipping index 0, the "build" action) and
+     * sets the corresponding flags in the returned FactoryBuildOptions struct.
+     * Recognised options: -h/--help, -d/--dry-run, -f/--force, -S/--with-slurm.
+     *
+     * @param arguments  The full command argument list.
+     * @return A FactoryBuildOptions struct with the parsed flags set.
+     *
+     * @note --help causes the usage message to be printed followed by
+     *       exit(EXIT_SUCCESS).  Any unrecognised option triggers
+     *       exit(EXIT_FAILURE).
+     */
     FactoryBuildOptions parse_build_options(const CommandArguments& arguments) {
         FactoryBuildOptions result;
         for (std::size_t index = 1; index < arguments.size(); ++index) {
@@ -125,6 +216,19 @@ namespace {
         return result;
     }
 
+    /**
+     * @brief Collects and sorts all recipe YAML files inside a factory's recipes/ directory.
+     *
+     * Scans the <factory>/recipes/ directory for regular files with a .yaml
+     * extension.  Any non-YAML file is skipped with a warning.  The resulting
+     * list is sorted lexicographically.  At least one recipe file must exist.
+     *
+     * @param factory  Path to the factory directory.
+     * @return A sorted vector of paths to .yaml recipe files.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the recipes/ directory
+     *       is missing or contains no YAML files.
+     */
     std::vector<std::filesystem::path> recipe_files(const std::filesystem::path& factory) {
         const std::filesystem::path recipes = factory / "recipes";
         if (!std::filesystem::is_directory(recipes)) {
@@ -149,6 +253,24 @@ namespace {
         return files;
     }
 
+    /**
+     * @brief Executes (or prints) an install plan for a single buildspace.
+     *
+     * In dry-run mode the plan is printed to stdout and the function returns
+     * immediately.  Otherwise a temporary shell script with the plan commands
+     * is written under <prefix>/.tmp/, and scripts/install.sh is invoked to
+     * execute it.  The KEZ_INSTALL_JOBS environment variable (falling back to
+     * the configured parallel-jobs setting) controls concurrency.
+     *
+     * @param plan     The BashCommandPlan containing installation commands.
+     * @param prefix   The buildspace prefix directory where the plan runs.
+     * @param options  Build options that control force-reinstall, slurm mode,
+     *                 and dry-run behaviour.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if scripts/install.sh
+     *       is missing.  The temporary plan file is removed after execution;
+     *       a failed removal produces only a warning (non-fatal).
+     */
     void run_install_plan(const BashCommandPlan& plan, const std::filesystem::path& prefix,
                           const FactoryBuildOptions& options) {
         if (options.dry_run) {
@@ -190,6 +312,22 @@ namespace {
         }
     }
 
+    /**
+     * @brief Builds every recipe in the active factory's recipes/ directory.
+     *
+     * Parses build options from the command arguments, resolves the active
+     * factory from the KEZ_FACTORY environment variable, ensures the
+     * buildspace/ directory exists, and then iterates over each recipe file.
+     * Each recipe is parsed into a BashCommandPlan (via parse_cmdline) with
+     * the buildspace target named after the recipe stem, and the plan is
+     * executed through run_install_plan().
+     *
+     * @param arguments  The full command argument list (action + options).
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the factory does not
+     *       exist, if the buildspace directory cannot be created, or if no
+     *       recipe files are found.
+     */
     void build_factory(const CommandArguments& arguments) {
         const FactoryBuildOptions options   = parse_build_options(arguments);
         const std::filesystem::path factory = active_factory_path();
@@ -216,6 +354,20 @@ namespace {
         SUCCESS(options.dry_run ? "Factory dry run completed." : "Factory build completed.");
     }
 
+    /**
+     * @brief Locates the factory profile configuration file.
+     *
+     * Checks two locations in order of preference:
+     *   1. <factory>/runspace/config.yaml  (current layout)
+     *   2. <factory>/config.yaml           (legacy layout)
+     *
+     * The first regular file found is returned.
+     *
+     * @param factory  Path to the factory directory.
+     * @return The path to the configuration file.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if neither file exists.
+     */
     std::filesystem::path factory_config_file(const std::filesystem::path& factory) {
         const std::filesystem::path current = factory / "runspace" / "config.yaml";
         if (std::filesystem::is_regular_file(current)) {
@@ -229,10 +381,44 @@ namespace {
         exit(EXIT_FAILURE);
     }
 
+    /**
+     * @brief Loads and parses a factory plan from its configuration file.
+     *
+     * Reads the YAML configuration file located by factory_config_file(),
+     * parses it into a FactoryPlan (a list of FactoryBuildspace entries, each
+     * containing named profiles with commands and summary regexes).
+     *
+     * @param factory  Path to the factory directory.
+     * @return The parsed FactoryPlan.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the config file
+     *       cannot be found or if its YAML content is invalid.
+     */
     FactoryPlan load_factory_plan(const std::filesystem::path& factory) {
         return parse_factory_config(YAML::LoadFile(factory_config_file(factory).string()));
     }
 
+    /**
+     * @brief Writes a bash profile script for a factory runspace profile.
+     *
+     * The generated script:
+     *   - Sets pipefail for strict error handling.
+     *   - Changes to the runspace working directory.
+     *   - Prepends bin/ directories from the buildspace to PATH.
+     *   - Defines a kez_factory_info helper that prints info messages
+     *     (via KEZ_HOME/bin/print_info if available, otherwise plain printf).
+     *   - Iterates over the profile's command list, printing each command
+     *     before executing it.
+     *
+     * @param script      Destination path for the generated shell script.
+     * @param space       The runspace working directory to cd into.
+     * @param buildspace  The buildspace directory whose bin/ directories are
+     *                    added to PATH.
+     * @param profile     The FactoryProfile containing the command list.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the script file
+     *       cannot be opened or if writing fails after close.
+     */
     void write_profile_script(const std::filesystem::path& script,
                               const std::filesystem::path& space,
                               const std::filesystem::path& buildspace,
@@ -271,6 +457,20 @@ namespace {
         }
     }
 
+    /**
+     * @brief Runs all profiles defined in the active factory's configuration.
+     *
+     * Loads the factory plan from the configuration file, iterates over each
+     * buildspace/name and each profile defined therein, creates a dedicated
+     * runspace subdirectory (<runspace>/<buildspace>_<profile>), writes a
+     * profile execution script via write_profile_script(), executes it, and
+     * removes the script afterwards.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if:
+     *       - The active factory directory does not exist.
+     *       - The runspace cannot be created.
+     *       - Any referenced buildspace directory is missing.
+     */
     void run_factory() {
         const std::filesystem::path factory = active_factory_path();
         if (!std::filesystem::is_directory(factory)) {
@@ -317,6 +517,16 @@ namespace {
         SUCCESS("Factory run completed.");
     }
 
+    /**
+     * @brief Collects the output log files present in a runspace directory.
+     *
+     * Looks for the two standard output files kez.out and kez.err inside the
+     * given space directory.  Only regular files are included; missing files
+     * are silently skipped.
+     *
+     * @param space  Path to the runspace directory to scan.
+     * @return A vector of paths to existing output files (kez.out, kez.err).
+     */
     std::vector<std::filesystem::path> output_files(const std::filesystem::path& space) {
         std::vector<std::filesystem::path> result;
         for (const char* name : {"kez.out", "kez.err"}) {
@@ -328,6 +538,18 @@ namespace {
         return result;
     }
 
+    /**
+     * @brief Searches a single output file for lines matching a regex pattern.
+     *
+     * Reads the file, splits it into lines, and prints every line that matches
+     * the pattern via INFO().  Sets the referenced bool `matched` to true if
+     * at least one match was found, allowing the caller to detect when no
+     * matches occurred across multiple files.
+     *
+     * @param path     Path to the file to search.
+     * @param pattern  The compiled std::regex to match against each line.
+     * @param matched  Reference to a flag that is set to true on any match.
+     */
     void summarize_file(const std::filesystem::path& path, const std::regex& pattern,
                         bool& matched) {
         const std::vector<std::string> lines = split(read_file(path.string()), '\n');
@@ -339,6 +561,23 @@ namespace {
         }
     }
 
+    /**
+     * @brief Summarises the output of all profiles in the active factory.
+     *
+     * Loads the factory plan, iterates over every buildspace/profile
+     * combination, and for each one:
+     *   1. Locates the runspace output files (kez.out, kez.err).
+     *   2. Checks that the profile defines a summary_regex.
+     *   3. Searches each output file for lines matching the regex, printing
+     *      matches via INFO().
+     *
+     * Profiles with no output files or no summary regex are skipped with a
+     * warning.  If a profile's regex matched nothing, a "No matches found."
+     * warning is printed.
+     *
+     * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the active factory
+     *       directory does not exist.
+     */
     void summarize_factory() {
         const std::filesystem::path factory = active_factory_path();
         if (!std::filesystem::is_directory(factory)) {
@@ -379,6 +618,28 @@ namespace {
     }
 }  // namespace
 
+/**
+ * @brief Top-level dispatcher for the 'kez factory' subcommand.
+ *
+ * Parses the first argument as the action and delegates to the appropriate
+ * handler.  Supported actions:
+ *   - create, remove         -- manage factory directories
+ *   - list                   -- enumerate existing factories
+ *   - enter, exit, which     -- manage the active factory selection
+ *   - build                  -- build all recipes in the active factory
+ *   - run                    -- execute profiles in the active factory
+ *   - summarize              -- print summary lines from profile output
+ *
+ * If no arguments are given or -h/--help is passed, the usage message is
+ * printed and the function returns without error.
+ *
+ * @param arguments  The command argument list (action + optional arguments).
+ *
+ * @note Terminates via ERROR()/exit(EXIT_FAILURE) if the action is
+ *       unrecognised, if subcommands like 'list', 'exit', 'which', 'run',
+ *       or 'summarize' receive unexpected extra arguments, or if 'enter'
+ *       finds that a factory is already selected.
+ */
 void execute_factory(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
         factory_help();

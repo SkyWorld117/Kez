@@ -1,3 +1,15 @@
+/**
+ * @file    user_config_generator_test.cpp
+ * @brief   Unit tests for the user-config generation pipeline.
+ *
+ * Tests cover the individual filter components (`configurations_filter`,
+ * `options_filter`, `stages_filter`) as well as the top-level
+ * `gen_user_config` entry point.  The test fixture `TemporaryGeneratorDatabase`
+ * sets up an ephemeral KEZ environment with a minimal database, heuristics
+ * tree, and manifest so that tests can exercise real YAML parsing and
+ * filtering.
+ */
+
 #include <gtest/gtest.h>
 #include <unistd.h>
 
@@ -16,6 +28,26 @@
 
 namespace {
 
+    /**
+     * Test fixture that creates a temporary KEZ environment for user-config
+     * generation tests.
+     *
+     * On SetUp the fixture:
+     *   - Saves the current `KEZ_DB`, `KEZ_HOME`, `KEZ_WORKDIR`, and
+     *     `KEZ_ARCH` environment variables for later restoration.
+     *   - Creates a temporary directory with subdirectories for `database`,
+     *     `heuristics`, `mpis`, `patches/<pkg>`, and `vendors`.
+     *   - Sets those environment variables to point into the temp directory
+     *     and forces `KEZ_ARCH` to `x86_64`.
+     *   - Writes a minimal `manifest.yaml`.
+     *   - Clears the database cache so that tests start from a clean slate.
+     *
+     * On TearDown it removes the temporary directory and restores the original
+     * environment variables.
+     *
+     * Helper methods `write_package` and `write_file` let derived code quickly
+     * populate the temporary database and filesystem.
+     */
     class TemporaryGeneratorDatabase : public ::testing::Test {
        protected:
         void SetUp() override {
@@ -53,6 +85,18 @@ paths:
             restore_environment("KEZ_ARCH", previous_architecture_);
         }
 
+        /**
+         * Saves the current value of an environment variable into an
+         * optional<string> so it can be restored later.
+         *
+         * If the variable is not set the optional remains empty, which signals
+         * to @ref restore_environment that it should unset the variable rather
+         * than overwrite it.
+         *
+         * @param name     Environment variable name (e.g. "KEZ_DB").
+         * @param previous Output parameter receiving the saved value (or
+         *                 nullopt).
+         */
         static void remember_environment(const char* name, std::optional<std::string>& previous) {
             const char* value = std::getenv(name);
             if (value != nullptr) {
@@ -60,6 +104,16 @@ paths:
             }
         }
 
+        /**
+         * Restores an environment variable to a previously saved value.
+         *
+         * If @p previous has a value the variable is set to that value;
+         * otherwise it is unset.  This lets the fixture cleanly undo its
+         * SetUp modifications without leaking state across tests.
+         *
+         * @param name     Environment variable name.
+         * @param previous The value saved earlier by @ref remember_environment.
+         */
         static void restore_environment(const char* name,
                                         const std::optional<std::string>& previous) {
             if (previous.has_value()) {
@@ -69,6 +123,14 @@ paths:
             }
         }
 
+        /**
+         * Creates a package recipe at `database/<package>/latest.yaml` inside
+         * the temporary environment.
+         *
+         * @param package  Package name (used as the directory name).
+         * @param contents Raw YAML content of the recipe (the entire
+         *                 `latest.yaml` file).
+         */
         void write_package(const std::string& package, const std::string& contents) const {
             const std::filesystem::path directory = path_ / "database" / package;
             std::filesystem::create_directories(directory);
@@ -77,6 +139,15 @@ paths:
             output << contents;
         }
 
+        /**
+         * Writes arbitrary content to a file rooted in the temporary
+         * environment path.
+         *
+         * @param path     Relative (or absolute) path; for typical use a
+         *                 path relative to @ref path_ (e.g.
+         *                 `path_ / "config.yaml"`).
+         * @param contents File content to write.
+         */
         void write_file(const std::filesystem::path& path, const std::string& contents) const {
             std::ofstream output(path);
             ASSERT_TRUE(output.good());
@@ -90,11 +161,31 @@ paths:
         std::optional<std::string> previous_architecture_;
     };
 
+    /**
+     * Converts a YAML sequence node (of strings) into an unordered_set for
+     * order-independent comparison.
+     *
+     * @param  sequence A YAML node that should represent a
+     *                  `std::vector<std::string>`.
+     * @return An unordered_set containing the same string values.
+     */
     std::unordered_set<std::string> as_set(const YAML::Node& sequence) {
         const std::vector<std::string> values = sequence.as<std::vector<std::string>>();
         return {values.begin(), values.end()};
     }
 
+    /**
+     * Searches a YAML sequence of option nodes for one whose `"name"` field
+     * matches @p name.
+     *
+     * @param  options Sequence of YAML nodes, each expected to have a
+     *                 `"name"` string key.
+     * @param  name    The option name to look for.
+     * @return The matching YAML::Node if found.
+     *
+     * @note If no matching option exists the test is failed via ADD_FAILURE
+     *       and an empty (null) node is returned.
+     */
     YAML::Node find_option(const YAML::Node& options, const std::string& name) {
         for (YAML::Node option : options) {
             if (option["name"].as<std::string>() == name) {
@@ -105,6 +196,15 @@ paths:
         return YAML::Node();
     }
 
+    /**
+     * Checks whether a YAML sequence of option nodes contains one with a
+     * given name.
+     *
+     * @param  options Sequence of YAML nodes, each expected to have a
+     *                 `"name"` string key.
+     * @param  name    The option name to look for.
+     * @return true if a matching option exists, false otherwise.
+     */
     bool has_option(const YAML::Node& options, const std::string& name) {
         for (YAML::Node option : options) {
             if (option["name"].as<std::string>() == name) {
@@ -114,6 +214,28 @@ paths:
         return false;
     }
 
+    /**
+     * @brief Verifies that `configurations_filter` and `stages_filter`
+     *        correctly convert typed user-configurable fields and resolve
+     *        abstract requirements.
+     *
+     * The test exercises the following scenarios:
+     *   - An environment variable whose `requires` is satisfied by a concrete
+     *     dependency appears in the filtered output with its default value
+     *     preserved.
+     *   - An environment variable whose `requires` is **not** satisfied is
+     *     excluded from the filtered output.
+     *   - A user-configurable build option with an `enabled` default of
+     *     `false`, explicit `enabled_value`, and `disabled_format` is
+     *     correctly carried through; its `disabled_value` field is null
+     *     because the recipe did not set one.
+     *   - A user-configurable option with no explicit defaults is present
+     *     and enabled=true (the default), with a null `enabled_value`.
+     *   - A non-user-configurable (`user_configurable: false`) option is
+     *     excluded from the output.
+     *   - `filtered_stages` preserves stage-level configurations and applies
+     *     the same filtering to the stage's nested configurations.
+     */
     TEST(UserConfigFilters, ConvertTypedUserConfigurableFieldsAndResolveAbstractRequirements) {
         BuildConfiguration configuration;
 
@@ -192,6 +314,35 @@ paths:
         EXPECT_EQ(stages[0]["configurations"]["options"].size(), 2U);
     }
 
+    /**
+     * @brief Full integration test: generates a user YAML from a set of typed
+     *        package recipes and validates every section of the output.
+     *
+     * Packages created:
+     *   - `application` (type: package) — declares source tarball releases,
+     *     dependencies, build configurations (environment + options), and
+     *     stage-level configurations.
+     *   - `library` (type: package) — a git-sourced dependency.
+     *   - `system-library` (type: system) — no build steps.
+     *   - `external-tool` (type: external) — externally managed tool.
+     *
+     * Patch files are written to `patches/application/` to verify alphabetical
+     * ordering and default-disabled state.
+     *
+     * Assertions cover:
+     *   - The dependency list contains all transitive packages.
+     *   - The recipe `targets` lists the requested target only.
+     *   - Abstract packages map is empty (no abstract types involved).
+     *   - System-typed packages are absent from the `kez` map.
+     *   - The application entry has the correct description, the latest
+     *     version (2.0.0), the compiler from `config.yaml`, alphabetically
+     *     ordered patches (disabled by default), user-configurable
+     *     environment and options with proper defaults (including
+     *     enabled_value and disabled_value), and stage-level configurations
+     *     that override global ones.
+     *   - A library dependency is listed with its version and compiler.
+     *   - An external-tool dependency has no compiler field.
+     */
     TEST_F(TemporaryGeneratorDatabase, GeneratesUserYamlFromResolvedTypedPackageData) {
         write_file(path_ / "config.yaml", R"(
 settings:
@@ -307,6 +458,28 @@ recipe:
         EXPECT_FALSE(result["kez"]["external-tool"]["compiler"].IsDefined());
     }
 
+    /**
+     * @brief Verifies that packages declaring a `toolchain` (cmake, autotools)
+     *        automatically surface toolchain-specific build options as editable
+     *        templates in the generated user config.
+     *
+     * For each toolchain the test checks:
+     *   - The expected well-known options exist (e.g. `CMAKE_INSTALL_PREFIX`,
+     *     `prefix`, `CFLAGS`, `LDFLAGS`, `CMAKE_C_FLAGS`,
+     *     `CMAKE_EXE_LINKER_FLAGS`).
+     *   - Each option's `enabled_value` is a template string referencing
+     *     either the package's own prefix or properties from dependencies
+     *     (e.g. `${library.includes}`, `${library.libs}`).
+     *   - Options that should be omitted when no system dependency provides
+     *     them (`CMAKE_PREFIX_PATH`, `LIBS`) are absent.
+     *
+     * Edge cases:
+     *   - Inter-package property references (`${pkg.property}`) are emitted
+     *     as literal template strings, not resolved.
+     *   - Packages with no explicit `build.configurations` (empty `{}`)
+     *     still produce toolchain defaults.
+     *   - Both CMake and Autotools paths are exercised independently.
+     */
     TEST_F(TemporaryGeneratorDatabase, ExposesToolchainGeneratedOptionsAsEditableTemplates) {
         write_package("gcc", R"(
 recipe:
@@ -370,6 +543,26 @@ recipe:
         EXPECT_FALSE(has_option(autotools_options, "LIBS"));
     }
 
+    /**
+     * @brief Verifies that abstract package types are resolved to their
+     *        architecture-appropriate concrete implementation and that the
+     *        selection is recorded in the generated user config.
+     *
+     * The test sets up:
+     *   - A `heuristics/advice.yaml` mapping the abstract `mpi` type to
+     *     `implementation` on `x86_64`.
+     *   - An abstract `mpi` package that lists `implementation` as an
+     *     available implementation.
+     *   - A concrete `implementation` package with a tarball source and
+     *     user-configurable options.
+     *
+     * Expectations:
+     *   - `recipe.abstract_packages.mpi` records `"implementation"`.
+     *   - `recipe.dependencies` lists the concrete package, not `mpi`.
+     *   - `recipe.targets` still lists the original abstract target (`mpi`).
+     *   - The `kez` map contains the concrete package entry with its version
+     *     and build configuration.
+     */
     TEST_F(TemporaryGeneratorDatabase, RecordsAbstractSelectionAndConfiguresItsConcreteTarget) {
         write_file(path_ / "heuristics" / "advice.yaml", R"(
 advice:
@@ -414,6 +607,21 @@ recipe:
         EXPECT_EQ(result["kez"]["implementation"]["build"]["configurations"]["options"].size(), 1U);
     }
 
+    /**
+     * @brief Verifies that `gen_user_config` selects the latest installed
+     *        version when a package already exists in the `mpis/` or
+     *        `vendors/` directories.
+     *
+     * Edge cases:
+     *   - Multiple installed versions of an MPI implementation
+     *     (`implementation-4.1.0-system` and `implementation-5.2.0-system`);
+     *     the highest version string (`5.2.0`) is picked.
+     *   - Multiple installed versions of a vendor tool
+     *     (`vendor-tool-2024.2` and `vendor-tool-2025.3`); the highest
+     *     version (`2025.3`) is picked.
+     *   - The database recipe's declared `releases` may differ from what is
+     *     installed; the installed version takes precedence.
+     */
     TEST_F(TemporaryGeneratorDatabase, UsesLatestInstalledMpiAndVendorVersions) {
         write_package("implementation", R"(
 recipe:

@@ -6,6 +6,16 @@
 #include <utils/colored_io.hpp>
 
 namespace {
+    /**
+     * @brief Prints the top-level usage help text to stdout.
+     *
+     * Lists every available command with a one-line summary and directs the user
+     * to `kez <command> --help` for per-command details. Called when no argument
+     * is given, or when `-h` / `--help` is passed.
+     *
+     * @note This function does not terminate the program; the caller decides
+     *       whether to return or exit after calling it.
+     */
     void print_help() {
         std::cout << "Kez - an HPC-focused package manager\n\n"
                      "Usage: kez <command> [options]\n\n"
@@ -25,6 +35,24 @@ namespace {
     }
 }  // namespace
 
+/**
+ * @brief Top-level command dispatcher for the Kez CLI.
+ *
+ * Inspects `argv[1]` to identify the requested command and forwards the
+ * remaining arguments to the corresponding `execute_*` handler. When no
+ * arguments, or `-h`/`--help`, or `-V`/`--version` is given, the function
+ * prints help / version information and returns immediately without dispatching.
+ *
+ * @param argc  Argument count as received from `main()`.
+ * @param argv  Argument vector as received from `main()`.
+ *
+ * @return void
+ *
+ * @warning If the command in `argv[1]` does not match any known command name,
+ *          an error message is printed via `ERROR()` and the process terminates
+ *          with `exit(EXIT_FAILURE)`. This function does not return in that
+ *          branch.
+ */
 void run_ui(int argc, char* argv[]) {
     if (argc <= 1) {
         print_help();

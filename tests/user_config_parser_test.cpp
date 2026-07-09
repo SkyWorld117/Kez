@@ -1,3 +1,13 @@
+/**
+ * @file user_config_parser_test.cpp
+ * @brief Tests for the user configuration parser that translates user-editable
+ *        YAML configs into executable BashCommandPlans.
+ *
+ * Each test creates a temporary database with minimal synthetic recipes and
+ * verifies that parse_user_config() produces the correct commands, dependency
+ * ordering, template resolution, condition evaluation, and error handling.
+ */
+
 #include <gtest/gtest.h>
 #include <unistd.h>
 
@@ -15,6 +25,26 @@
 
 namespace {
 
+    /**
+     * @brief Test fixture that provisions a temporary, isolated database
+     *        environment for user-config-parser tests.
+     *
+     * SetUp() creates a temporary directory with a minimal database (one
+     * synthetic `gcc` compiler recipe) and sets the KEZ_DB, KEZ_HOME,
+     * KEZ_ARCH, and CFLAGS environment variables to point into it.  It
+     * saves any pre-existing values for those variables and restores them
+     * in TearDown().
+     *
+     * The fixture provides convenience methods:
+     *   - write_package()    – write a recipe YAML into the temp database.
+     *   - write_file()       – write an arbitrary file under the temp root.
+     *   - settings()         – return a fully populated UserConfigParserSettings
+     *                          struct pointing into the temp directory.
+     *
+     * Every test starts with a clean temp directory and a known compiler
+     * ("gcc") so that `gen_user_config()` can resolve the compiler property
+     * used during command generation.
+     */
     class TemporaryUserConfigParserDatabase : public ::testing::Test {
        protected:
         void SetUp() override {
@@ -65,6 +95,7 @@ recipe:
             restore("CFLAGS", previous_cflags_);
         }
 
+        /** @brief Restore or unset an environment variable that was saved before the test. */
         static void restore(const char* name, const std::optional<std::string>& value) {
             if (value.has_value()) {
                 setenv(name, value->c_str(), 1);
@@ -73,10 +104,21 @@ recipe:
             }
         }
 
+        /**
+         * @brief Write a package recipe into the temporary database under
+         *        `database/<package>/latest.yaml`.
+         */
         void write_package(const std::string& package, const std::string& contents) const {
             write_package(package, "latest.yaml", contents);
         }
 
+        /**
+         * @brief Write a package recipe into the temporary database under
+         *        `database/<package>/<filename>`.
+         *
+         * This allows tests to create version-range recipes (e.g. "1.0-1.9.yaml")
+         * alongside the default latest.yaml.
+         */
         void write_package(const std::string& package, const std::string& filename,
                            const std::string& contents) const {
             const std::filesystem::path directory = path_ / "database" / package;
@@ -86,12 +128,21 @@ recipe:
             output << contents;
         }
 
+        /** @brief Write an arbitrary file under the temporary root directory. */
         void write_file(const std::filesystem::path& path, const std::string& contents) const {
             std::ofstream output(path);
             ASSERT_TRUE(output.good());
             output << contents;
         }
 
+        /**
+         * @brief Return a fully populated UserConfigParserSettings pointing into
+         *        the temporary directory.
+         *
+         * All prefix paths are set to well-known locations under /opt so that
+         * the expected command strings in assertions are deterministic and
+         * independent of the host filesystem layout.
+         */
         UserConfigParserSettings settings() const {
             UserConfigParserSettings result;
             result.install_prefix   = "/opt/env";
@@ -113,6 +164,19 @@ recipe:
         std::optional<std::string> previous_cflags_;
     };
 
+    /**
+     * @brief Search a YAML sequence of option nodes for one whose "name"
+     *        matches @p name and return it.
+     *
+     * Fails the current test via ADD_FAILURE if no matching option is found.
+     * Used by tests to surgically modify a single option in the generated
+     * user config before parsing.
+     *
+     * @param options  YAML node representing a sequence of option objects.
+     * @param name     The "name" field to search for.
+     * @return The matching YAML node (empty node on failure, but the test
+     *         already failed).
+     */
     YAML::Node find_option(YAML::Node options, const std::string& name) {
         for (YAML::Node option : options) {
             if (option["name"].as<std::string>() == name) {
@@ -123,6 +187,35 @@ recipe:
         return YAML::Node();
     }
 
+    /**
+     * @brief Verify that the parser emits dependency-ordered commands for
+     *        typed recipes and correctly renders user-supplied configuration
+     *        values.
+     *
+     * Sets up two packages ("library" with a git source, "application" with
+     * a tarball source, cmake toolchain, patches, and build
+     * configurations).  The test enables a patch, overrides environment and
+     * option values in the user config, then parses it and checks:
+     *   - The plan contains two entries, ordered by dependency (library
+     *     before application).
+     *   - Application commands include wget/download, unpack, cache,
+     *     patch application, preprocessing, environment export, cmake
+     *     configure (with FEATURE=ON, merged linker flags from properties
+     *     and overrides), build, install, and postprocessing.
+     *   - The library commands are the shallow-clone / cache / make steps.
+     *   - When the user config specifies a local source path (version
+     *     starting with "dev@"), the parser substitutes a file copy for
+     *     the download step.
+     *
+     * Edge cases covered:
+     *   - Tarball vs. git source types.
+     *   - Option conditions that trigger property overrides across packages.
+     *   - Template expansion of ${kez.arch}, ${application.prefix}, etc.
+     *   - Local (dev@) source substitution.
+     *   - Patch application ordering.
+     *   - Environment variable merging (CFLAGS with user value).
+     *   - CMake generator expressions with compiler properties.
+     */
     TEST_F(TemporaryUserConfigParserDatabase,
            GeneratesDependencyOrderedCommandsFromTypedRecipesAndUserValues) {
         write_file(path_ / "patches" / "application" / "fix.patch", "patch");
@@ -251,6 +344,28 @@ recipe:
         EXPECT_EQ(local_plan[1].commands[0], "cp -a '" + local_source.string() + "' source");
     }
 
+    /**
+     * @brief Verify that abstract package properties are resolved to their
+     *        concrete implementation and that option selection conditions
+     *        referencing those properties work correctly.
+     *
+     * Sets up an abstract "mpi" package with a single implementation, an
+     * "implementation" package with a compiler property, and an
+     * "application" that references `${mpi.c}` and has a conditional option
+     * `${mpi.use-implementation}`.  The user config maps the abstract `mpi`
+     * to `implementation` and disables the `--with-mpi` option (since the
+     * condition `${mpi.use-implementation} true` is false for an abstract
+     * package's `use-implementation` property).
+     *
+     * Verifies that the plan produces a single configure command resolving
+     * CC to the implementation's mpicc path and omitting `--with-mpi`.
+     *
+     * Edge cases covered:
+     *   - Abstract-to-concrete package resolution.
+     *   - Conditional option enabled/disabled by abstract property state.
+     *   - Template resolution of ${mpi.c} through the implementation.
+     *   - Condition using the template-style property reference syntax.
+     */
     TEST_F(TemporaryUserConfigParserDatabase, ResolvesAbstractPropertiesAndSelectionConditions) {
         write_package("mpi", R"(
 recipe:
@@ -303,6 +418,37 @@ recipe:
         EXPECT_EQ(plan[0].commands[0], "configure CC=\"/opt/mpi/bin/mpicc\" --with-mpi");
     }
 
+    /**
+     * @brief Verify that raw dependency paths (include, lib, libs) are expanded
+     *        in preprocessing commands and that user-specified option values
+     *        override recipe defaults.
+     *
+     * Creates a "library" package with include/lib/libs properties and an
+     * "application" that depends on it and uses a cmake toolchain.  The
+     * test modifies the generated user config by overriding
+     * CMAKE_CXX_FLAGS with a value containing `${library.includes}` and
+     * checks that:
+     *   - The preprocessing "echo" command expands
+     *     ${library.includes}, ${library.ldflags}, and
+     *     ${library.nvldflags} to the correct -I/-L/-rpath flags.
+     *   - The cmake configure command contains the default FEATURE=ON,
+     *      CMAKE_INSTALL_PREFIX, CMAKE_C_FLAGS with the recipe default -O2,
+     *      and CMAKE_CXX_FLAGS with the user override -Og plus the expanded
+     *      include path.
+     *   - CMAKE_EXE_LINKER_FLAGS contains the library's libs and paths.
+     *   - CMAKE_BUILD_RPATH references the library's lib directory.
+     *   - CMAKE_C_FLAGS does NOT pick up the library's include path
+     *     (only CMAKE_CXX_FLAGS was overridden).
+     *
+     * Edge cases covered:
+     *   - Template expansion of raw property paths (includes, ldflags,
+     *     nvldflags) that the database parser synthesizes from the
+     *     recipe's properties.
+     *   - User override of an option that uses template references in its value.
+     *   - Mix of default options and user-overridden options in the same command.
+     *   - Verification that default options remain unchanged when only
+     *     sibling options are overridden.
+     */
     TEST_F(TemporaryUserConfigParserDatabase,
            ExpandsRawDependencyPathsAndLetsExplicitOptionsOverrideDefaults) {
         write_package("library", R"(
@@ -359,6 +505,32 @@ recipe:
                   std::string::npos);
     }
 
+    /**
+     * @brief Verify that the autotools toolchain emits compiler-specific
+     *        linker flags (LDFLAGS with -Xlinker -rpath) when the selected
+     *        compiler is NVHPC.
+     *
+     * Sets up an "nvhpc-compilers" compiler recipe with lib pointing to
+     * its prefix/lib, a "library" package with include/lib/libs properties,
+     * and an "application" that uses the autotools toolchain and depends on
+     * the library.  The user config selects "nvhpc-compilers@1.0" as the
+     * compiler.
+     *
+     * Verifies that:
+     *   - The configure command includes --enable-feature.
+     *   - CC is resolved to the NVHPC compiler binary.
+     *   - CXXFLAGS includes -O3 and the library's include path.
+     *   - LDFLAGS includes both the compiler's lib path and the library's
+     *     lib path with -Xlinker -rpath (NVHPC-specific linker syntax).
+     *   - LIBS is NOT present (autotools handles -lexample via LDFLAGS
+     *     differently from cmake).
+     *
+     * Edge cases covered:
+     *   - NVHPC (non-GCC) compiler selection.
+     *   - Autotools toolchain linker flag format for NVHPC.
+     *   - Dual rpath entries (compiler lib + dependency lib).
+     *   - Compiler property path template resolution.
+     */
     TEST_F(TemporaryUserConfigParserDatabase, UsesCompilerSpecificAutotoolsLinkerFlags) {
         write_package("nvhpc-compilers", R"(
 recipe:
@@ -410,6 +582,26 @@ recipe:
         EXPECT_EQ(command.find("LIBS="), std::string::npos);
     }
 
+    /**
+     * @brief Verify that the parser selects a recipe from a version-range
+     *        file and resolves its canonical name.
+     *
+     * Creates two recipe files for "demo": a default latest.yaml (name:
+     * "demo") and a version-range file "1.0-1.9.yaml" (name: "demo-v1").
+     * The user config requests version "1.5", which falls within the range.
+     *
+     * Verifies that:
+     *   - The plan contains one entry for "demo" (the original package
+     *     name, not "demo-v1").
+     *   - The command expands ${demo-v1.prefix} to "/opt/env/demo".
+     *
+     * Edge cases covered:
+     *   - Version-range recipe selection (version 1.5 within 1.0-1.9).
+     *   - Canonical name resolution: the plan uses the package key from
+     *     the user config, not the recipe's internal name.
+     *   - Template expansion using the version-range recipe's name
+     *     (demo-v1) resolves correctly.
+     */
     TEST_F(TemporaryUserConfigParserDatabase, SelectsVersionedRecipeAndResolvesItsCanonicalName) {
         write_package("demo", R"(
 recipe:
@@ -442,6 +634,27 @@ recipe:
         EXPECT_EQ(plan[0].commands, std::vector<std::string>({"echo /opt/env/demo"}));
     }
 
+    /**
+     * @brief Verify that a package's option conditions can reference option
+     *        states in another package (forward reference).
+     *
+     * Creates a "helper" package with a `use_cuda` option and an
+     * "application" that depends on helper and whose `FLAGS` option has a
+     * condition referencing `${helper.config.use_cuda}`.  The user config
+     * enables `use_cuda` in the helper package.
+     *
+     * Verifies that the condition evaluates to true and the configure
+     * command includes `FLAGS="base cuda"`.
+     *
+     * Edge cases covered:
+     *   - Forward cross-package option condition references
+     *     (`${helper.config.use_cuda}`).
+     *   - Condition with action "append" adding a value to a default.
+     *   - Option whose enabled_format is "" (empty format) — no format
+     *     string substitution, just boolean state.
+     *   - User config explicitly setting enabled_value/disabled_value to
+     *     null (~) to suppress format output.
+     */
     TEST_F(TemporaryUserConfigParserDatabase, ResolvesForwardConditionReferencesToOptionStates) {
         write_package("helper", R"(
 recipe:
@@ -501,6 +714,25 @@ recipe:
         EXPECT_EQ(plan[0].commands[0], "configure FLAGS=\"base cuda\"");
     }
 
+    /**
+     * @brief Verify that the parser terminates with an error when a condition
+     *        references a nonexistent option in another package.
+     *
+     * Similar setup to ResolvesForwardConditionReferencesToOptionStates
+     * but the application recipe's condition uses "use-feature" (with a
+     * hyphen) while the helper package actually defines "use_feature"
+     * (with underscore) — a deliberate mismatch.
+     *
+     * Verifies that parse_user_config() calls exit(EXIT_FAILURE) and
+     * prints an error message containing "condition references unresolved
+     * option 'helper.config.use-feature'".
+     *
+     * Edge cases covered:
+     *   - Invalid cross-package option reference (name mismatch).
+     *   - Error termination via exit() rather than throwing an exception
+     *     (consistent with the project's no-exceptions policy).
+     *   - Error message includes the full unresolved reference path.
+     */
     TEST_F(TemporaryUserConfigParserDatabase, RejectsInvalidConfigOptionConditionNames) {
         write_package("helper", R"(
 recipe:
@@ -558,6 +790,38 @@ recipe:
                     "condition references unresolved option 'helper.config.use-feature'");
     }
 
+    /**
+     * @brief Verify end-to-end parsing of real repository recipes (fio and
+     *        dftbplus), checking dependency ordering and complete template
+     *        resolution.
+     *
+     * This test switches the KEZ_DB to the project's real database directory
+     * and KEZ_HOME to the source root.  It performs two rounds:
+     *
+     *   Round 1 — fio:
+     *     Generates a config for "fio", parses it, and verifies:
+     *       - The plan has two entries ordered by dependency (libaio before fio).
+     *       - Every command in both packages is free of unresolved
+     *         "${fio." or "${libaio." template references.
+     *
+     *   Round 2 — dftbplus:
+     *     Generates a config for "dftbplus", marks "rdma-core" as an
+     *     external package (present on the host system), parses, and
+     *     verifies:
+     *       - The plan has at least 3 entries.
+     *       - Every command in every package is free of any "${...}"
+     *         pattern containing a dot — i.e., all
+     *         package-scoped property templates have been resolved.
+     *
+     * Edge cases covered:
+     *   - Real (not synthetic) package recipes with complex dependency trees.
+     *   - Template resolution across transitive dependencies.
+     *   - External package declaration (packages provided by the host OS
+     *     that satisfy a dependency without building).
+     *   - No-op (property-only) packages that do not appear in the plan.
+     *   - Verification that no dangling template references remain after
+     *     parsing.
+     */
     TEST_F(TemporaryUserConfigParserDatabase, ParsesARepositoryRecipeEndToEnd) {
         const std::filesystem::path source = KEZ_SOURCE_DIR;
         setenv("KEZ_DB", (source / "database").c_str(), 1);
@@ -601,6 +865,34 @@ recipe:
         }
     }
 
+    /**
+     * @brief Verify that property-only facade packages (those with no
+     *        source/build sections) are omitted from the build plan but
+     *        their buildable dependencies are still scheduled.
+     *
+     * Uses the real database recipe for "llamacpp", which depends on
+     * "nvhpc-nccl" (a property-only facade — it declares properties but
+     * has no source/build), and "nvhpc-nccl" in turn depends on "nvhpc"
+     * (a real compiler package that must be built).
+     *
+     * Verifies:
+     *   - "nvhpc" appears in the plan packages (it must be built).
+     *   - "llamacpp" appears in the plan packages.
+     *   - "nvhpc-nccl" does NOT appear in the plan packages (it is a
+     *     facade with nothing to build).
+     *   - llamacpp's dependency list includes both "cuda" (a direct
+     *     dependency) and "nvhpc" (reached transitively through the
+     *     nvhpc-nccl facade).
+     *
+     * Edge cases covered:
+     *   - Property-only facade elimination from the build plan.
+     *   - Transitive dependency scheduling through a facade: the
+     *     buildable dependency of the facade (nvhpc) must be scheduled
+     *     before the dependent of the facade (llamacpp).
+     *   - Parallel installation ordering: nvhpc must finish before
+     *     llamacpp starts, even though the intermediate package
+     *     (nvhpc-nccl) produces no commands.
+     */
     TEST_F(TemporaryUserConfigParserDatabase,
            SchedulesBuildableDependenciesReachableThroughPropertyOnlyFacade) {
         const std::filesystem::path source = KEZ_SOURCE_DIR;
@@ -644,6 +936,29 @@ recipe:
             << "llamacpp must depend on nvhpc transitively via the nvhpc-nccl facade";
     }
 
+    /**
+     * @brief Verify that compute_rebuild_set() includes transitive
+     *        dependents reached through property-only facades.
+     *
+     * Uses the same real-repository llamacpp setup as
+     * SchedulesBuildableDependenciesReachableThroughPropertyOnlyFacade.
+     * After parsing the plan, calls compute_rebuild_set(plan, "nvhpc")
+     * to simulate rebuilding the nvhpc compiler.
+     *
+     * Verifies:
+     *   - "nvhpc" itself is in the rebuild set.
+     *   - "llamacpp" is in the rebuild set (it transitively depends on
+     *     nvhpc through the nvhpc-nccl facade).
+     *   - "cuda" is NOT in the rebuild set (it is independent of nvhpc).
+     *
+     * Edge cases covered:
+     *   - Rebuild-set computation through a property-only facade.
+     *   - The facade (nvhpc-nccl) is absent from the plan, so the
+     *     rebuild algorithm must follow the transitive scheduling edges
+     *     (set during parsing) rather than the original dependency edges.
+     *   - Negative check that unrelated packages are correctly excluded
+     *     from the rebuild set.
+     */
     TEST_F(TemporaryUserConfigParserDatabase,
            RebuildSetIncludesDependentsReachedThroughPropertyOnlyFacade) {
         const std::filesystem::path source = KEZ_SOURCE_DIR;
