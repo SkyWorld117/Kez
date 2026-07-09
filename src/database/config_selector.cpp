@@ -6,10 +6,10 @@
 #include <vector>
 
 /**
- * @brief Represents a version range parsed from a database config filename.
+ * @brief Describes a version-range config file for a package.
  *
- * A filename like "1.0-2.0.yaml" yields start="1.0", end="2.0" and the
- * full filesystem path to the file.
+ * Each instance represents one `<start>-<end>.yaml` file found inside a
+ * package's database directory.  The range is inclusive on both ends.
  */
 struct ConfigRange {
     std::string start;           ///< Lower bound of the version range (inclusive).
@@ -54,32 +54,12 @@ namespace {
 }  // namespace
 
 /**
- * @brief Select the appropriate config YAML path for a package version.
+ * @brief Select the best-matching config YAML for a given package and version.
  *
- * Resolves the config file for @p package_name at @p version by scanning the
- * package's directory under @p database_path.  The lookup order is:
- *   1. If @p version is empty or "latest", return `<pkg>/latest.yaml`.
- *   2. Otherwise, search all `<start>-<end>.yaml` range files and return the
- *      first whose range contains @p version (inclusive on both bounds).
- *   3. If no range contains the version, fall back to `<pkg>/latest.yaml`.
- *
- * Before scanning, the function validates that:
- *   - The package subdirectory exists.
- *   - A `latest.yaml` file exists inside it.
- *   - No two range files overlap (checked after sorting).
- *
- * @param database_path  Root directory of the package database.
- * @param package_name   Name of the package (a subdirectory under @p database_path).
- * @param version        Target version string.  Pass an empty string or "latest"
- *                       to select the default (`latest.yaml`).
- * @return std::filesystem::path  Path to the chosen YAML config file.
- *
- * @note Terminates the program via ERROR() + exit(EXIT_FAILURE) if:
- *       - The package directory is missing.
- *       - `latest.yaml` is missing.
- *       - A range filename has an invalid format (see parse_range_path).
- *       - A range's start version exceeds its end version.
- *       - Any two range files overlap after sorting.
+ * Searches the package's database directory for version-range files
+ * (`<start>-<end>.yaml`), validates they are disjoint and sorted, then
+ * returns the path whose range contains @p version.  Falls back to
+ * `latest.yaml` if no range matches or @p version is empty / "latest".
  */
 std::filesystem::path select_config_path(const std::filesystem::path& database_path,
                                          const std::string& package_name,
@@ -142,18 +122,10 @@ std::filesystem::path select_config_path(const std::filesystem::path& database_p
 }
 
 /**
- * @brief Validate that a package name is well-formed for filesystem lookup.
+ * @brief Validate that a package name is a plain, non-empty leaf name.
  *
- * Rejects empty strings, the special directory entries "." and "..", any
- * string containing a parent-path separator (i.e. a relative/absolute path),
- * and any string whose final filename component differs from the original
- * input (which would indicate normalization changes).
- *
- * @param package_name  The package name to validate.
- *
- * @note Terminates the program via ERROR() + exit(EXIT_FAILURE) if the name
- *       fails any of the above checks.  This prevents path-traversal attacks
- *       and ambiguous lookups in the database directory tree.
+ * Rejects empty strings, `.`, `..`, names with a parent path, and names
+ * that the filesystem would interpret as a path (e.g. containing `/`).
  */
 void validate_package_name(const std::string& package_name) {
     const std::filesystem::path path(package_name);

@@ -118,7 +118,7 @@ void emit_environment_activation(const std::filesystem::path& prefix, const std:
  *   2. Unsets the named @p variable.
  *
  * The output is intended to be evaluated by the calling shell (via ``eval``)
- * and is produced by @ref main.sh when the user runs ``kez env exit``,
+ * and is produced by ``main.sh`` when the user runs ``kez env exit``,
  * ``kez compiler unload``, or ``kez mpi unload``.
  *
  * @param prefix    The environment root whose ``bin/`` subdirectory is to be

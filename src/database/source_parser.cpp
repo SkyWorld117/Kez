@@ -43,43 +43,13 @@ namespace {
 }  // namespace
 
 /**
- * @brief Parse a ``source`` block from a package recipe YAML node into a
- *        fully validated @ref Source struct.
+ * @brief Parses a single source block (type, URL, and releases) from a recipe's
+ *        YAML configuration.
  *
- * This is the top-level entry point for extracting source metadata from a
- * package recipe.  The function validates the structure of the YAML node
- * and enforces type-specific constraints:
- *
- *   - The node must be a map containing only the keys ``type``, ``url``,
- *     and ``releases``.
- *   - ``type`` must be one of ``"git"``, ``"tarball"``, ``"zip"``, or
- *     ``"script"``.
- *   - ``url`` is optional overall, but **required** when ``type`` is
- *     ``"git"``.
- *   - ``releases`` must be a **non-empty** sequence of maps.  Each release
- *     may carry ``version``, ``url``, and ``tag`` keys.
- *   - Every release must have a **non-empty**, **unique** ``version``.
- *   - For ``"git"`` sources, every release must have a ``tag``.
- *   - For ``"tarball"`` and ``"zip"`` sources, every release must have a
- *     ``url``.
- *
- * All validation failures are fatal and terminate the program via
- * fail_config.
- *
- * @param node    The YAML node representing the ``source`` block of a
- *                package recipe (e.g. from ``database/<pkg>/latest.yaml``).
- * @param path    Logical YAML path used in error messages (e.g. ``"source"``,
- *                ``"source.releases[0].version"``).
- * @param context The parser context carrying the recipe tree root path for
- *                error annotation.
- *
- * @return A fully populated @ref Source struct.  The function either returns
- *         a valid result or terminates the program on any validation error.
- *
- * @see Source
- * @see SourceType
- * @see Release
- * @see parse_source_type
+ * Expects a map node containing at least "type" and "releases".  For git
+ * sources the top-level "url" is required; for tarball/zip sources each
+ * release entry must supply its own "url".  Duplicate version strings
+ * across releases are rejected, and the releases sequence must not be empty.
  */
 Source parse_source(const YAML::Node& node, const std::string& path,
                     const DatabaseParserContext& context) {
@@ -137,30 +107,11 @@ Source parse_source(const YAML::Node& node, const std::string& path,
 }
 
 /**
- * @brief Parse a YAML sequence node into a vector of strings.
+ * @brief Parses a YAML sequence node into a vector of scalar strings.
  *
- * Iterates over every element of the YAML sequence, validates that each
- * element is a scalar, and collects the resulting strings in order.
- * This is used throughout the database parsers for fields that contain
- * lists of names (e.g. dependency lists, configuration key lists).
- *
- * @param node    The YAML node that must be a sequence (list) of scalar
- *                values.
- * @param path    Logical YAML path used in error messages (e.g.
- *                ``"dependencies"``, ``"properties[2]"``).
- * @param context The parser context carrying the recipe tree root path for
- *                error annotation.
- *
- * @return A std::vector<std::string> containing the parsed scalar values
- *         in sequence order.
- *
- * @warning If @p node is not a YAML sequence, the function calls
- *          expect_sequence which terminates the program via fail_config.
- *          Similarly, if any element is not a YAML scalar, parse_scalar
- *          terminates the program.
- *
- * @see expect_sequence
- * @see parse_scalar
+ * Validates that the node is a sequence, then extracts each element as a
+ * scalar string.  Any element that is not a scalar triggers a fatal
+ * configuration error via fail_config.
  */
 std::vector<std::string> parse_scalar_sequence(const YAML::Node& node, const std::string& path,
                                                const DatabaseParserContext& context) {

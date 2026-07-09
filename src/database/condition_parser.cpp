@@ -65,26 +65,12 @@ namespace {
     }
 
     /**
-     * @brief Validates the syntax of a version comparison token.
+     * @brief Validates a version-comparison token in a condition expression.
      *
-     * A valid version comparison must start with a template variable
-     * (`${...}`) immediately followed by one or more comma-separated
-     * comparisons, each consisting of a comparison operator (`>=`, `<=`, `==`,
-     * `!=`, `>`, `<`) and a version string. For example:
-     * `${prefix}>=1.0,<2.0` is valid.
-     *
-     * @param token   The version comparison token to validate.
-     * @param node    The YAML node from which the expression originated,
-     *                used for error reporting.
-     * @param path    The YAML path to the node, used for error reporting.
-     * @param context The parser context providing error-reporting utilities.
-     *
-     * @note Terminates the program via `fail_config` on any of the following:
-     *       - The token does not start with `${`.
-     *       - The closing `}` is missing or empty (i.e. `${}`).
-     *       - No comparison follows the template variable.
-     *       - A comparison segment lacks a valid operator prefix or is
-     *         operator-only (no version string).
+     * Checks that the token begins with a template variable (`${...}`), that the
+     * template is well-formed, and that the comparison portion following the
+     * closing brace consists of one or more valid relational operators
+     * (>=, <=, ==, !=, >, <) each followed by a version string.
      */
     void validate_version_condition(const std::string& token, const YAML::Node& node,
                                     const std::string& path, const DatabaseParserContext& context) {
@@ -126,42 +112,13 @@ namespace {
 }  // namespace
 
 /**
- * @brief Validates the syntax of a condition expression string.
+ * @brief Validates a logical condition expression string.
  *
- * Expects a boolean expression composed of the following grammar:
- * @code
- *   expression  ::= or-expr
- *   or-expr     ::= and-expr ("||" and-expr)*
- *   and-expr    ::= unary ("&&" unary)*
- *   unary       ::= "not" unary | primary
- *   primary     ::= "(" expression ")"
- *                  | "true" | "false"
- *                  | "required" <package-name>
- *                  | "environment" <variable-name>
- *                  | "version" <version-condition>
- *                  | [<option-name>] ("true" | "false" | "enabled" | "disabled")
- * @endcode
- *
- * Uses recursive-descent parsing to validate the tokenized expression without
- * evaluating it. After the top-level parse completes, it verifies that every
- * token was consumed.
- *
- * @param expression The raw condition expression string to validate.
- * @param node       The YAML node from which the expression originated,
- *                   used for error reporting.
- * @param path       The YAML path to the node, used for error reporting.
- * @param context    The parser context providing error-reporting utilities.
- *
- * @note Terminates the program via `fail_config` on any of the following:
- *       - The expression is empty.
- *       - A parentheses mismatch is detected (missing opening or closing
- *         parenthesis).
- *       - An operand is missing after `required` or `environment`.
- *       - A version comparison is missing or syntactically invalid (delegated
- *         to `validate_version_condition`).
- *       - An option condition does not end with one of `true`, `false`,
- *         `enabled`, or `disabled`.
- *       - An unexpected or extra token remains after the parse completes.
+ * Tokenizes the expression and then performs a recursive-descent parse
+ * (disjunction, conjunction, unary, primary) to verify syntactic correctness.
+ * Reports a configuration error via `fail_config` if the expression is empty,
+ * contains unmatched parentheses, incomplete operators, or any other invalid
+ * token sequence.
  */
 void validate_condition(const std::string& expression, const YAML::Node& node,
                         const std::string& path, const DatabaseParserContext& context) {
@@ -268,24 +225,12 @@ void validate_condition(const std::string& expression, const YAML::Node& node,
 }
 
 /**
- * @brief Recursively validates that all template variables in a YAML subtree
- *        are syntactically well-formed.
+ * @brief Recursively validates all template variable references (`${...}`) in a
+ *        YAML subtree.
  *
- * Walks every node (maps, sequences, and scalars) in the YAML subtree rooted
- * at `node`. For each scalar value, it scans for `${...}` template-variable
- * references and checks that:
- *   - Every opening `${` has a matching `}`.
- *   - No template variable is nested inside another (i.e. `${...${...}...}`).
- *   - No template variable is empty (`${}`).
- *
- * @param node    The YAML node whose subtree should be validated.
- * @param path    The YAML path to the current node, used for error reporting.
- * @param context The parser context providing error-reporting utilities.
- *
- * @note Terminates the program via `fail_config` if any malformed template
- *       variable is found.
- * @warning This function does **not** evaluate or resolve template variables;
- *          it only checks for syntactic correctness.
+ * Walks maps, sequences, and scalar values. For each scalar, checks that
+ * every `${...}` occurrence is properly closed, is not empty (`${}`), and
+ * does not contain nested braces. Reports invalid findings via `fail_config`.
  */
 void validate_templates(const YAML::Node& node, const std::string& path,
                         const DatabaseParserContext& context) {

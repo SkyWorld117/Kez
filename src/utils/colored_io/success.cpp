@@ -1,28 +1,11 @@
 #include <utils/colored_io.hpp>
 
 /**
- * @brief Entry point for the success-message printing utility.
+ * @brief Standalone binary that prints a success message.
  *
- * Reads a message string from the command-line arguments and prints it to
- * standard output using the SUCCESS() helper macro (typically rendered in
- * green by the terminal).  This binary is used by the install scripts to
- * display final confirmation that a build step completed successfully.
- *
- * @param argc  Argument count (must be at least 2; argv[0] is the program
- *              name and argv[1] is the message to display).
- * @param argv  Argument vector.  argv[1] is interpreted as the success
- *              message.  Any further arguments are silently ignored.
- *
- * @return 0 on success, 1 on error.
- *
- * @warning If fewer than two arguments are provided, an error message is
- *          printed via the ERROR() macro and the program exits with a
- *          non-zero return code (1).  This does NOT call exit() directly
- *          but relies on the caller (or the ERROR() macro itself) to
- *          terminate the process.
- *
- * @note This program does not attempt to sanitize or escape the message;
- *      it is the caller's responsibility to supply a safe, printable string.
+ * Invoked by scripts/install.sh to display consistently-coloured success output.
+ * Accepts a single message argument and forwards it to the SUCCESS() macro.
+ * If called without arguments, a usage hint is printed and the program exits.
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {

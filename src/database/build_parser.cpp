@@ -89,28 +89,11 @@ namespace {
 }  // namespace
 
 /**
- * @brief Parse a YAML node into a @c ConfigurableValue<bool>.
+ * @brief Parse a YAML node into a configurable boolean value.
  *
- * Delegates to @c parse_configurable<bool> with a value parser that calls
- * @c parse_boolean, then validates that every condition uses the
- * @c ValueAction::Set action.  Any condition with a non-Set action triggers
- * a fatal configuration error because appending or prepending to a boolean
- * is semantically meaningless.
- *
- * @param node    The YAML node (expected to be a map) to parse.
- * @param path    Dot-separated YAML path used for error-reporting context
- *                (e.g. @c "build.configurations.options[0].enabled").
- * @param context The parser context providing the source file path for
- *                diagnostic messages.
- * @return A fully populated @c ConfigurableValue<bool> containing the parsed
- *         default value (if any) and the list of conditional values.
- *
- * @warning Terminates the process with @c exit(EXIT_FAILURE) if @p node is
- *          not a map, contains unexpected keys, lacks both a default and any
- *          conditions, or a condition uses a non-Set action.
- *
- * @see parse_configurable
- * @see parse_string_configurable
+ * Delegates to the generic @c parse_configurable template with a boolean
+ * parser, then validates that every condition uses the @c Set action (the
+ * only action supported for boolean configurables).
  */
 ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node, const std::string& path,
                                                 const DatabaseParserContext& context) {
@@ -127,27 +110,11 @@ ConfigurableValue<bool> parse_bool_configurable(const YAML::Node& node, const st
 }
 
 /**
- * @brief Parse a YAML node into a @c ConfigurableValue<std::string>.
+ * @brief Parse a YAML node into a configurable string value.
  *
- * Delegates to @c parse_configurable<std::string> with a value parser that
- * calls @c parse_scalar (with @c allow_null=true).  Unlike the boolean
- * variant, string configurables permit all @c ValueAction modes (Set,
- * Append, Prepend).
- *
- * @param node    The YAML node (expected to be a map) to parse.
- * @param path    Dot-separated YAML path used for error-reporting context
- *                (e.g. @c "build.configurations.options[0].enabled_value").
- * @param context The parser context providing the source file path for
- *                diagnostic messages.
- * @return A fully populated @c ConfigurableValue<std::string> containing the
- *         parsed default value (if any) and the list of conditional values.
- *
- * @warning Terminates the process with @c exit(EXIT_FAILURE) if @p node is
- *          not a map, contains unexpected keys, or lacks both a default and
- *          any conditions.
- *
- * @see parse_configurable
- * @see parse_bool_configurable
+ * Delegates to the generic @c parse_configurable template with a scalar
+ * string parser to handle both the default value and any condition-dependent
+ * overrides.
  */
 ConfigurableValue<std::string> parse_string_configurable(const YAML::Node& node,
                                                          const std::string& path,
@@ -229,41 +196,10 @@ namespace {
     /**
      * @brief Parse a YAML node into a @c BuildOption.
      *
-     * Reads a mapping with the following recognized keys:
-     *   - @c name              (string, required) -- short option name.
-     *   - @c description       (string, optional) -- human-readable description.
-     *   - @c user_configurable (bool,   optional) -- whether end-users may
-     *     override this option (default: @c false).
-     *   - @c enabled           (map,    optional) -- condition-dependent boolean
-     *     control for whether the option is enabled.  Parsed via
-     *     @c parse_bool_configurable.
-     *   - @c enabled_format    (string, optional) -- format string used when
-     *     the option is enabled.
-     *   - @c disabled_format   (string, optional) -- format string used when
-     *     the option is disabled.
-     *   - @c requires          (sequence of strings, optional) -- packages that
-     *     must be present for this option to be valid.
-     *   - @c enabled_value     (map,    optional) -- condition-dependent string
-     *     value applied when the option is enabled.  Parsed via
-     *     @c parse_string_configurable.
-     *   - @c disabled_value    (map,    optional) -- condition-dependent string
-     *     value applied when the option is disabled.  Parsed via
-     *     @c parse_string_configurable.
-     *
-     * @param node    The YAML node (expected to be a map) to parse.
-     * @param path    Dot-separated YAML path used for error-reporting context
-     *                (e.g. @c "build.configurations.options[0]").
-     * @param context The parser context providing the source file path for
-     *                diagnostic messages.
-     * @return A fully populated @c BuildOption with the parsed name, metadata,
-     *         and configurable values.
-     *
-     * @warning Terminates the process with @c exit(EXIT_FAILURE) if the node is
-     *          not a map or contains unrecognized keys.
-     *
-     * @see BuildOption
-     * @see parse_bool_configurable
-     * @see parse_string_configurable
+     * Reads all option fields (name, description, user_configurable, enabled,
+     * enabled_format, disabled_format, requires, enabled_value, disabled_value)
+     * from the provided YAML mapping and populates the corresponding members
+     * of a @c BuildOption struct.
      */
     BuildOption parse_option(const YAML::Node& node, const std::string& path,
                              const DatabaseParserContext& context) {
@@ -305,31 +241,10 @@ namespace {
 /**
  * @brief Parse a YAML node into a @c BuildConfiguration.
  *
- * Reads an optional map with the following recognized keys:
- *   - @c command      (string)  -- the build-system command to invoke.
- *   - @c environment  (sequence of maps) -- environment variables to set
- *     during the build step.  Each entry is parsed by the internal
- *     @c parse_environment_variable helper.
- *   - @c options      (sequence of maps) -- user-configurable build options.
- *     Each entry is parsed by the internal @c parse_option helper.  Duplicate
- *     option names produce a warning (via @c warn_config) but are retained.
- *
- * @param node    The YAML node (expected to be a map) to parse.
- * @param path    Dot-separated YAML path used for error-reporting context
- *                (e.g. @c "build.configurations").
- * @param context The parser context providing the source file path for
- *                diagnostic messages.
- * @return A @c BuildConfiguration with the parsed command, environment
- *         variables, and options.  Unset optional fields are left
- *         disengaged.
- *
- * @warning Terminates the process with @c exit(EXIT_FAILURE) if the node is
- *          not a map or contains unrecognized keys.
- *
- * @see parse_build
- * @see BuildConfiguration
- * @see EnvironmentVariable
- * @see BuildOption
+ * Extracts the optional @c command field, the @c environment variable list
+ * (each parsed via @c parse_environment_variable), and the @c options list
+ * (each parsed via @c parse_option).  Duplicate option names produce a
+ * warning but are retained.
  */
 BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::string& path,
                                              const DatabaseParserContext& context) {
@@ -367,44 +282,13 @@ BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::
 }
 
 /**
- * @brief Parse a YAML node into a @c Build description.
+ * @brief Parse the top-level @c build section of a package recipe into a
+ *        @c Build struct.
  *
- * Reads an optional map with the following recognized keys:
- *   - @c preprocessing  (string) -- a shell command run before any stage.
- *   - @c postprocessing (string) -- a shell command run after all stages.
- *   - @c configurations (map)    -- build-wide configuration (command,
- *     environment, options).  Delegates to
- *     @c parse_build_configuration.
- *   - @c stages         (sequence of maps) -- ordered build stages.  Each
- *     stage map may contain:
- *       - @c target        (string)        -- the build target (e.g.
- *         @c "all" or @c "install").  May be null, in which case the
- *         target is left disengaged.
- *       - @c multithreaded (bool)          -- whether parallel jobs are
- *         allowed (default @c true).
- *       - @c configurations (map)          -- per-stage configuration
- *         overrides (command, environment, options).
- *
- * If the @c stages key is present, every entry is validated as a map with
- * only the allowed keys listed above.  The @c target key is required for
- * each stage (via @c required_node), but its value is permitted to be null
- * to indicate the toolchain default.
- *
- * @param node    The YAML node (expected to be a map) to parse.
- * @param path    Dot-separated YAML path used for error-reporting context
- *                (e.g. @c "build").
- * @param context The parser context providing the source file path for
- *                diagnostic messages.
- * @return A @c Build with the parsed preprocessing/postprocessing scripts,
- *         build-wide configuration, and ordered list of stages.
- *
- * @warning Terminates the process with @c exit(EXIT_FAILURE) if the node is
- *          not a map, contains unrecognized keys, or a stage entry is
- *          malformed.
- *
- * @see parse_build_configuration
- * @see Build
- * @see BuildStage
+ * Reads the optional @c preprocessing and @c postprocessing scripts, the
+ * @c configurations block (via @c parse_build_configuration), and the
+ * @c stages list, where each stage specifies a target, multithreading flag,
+ * and its own configurations block.
  */
 Build parse_build(const YAML::Node& node, const std::string& path,
                   const DatabaseParserContext& context) {

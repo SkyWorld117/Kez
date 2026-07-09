@@ -7,38 +7,14 @@
 #include <vector>
 
 /**
- * @brief Entry point for the bash completion helper binary.
+ * @brief Standalone binary that provides bash completion suggestions for kez.
  *
- * Parses a zero-based word index from argv[1] and a sequence of command-line
- * words from argv[2..], then queries completion_suggestions() for candidate
- * completions and prints each on its own line to stdout.
+ * Reads the current word index (argv[1]) and the command-line words (argv[2..])
+ * from the bash completion system, then prints matching suggestions to stdout,
+ * one per line.  The output is consumed by completion.bash.
  *
- * This binary is invoked by the kez completion hook when the user presses Tab
- * and is never called directly by the user.  It communicates completions
- * exclusively via stdout; any parse failure results in silent empty output
- * (exit 0 with no lines printed), which tells the shell that no completions
- * are available.
- *
- * @param argc Argument count (must be >= 3 for meaningful work).
- * @param argv Argument vector:
- *   - argv[1] : zero-based index of the word being completed within the
- *               full command line (must parse as a non-negative integer <=
- *               INT_MAX).
- *   - argv[2..]: the individual words of the command line so far.
- *
- * @return 0 on success.  Also returns 0 (silently) on any input error so that
- *         the shell never sees a non-zero exit from a completion helper.
- *
- * @note This function does NOT call ERROR(), exit(), or any other termination
- *       routine.  All pathological inputs (missing arguments, invalid integer,
- *       out-of-range index, overflow) are handled gracefully by returning 0
- *       with no output.
- *
- * @warning The parsed index is validated with strtol() followed by five
- *          checks (errno, no-progress, trailing chars, negative, > INT_MAX).
- *          Overflow of std::size_t during the reserve() call is not possible
- *          because argc is bounded by the shell's argument limit and the
- *          parsed index was already clamped to INT_MAX.
+ * If fewer than 3 arguments are provided, or if the word index is not a valid
+ * non-negative integer, the program silently exits with no output.
  */
 int main(int argc, char* argv[]) {
     if (argc < 3) {

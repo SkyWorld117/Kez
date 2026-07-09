@@ -27,20 +27,10 @@ namespace {
     }
 
     /**
-     * @brief Split a dot-separated path string into its individual segments.
+     * @brief Split a dot-separated configuration path into its component parts.
      *
-     * Parses a path of the form \c "foo.bar.baz" into a vector
-     * \c {"foo", "bar", "baz"}.  Empty segments (caused by leading,
-     * trailing, or consecutive dots) are treated as invalid and trigger
-     * program termination via @ref invalid_path.
-     *
-     * @param path  The dot-separated path to split.  Must be non-empty and
-     *              must not contain empty segments.
-     * @return A vector of segment strings.  The vector is guaranteed to
-     *         contain at least one element on success.
-     *
-     * @warning Terminates the process via @ref invalid_path if @p path is
-     *          empty or if any segment is empty.
+     * Each segment between dots must be non-empty; an empty segment or an empty
+     * input triggers a fatal error via invalid_path().
      */
     std::vector<std::string> split_path(const std::string& path) {
         if (path.empty()) {
@@ -65,18 +55,12 @@ namespace {
     }
 
     /**
-     * @brief Attempt to parse a string as a non-negative @c std::size_t
-     *        integer.
+     * @brief Determine whether a string is a non-negative decimal integer and
+     *        parse it into a size_t.
      *
-     * Accepts only decimal digits (0--9).  Overflow is detected: if the
-     * parsed value would exceed @c std::numeric_limits<std::size_t>::max(),
-     * the function returns @c false without modifying @p result.  Leading
-     * zeros are permitted.
-     *
-     * @param[in]  value  The string to parse.
-     * @param[out] result On success, set to the parsed numeric value.
-     * @return @c true if @p value consists entirely of decimal digits and
-     *         the result fits in @c std::size_t; @c false otherwise.
+     * Returns false on empty strings, non-digit characters, or overflow beyond
+     * SIZE_MAX.  On success stores the parsed value in @p result and returns
+     * true.
      */
     bool numeric_index(const std::string& value, std::size_t& result) {
         if (value.empty()) {
@@ -100,32 +84,13 @@ namespace {
     }
 
     /**
-     * @brief Resolve a selector string to an index within a YAML sequence.
+     * @brief Resolve a path selector against a YAML sequence node and return
+     *        the matching index.
      *
-     * The @p selector is interpreted in one of two ways:
-     *   - **Numeric index**: If the selector parses as a non-negative
-     *     integer (via @ref numeric_index), it is used directly as the
-     *     sequence index.  The index is bounds-checked against
-     *     @c node.size().
-     *   - **Name/target match**: Otherwise, the sequence is scanned for a
-     *     map element whose @c name or @c target key matches the selector
-     *     as a scalar string.  The first such element is selected.
-     *
-     * If neither interpretation succeeds, the process is terminated via
-     * @ref invalid_path.
-     *
-     * @param node     The YAML sequence node to search.  Must be a valid
-     *                 sequence.
-     * @param selector The selector string: a decimal index or a
-     *                 name/target value to match.
-     * @param path     The full configuration path being traversed, used
-     *                 solely for error diagnostics.
-     * @return The index into @p node that @p selector resolves to.
-     *
-     * @warning Terminates the process via @ref invalid_path when the
-     *          selector is a numeric index that is out of bounds, or when
-     *          it is a name that does not match any element's @c name or
-     *          @c target field.
+     * If @p selector is a decimal number it is treated as a literal position;
+     * otherwise each sequence element is searched for a map with a "name" or
+     * "target" key whose scalar value matches @p selector.  A fatal error is
+     * raised when no match is found.
      */
     std::size_t sequence_index(const YAML::Node& node, const std::string& selector,
                                const std::string& path) {
@@ -152,36 +117,12 @@ namespace {
     }
 
     /**
-     * @brief Recursively walk the parsed path segments and assign a scalar
-     *        value at the target location in a YAML tree.
+     * @brief Recursively walk a parsed path and assign a value at the target
+     *        YAML location.
      *
-     * This is the core recursive helper behind @ref traverse.  It consumes
-     * one path segment per recursion level and dispatches based on the
-     * current node's type:
-     *
-     *   - **Map node**: Looks up the current segment as a key.  If the key
-     *     does not exist the path is considered invalid.  On the final
-     *     segment the key is assigned @p value; otherwise recursion
-     *     continues into the child node.
-     *   - **Sequence node**: Resolves the current segment to an index via
-     *     @ref sequence_index (numeric index or name/target match).  On
-     *     the final segment that element is assigned @p value; otherwise
-     *     recursion continues into the child node.
-     *   - **Other types** (scalar, null): The path is considered invalid
-     *     because traversal cannot descend into a leaf value.
-     *
-     * @param parts      The pre-split path segments (from @ref split_path).
-     * @param position   The index of the current segment being processed.
-     * @param value      The scalar string to assign at the resolved
-     *                   location.
-     * @param node       The YAML node at the current depth of the tree.
-     * @param full_path  The original dot-separated path string, used solely
-     *                   for error diagnostics.
-     *
-     * @warning Terminates the process via @ref invalid_path if any segment
-     *          does not exist in a map, refers to an out-of-bounds or
-     *          unmatched index in a sequence, or attempts to descend into a
-     *          scalar or null node.
+     * Operates on maps (descending by key) and sequences (resolving the
+     * selector via sequence_index()).  A fatal error is raised if an
+     * intermediate key is missing or the node type is unexpected.
      */
     void assign(const std::vector<std::string>& parts, std::size_t position,
                 const std::string& value, YAML::Node node, const std::string& full_path) {
@@ -213,37 +154,12 @@ namespace {
 }  // namespace
 
 /**
- * @brief Assign a scalar value to a node located by a dot-separated path.
+ * @brief Parse a dot-separated configuration path and assign a string value at
+ *        the target YAML node.
  *
- * Splits @p path into segments (via @ref split_path) and recursively
- * walks the YAML tree rooted at @p node to find the target location,
- * then sets that location to the scalar @p value.
- *
- * Maps are traversed by key name.  Sequences are traversed by either a
- * numeric index (e.g. \c "2") or by matching the element's @c name or
- * @c target scalar field against the segment value (see
- * @ref sequence_index).
- *
- * If any segment in the path is invalid, refers to a non-existent key,
- * or addresses a non-traversable node type, the process is terminated
- * with a fatal error.
- *
- * @param path  Dot-separated path describing the location in the YAML
- *              tree (e.g. \c "build.options.debug" or
- *              \c "dependencies.libtirpc.version").  Segments that address
- *              a sequence element may use a numeric index or a bare name
- *              matched against the element's @c name or @c target field.
- * @param value The scalar string to assign at the resolved location.
- * @param node  The root YAML node to start the traversal from.
- *
- * @note This function modifies the YAML tree in place.
- * @warning Terminates the process via @ref invalid_path on any traversal
- *          failure (missing key, out-of-bounds index, unmatched name, or
- *          attempted descent into a scalar/null node).
- *
- * @see split_path
- * @see sequence_index
- * @see assign
+ * This is the sole public entry point.  It splits @p path into parts and
+ * delegates to the anonymous-namespace assign() helper.  A fatal error is
+ * raised for any malformed or unresolvable path.
  */
 void traverse(const std::string& path, const std::string& value, YAML::Node node) {
     const std::vector<std::string> parts = split_path(path);

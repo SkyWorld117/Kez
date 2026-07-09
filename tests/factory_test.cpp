@@ -80,29 +80,6 @@ factory:
         EXPECT_EQ(plan[1].profiles[0].commands, plan[0].profiles[0].commands);
     }
 
-    /**
-     * @brief Verifies that wrap_factory_target produces a correct Slurm
-     *        sbatch wrapper command.
-     *
-     * The test calls wrap_factory_target with MPI configuration (mpirun
-     * with --bind-to core) inside a Slurm batch environment. It checks that
-     * the resulting command string is a correctly-formed sbatch invocation
-     * that embeds:
-     *   - The job name derived from the current working directory.
-     *   - Node, task, CPU, and GPU resource allocations (2 nodes, 3 tasks
-     *     per node, 4 CPUs per task, 1 GPU per task).
-     *   - A custom partition (--partition=batch).
-     *   - Output and error redirection (kez.out / kez.err).
-     *   - The OMP_NUM_THREADS environment variable set to 8.
-     *   - The inner MPI launch command wrapped via --wrap.
-     *
-     * Edge cases covered:
-     *   - Non-trivial MPI launcher flags (--bind-to core).
-     *   - Explicit GPU-per-task specification (gpus_per_task = 1).
-     *   - The generated --job-name uses the shell expression
-     *     "${PWD##/}" (the current directory's basename) rather than a
-     *     static name, ensuring uniqueness per directory.
-     */
     TEST(FactoryParser, WrapsSlurmAndMpiProfiles) {
         EXPECT_EQ(wrap_factory_target("./bench", "mpirun", "--bind-to core", "slurm",
                                       "--partition=batch", "2", "3", "4", "8", "1"),

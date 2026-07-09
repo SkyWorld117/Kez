@@ -57,23 +57,11 @@ namespace {
 }  // namespace
 
 /**
- * @brief Checks whether all abstract requirements are met by a concrete
- *        dependency vector.
+ * @brief Checks whether a list of abstract package requirements is satisfied
+ *        against a vector of resolved concrete dependencies.
  *
- * Convenience overload that delegates to @c requirements_satisfied_impl with
- * a linear-search containment check (std::find).
- *
- * @param requirements          The abstract requirements that must be satisfied.
- * @param dependencies          Concrete package names (as a vector) that have
- *                              been resolved.
- * @param abstract_packages     Map from abstract names to the concrete
- *                              selections made for this environment.
- * @return true if every abstract requirement is present in @p dependencies,
- *         either by its own name or through an abstract-package alias; false
- *         otherwise.
- *
- * @note This is a pure predicate with no side effects and no error-signalling
- *       calls (ERROR, fail_config, user_config_error, exit).
+ * Delegates to the templated @c requirements_satisfied_impl, wrapping
+ * @c std::find as the contains functor.
  */
 bool requirements_satisfied(const std::vector<std::string>& requirements,
                             const std::vector<std::string>& dependencies,
@@ -86,23 +74,11 @@ bool requirements_satisfied(const std::vector<std::string>& requirements,
 }
 
 /**
- * @brief Checks whether all abstract requirements are met by a concrete
- *        dependency set (unordered).
+ * @brief Checks whether a list of abstract package requirements is satisfied
+ *        against an unordered_set of resolved concrete dependencies.
  *
- * Convenience overload that delegates to @c requirements_satisfied_impl with
- * a hash-set containment check (std::unordered_set::find).
- *
- * @param requirements          The abstract requirements that must be satisfied.
- * @param dependencies          Concrete package names (as an unordered set)
- *                              that have been resolved.
- * @param abstract_packages     Map from abstract names to the concrete
- *                              selections made for this environment.
- * @return true if every abstract requirement is present in @p dependencies,
- *         either by its own name or through an abstract-package alias; false
- *         otherwise.
- *
- * @note This is a pure predicate with no side effects and no error-signalling
- *       calls (ERROR, fail_config, user_config_error, exit).
+ * Delegates to the templated @c requirements_satisfied_impl, wrapping
+ * @c unordered_set::find as the contains functor.
  */
 bool requirements_satisfied(const std::vector<std::string>& requirements,
                             const std::unordered_set<std::string>& dependencies,

@@ -114,9 +114,8 @@ template <typename... Ts> struct dump_struct<std::tuple<Ts...>, false> {
      * representations with a `", "` separator.
      *
      * @tparam T  The concrete tuple type (always std::tuple<Ts...>).
-     * @tparam Is A parameter pack of indices 0..(N-1).
+     * @tparam Is  A parameter pack of indices 0..(N-1).
      * @param  value The tuple to stringify.
-     * @param  tag   An index_sequence used only for overload resolution.
      * @return A string containing the comma-separated dump of all elements.
      */
     template <typename T, std::size_t... Is>

@@ -27,20 +27,13 @@ namespace {
 }  // namespace
 
 /**
- * @brief Load a YAML file from disk, caching the result.
+ * @brief Loads a YAML file from disk with in-process caching, keyed by
+ *        absolute normalized path.
  *
- * The path is resolved to an absolute, lexically-normalised string and used
- * as the cache key.  On cache hit the previously-parsed YAML::Node is
- * returned immediately; on cache miss the file is parsed with
- * YAML::LoadFile() and inserted into the cache.
- *
- * @param path  Filesystem path to the YAML file (relative or absolute).
- * @return The root YAML::Node of the parsed file.
- *
- * @warning YAML::LoadFile() will throw a YAML::Exception if the file does
- *          not exist or contains invalid syntax.  This function does not
- *          catch that exception — the program terminates via
- *          std::terminate if an unhandled exception reaches main().
+ * On first invocation for a given path the file is read and parsed via
+ * YAML::LoadFile; subsequent calls for the same path return the cached
+ * YAML::Node.  The cache is never evicted during the lifetime of the
+ * process.
  */
 YAML::Node cached_yaml_load(const std::filesystem::path& path) {
     const std::string key = std::filesystem::absolute(path).lexically_normal().string();
@@ -54,31 +47,24 @@ YAML::Node cached_yaml_load(const std::filesystem::path& path) {
 }
 
 /**
- * @brief Check whether a YAML node is a map containing a given key.
+ * @brief Checks whether a YAML map node contains a defined value for the
+ *        given key.
  *
- * Returns false if the node is not a map at all, or if the key is present
- * but explicitly undefined (YAML null / ~).  This is a safe query that
- * never terminates the program.
- *
- * @param node  The YAML node to inspect.
- * @param key   The key to look for within @p node.
- * @return true if @p node is a map and @p node[key] is defined;
- *         false otherwise.
+ * Returns false if the node is not a map or if the key is missing or
+ * explicitly null.  Does not validate that the value is of any particular
+ * type.
  */
 bool yaml_has(const YAML::Node& node, const std::string& key) {
     return node.IsMap() && node[key].IsDefined();
 }
 
 /**
- * @brief Extract the scalar string value from a YAML node.
+ * @brief Validates that a YAML node is a scalar and returns its string
+ *        value.
  *
- * @param node         The YAML node that is expected to hold a scalar.
- * @param description  Human-readable description of the expected content
- *                     (e.g. "package version"), used in the error message.
- * @return The scalar value as a std::string.
- *
- * @note Terminates the program via ERROR() + exit(EXIT_FAILURE) if
- *       @p node is not a scalar (e.g. it is a map, sequence, or null).
+ * Terminates the program via ERROR() if the node is not a scalar.  The
+ * @p description argument is used in the error message to identify which
+ * field was expected to be a scalar.
  */
 std::string yaml_scalar(const YAML::Node& node, const std::string& description) {
     if (!node.IsScalar()) {
@@ -89,20 +75,12 @@ std::string yaml_scalar(const YAML::Node& node, const std::string& description) 
 }
 
 /**
- * @brief Extract a boolean value from a YAML scalar node.
+ * @brief Parses a YAML scalar as a boolean, accepting true/True/TRUE and
+ *        false/False/FALSE.
  *
- * Accepts the string literals "true", "True", "TRUE" for true and
- * "false", "False", "FALSE" for false.  Any other scalar content —
- * including non-scalar nodes — causes termination with an error.
- *
- * @param node         The YAML node that is expected to hold a boolean.
- * @param description  Human-readable description of the expected content
- *                     (e.g. "enable_mpi"), used in the error message.
- * @return true or false as determined by the scalar text.
- *
- * @note Terminates the program via ERROR() + exit(EXIT_FAILURE) if
- *       @p node is not a scalar or if the scalar text is not a recognised
- *       boolean literal.
+ * Delegates to yaml_scalar for type validation and terminates the program
+ * if the string does not match any recognised boolean literal.  The
+ * @p description argument identifies the field in error messages.
  */
 bool yaml_boolean(const YAML::Node& node, const std::string& description) {
     const std::string value = yaml_scalar(node, description);

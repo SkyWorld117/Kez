@@ -35,24 +35,6 @@ namespace {
     }
 }  // namespace
 
-/**
- * @brief Top-level command dispatcher for the Kez CLI.
- *
- * Inspects `argv[1]` to identify the requested command and forwards the
- * remaining arguments to the corresponding `execute_*` handler. When no
- * arguments, or `-h`/`--help`, or `-V`/`--version` is given, the function
- * prints help / version information and returns immediately without dispatching.
- *
- * @param argc  Argument count as received from `main()`.
- * @param argv  Argument vector as received from `main()`.
- *
- * @return void
- *
- * @warning If the command in `argv[1]` does not match any known command name,
- *          an error message is printed via `ERROR()` and the process terminates
- *          with `exit(EXIT_FAILURE)`. This function does not return in that
- *          branch.
- */
 void run_ui(int argc, char* argv[]) {
     if (argc <= 1) {
         print_help();

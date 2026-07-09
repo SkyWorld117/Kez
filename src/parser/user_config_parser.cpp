@@ -52,18 +52,8 @@ namespace {
     }
 
     /**
-     * @brief Read an optional scalar string from a YAML map, returning an
-     *        empty string when the key is missing or its value is null.
-     *
-     * Unlike yaml_scalar(), this function does not require the value to be
-     * present -- it gracefully returns an empty string for missing or null
-     * entries.  Only calls user_config_error if the key exists and its value
-     * is not a scalar (e.g. a map or sequence).
-     *
-     * @param node  The YAML map node to search.
-     * @param key   The map key whose string value is desired.
-     * @return The scalar string value, or an empty string if the key is
-     *         absent or null.
+     * @brief Return a scalar value from a YAML node if present and non-null,
+     *        otherwise return an empty string.
      */
     std::string optional_scalar(const YAML::Node& node, const std::string& key) {
         if (!yaml_has(node, key) || node[key].IsNull()) {
@@ -73,25 +63,8 @@ namespace {
     }
 
     /**
-     * @brief Search a YAML sequence of named maps for a specific entry.
-     *
-     * Iterates over the sequence and returns the first map whose `"name"`
-     * field matches @p name.  Each element in the sequence is expected to be
-     * a map containing a `"name"` scalar; any element that violates this is
-     * treated as a fatal error.
-     *
-     * @param sequence    The YAML sequence to search.  May be undefined or
-     *                    null, in which case an undefined node is returned.
-     * @param name        The name value to match against each entry's
-     *                    `"name"` field.
-     * @param description Human-readable label for the sequence, used in
-     *                    error messages (e.g. `"user option configuration"`).
-     * @return The matching YAML map node, or an undefined node if no match
-     *         is found.
-     *
-     * @warning Terminates via user_config_error() if @p sequence is not a
-     *          sequence, or if any element lacks a `"name"` field or is not
-     *          a map.
+     * @brief Look up a named entry in a YAML sequence of maps by its \"name\"
+     *        field.
      */
     YAML::Node find_named_user_value(const YAML::Node& sequence, const std::string& name,
                                      const std::string& description) {
@@ -113,20 +86,7 @@ namespace {
     }
 
     /**
-     * @brief Check whether a database target specification matches a user's
-     *        target specification.
-     *
-     * A match occurs when:
-     *   - Both are absent (database target is absent, and user target is
-     *     undefined or null), OR
-     *   - Both are present, the user target is a scalar, and its string
-     *     value equals the database target string.
-     *
-     * @param database_target  Optional target from the database recipe
-     *                         (e.g. a stage target name).  May be disengaged.
-     * @param user_target      YAML node from the user configuration
-     *                         (possibly undefined).
-     * @return true if the two specifications are semantically equal.
+     * @brief Check whether a database target matches a user-specified target.
      */
     bool targets_match(const std::optional<std::string>& database_target,
                        const YAML::Node& user_target) {
@@ -137,19 +97,8 @@ namespace {
     }
 
     /**
-     * @brief Format an option name according to the build toolchain's
-     *        conventions.
-     *
-     * Maps a bare option name to the flag syntax expected by the toolchain:
-     *   - Autotools: prepends `--` (or returns the name as-is if it already
-     *     starts with `--`, `-`, or is a shell assignment like `VAR=value`).
-     *   - CMake: prepends `-D` (or returns as-is if already starting with `-`).
-     *   - Other toolchains (Make, None): returns the name verbatim.
-     *
-     * @param name      The raw option name (e.g. `"shared"`, `"BUILD_SHARED_LIBS"`).
-     * @param toolchain The build system toolchain in use.
-     * @return The toolchain-formatted option string suitable for inclusion in
-     *         a configuration command.
+     * @brief Format an option name with the toolchain-appropriate prefix
+     *        (e.g., \"--\" for Autotools, \"-D\" for CMake).
      */
     std::string option_name(const std::string& name, Toolchain toolchain) {
         if (toolchain == Toolchain::Autotools) {
@@ -165,19 +114,8 @@ namespace {
     }
 
     /**
-     * @brief Render a single build option into its command-line flag string.
-     *
-     * Uses the option's enabled/disabled format template and the corresponding
-     * resolved value from @p state to produce the final flag.  If the format
-     * resolves to an empty string the option contributes nothing to the command.
-     *
-     * @param option    The build option descriptor from the database recipe.
-     * @param state     The parsed state indicating whether the option is
-     *                  enabled and what value strings to use.
-     * @param toolchain The build toolchain, used to format the flag name.
-     * @param context   Parser context for resolving template placeholders
-     *                  in the option values.
-     * @return The rendered command-line fragment (may be empty).
+     * @brief Render a single build option to its command-line string
+     *        representation, including any configured value.
      */
     std::string render_option(const BuildOption& option, const ParsedOptionState& state,
                               Toolchain toolchain, UserConfigParserContext& context) {
@@ -198,21 +136,7 @@ namespace {
 
     /**
      * @brief Render all options of a build configuration into a single
-     *        space-separated command-line string.
-     *
-     * Iterates over every BuildOption in @p configuration, looks up its
-     * resolved state in @p context.option_values, renders each into a flag
-     * fragment, and joins non-empty fragments with spaces.
-     *
-     * @param configuration  The build configuration whose options are rendered.
-     * @param toolchain      The build toolchain used to format each flag.
-     * @param context        Parser context holding the resolved option states.
-     * @return A space-joined string of rendered flags, or an empty string if
-     *         no options contribute anything.
-     *
-     * @warning Terminates via user_config_error() if an option from the
-     *          configuration has no corresponding entry in
-     *          @p context.option_values.
+     *        space-joined command string.
      */
     std::string render_configuration_options(const BuildConfiguration& configuration,
                                              Toolchain toolchain,
@@ -232,19 +156,8 @@ namespace {
     }
 
     /**
-     * @brief Locate a user's build-stage override that matches a given
-     *        database stage.
-     *
-     * Searches the user's `build.stages` sequence for the first entry whose
-     * `"target"` field matches @p stage.target via targets_match().
-     *
-     * @param user_package  The user's YAML configuration for this package.
-     * @param stage         The database stage descriptor to match against.
-     * @return The matching user stage YAML node, or an undefined node if no
-     *         match is found.
-     *
-     * @warning Terminates via user_config_error() if `build.stages` is
-     *          present but is not a sequence, or if any entry is not a map.
+     * @brief Find the user-provided build stage entry that matches a given
+     *        database stage by target.
      */
     YAML::Node find_user_stage(const YAML::Node& user_package, const BuildStage& stage) {
         if (!yaml_has(user_package, "build") || !yaml_has(user_package["build"], "stages")) {
@@ -268,20 +181,8 @@ namespace {
     }
 
     /**
-     * @brief Retrieve the user's configuration overrides for a package,
+     * @brief Retrieve the user's configurations YAML node for a package,
      *        optionally scoped to a specific build stage.
-     *
-     * When @p stage is null (the default), returns the top-level
-     * `build.configurations` node from the user config.  When a stage is
-     * given, the function first finds the matching user stage via
-     * find_user_stage() and returns that stage's `configurations` node.
-     *
-     * @param user_package  The user's YAML configuration for this package.
-     * @param stage         Optional pointer to a specific build stage whose
-     *                      per-stage overrides should be retrieved.  Pass
-     *                      nullptr for the top-level configuration.
-     * @return The user's configuration YAML node (may be undefined if no
-     *         overrides exist for the requested scope).
      */
     YAML::Node user_configuration(const YAML::Node& user_package,
                                   const BuildStage* stage = nullptr) {
@@ -297,20 +198,8 @@ namespace {
     }
 
     /**
-     * @brief Read a user-supplied string value for a configurable field,
-     *        falling back to a database default.
-     *
-     * If the user has provided an explicit value under @p key in
-     * @p user_value, it is returned (with a null value mapping to an empty
-     * string).  Otherwise the database's `ConfigurableValue.default_value` is
-     * used, or an empty string if even that is absent.
-     *
-     * @param user_value  The user's YAML node that may contain the key.
-     * @param key         The key to look up in @p user_value (e.g.
-     *                    `"enabled_value"`, `"disabled_value"`).
-     * @param value       The database's ConfigurableValue descriptor,
-     *                    providing the fallback default.
-     * @return The resolved string value.
+     * @brief Resolve a configurable string value from user-provided YAML or
+     *        fall back to the default.
      */
     std::string configurable_user_string(
         const YAML::Node& user_value, const std::string& key,
@@ -325,13 +214,6 @@ namespace {
 
     /**
      * @brief Compare two ParsedOptionState values for equality.
-     *
-     * Two states are equal when their @p enabled flag and both value strings
-     * are identical.
-     *
-     * @param left   The first parsed option state.
-     * @param right  The second parsed option state.
-     * @return true if all three fields match.
      */
     bool option_state_equal(const ParsedOptionState& left, const ParsedOptionState& right) {
         return left.enabled == right.enabled && left.enabled_value == right.enabled_value &&
@@ -339,14 +221,7 @@ namespace {
     }
 
     /**
-     * @brief Compare two maps of parsed option states for equality.
-     *
-     * Performs a structural comparison: the maps must have the same set of
-     * keys, and each corresponding ParsedOptionState must be equal.
-     *
-     * @param left   The first option-state map.
-     * @param right  The second option-state map.
-     * @return true if both maps are identical in keys and values.
+     * @brief Compare two maps of named option states for equality.
      */
     bool option_values_equal(const std::unordered_map<std::string, ParsedOptionState>& left,
                              const std::unordered_map<std::string, ParsedOptionState>& right) {
@@ -363,39 +238,8 @@ namespace {
     }
 
     /**
-     * @brief Compute the resolved values for every environment variable in a
-     *        build configuration.
-     *
-     * For each EnvironmentVariable in @p configuration:
-     *   1. If the variable's `requires` conditions are unsatisfied, it is
-     *      skipped (value left empty / unset).
-     *   2. If the variable is user-configurable and user values are requested
-     *      (@p use_user_values == true), the value is read from the user's
-     *      YAML configuration.  The user must have provided an entry; if not,
-     *      the program terminates.
-     *   3. Otherwise the database default value is used.
-     *   4. When @p apply_conditions is true, conditional overrides from the
-     *      database recipe are evaluated and applied to the value.
-     *
-     * Results are stored in both @p context.environment_values (keyed by
-     * pointer identity) and @p context.named_environment_values (keyed by
-     * the string `"<package>.env.<variable>"`).
-     *
-     * @param configuration    The build configuration whose environment is
-     *                         computed.
-     * @param user_configuration  The user's YAML overrides for this
-     *                         configuration (may be undefined).
-     * @param package          The database package descriptor, providing
-     *                         the package name for error messages and naming.
-     * @param context          Parser context; output states are stored here.
-     * @param use_user_values  Whether to read values from the user's YAML
-     *                         configuration instead of database defaults.
-     * @param apply_conditions Whether to evaluate conditional overrides on
-     *                         each variable's value.
-     *
-     * @warning Terminates via user_config_error() if a user-configurable
-     *          variable is missing from the user's configuration when
-     *          @p use_user_values is true.
+     * @brief Compute environment variable values for a build configuration
+     *        from user input or defaults, applying conditions when requested.
      */
     void compute_environment(const BuildConfiguration& configuration,
                              const YAML::Node& user_configuration, const PackageConfig& package,
@@ -432,41 +276,8 @@ namespace {
     }
 
     /**
-     * @brief Compute the resolved enabled/disabled state and value strings
-     *        for every build option in a configuration.
-     *
-     * For each BuildOption in @p configuration:
-     *   1. If the option's `requires` conditions are unsatisfied, it is
-     *      forced disabled and its values are left empty.
-     *   2. If the option is user-configurable and @p use_user_values is true,
-     *      the user's YAML is consulted for the enabled flag and value
-     *      overrides.  A missing entry is a fatal error.
-     *   3. Otherwise the database defaults are used (option enabled unless
-     *      the database says otherwise).
-     *   4. When @p apply_conditions is true, conditional overrides from the
-     *      database recipe are evaluated and applied.
-     *
-     * Results are stored in @p context.option_values (keyed by pointer
-     * identity) and also written to @p context.named_option_values (keyed by
-     * `"<package>.config.<option>"`).
-     *
-     * @param configuration    The build configuration whose options are
-     *                         computed.
-     * @param user_configuration  The user's YAML overrides for this
-     *                         configuration (may be undefined).
-     * @param package          The database package descriptor, providing the
-     *                         package name for error messages and naming.
-     * @param context          Parser context; output states are stored here.
-     * @param use_user_values  Whether to read state from the user's YAML
-     *                         configuration instead of database defaults.
-     * @param apply_conditions Whether to evaluate conditional overrides on
-     *                         each option's enabled/value fields.
-     *
-     * @warning Terminates via user_config_error() if:
-     *         - A user-configurable option is missing from the user's config
-     *           when @p use_user_values is true.
-     *         - A user-configurable option has neither an explicit `"enabled"`
-     *           field nor a database default with conditions.
+     * @brief Compute build option enabled/disabled states and their values
+     *        from user input or defaults, applying conditions when requested.
      */
     void compute_options(const BuildConfiguration& configuration,
                          const YAML::Node& user_configuration, const PackageConfig& package,
@@ -538,18 +349,8 @@ namespace {
     }
 
     /**
-     * @brief Compute both environment variables and options for a single
-     *        build configuration.
-     *
-     * Convenience wrapper that calls compute_environment() and
-     * compute_options() in sequence for the same configuration.
-     *
-     * @param configuration    The build configuration to compute.
-     * @param user_configuration  The user's YAML overrides.
-     * @param package          The database package descriptor.
-     * @param context          Parser context (stores results).
-     * @param use_user_values  Whether to use user-supplied values.
-     * @param apply_conditions Whether to evaluate conditional overrides.
+     * @brief Compute both environment variables and options for a build
+     *        configuration in a single pass.
      */
     void compute_configuration(const BuildConfiguration& configuration,
                                const YAML::Node& user_configuration, const PackageConfig& package,
@@ -562,26 +363,9 @@ namespace {
     }
 
     /**
-     * @brief Compute (or recompute) option and environment values for every
-     *        package in the context.
-     *
-     * Iterates over all resolved packages.  For each package that has a
-     * transformed build, the top-level build configurations and every per-stage
-     * configuration are processed via compute_configuration().  Compiler and
-     * MPI packages are treated specially: user values are used only when the
-     * user has explicitly provided a `"build"` section for them.
-     *
-     * After computation the function compares the new named option and
-     * environment maps against the previous snapshots (passed via @p context)
-     * to determine whether any values changed.
-     *
-     * @param context          Parser context; option/environment maps are
-     *                         both read (for previous snapshots) and written.
-     * @param apply_conditions Whether to evaluate conditional overrides
-     *                         during this pass.
-     * @return true if any option or environment value changed during this
-     *         pass; false if the state is stable (identical to the snapshots
-     *         taken at the start of the call).
+     * @brief Compute configuration values (options and environment) for all
+     *        packages, optionally applying conditional resolution, and return
+     *        whether any value changed.
      */
     bool compute_values(UserConfigParserContext& context, bool apply_conditions) {
         const auto previous_options     = context.named_option_values;
@@ -614,23 +398,8 @@ namespace {
     }
 
     /**
-     * @brief Precompute all configurable option and environment values,
-     *        iterating until the conditional values converge.
-     *
-     * First runs a pass with @p apply_conditions set to false to establish
-     * baseline values from user input and database defaults.  Then repeatedly
-     * recomputes with conditional overrides enabled until the state stabilises
-     * (no value changes between passes).  The maximum number of iterations is
-     * bounded by the total number of option states plus environment states
-     * plus one, which provides an upper bound on the number of sequential
-     * condition-dependency chains.
-     *
-     * @param context  Parser context; option and environment maps are
-     *                 populated and iteratively refined.
-     *
-     * @warning Terminates via user_config_error() if the iterative
-     *          computation does not converge within the bounded number of
-     *          passes, indicating a circular condition dependency.
+     * @brief Precompute configuration values by iterating conditional
+     *        resolution passes until convergence is reached.
      */
     void precompute_values(UserConfigParserContext& context) {
         compute_values(context, false);
@@ -646,26 +415,9 @@ namespace {
     }
 
     /**
-     * @brief Generate shell commands for a build configuration and append
-     *        them to the command list.
-     *
-     * Resolves the configuration command template against the current context,
-     * renders all options into command-line flags, and assembles the final
-     * command string.  Before emitting the command, environment variables
-     * declared in the configuration are exported (saving and restoring any
-     * pre-existing values around the command).
-     *
-     * @param configuration  The build configuration whose command and
-     *                       environment are to be emitted.
-     * @param package        The database package descriptor (unused except
-     *                       for signature compatibility).
-     * @param toolchain      The build toolchain used to format option flags.
-     * @param command        The command template string (may be empty).
-     * @param context        Parser context for resolving templates and
-     *                       looking up environment variable values.
-     * @param commands       Output vector of shell commands.  The environment
-     *                       exports, the resolved command, and the environment
-     *                       restores are appended in order.
+     * @brief Append shell commands that export configuration options and
+     *        environment variables, execute the build command, and restore
+     *        previous environment state.
      */
     void append_configuration_commands(const BuildConfiguration& configuration,
                                        const PackageConfig& package, Toolchain toolchain,
@@ -705,25 +457,8 @@ namespace {
     }
 
     /**
-     * @brief Generate shell commands to apply user-selected patches and
-     *        append them to the command list.
-     *
-     * Reads the `"patches"` list from the user's package configuration.
-     * Each entry must be a map with `"name"` and `"enabled"` fields.  Enabled
-     * patches are applied via `git apply`.  The patch file must exist at
-     * `$KEZ_HOME/patches/<package>/<name>`.
-     *
-     * @param package   The parsed user package whose `"patches"` section is
-     *                  consulted.
-     * @param context   Parser context providing filesystem paths (kez_home).
-     * @param commands  Output vector; `git apply` commands are appended for
-     *                  each enabled patch.
-     *
-     * @warning Terminates via user_config_error() if:
-     *         - The `"patches"` field is present but is not a sequence.
-     *         - Any patch entry is not a map or lacks `"name"` or `"enabled"`.
-     *         - A patch name contains path separators.
-     *         - The referenced patch file does not exist.
+     * @brief Append git-apply commands for patches the user has enabled in
+     *        their package configuration.
      */
     void append_patch_commands(const ParsedUserPackage& package, UserConfigParserContext& context,
                                std::vector<std::string>& commands) {
@@ -755,29 +490,9 @@ namespace {
     }
 
     /**
-     * @brief Generate the complete install command sequence for a single
-     *        package.
-     *
-     * Produces the ordered list of shell commands that will download,
-     * configure, build, and install the package.  The command sequence is:
-     *   1. (Vendor packages only) Create the install prefix directory if it
-     *      does not already exist.
-     *   2. Source commands (download / unpack via append_source_commands()).
-     *   3. Patch commands (via append_patch_commands()).
-     *   4. Preprocessing shell fragment (if declared).
-     *   5. Configuration command with options (if build configurations exist).
-     *   6. Per-stage commands (configure, build, install, etc.).
-     *   7. Postprocessing shell fragment (if declared).
-     *
-     * Compiler and MPI packages with no explicit `"build"` section in the
-     * user config are skipped (they produce no commands).  Vendor packages
-     * whose prefix already exists are also skipped as already-installed.
-     *
-     * @param package   The resolved user package for which commands are
-     *                  generated.
-     * @param context   Parser context for resolving templates and looking up
-     *                  option/environment states.
-     * @return A vector of shell command strings to be executed in order.
+     * @brief Generate the full sequence of shell commands to build a single
+     *        package: source extraction, patches, preprocessing,
+     *        configuration, stages, and postprocessing.
      */
     std::vector<std::string> generate_package_commands(const ParsedUserPackage& package,
                                                        UserConfigParserContext& context) {
@@ -843,20 +558,7 @@ namespace {
 
     /**
      * @brief Resolve a dependency name through abstract-package and alias
-     *        mappings.
-     *
-     * Given a dependency name from the database recipe:
-     *   1. If the name maps through @p context.abstract_packages to a
-     *      concrete implementation, the concrete name is used.
-     *   2. If the concrete name then maps through @p context.package_aliases
-     *      (user-specified aliases), the alias target is returned.
-     *   3. Otherwise the original (or first-resolved) name is returned
-     *      unchanged.
-     *
-     * @param dependency  The dependency name from the database recipe.
-     * @param context     Parser context providing abstract-package and alias
-     *                    mappings.
-     * @return The final resolved dependency name for plan construction.
+     *        mappings to its final concrete name for the build plan.
      */
     std::string plan_dependency_name(const std::string& dependency,
                                      const UserConfigParserContext& context) {
@@ -868,31 +570,8 @@ namespace {
     }
 
     /**
-     * @brief Recursively collect the nearest buildable packages reachable
-     *        from a given dependency.
-     *
-     * A package may depend on a property-only "facade" package (e.g.
-     * `nvhpc-nccl`) that declares no source or build and therefore emits no
-     * commands, making it absent from the executable plan.  Such a package
-     * imposes no scheduling constraint itself, but the buildable packages
-     * reachable through it do -- a dependent must still wait for them.
-     *
-     * This function traverses the dependency graph starting from
-     * @p dependency, recursing only through non-buildable intermediates and
-     * stopping at buildable ones (whose own plan edges already encode their
-     * deeper dependencies).  The @p visited set bounds the traversal and
-     * breaks any accidental cycles.
-     *
-     * @param dependency         The name of the dependency to start from
-     *                           (as used in the database recipe).
-     * @param context            Parser context for package indices and
-     *                           alias/abstract resolution.
-     * @param buildable_packages Set of package names that produce commands
-     *                           in the generated plan.
-     * @param visited            Set tracking already-traversed package names
-     *                           to prevent cycles.
-     * @param result             Output vector to which buildable package
-     *                           names are appended (via append_unique()).
+     * @brief Recursively traverse the dependency tree to collect packages
+     *        that have non-empty build commands.
      */
     void collect_buildable_dependencies(const std::string& dependency,
                                         const UserConfigParserContext& context,
@@ -919,22 +598,8 @@ namespace {
     }
 
     /**
-     * @brief Append buildable dependencies that satisfy a set of requirement
-     *        expressions to the result vector.
-     *
-     * Checks whether all expressions in @p requirements are satisfied via
-     * requirements_satisfied().  If so, each requirement is expanded through
-     * collect_buildable_dependencies() to find the nearest buildable packages
-     * reachable from it.
-     *
-     * @param requirements       List of requirement expressions (package
-     *                           names or abstract package keys) to process.
-     * @param context            Parser context for package resolution.
-     * @param buildable_packages Set of packages that produce build commands.
-     * @param visited            Set tracking already-traversed package names
-     *                           (shared across calls to prevent cycles).
-     * @param result             Output vector; buildable package names are
-     *                           appended.
+     * @brief Collect buildable dependencies for a set of requirements whose
+     *        conditions are satisfied.
      */
     void append_plan_requirements(const std::vector<std::string>& requirements,
                                   const UserConfigParserContext& context,
@@ -952,22 +617,8 @@ namespace {
     }
 
     /**
-     * @brief Collect buildable dependency packages implied by a build
-     *        configuration's environment variables and options.
-     *
-     * For each environment variable and build option in @p configuration,
-     * the function evaluates their respective `requires` lists via
-     * append_plan_requirements() and appends any resulting buildable
-     * packages to @p result.
-     *
-     * @param configuration      The build configuration whose option and
-     *                           environment requirements are scanned.
-     * @param context            Parser context for resolution.
-     * @param buildable_packages Set of packages that produce build commands.
-     * @param visited            Set tracking already-traversed packages
-     *                           (shared across calls).
-     * @param result             Output vector receiving buildable package
-     *                           names.
+     * @brief Collect buildable dependencies referenced by configuration
+     *        environment variables and options.
      */
     void append_plan_configuration_dependencies(
         const BuildConfiguration& configuration, const UserConfigParserContext& context,
@@ -983,22 +634,8 @@ namespace {
     }
 
     /**
-     * @brief Generate the dependency list for a package in the install plan.
-     *
-     * Produces the names of buildable packages that must be installed before
-     * @p package.  The algorithm proceeds in two phases:
-     *   1. Direct dependencies from the database recipe are expanded through
-     *      facades via collect_buildable_dependencies().
-     *   2. If the package has a transformed build, additional requirements
-     *      from configuration options and environment variables are appended.
-     *
-     * @param package            The parsed user package whose dependencies
-     *                           are computed.
-     * @param context            Parser context for resolution.
-     * @param buildable_packages Set of packages that produce build commands
-     *                           (i.e. are present in the generated plan).
-     * @return A vector of buildable package names that must be installed
-     *         before this package.
+     * @brief Generate the list of buildable dependencies required by a
+     *        package, including those from its configuration.
      */
     std::vector<std::string> generate_package_dependencies(
         const ParsedUserPackage& package, const UserConfigParserContext& context,
@@ -1028,14 +665,8 @@ namespace {
     }
 
     /**
-     * @brief Extract the version string from a user package configuration.
-     *
-     * Reads the `"version"` field from the user's YAML.  If the field is
-     * absent, `"latest"` is returned.  If the version contains an `@`
-     * separator (e.g. `"1.2.3@foo"`), everything after the `@` is stripped.
-     *
-     * @param user_package  The user's YAML configuration for the package.
-     * @return The version string to use when looking up the database recipe.
+     * @brief Extract the database version string from a user package
+     *        configuration, defaulting to \"latest\".
      */
     std::string database_version(const YAML::Node& user_package) {
         if (!yaml_has(user_package, "version")) {
@@ -1047,13 +678,8 @@ namespace {
     }
 
     /**
-     * @brief Extract the compiler name from a user package configuration.
-     *
-     * Reads the `"compiler"` field from the user's YAML.  If absent,
-     * `"system"` is returned as the default compiler.
-     *
-     * @param user_package  The user's YAML configuration for the package.
-     * @return The compiler name string (e.g. `"gcc"`, `"llvm"`, `"system"`).
+     * @brief Extract the compiler identifier from a user package
+     *        configuration, defaulting to \"system\".
      */
     std::string package_compiler(const YAML::Node& user_package) {
         return yaml_has(user_package, "compiler")
@@ -1062,30 +688,9 @@ namespace {
     }
 
     /**
-     * @brief Populate the parser context from the user configuration YAML.
-     *
-     * Performs the initial loading and validation phase of the parsing
-     * pipeline:
-     *   1. Validates the root structure (requires `"kez"` map and
-     *      `"recipe.dependencies"` sequence).
-     *   2. Loads the flat dependency set into @p context.dependencies.
-     *   3. Processes abstract package selections from
-     *      `"recipe.abstract_packages"` and validates that each
-     *      implementation actually satisfies the abstract package.
-     *   4. Verifies every key in the `"kez"` map corresponds to a declared
-     *      dependency.
-     *   5. For each dependency that is not system-provided, reads its user
-     *      config, loads the database recipe, applies build transformation,
-     *      and stores the result as a ParsedUserPackage in @p context.
-     *
-     * @param user_config  The top-level user configuration YAML node.
-     * @param settings     Parser settings (paths, architecture, etc.).
-     * @param context      Output context to populate.  Existing contents
-     *                     are overwritten.
-     *
-     * @warning Terminates via user_config_error() on any structural or
-     *          semantic validation failure (missing required fields, package
-     *          absent from dependencies, abstract package mismatch, etc.).
+     * @brief Populate a UserConfigParserContext from the user config YAML
+     *        and settings: validate structure, load dependencies, resolve
+     *        abstract packages, and parse each package entry.
      */
     void load_parser_context(const YAML::Node& user_config,
                              const UserConfigParserSettings& settings,
@@ -1172,6 +777,11 @@ namespace {
 
 }  // namespace
 
+/**
+ * @brief Load parser settings from environment variables (KEZ_HOME,
+ *        KEZ_WORKDIR, KEZ_ARCH), the manifest file, and the user config
+ *        file under the work directory.
+ */
 UserConfigParserSettings load_user_config_parser_settings(
     const std::filesystem::path& install_prefix) {
     const char* home_value = std::getenv("KEZ_HOME");
@@ -1240,6 +850,11 @@ UserConfigParserSettings load_user_config_parser_settings(
     return result;
 }
 
+/**
+ * @brief Parse a user configuration YAML node into a BashCommandPlan using
+ *        the provided settings: load context, precompute values, and
+ *        generate build commands in dependency order.
+ */
 BashCommandPlan parse_user_config(const YAML::Node& user_config,
                                   const UserConfigParserSettings& settings) {
     UserConfigParserContext context;
@@ -1281,11 +896,19 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
     return result;
 }
 
+/**
+ * @brief Parse a user configuration YAML node into a BashCommandPlan,
+ *        loading the settings from the given install prefix.
+ */
 BashCommandPlan parse_user_config(const YAML::Node& user_config,
                                   const std::filesystem::path& install_prefix) {
     return parse_user_config(user_config, load_user_config_parser_settings(install_prefix));
 }
 
+/**
+ * @brief Read a user configuration file from disk and parse it into a
+ *        BashCommandPlan.
+ */
 BashCommandPlan parse_user_config_file(const std::filesystem::path& path,
                                        const UserConfigParserSettings& settings) {
     if (!std::filesystem::is_regular_file(path)) {

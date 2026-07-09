@@ -4,7 +4,7 @@ Kez is an HPC-focused package manager for GNU/Linux systems.
 
 Everything is at its very early stage, use with caution.
 
-You can find more information in the [documentation](docs/01-Getting_Started.md).
+You can find more information in the [documentation](docs/README.md).
 
 ## Why Kez?
 

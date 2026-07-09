@@ -22,7 +22,7 @@ struct FactoryProfile {
      * @brief Ordered list of bash commands to execute.
      *
      * The sequence is built by the parser as:
-     *   1. Input copy command (cp -a <inputs>/. .)  -- if inputs are defined
+     *   1. Input copy command (cp -a @<inputs@>/. .)  -- if inputs are defined
      *   2. Prerun script                             -- if defined
      *   3. Launcher/scheduler-wrapped target command  -- always present
      *   4. Postrun script                             -- if defined

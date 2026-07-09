@@ -19,40 +19,10 @@
 #include <utils/colored_io.hpp>
 
 /**
- * @brief Execute the `kez init` subcommand.
+ * @brief Executes the `kez init` command.
  *
- * Parses command-line flags and launches the bootstrap script
- * (`$KEZ_HOME/scripts/init.sh`) to create or refresh the distro-independent
- * system stack.
- *
- * Supported options:
- *   - `--refresh`             : Recreate the system environment from scratch.
- *   - `--use-distro-compiler` : Skip building GCC and link the distribution's
- *                               compiler instead.
- *   - `-h` / `--help`         : Print usage information and return early.
- *
- * The script path is constructed from the `KEZ_HOME` environment variable and
- * guarded by an existence check.  The final command is executed synchronously
- * via @ref run_external_command.
- *
- * @param arguments  Vector of command-line tokens following the `init`
- *                   subcommand.  Each token is matched case-sensitively
- *                   against the known flags above.  Unknown tokens cause
- *                   an immediate error.
- *
- * @return void (returns early when `--help` is given; otherwise the function
- *         only returns after `init.sh` completes).
- *
- * @note Terminates the process with `exit(EXIT_FAILURE)` if:
- *       - An unknown option is encountered.
- *       - `$KEZ_HOME` is not set (caught by @ref get_env_var).
- *       - `$KEZ_HOME/scripts/init.sh` does not exist or is not a regular file.
- *       - The external command returns a non-zero exit status (caught by
- *         @ref run_external_command).
- *
- * @see execute_update
- * @see run_external_command
- * @see shell_single_quote
+ * Delegates to scripts/init.sh, optionally passing --refresh and/or
+ * --use-distro-compiler flags.
  */
 void execute_init(const CommandArguments& arguments) {
     bool refresh             = false;
@@ -92,44 +62,10 @@ void execute_init(const CommandArguments& arguments) {
 }
 
 /**
- * @brief Execute the `kez update` subcommand.
+ * @brief Executes the `kez update` command.
  *
- * Updates the Kez source tree by pulling from its remote (`git pull
- * --ff-only`), then rebuilds the project with `make -B`.  When
- * `--with-system` is passed the system environment is also refreshed
- * after the rebuild.
- *
- * The number of parallel make jobs is controlled by the `KEZ_NPROC`
- * environment variable; it defaults to `"1"` when not set and must be
- * a positive integer.
- *
- * Supported options:
- *   - `--with-system` : Refresh the system toolchain after rebuilding Kez.
- *   - `-h` / `--help` : Print usage information and return early.
- *
- * @param arguments  Vector of command-line tokens following the `update`
- *                   subcommand.  Each token is matched case-sensitively
- *                   against the known flags above.  Unknown tokens cause
- *                   an immediate error.
- *
- * @return void (returns early when `--help` is given; otherwise the function
- *         only returns after the update and optional refresh complete).
- *
- * @note Terminates the process with `exit(EXIT_FAILURE)` if:
- *       - `KEZ_NPROC` is not set to a valid positive integer (or is empty or
- *         consists only of zeros).
- *       - `$KEZ_HOME` is not set (caught by @ref get_env_var).
- *       - The `git pull` or `make` command returns a non-zero exit status
- *         (caught by @ref run_external_command).
- *
- * @warning The `KEZ_NPROC` validation rejects the string if it contains any
- *          non-digit character or if every digit is zero (i.e.
- *          `find_first_not_of('0')` returns @c npos).  This also rejects the
- *          string `"0"` itself.
- *
- * @see execute_init
- * @see run_external_command
- * @see shell_single_quote
+ * Pulls the latest source via git, rebuilds the project, and optionally
+ * refreshes the system toolchain via scripts/init.sh --refresh.
  */
 void execute_update(const CommandArguments& arguments) {
     bool with_system = false;

@@ -38,19 +38,7 @@ namespace {
     }
 
     /**
-     * @brief Extracts the version string for a package from the user configuration.
-     *
-     * Reads `kez.<package>.version` from the user config. If the version contains
-     * a '@' character (indicating a local source path suffix), the suffix is
-     * stripped so that only the actual version identifier remains. The result is
-     * validated as a safe filesystem path component.
-     *
-     * @param user_config  The parsed user configuration YAML node.
-     * @param package      The name of the package whose version to extract.
-     * @return The version string, with any local-source marker (everything after
-     *         the first '@') removed.
-     * @warning Terminates the program via ERROR() if `kez.<package>.version` is
-     *          missing or if the version fails path-component validation.
+     * @brief Retrieves the version string for a given package from the user configuration.
      */
     std::string package_version(const YAML::Node& user_config, const std::string& package) {
         const YAML::Node kez = user_config["kez"];
@@ -68,20 +56,7 @@ namespace {
     }
 
     /**
-     * @brief Extracts the compiler specification for a package from the user
-     *        configuration.
-     *
-     * Reads `kez.<package>.compiler` from the user config. If no compiler is
-     * specified, defaults to "system". The '@' character (used internally as a
-     * delimiter in version strings) is replaced with '-' to produce a safe path
-     * component. The result is validated as a safe filesystem path component.
-     *
-     * @param user_config  The parsed user configuration YAML node.
-     * @param package      The name of the package whose compiler to extract.
-     * @return The compiler string (with '@' replaced by '-'), or "system" if
-     *         no compiler is configured.
-     * @warning Terminates the program via ERROR() if the compiler value fails
-     *          path-component validation.
+     * @brief Retrieves the compiler specification for a given package from the user configuration.
      */
     std::string package_compiler(const YAML::Node& user_config, const std::string& package) {
         const YAML::Node kez = user_config["kez"];
@@ -97,12 +72,7 @@ namespace {
 }  // namespace
 
 /**
- * @brief Converts a PackageType enum value to its human-readable string
- *        representation.
- *
- * @param type The PackageType enum value.
- * @return A string such as "package", "system", "compiler", "mpi", "vendor",
- *         "abstract", or "external". Returns "unknown" for unrecognised values.
+ * @brief Returns a human-readable string representation of a PackageType enum value.
  */
 std::string package_type_name(PackageType type) {
     switch (type) {
@@ -118,19 +88,7 @@ std::string package_type_name(PackageType type) {
 }
 
 /**
- * @brief Resolves a named path from the project's manifest.yaml.
- *
- * Reads the value of `manifest.paths.<name>` from the manifest file located
- * at `$KEZ_HOME/manifest.yaml`. If the configured path is relative, it is
- * joined with `$KEZ_WORKDIR` to form an absolute path. If it is already
- * absolute, it is returned as-is.
- *
- * @param name The key under `manifest.paths` to look up
- *             (e.g. "applications", "compilers", "system", "utilities").
- * @return The resolved (absolute) filesystem path.
- * @warning Terminates the program via ERROR() if `$KEZ_HOME` or
- *          `$KEZ_WORKDIR` is not set, or if `manifest.paths.<name>` is
- *          missing from the manifest.
+ * @brief Resolves a configured filesystem path from the manifest for a named path entry.
  */
 std::filesystem::path configured_work_path(const std::string& name) {
     const std::filesystem::path home = get_env_var("KEZ_HOME");
@@ -146,16 +104,7 @@ std::filesystem::path configured_work_path(const std::string& name) {
 }
 
 /**
- * @brief Extracts the list of target packages from the user configuration.
- *
- * Reads the `recipe.targets` sequence from the user config. Each element is
- * converted to a string and collected into a vector.
- *
- * @param user_config The parsed user configuration YAML node.
- * @return A vector of target package name strings, in the order they appear
- *         in the configuration.
- * @warning Terminates the program via ERROR() if `recipe.targets` is missing,
- *          is not a YAML sequence, or is empty.
+ * @brief Extracts the list of target package names from the user configuration.
  */
 std::vector<std::string> user_config_targets(const YAML::Node& user_config) {
     if (!yaml_has(user_config, "recipe") || !user_config["recipe"].IsMap() ||
@@ -177,40 +126,7 @@ std::vector<std::string> user_config_targets(const YAML::Node& user_config) {
 }
 
 /**
- * @brief Determines the installation directory prefix for a set of targets.
- *
- * Resolves all requested targets through abstract-package mapping, verifies
- * they share a common PackageType, then selects the installation prefix based
- * on that type:
- *
- *   - **Utilities** (`utilities=true`): uses the configured `utilities` path;
- *     only allowed for `PackageType::Package`.
- *   - **System**: the configured `system` path.
- *   - **Compiler**: `compilers/<package>-<version>`.
- *   - **MPI**:      `mpis/<package>-<version>-<compiler>`.
- *   - **Vendor**:   `vendors/<package>-<version>`.
- *   - **External**: rejected (configured externally, cannot be installed).
- *   - **Abstract**: rejected (must be resolved to a concrete type first).
- *   - **Package**:  `applications/<environment>`.
- *
- * For `PackageType::Package`, the environment name is obtained from the
- * @p environment_name parameter. If that is empty, `$KEZ_ACTIVE_ENV` is used
- * instead. An environment is always required for regular packages.
- *
- * @param user_config      The parsed user configuration YAML node.
- * @param environment_name The explicit environment name, or an empty string to
- *                         fall back to `$KEZ_ACTIVE_ENV`.
- * @param utilities        If true, install as a utility (forces the utilities
- *                         path and requires a single `Package` target).
- * @return The absolute installation prefix path.
- * @warning Terminates the program via ERROR() in many scenarios:
- *          - Targets have mixed package types.
- *          - `utilities=true` but the target is not a regular package.
- *          - Multiple targets of type Compiler, MPI, Vendor, or External.
- *          - Target is External (these are configured externally).
- *          - Target is unresolved Abstract.
- *          - No environment is available for a Package-type install.
- *          - Environment name fails path-component validation.
+ * @brief Determines the installation prefix path based on package types and environment.
  */
 std::filesystem::path installation_prefix(const YAML::Node& user_config,
                                           const std::string& environment_name, bool utilities) {
@@ -284,20 +200,7 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
 }
 
 /**
- * @brief Validates that a string is a safe, single filesystem path component.
- *
- * A valid path component must not be empty, must not be "." or "..", and must
- * not contain any directory separator (i.e. it must not have a parent path).
- * This is used to guard against path-traversal and injection when constructing
- * installation directory names from user-supplied values such as package
- * versions, compiler specs, and environment names.
- *
- * @param value       The string to validate.
- * @param description A human-readable label describing what is being validated
- *                    (e.g. "package version", "environment name"); used in the
- *                    error message on failure.
- * @warning Terminates the program via ERROR() if the value is empty, is ".",
- *          is "..", or contains path separators.
+ * @brief Validates that a path component is a simple, non-empty name without parent references.
  */
 void validate_path_component(const std::string& value, const std::string& description) {
     const std::filesystem::path path(value);
@@ -309,16 +212,7 @@ void validate_path_component(const std::string& value, const std::string& descri
 }
 
 /**
- * @brief Executes a shell command and checks that it completed successfully.
- *
- * Delegates to std::system(3). The command is interpreted by `/bin/sh -c`.
- * After execution the exit status is inspected: the command must have exited
- * normally (not by a signal) with exit code 0.
- *
- * @param command The shell command string to execute.
- * @warning Terminates the program via ERROR() if the command could not be
- *          launched (std::system returns -1), if it did not exit normally, or
- *          if it returned a non-zero exit status.
+ * @brief Executes a shell command and terminates on failure.
  */
 void run_external_command(const std::string& command) {
     const int status = std::system(command.c_str());
@@ -329,17 +223,7 @@ void run_external_command(const std::string& command) {
 }
 
 /**
- * @brief Lists all immediate subdirectories under a root path, sorted
- *        alphabetically.
- *
- * If @p root does not exist or contains no subdirectories, an informational
- * message is printed instead of an empty listing. Each subdirectory name is
- * printed indented by "  - ".
- *
- * @param root    The directory to scan for subdirectories.
- * @param heading A label describing the kind of entries being listed
- *                (e.g. "environments", "packages"); used in the heading and
- *                the "not found" message.
+ * @brief Lists the subdirectories of a given root path under a section heading.
  */
 void list_directories(const std::filesystem::path& root, const std::string& heading) {
     if (!std::filesystem::is_directory(root)) {
@@ -364,17 +248,7 @@ void list_directories(const std::filesystem::path& root, const std::string& head
 }
 
 /**
- * @brief Emits shell commands to activate an environment by prepending its
- *        `bin/` directory to `PATH` and setting an environment variable.
- *
- * The emitted lines are intended to be eval'd by the calling shell (typically
- * via main.sh). They export `PATH` with the prefix's `bin/` directory
- * prepended and set the given @p variable to @p value.
- *
- * @param prefix   The installation prefix whose `bin/` subdirectory is added
- *                 to `PATH`.
- * @param variable The name of the environment variable to set.
- * @param value    The value to assign to the environment variable.
+ * @brief Prints shell commands to activate an environment by prepending to PATH and setting a variable.
  */
 void emit_environment_activation(const std::filesystem::path& prefix, const std::string& variable,
                                  const std::string& value) {
@@ -383,17 +257,7 @@ void emit_environment_activation(const std::filesystem::path& prefix, const std:
 }
 
 /**
- * @brief Emits shell commands to deactivate an environment by removing its
- *        `bin/` directory from `PATH` and unsetting an environment variable.
- *
- * The emitted lines are intended to be eval'd by the calling shell (typically
- * via main.sh). The `PATH` variable is rebuilt by iterating over its colon-
- * separated entries and excluding the entry that matches the prefix's `bin/`
- * directory. The shell-scratch variables are unset afterwards.
- *
- * @param prefix   The installation prefix whose `bin/` subdirectory is removed
- *                 from `PATH`.
- * @param variable The name of the environment variable to unset.
+ * @brief Prints shell commands to deactivate an environment by removing its bin directory from PATH and unsetting a variable.
  */
 void emit_environment_deactivation(const std::filesystem::path& prefix,
                                    const std::string& variable) {
@@ -410,15 +274,7 @@ void emit_environment_deactivation(const std::filesystem::path& prefix,
 }
 
 /**
- * @brief Prints a human-readable representation of a BashCommandPlan to
- *        stdout.
- *
- * For each PackageCommands entry in the plan, a heading line showing the
- * package name is printed, followed by each command prefixed with " -  ".
- *
- * @param plan The BashCommandPlan to display (a sequence of PackageCommands
- *             entries, each containing a package name and its list of shell
- *             commands).
+ * @brief Prints a human-readable summary of a BashCommandPlan to stdout.
  */
 void print_command_plan(const BashCommandPlan& plan) {
     for (const PackageCommands& package : plan) {

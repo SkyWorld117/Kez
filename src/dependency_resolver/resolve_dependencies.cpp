@@ -50,32 +50,12 @@ namespace {
     }
 
     /**
-     * @brief Choose (or retrieve) a concrete implementation for an abstract package.
+     * @brief Select a concrete implementation for an abstract package.
      *
-     * If @p abstract_package already has a selection recorded in @p state it is
-     * returned immediately.  Otherwise the function enters either interactive or
-     * automatic selection mode:
-     *
-     *   - **Interactive** (`state.interactive == true`): prints the list of
-     *     valid implementations and loops reading stdin until a valid choice
-     *     is entered.  If stdin ends (EOF/error) the program terminates via
-     *     `ERROR()` + `exit(EXIT_FAILURE)`.
-     *
-     *   - **Automatic** (`state.interactive == false`): delegates to `advise()`
-     *     (see advisor.hpp).  If the advice returns a value that is not among
-     *     the declared implementations, the program terminates via `ERROR()` +
-     *     `exit(EXIT_FAILURE)`.
-     *
-     * The chosen implementation is recorded in `state.abstract_packages` for
-     * subsequent calls to `resolve_abstract()`.
-     *
-     * @param state              Resolution state (the selection map is
-     *                           updated as a side effect).
-     * @param abstract_package   Name of the abstract package to resolve.
-     * @param config             The loaded database config for the abstract
-     *                           package (provides the list of valid
-     *                           implementations).
-     * @return The selected concrete implementation name.
+     * If the abstract package already has a chosen implementation in the
+     * resolution state it is returned immediately.  Otherwise the user is
+     * prompted (interactive mode) or the heuristic advisor is consulted
+     * (non-interactive mode) to pick one from the available implementations.
      */
     std::string select_implementation(ResolutionState& state, const std::string& abstract_package,
                                       const PackageConfig& config) {
@@ -122,31 +102,12 @@ namespace {
     }
 
     /**
-     * @brief Collect the full set of dependencies for a package, including
-     *        user-decided optional ones.
+     * @brief Collect the full dependency list for a package, including optional ones.
      *
-     * Starts from the essential (mandatory) dependencies obtained via
-     * `get_essential_dependencies()`.  For each optional dependency returned
-     * by `get_optional_dependencies()` that is not already in the essential
-     * set, a decision is made:
-     *
-     *   - If the optional dependency has already been decided in
-     *     `state.optional_package_choices`, that decision is reused.
-     *   - In interactive mode the user is prompted (y/n); if input fails the
-     *     program terminates via `ERROR()` + `exit(EXIT_FAILURE)`.
-     *   - In non-interactive mode the optional dependency is **excluded**
-     *     (default: skip).
-     *
-     * Only those optional dependencies that were positively selected are
-     * appended to the returned list.
-     *
-     * @param state        Resolution state (optional-package choices are
-     *                     updated as a side effect, and reused across
-     *                     subsequent calls).
-     * @param package_name   The concrete package name whose dependencies
-     *                       are being selected.
-     * @return A vector containing all essential dependencies plus any
-     *         optional dependencies the user (or default) chose to include.
+     * Starts with the essential dependencies, then iterates through the
+     * optional dependencies.  Each optional dependency whose inclusion has not
+     * yet been decided is offered to the user (interactive) or excluded
+     * (non-interactive).  Already-recorded choices are reused.
      */
     std::vector<std::string> select_dependencies(ResolutionState& state,
                                                  const std::string& package_name) {
@@ -191,32 +152,12 @@ namespace {
     }
 
     /**
-     * @brief Recursively build the dependency adjacency list for a package
-     *        and all of its transitive dependencies (depth-first traversal).
+     * @brief Recursively build the dependency adjacency list for a package.
      *
-     * The logic proceeds as follows:
-     *
-     *   1. If @p package_name is already present in the adjacency list the
-     *      call returns immediately (cycle / shared-dependency guard).
-     *   2. The database config for @p package_name is loaded.
-     *   3. If the config indicates an **abstract** package, a concrete
-     *      implementation is chosen (via `select_implementation`).  If that
-     *      concrete package is already in the adjacency list we return;
-     *      otherwise we reload the config for the concrete package.
-     *   4. **System** packages are recorded with an empty dependency vector
-     *      and added to `state.system_packages`; no further recursion.
-     *   5. **Compiler** and **Mpi** packages that are *not* in the user's
-     *      explicit target set are treated as leaf nodes (empty dependencies,
-     *      no further recursion) — they are assumed to be pre-installed
-     *      system components.
-     *   6. For all other packages, dependencies are selected via
-     *      `select_dependencies`, stored in the adjacency list, and each
-     *      dependency is recursively processed.
-     *
-     * @param state        Resolution state (adjacency list, system packages,
-     *                     abstract selections, and optional choices are all
-     *                     updated as side effects).
-     * @param package_name   The package (or abstract package) to build from.
+     * Skips already-visited packages.  Abstract packages are resolved to a
+     * concrete implementation first.  System-type packages and compiler/MPI
+     * packages not in the target set are treated as leaves (no dependencies
+     * expanded).
      */
     void build_adjacency_list(ResolutionState& state, const std::string& package_name) {
         if (state.adjacency_list.find(package_name) != state.adjacency_list.end()) {
@@ -252,20 +193,8 @@ namespace {
     }
 
     /**
-     * @brief Resolve abstract names in the adjacency list to their concrete
-     *        implementations, producing a unified graph.
-     *
-     * Iterates over every entry in the internal adjacency list.  For each
-     * node and each of its dependencies, the abstract name (if any) is
-     * replaced with the concrete name already chosen and stored in
-     * `resolve_abstract()`.  Duplicate dependency entries within a single
-     * node's list are eliminated via `append_unique()`.
-     *
-     * The returned graph is suitable for topological sorting.
-     *
-     * @param state   The resolution state whose adjacency list and abstract
-     *                selections are used.
-     * @return A new adjacency list with all abstract names concretised.
+     * @brief Merge the per-package adjacency lists into a single graph with
+     *        abstract names resolved to concrete implementations.
      */
     DependencyGraph unify_adjacency_list(const ResolutionState& state) {
         DependencyGraph unified_adjacency_list;
@@ -280,17 +209,10 @@ namespace {
     }
 
     /**
-     * @brief Remove all system-type packages from an ordered package list.
+     * @brief Remove system-type packages from an ordered package list.
      *
-     * Scans @p packages and copies every entry that is not present in
-     * @p system_packages into a new vector, preserving the original order.
-     *
-     * @param packages          The ordered list of all packages (e.g. the
-     *                          topological-sort output).
-     * @param system_packages   The set of packages that were identified as
-     *                          system-type during graph building.
-     * @return A new vector containing only non-system packages, in the
-     *         original relative order.
+     * System packages are installed by the host OS rather than managed by Kez,
+     * so they should not appear in the user-visible install plan.
      */
     std::vector<std::string> filter_system_packages(
         const std::vector<std::string>& packages,
@@ -307,54 +229,11 @@ namespace {
 }  // namespace
 
 /**
- * @brief Compute a full dependency resolution for a set of target packages.
+ * @brief Resolve dependencies for the given set of target packages.
  *
- * This is the top-level entry point of the dependency-resolution pipeline.
- * It performs the following steps:
- *
- *   1. Returns an empty result immediately if @p package_names is empty.
- *   2. Initialises a `ResolutionState` seeded with the target packages and
- *      the interactivity flag.
- *   3. For every target package, invokes `build_adjacency_list()` to
- *      recursively construct the full transitive dependency graph.
- *      During this phase abstract packages are resolved, system packages
- *      are identified, and optional-dependency decisions are collected
- *      (interactively or via heuristics/advice).
- *   4. Calls `unify_adjacency_list()` to replace any remaining abstract
- *      names with their concrete choices.
- *   5. Topologically sorts the unified graph (via `topological_sort`),
- *      then **reverses** the result so that the least-dependent packages
- *      (install-first) appear first.
- *   6. Removes all system-type packages from the reversed order via
- *      `filter_system_packages()`.
- *
- * The return value carries both the full ordered list (including system
- * packages) and the filtered list (user-installable packages only), as well
- * as the abstract-to-concrete mapping that was resolved.
- *
- * The program terminates via `ERROR()` + `exit(EXIT_FAILURE)` if:
- *   - The interactive selection loop encounters EOF or an I/O error on
- *     stdin (see `select_implementation` and `select_dependencies`).
- *   - The heuristics advisor selects an implementation that does not
- *     appear in the package's declared `implementations` list
- *     (see `select_implementation`).
- *
- * @param package_names   The set of packages the user wants to install
- *                        (may be empty).
- * @param interactive     If true the user is prompted interactively for
- *                        abstract-package implementations and optional
- *                        dependency choices.  If false, the heuristics
- *                        advisor is used and optional dependencies are
- *                        excluded by default.
- * @return A `DependencyResolution` containing:
- *         - `all_packages`   — full topological-sort order (reversed,
- *                              system packages included).
- *         - `filtered_packages` — only non-system packages, in install
- *                                 order.
- *         - `abstract_packages` — mapping of abstract -> concrete names
- *                                 that was resolved.
- *         Returns an empty `DependencyResolution` when the input list is
- *         empty.
+ * Builds a dependency graph, topologically sorts it, filters out system
+ * packages, and returns the ordered install plan together with any abstract-
+ * to-concrete implementation mappings that were selected.
  */
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
                                           bool interactive) {

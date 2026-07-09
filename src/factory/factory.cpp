@@ -9,6 +9,7 @@
 #include <vector>
 
 namespace {
+    /** @brief Holds the parsed commands and summary-regex pattern for a single profile run. */
     struct FactoryRun {
         std::vector<std::string> commands;
         std::string summary_regex;
@@ -39,17 +40,7 @@ namespace {
         return yaml_scalar(node[key], description + " " + key);
     }
 
-    /**
-     * @brief Replace all occurrences of a substring within a string, in place.
-     *
-     * This is a simple find-and-replace loop. It safely handles overlapping
-     * patterns by advancing `position` past the replacement text after each
-     * substitution.
-     *
-     * @param value        The string to modify in place.
-     * @param pattern      The substring to search for.
-     * @param replacement  The string to substitute for each match.
-     */
+    /** @brief Replace every occurrence of @p pattern in @p value with @p replacement. */
     void replace_all(std::string& value, const std::string& pattern,
                      const std::string& replacement) {
         std::size_t position = 0;
@@ -59,31 +50,8 @@ namespace {
         }
     }
 
-    /**
-     * @brief Resolve a scalar value through the three-level inheritance chain:
-     *        factory -> buildspace -> profile.
-     *
-     * At each level the `@p key` is looked up in the corresponding YAML map.
-     * If the key exists and is not null, its value overrides the inherited
-     * value from the parent level. The special placeholder `${<key>}` in the
-     * child's value is replaced with the parent's value, enabling patterns
-     * such as appending to a base path.
-     *
-     * The resolution order is:
-     *   1. factory_config   (base value)
-     *   2. buildspace_config (overrides factory, may reference ${key})
-     *   3. profile_config    (overrides buildspace, may reference ${key})
-     *
-     * @param factory_config     The top-level factory YAML map.
-     * @param buildspace_config  The current buildspace YAML map.
-     * @param profile_config     The current profile YAML map.
-     * @param key                The configuration key to resolve.
-     *
-     * @return The resolved string value. Returns an empty string if the key is
-     *         absent at all three levels.
-     *
-     * @see inherited_resource  Wraps this function with a default fallback.
-     */
+    /** @brief Inherit a scalar value from the factory/buildspace/profile hierarchy,
+     *         expanding ${key} references with the parent value. */
     std::string inherited_scalar(const YAML::Node& factory_config,
                                  const YAML::Node& buildspace_config,
                                  const YAML::Node& profile_config, const std::string& key) {
@@ -104,24 +72,7 @@ namespace {
         return value;
     }
 
-    /**
-     * @brief Extract the factory configuration body from a YAML node.
-     *
-     * If the node contains a `factory` key, its value is treated as the
-     * configuration root. Otherwise the node itself is used directly.
-     * This allows the factory config to be specified either as:
-     *
-     *   factory:
-     *     buildspace: [...]
-     *
-     * or equivalently (when the document is already the factory map):
-     *
-     *   buildspace: [...]
-     *
-     * @param config  The top-level YAML node from the configuration file.
-     *
-     * @return The YAML node representing the factory configuration body.
-     */
+    /** @brief Extract the "factory" sub-map from @p config, or return @p config itself. */
     YAML::Node factory_body(const YAML::Node& config) {
         if (yaml_has(config, "factory")) {
             return config["factory"];
@@ -129,22 +80,7 @@ namespace {
         return config;
     }
 
-    /**
-     * @brief Find a named entry in a YAML sequence of maps.
-     *
-     * Performs a linear search through `sequence` for a map item whose
-     * `name` key has the scalar value equal to `name`. Returns the first
-     * match. This is used to locate sibling buildspace and profile entries.
-     *
-     * @param sequence     The YAML sequence to search.
-     * @param name         The value of the `name` field to look for.
-     * @param description  Human-readable context string for error messages.
-     *
-     * @return The matching YAML map node, or a null (undefined) node if no
-     *         match is found.
-     *
-     * @warning Terminates the program if `sequence` is not a YAML sequence.
-     */
+    /** @brief Find a map element with the given @p name in a YAML sequence of maps. */
     YAML::Node find_named_entry(const YAML::Node& sequence, const std::string& name,
                                 const std::string& description) {
         if (!sequence.IsSequence()) {
@@ -162,23 +98,7 @@ namespace {
         return YAML::Node();
     }
 
-    /**
-     * @brief Detect and reject a configuration cycle.
-     *
-     * Checks whether `name` already appears in `stack`. If it does, a cycle
-     * exists in the sibling inheritance chain and the function terminates the
-     * program with an error. This is used both for buildspace-level and
-     * profile-level sibling traversal.
-     *
-     * @param stack        The current ancestry stack of names visited during
-     *                     traversal (most recent last).
-     * @param name         The name to check for duplication.
-     * @param description  Human-readable label for error messages
-     *                     ("Profile" or "Cellar").
-     *
-     * @warning Terminates the program if `name` is already present in `stack`,
-     *          indicating a cyclic sibling reference.
-     */
+    /** @brief Terminate if @p name already appears in @p stack (circular sibling reference). */
     void reject_cycle(const std::vector<std::string>& stack, const std::string& name,
                       const std::string& description) {
         if (std::find(stack.begin(), stack.end(), name) != stack.end()) {
@@ -187,23 +107,7 @@ namespace {
         }
     }
 
-    /**
-     * @brief Parse a string as an unsigned long integer with validation.
-     *
-     * Converts the string via `std::strtoul` and validates that the entire
-     * string was consumed, the conversion succeeded, and the result satisfies
-     * the zero-allowed policy.
-     *
-     * @param value       The string to parse.
-     * @param key         The configuration key name, used in error messages.
-     * @param allow_zero  If true, zero is a valid value; otherwise only
-     *                    positive integers are accepted.
-     *
-     * @return The parsed unsigned long integer.
-     *
-     * @warning Terminates the program if the string is not a valid non-negative
-     *          (or positive) integer, or if `strtoul` fails.
-     */
+    /** @brief Parse @p value as a non-negative (or positive) unsigned long integer resource field. */
     unsigned long parse_unsigned_resource(const std::string& value, const std::string& key,
                                           bool allow_zero) {
         errno                      = 0;
@@ -217,24 +121,7 @@ namespace {
         return parsed;
     }
 
-    /**
-     * @brief Resolve a resource value through inheritance with a default fallback.
-     *
-     * Delegates to @ref inherited_scalar to resolve `key` across the three
-     * configuration levels. If the resolved value is empty, `default_value`
-     * is returned instead.
-     *
-     * @param factory_config     Top-level factory YAML map.
-     * @param buildspace_config  Current buildspace YAML map.
-     * @param profile_config     Current profile YAML map.
-     * @param key                The configuration key to resolve.
-     * @param default_value      Fallback value when inheritance yields an
-     *                           empty string (e.g. "1" for num_nodes).
-     *
-     * @return The resolved string value, or `default_value` if empty.
-     *
-     * @see inherited_scalar
-     */
+    /** @brief Like inherited_scalar but falls back to @p default_value when the result is empty. */
     std::string inherited_resource(const YAML::Node& factory_config,
                                    const YAML::Node& buildspace_config,
                                    const YAML::Node& profile_config, const std::string& key,
@@ -244,62 +131,12 @@ namespace {
         return value.empty() ? default_value : value;
     }
 
-    /**
-     * @brief Build the bash command to copy input files into the current
-     *        working directory.
-     *
-     * Produces `cp -a <inputs>/. .` which recursively copies the contents of
-     * the inputs directory (preserving permissions, symlinks, etc.) into the
-     * current directory. The trailing `/.` ensures only the *contents* of the
-     * inputs directory are copied, not the directory itself.
-     *
-     * @param inputs  Path to the input data directory.
-     *
-     * @return A bash command string for copying inputs.
-     */
+    /** @brief Build a cp command that copies the contents of @p inputs into the current directory. */
     std::string copy_inputs_command(const std::string& inputs) {
         return "cp -a " + inputs + "/. .";
     }
 
-    /**
-     * @brief Parse a single factory profile from YAML and produce its
-     *        command sequence.
-     *
-     * A profile defines how to run a benchmarking or profiling workload:
-     * what inputs to copy, what prerun/postrun scripts to execute, and —
-     * critically — what target command to run, along with the launcher,
-     * scheduler, and resource allocation parameters.
-     *
-     * Inheritance is resolved from factory and buildspace levels via
-     * @ref inherited_scalar / @ref inherited_resource. If the profile has a
-     * `sibling` key, processing is delegated to the named sibling profile
-     * instead (used for sharing configuration between similar profiles).
-     * Cycles in sibling references are detected and rejected.
-     *
-     * The resulting command sequence (in order) is:
-     *   1. Input copy (`cp -a <inputs>/. .`)  -- if `inputs` is defined
-     *   2. Prerun script                       -- if `prerun` is defined
-     *   3. Launcher/scheduler-wrapped target   -- always present; built by
-     *      @ref wrap_factory_target
-     *   4. Postrun script                      -- if `postrun` is defined
-     *
-     * @param factory_config     Top-level factory YAML map.
-     * @param buildspace_config  The buildspace YAML map containing this
-     *                           profile.
-     * @param profile_config     The profile's YAML map to parse.
-     * @param stack              Current ancestry stack for cycle detection
-     *                           (profile names visited so far).
-     *
-     * @return A @ref FactoryRun struct containing the ordered command list
-     *         and the summary regex (or empty string if unspecified).
-     *
-     * @warning Terminates the program if:
-     *          - profile_config is not a map
-     *          - the `name` key is missing or not a scalar
-     *          - a sibling reference forms a cycle
-     *          - the sibling profile does not exist
-     *          - the `target` key is undefined at all three inheritance levels
-     */
+    /** @brief Parse a single profile entry into a FactoryRun (commands + summary regex). */
     FactoryRun parse_profile_run(const YAML::Node& factory_config,
                                  const YAML::Node& buildspace_config,
                                  const YAML::Node& profile_config, std::vector<std::string> stack) {
@@ -387,33 +224,7 @@ namespace {
         return run;
     }
 
-    /**
-     * @brief Parse all profiles within a buildspace from YAML.
-     *
-     * Validates the buildspace configuration (must be a map with a `name`
-     * scalar), detects and rejects sibling cycles, and handles sibling
-     * delegation (if the buildspace's `sibling` key is set, its profiles are
-     * parsed from the named sibling instead). Each profile in the
-     * `profiles` sequence is parsed via @ref parse_profile_run.
-     *
-     * @param factory_config     Top-level factory YAML map.
-     * @param buildspace_config  The buildspace YAML map whose `profiles`
-     *                           sequence (or sibling's) will be parsed.
-     * @param stack              Current ancestry stack for sibling cycle
-     *                           detection (buildspace names visited so far).
-     *
-     * @return A vector of @ref FactoryProfile structs with all inheritance
-     *         resolved and commands assembled.
-     *
-     * @warning Terminates the program if:
-     *          - buildspace_config is not a map
-     *          - the `name` key is missing or not a scalar
-     *          - a sibling reference forms a cycle
-     *          - the sibling buildspace does not exist
-     *          - the `profiles` key is missing or is not a sequence
-     *          - any individual profile fails parsing (delegated to
-     *            @ref parse_profile_run).
-     */
+    /** @brief Parse all profiles under a single buildspace entry. */
     std::vector<FactoryProfile> parse_buildspace_profiles(const YAML::Node& factory_config,
                                                           const YAML::Node& buildspace_config,
                                                           std::vector<std::string> stack) {
@@ -458,18 +269,7 @@ namespace {
         return profiles;
     }
 
-    /**
-     * @brief Append an option string to a command, followed by a space, if
-     *        the option is non-empty.
-     *
-     * This is a small helper used when assembling launcher and scheduler
-     * command lines. It avoids trailing-spacing or extra-space issues by
-     * only adding content when the option is present.
-     *
-     * @param command  The command string being built (modified in place).
-     * @param option   The option string to append. If empty, nothing is
-     *                 appended.
-     */
+    /** @brief Append @p option and a trailing space to @p command if @p option is not empty. */
     void append_if_present(std::string& command, const std::string& option) {
         if (!option.empty()) {
             command += option + " ";
@@ -477,6 +277,7 @@ namespace {
     }
 }  // namespace
 
+/** @brief Parse the top-level factory configuration into a list of buildspace entries (each with profiles). */
 FactoryPlan parse_factory_config(const YAML::Node& config) {
     const YAML::Node factory_config = factory_body(config);
     if (!factory_config.IsMap()) {
@@ -500,6 +301,7 @@ FactoryPlan parse_factory_config(const YAML::Node& config) {
     return plan;
 }
 
+/** @brief Build the shell command that launches @p target under the given launcher/scheduler/resource constraints. */
 std::string wrap_factory_target(const std::string& target, const std::string& launcher,
                                 const std::string& launcher_opts, const std::string& scheduler,
                                 const std::string& scheduler_opts, const std::string& num_nodes,

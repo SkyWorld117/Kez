@@ -104,3 +104,9 @@ make -j
 ```
 
 Testing is done similarly via `make -j test`. Notice that running the tests does not necessarily fully compile the project.
+
+## Documentation
+
+The documentation is located in the `docs/` directory. It contains structured guides and references for both users and developers. 
+
+Next to the documentation, it is also required to write doxygen-style comments in the codebase. This will allow for automatic generation of API documentation. Run `doxygen` at the root of the project to generate the documentation. DO NOT PUSH THE GENERATED DOCUMENTATION TO THE REPOSITORY. It is only meant for local use.

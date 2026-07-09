@@ -173,7 +173,7 @@ struct UserConfigParserContext {
  *        return the resulting value.
  *
  * Walks the list of @ref ConditionalValue entries attached to a
- * @ref ConfigurableValue&lt;std::string&gt;.  For each entry whose condition
+ * ConfigurableValue@<std::string@>.  For each entry whose condition
  * evaluates to true in the current @p context, the corresponding action
  * (Set / Append / Prepend) is applied to @p base_value.  The first matching
  * entry with action Set replaces @p base_value entirely; Append and Prepend
@@ -193,7 +193,7 @@ std::string apply_parser_conditions(const ConfigurableValue<std::string>& config
  * @brief Evaluate conditional overrides for a configurable boolean value.
  *
  * Similar to the string overload, but operates on a
- * @ref ConfigurableValue&lt;bool&gt;.  Each matching condition's action is
+ * ConfigurableValue@<bool@>.  Each matching condition's action is
  * applied to the boolean base value.  Note that Append and Prepend behave
  * identically to Set for boolean values (the boolean is simply replaced).
  *
