@@ -22,7 +22,7 @@ kez:
                       enabled_value: never
                     - name: with-cuda
                       description: Build with CUDA support
-                      enabled: false
+                      enabled: true
                       enabled_value: ${cuda.prefix}
                       requires:
                           - cuda
@@ -67,10 +67,16 @@ kez:
                 options:
                     - name: use_cuda
                       description: Enable CUDA support
-                      enabled: false
+                      enabled: true
                       enabled_value: ${cuda.prefix}
                       requires:
                           - cuda
+                    - name: with-gdrcopy
+                      description: Specify gdrcopy installation path
+                      enabled: true
+                      enabled_value: ${gdrcopy.prefix}
+                      requires:
+                          - gdrcopy
                     - name: prefix
                       enabled: true
                       enabled_value: ${ucx.prefix}
@@ -85,19 +91,19 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${rdma-core.includes} ${cuda.includes}
+                      enabled_value: ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes}
+                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes}
+                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes}
+                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${rdma-core.ldflags} ${cuda.ldflags}
+                      enabled_value: ${compiler.ldflags} ${rdma-core.ldflags} ${cuda.ldflags} ${gdrcopy.ldflags}
     rdma-core:
         description: RDMA core userspace libraries and daemons
     prrte:
@@ -244,7 +250,7 @@ kez:
                 options:
                     - name: use_cuda
                       description: Use CUDA support
-                      enabled: false
+                      enabled: true
                       enabled_value:
                       disabled_value:
                       requires:
@@ -344,6 +350,8 @@ kez:
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${zlib.ldflags}
+    gdrcopy:
+        description: GDRCopy userspace library
     cuda:
         description: NVIDIA CUDA Toolkit
         version: 13.3
@@ -364,6 +372,7 @@ recipe:
         - libpciaccess
         - lz4
         - zlib
+        - gdrcopy
         - cuda
     targets:
         - openmpi
