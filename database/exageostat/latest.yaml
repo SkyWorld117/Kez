@@ -1,0 +1,133 @@
+---
+recipe:
+    name: exageostat
+    description: The Exascale GeoStatistics project (ExaGeoStat) is a parallel high-performance unified framework for computational geostatistics on 
+        many-core systems.
+    type: package
+    toolchain: cmake
+
+    # For now it cannot be tested. The current version requires CUDA 11
+
+    source:
+        type: git
+        url: https://github.com/ecrc/ExaGeoStatCPP.git
+        releases:
+            - version: 2.0.0
+              tag: 2.0.0
+
+    dependencies:
+        - blas
+        - lapack
+
+    build:
+        preprocessing: git submodule update --init --recursive
+        # postprocessing: |-
+        #     mkdir -p ${exascale-climate-emulator.prefix}
+        #     cp -r tests/* ${exascale-climate-emulator.prefix}/bin/
+        #     old_rpath=$(patchelf --print-rpath ${exascale-climate-emulator.prefix}/bin/testing_climate_emulator)
+        #     new_rpath=$(echo "$old_rpath" | tr ':' '\n' | grep -v '/\.tmp/source' | tr '\n' ':')
+        #     new_rpath="$new_rpath:${exascale-climate-emulator.prefix}/lib:${exascale-climate-emulator.prefix}/lib64"
+        #     patchelf --set-rpath "$new_rpath" ${exascale-climate-emulator.prefix}/bin/testing_climate_emulator
+
+        configurations:
+            options:
+                - name: BLA_VENDOR
+                  description: BLAS vendor [Goto, ATLAS PhiPACK, CXML, DXML, SunPerf, SCSL, SGIMATH, IBMESSL, IBMESSLMT, Intel10_32 (intel mkl v10 32 
+                      bit), Intel10_64lp (intel mkl v10 64 bit, lp thread model, lp64 model), Intel10_64lp_seq (intel mkl v10 64 bit, sequential code,
+                      lp64 model), Intel( older versions of mkl 32 and 64 bit), ACML, ACML_MP, ACML_GPU, Apple, NAS, Generic]
+                  user_configurable: true
+                  enabled_value:
+                      default: Generic
+
+                - name: USE_MPI
+                  description: Enable MPI support
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+                  requires: [mpi]
+
+                - name: USE_CUDA
+                  description: Enable CUDA support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ON
+                  requires: [cuda]
+
+                - name: HICMA_PARSEC_HAVE_CUDA
+                  description: Enable CUDA support in HiCMA
+                  enabled:
+                      conditions:
+                          - condition: ${exageostat.config.USE_CUDA} true
+                            value: true
+                          - condition: ${exageostat.config.USE_CUDA} false
+                            value: false
+                  enabled_value:
+                      default: ON
+                  requires: [cuda]
+
+                - name: PARSEC_GPU_WITH_CUDA
+                  description: Enable CUDA support in PaRSEC
+                  enabled:
+                      conditions:
+                          - condition: ${exageostat.config.USE_CUDA} true
+                            value: true
+                          - condition: ${exageostat.config.USE_CUDA} false
+                            value: false
+                  enabled_value:
+                      default: ON
+                  requires: [cuda]
+
+                - name: CMAKE_CUDA_ARCHITECTURES
+                  description: CUDA architectures
+                  user_configurable: true
+                  enabled:
+                      conditions:
+                          - condition: ${exageostat.config.USE_CUDA} true
+                            value: true
+                          - condition: ${exageostat.config.USE_CUDA} false
+                            value: false
+                  enabled_value:
+                      default: 90
+
+                - name: CMAKE_CUDA_COMPILER
+                  description: CUDA compiler
+                  user_configurable: true
+                  enabled:
+                      conditions:
+                          - condition: ${exageostat.config.USE_CUDA} true
+                            value: true
+                          - condition: ${exageostat.config.USE_CUDA} false
+                            value: false
+                  enabled_value:
+                      default: ${cuda.prefix}/bin/nvcc
+
+                - name: USE_CLIMATE_EMULATOR
+                  description: Enable Climate Emulator support
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+
+                - name: CMAKE_INCLUDE_PATH
+                  description: Include paths
+                  enabled_value:
+                      default: ${blas.prefix}/include;${lapack.prefix}/include
+                      conditions:
+                          - condition: ${exageostat.config.USE_CUDA} true
+                            action: append
+                            value: ;${cuda.prefix}/include
+
+                - name: CMAKE_INTERPROCEDURAL_OPTIMIZATION
+                  description: Enable interprocedural optimization (IPO)
+                  enabled_value:
+                      default: ON
+        stages:
+            - target:
+            - target: install
+
+    properties:
