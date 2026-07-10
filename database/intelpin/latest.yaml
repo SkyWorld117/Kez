@@ -7,6 +7,8 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 4.3
+              url: https://software.intel.com/sites/landingpage/pintool/downloads/pin-external-4.3-99850-gce5652921-gcc-linux.tar.gz
             - version: 3.31
               url: https://software.intel.com/sites/landingpage/pintool/downloads/pin-external-3.31-98869-gfa6f126a8-gcc-linux.tar.gz
 

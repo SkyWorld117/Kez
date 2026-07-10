@@ -6,20 +6,15 @@ recipe:
     toolchain: autotools
 
     source:
-        type: git
-        url: https://github.com/sstsimulator/sst-core.git
+        type: tarball
         releases:
-            - version: scc25
-              tag: 546dda2
-            - version: latest
-              tag: master
+            - version: 16.0.0
+              url: https://github.com/sstsimulator/sst-core/releases/download/v16.0.0_Final/sstcore-16.0.0.tar.gz
 
     dependencies:
         - mpi
-        - python
 
     build:
-        preprocessing: ./autogen.sh
         postprocessing: |-
             mkdir -p ${sst-core.prefix}/src
             cp -r ${source}/src/* ${sst-core.prefix}/src/
@@ -32,6 +27,8 @@ recipe:
                   description: Path to Python interpreter
                   enabled_value:
                       default: ${python.prefix}
+                  requires:
+                      - python
 
                 - name: with-hdf5
                   description: Use HDF5 statistics format
@@ -41,13 +38,8 @@ recipe:
                   enabled_value:
                       default: ${hdf5.prefix}
                   disabled_format: without-hdf5
-                  requires: [hdf5]
-
-                - name: CXXFLAGS
-                  description: C++ compiler flags
-                  user_configurable: true
-                  enabled_value:
-                      default: -O3
+                  requires:
+                      - hdf5
 
                 - name: MPICC
                   description: MPI C compiler

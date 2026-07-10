@@ -21,22 +21,10 @@ recipe:
                         enabled_value:
                             default: ${compiler.c}
 
-            # - name: CFLAGS
-            #   description: C compiler flags
-            #   user_configurable: true
-            #   enabled_value:
-            #     default: -O3 -I${source}/include
-
                       - name: CXX
                         description: C++ compiler
                         enabled_value:
                             default: ${compiler.cxx}
-
-            # - name: CXXFLAGS
-            #   description: C++ compiler flags
-            #   user_configurable: true
-            #   enabled_value:
-            #     default: -O3
             - target: install
               configurations:
                   options:

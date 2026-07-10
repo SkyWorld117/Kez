@@ -9,17 +9,13 @@ recipe:
         type: git
         url: https://github.com/CMU-SAFARI/ramulator2.git
         releases:
-            - version: scc25
-              tag: main
+            - version: 2.1.0
+              tag: v2.1.0
+
+    dependencies:
+        - python
 
     build:
-        preprocessing: |-
-            curl -LJO https://github.com/sstsimulator/sst-elements/releases/download/v15.0.0_Final/sstelements-15.0.0.tar.gz
-            tar xf sstelements-15.0.0.tar.gz
-            cp ./sst-elements/src/sst/elements/memHierarchy/membackend/ramulator2/sst_frontend.cpp ./src/frontend/impl/external_wrapper/
-            sed -i.bak '19a impl/external_wrapper/sst_frontend.cpp' ./src/frontend/CMakeLists.txt
-        postprocessing: mkdir -p ${ramulator2.prefix} && cp ./ramulator2 ${ramulator2.prefix}
-
         configurations:
             options:
                 # Allow for older Cmake version
@@ -27,7 +23,18 @@ recipe:
                   description: Minimum CMake policy version
                   enabled_value:
                       default: 3.15
+
+                - name: Python_EXECUTABLE
+                  description: Path to the Python executable
+                  enabled_value:
+                      default: ${python.prefix}/bin/python3
+
+                - name: Python_INCLUDE_DIRS
+                  description: Path to the Python include directories
+                  enabled_value:
+                      default: ${python.prefix}/include
         stages:
             - target:
+            - target: install
 
     properties:

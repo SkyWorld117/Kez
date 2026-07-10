@@ -14,8 +14,8 @@ recipe:
     build:
         postprocessing: |-
             mkdir -p ${dramsim3.prefix}/build
-            cp dramsim3main ${dramsim3.prefix}/build
-            cp ../libdramsim3.so ${dramsim3.prefix}
+            cp ${source}/build/dramsim3main ${dramsim3.prefix}/build
+            cp ${source}/libdramsim3.so ${dramsim3.prefix}
 
         configurations:
             options:
