@@ -105,6 +105,14 @@ Abstract and external packages do not have a toolchain. Vendor packages using a
 `script` source type also typically have no toolchain — their installation logic
 goes in `preprocessing`/`postprocessing`.
 
+For packages with no toolchain, configuration instructions are only generated
+when `build.configurations.command` is explicitly set. If the `command` field
+is absent, the configuration options and environment variables are still
+available for **templating** (e.g. `${pkg.config.*}`, `${pkg.env.*}`), but no
+shell commands are emitted for that configuration block. This is useful for
+packages like `intel-oneapi-mkl` that declare configurable options exclusively
+for dependent packages to reference via the template system.
+
 ### `overrides`
 
 Modifies build parameters of dependencies. Defined in the schema but not currently
@@ -137,6 +145,13 @@ Used by a few packages with custom build systems (e.g., `boost` uses `./b2`,
 
 If `configurations` is empty (`{}`), the toolchain default is used with no
 custom options or environment variables.
+
+For packages with **no** `toolchain` field, the `command` is **required** to
+generate any configuration instructions. When absent, the configuration's
+options and environment variables are still computed for template resolution
+(e.g. `${pkg.config.*}`, `${pkg.env.*}`), but no shell commands are emitted.
+This allows packages to expose configurable properties to dependents without
+producing a configure step.
 
 #### `stages`
 
