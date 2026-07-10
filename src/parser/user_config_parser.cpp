@@ -449,11 +449,20 @@ namespace {
         if (build.configurations.has_value()) {
             const std::optional<std::string> default_command =
                 package.database_config->default_configuration_command();
-            append_configuration_commands(
-                *build.configurations, *package.database_config,
-                package.database_config->toolchain(),
-                build.configurations->command.value_or(default_command.value_or("")), context,
-                commands);
+            // For generic packages (Toolchain::None) without an explicit
+            // configuration command, skip generating configuration commands.
+            // Configuration values remain available for templating (e.g.
+            // ${pkg.config.*}, ${pkg.env.*}) because they were already
+            // populated into named_option_values and named_environment_values
+            // by precompute_values() above.
+            if (package.database_config->toolchain() != Toolchain::None ||
+                build.configurations->command.has_value()) {
+                append_configuration_commands(
+                    *build.configurations, *package.database_config,
+                    package.database_config->toolchain(),
+                    build.configurations->command.value_or(default_command.value_or("")), context,
+                    commands);
+            }
         }
         for (const BuildStage& stage : build.stages) {
             BuildStage resolved_stage = stage;
@@ -468,8 +477,14 @@ namespace {
                     ? *stage.configurations->command
                     : default_command.value_or("");
             if (stage.configurations.has_value()) {
-                append_configuration_commands(*stage.configurations, *package.database_config,
-                                              Toolchain::None, command, context, commands);
+                // For generic packages (Toolchain::None) without an explicit
+                // stage command, skip generating configuration commands
+                // (values are still available for templating).
+                if (package.database_config->toolchain() != Toolchain::None ||
+                    stage.configurations->command.has_value()) {
+                    append_configuration_commands(*stage.configurations, *package.database_config,
+                                                  Toolchain::None, command, context, commands);
+                }
             } else if (!command.empty()) {
                 commands.push_back(resolve_parser_scalar(command, context));
             }
