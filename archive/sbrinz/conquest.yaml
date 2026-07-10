@@ -19,23 +19,38 @@ kez:
                             enabled: true
                             enabled_value: default
     libxc:
-        version: 7.0.0
+        version: 6.2.2
         compiler: system
         build:
             configurations:
                 options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libxc.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
                     - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3
+                    - name: CXXFLAGS
                       enabled: true
                       enabled_value: -O3
                     - name: FCFLAGS
                       enabled: true
                       enabled_value: -O3
                     - name: LDFLAGS
-                      enabled: false
-                      enabled_value:
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${libxc.ldflags}
     openmpi:
         description: Open Source Implementation of the Message Passing Interface
-        version: 5.0.8
+        version: 5.0.10
         compiler: system
     intel-oneapi-mkl:
         description: Intel oneAPI Math Kernel Library for high-performance math routines
@@ -63,14 +78,14 @@ kez:
                       enabled: true
                       enabled_value: openmpi
     intel-oneapi:
-        version: 2025.1.0.666
+        version: 2026.1.0.192
 recipe:
     abstract_packages:
-        mpi: openmpi
-        scalapack: intel-oneapi-mkl
+        blas: intel-oneapi-mkl
         fftw3-api: intel-oneapi-mkl
         lapack: intel-oneapi-mkl
-        blas: intel-oneapi-mkl
+        mpi: openmpi
+        scalapack: intel-oneapi-mkl
     dependencies:
         - conquest
         - libxc
