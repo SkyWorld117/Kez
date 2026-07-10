@@ -3,7 +3,9 @@
 #include <string>
 #include <ui/commands.hpp>
 #include <ui/ui.hpp>
+#include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
+#include <utils/yaml_utils.hpp>
 
 namespace {
     /**
@@ -47,7 +49,10 @@ void run_ui(int argc, char* argv[]) {
         return;
     }
     if (command == "-V" || command == "--version") {
-        std::cout << "Kez dev\n";
+        std::filesystem::path kez_home = get_env_var("KEZ_HOME");
+        YAML::Node manifest            = cached_yaml_load(kez_home / "manifest.yaml");
+        std::string version            = manifest["project"]["version"].as<std::string>();
+        INFO("Kez version: " + version);
         return;
     }
 
