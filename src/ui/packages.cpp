@@ -111,6 +111,15 @@ void execute_uconf(const CommandArguments& arguments) {
 /**
  * @brief Runs the `info` subcommand: displays metadata for a single package or prints
  *        its raw recipe YAML with --raw.
+ *
+ * The formatted report uses a layout similar to `fgr info`:
+ * - A decorated title block (name, description, author, type, toolchain)
+ * - Section-based output with per-type variation:
+ *   - Abstract packages show their implementations.
+ *   - External packages show their properties.
+ *   - All other types show releases, config options, dependencies, and properties.
+ * - Colored delimiters, consistent column alignment via print_two_columns, and
+ *   word-wrapping through print_text.
  */
 void execute_info(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
@@ -141,39 +150,190 @@ void execute_info(const CommandArguments& arguments) {
     }
 
     const PackageConfigPtr package = get_db_config(name);
-    std::cout << package->name << '\n';
-    if (package->description.has_value()) {
-        std::cout << "  Description: " << *package->description << '\n';
-    }
-    if (package->author.has_value()) {
-        std::cout << "  Author:      " << *package->author << '\n';
-    }
-    std::cout << "  Type:        " << package_type_name(package->type) << '\n';
-    std::cout << "  Toolchain:   " << toolchain_name(package->toolchain()) << '\n';
-    if (package->source.has_value()) {
-        std::cout << "  Releases:\n";
-        for (const Release& release : package->source->releases) {
-            std::cout << "    - " << release.version << '\n';
+
+    // ---- layout constants matching fgr info style ----
+    const int max_width   = 80;
+    const int short_width = 30;
+    const int indent      = 4;
+
+    auto strong_color = [](const std::string& txt) {
+        return color<Color::BOLD, Color::MAGENTA>(txt);
+    };
+    auto normal_color = [](const std::string& txt) { return color<Color::MAGENTA>(txt); };
+
+    auto print_section_header = [&](const std::string& title) {
+        const std::string delim(short_width, '-');
+        print_text("");
+        print_text(strong_color(delim));
+        print_text(strong_color(title + ":"));
+        print_text("");
+    };
+
+    // ---- title block ----
+    {
+        const std::string large_delim(max_width, '=');
+        print_text(strong_color(large_delim));
+        print_text(strong_color(package->name), max_width);
+        print_text(strong_color(large_delim));
+
+        if (package->description) {
+            print_text(*package->description, max_width);
+        }
+        print_text("");
+        print_text(normal_color("Author: ") + (package->author ? *package->author : "{missing}"),
+                   max_width);
+        print_text("");
+
+        print_text(normal_color("Type: ") + package_type_name(package->type), max_width);
+
+        const std::string tc = toolchain_name(package->toolchain());
+        if (tc != "none" && tc != "unknown") {
+            print_text(normal_color("Toolchain: ") + tc, max_width);
         }
     }
-    if (!package->implementations.empty()) {
-        std::cout << "  Implementations:\n";
-        for (const std::string& implementation : package->implementations) {
-            std::cout << "    - " << implementation << '\n';
+
+    // ---- type-specific body sections ----
+    if (package->type == PackageType::Abstract) {
+        // --- Implements ---
+        print_section_header("Implements");
+        if (!package->implementations.empty()) {
+            for (const std::string& impl : package->implementations) {
+                print_two_columns(impl, "{Short description}", short_width, max_width);
+            }
+        } else {
+            print_text("Nothing");
+        }
+
+    } else if (package->type == PackageType::External) {
+        // --- Properties ---
+        print_section_header("Properties");
+        if (!package->properties.empty()) {
+            for (const Property& prop : package->properties) {
+                print_two_columns(prop.name, property_value(prop), short_width, 0);
+            }
+        } else {
+            print_text("None");
+        }
+
+    } else {
+        // --- Releases ---
+        print_section_header("Releases");
+        if (package->source) {
+            // Map SourceType to string.
+            auto source_type_str = [](SourceType st) -> std::string {
+                switch (st) {
+                    case SourceType::Git: return "git";
+                    case SourceType::Tarball: return "tarball";
+                    case SourceType::Zip: return "zip";
+                    case SourceType::Script: return "script";
+                }
+                return "unknown";
+            };
+            print_text("Type: " + normal_color(source_type_str(package->source->type)), max_width);
+
+            if (package->source->type == SourceType::Git && package->source->url) {
+                print_text("Repository: " + normal_color(*package->source->url));
+            }
+
+            for (const Release& release : package->source->releases) {
+                print_text("Version " + normal_color(release.version), max_width);
+                if (package->source->type == SourceType::Git && release.tag) {
+                    print_text(*release.tag, 0, indent);
+                } else if (release.url) {
+                    print_text(*release.url, 0, indent);
+                }
+            }
+        } else {
+            print_text("None");
+        }
+
+        // --- Config Options ---
+        print_section_header("Config Options");
+        {
+            bool found = false;
+
+            // Collect from the top-level build configuration.
+            if (package->build && package->build->configurations) {
+                const BuildConfiguration& cfg = *package->build->configurations;
+
+                for (const BuildOption& opt : cfg.options) {
+                    if (!opt.user_configurable) {
+                        continue;
+                    }
+                    found             = true;
+                    std::string label = normal_color(opt.name);
+                    if (opt.enabled_value && opt.enabled_value->default_value) {
+                        label += " [" + *opt.enabled_value->default_value + "]";
+                    }
+                    print_two_columns(label, opt.description.value_or(""), short_width, max_width);
+                }
+
+                for (const EnvironmentVariable& env : cfg.environment) {
+                    if (!env.user_configurable) {
+                        continue;
+                    }
+                    found = true;
+                    print_two_columns(normal_color(env.name), env.description.value_or(""),
+                                      short_width, max_width);
+                }
+            }
+
+            // Collect from per-stage configurations.
+            if (package->build) {
+                for (const BuildStage& stage : package->build->stages) {
+                    if (!stage.configurations) {
+                        continue;
+                    }
+                    for (const BuildOption& opt : stage.configurations->options) {
+                        if (!opt.user_configurable) {
+                            continue;
+                        }
+                        found             = true;
+                        std::string label = normal_color(opt.name);
+                        if (opt.enabled_value && opt.enabled_value->default_value) {
+                            label += " [" + *opt.enabled_value->default_value + "]";
+                        }
+                        print_two_columns(label, opt.description.value_or(""), short_width,
+                                          max_width);
+                    }
+                    for (const EnvironmentVariable& env : stage.configurations->environment) {
+                        if (!env.user_configurable) {
+                            continue;
+                        }
+                        found = true;
+                        print_two_columns(normal_color(env.name), env.description.value_or(""),
+                                          short_width, max_width);
+                    }
+                }
+            }
+
+            if (!found) {
+                print_text("None");
+            }
+        }
+
+        // --- Dependencies ---
+        print_section_header("Dependencies");
+        if (!package->dependencies.empty()) {
+            for (const std::string& dep : package->dependencies) {
+                print_two_columns(dep, "{Short description}", short_width, max_width);
+            }
+        } else {
+            print_text("None");
+        }
+
+        // --- Properties ---
+        print_section_header("Properties");
+        if (!package->properties.empty()) {
+            for (const Property& prop : package->properties) {
+                print_two_columns(prop.name, property_value(prop), short_width, 0);
+            }
+        } else {
+            print_text("None");
         }
     }
-    if (!package->dependencies.empty()) {
-        std::cout << "  Dependencies:\n";
-        for (const std::string& dependency : package->dependencies) {
-            std::cout << "    - " << dependency << '\n';
-        }
-    }
-    if (!package->properties.empty()) {
-        std::cout << "  Properties:\n";
-        for (const Property& property : package->properties) {
-            std::cout << "    " << property.name << ": " << property_value(property) << '\n';
-        }
-    }
+
+    print_text("");
 }
 
 /**
