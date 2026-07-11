@@ -266,7 +266,8 @@ recipe:
                                "-DCMAKE_Fortran_FLAGS=\"-O3\" -DCMAKE_CUDA_FLAGS=\"-O3\" "
                                "-DCMAKE_EXE_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
                                "-DCMAKE_SHARED_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
-                               "-DCMAKE_MODULE_LINKER_FLAGS=\"-lbase -lfeature -loverride\"");
+                               "-DCMAKE_MODULE_LINKER_FLAGS=\"-lbase -lfeature -loverride\" "
+                               "-DCMAKE_PREFIX_PATH=\"/opt/env/library\"");
         EXPECT_EQ(commands[10], "export CFLAGS='host flags'");
         EXPECT_EQ(commands[11], "cmake --build build --parallel 8 --target build");
         EXPECT_EQ(commands[12], "cmake --install build");

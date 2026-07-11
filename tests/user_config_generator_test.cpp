@@ -388,7 +388,9 @@ recipe:
         EXPECT_EQ(
             find_option(cmake_options, "CMAKE_EXE_LINKER_FLAGS")["enabled_value"].as<std::string>(),
             "${library.ldflags} ${library.libs}");
-        EXPECT_FALSE(has_option(cmake_options, "CMAKE_PREFIX_PATH"));
+        EXPECT_EQ(
+            find_option(cmake_options, "CMAKE_PREFIX_PATH")["enabled_value"].as<std::string>(),
+            "${library.prefix}");
 
         const YAML::Node autotools = gen_user_config({"autotools-application"}, false, "system");
         const YAML::Node autotools_options =

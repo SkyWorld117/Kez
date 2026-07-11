@@ -126,6 +126,7 @@ namespace {
         std::vector<std::string> linker_flags;
         std::vector<std::string> libraries;
         std::vector<std::string> library_paths;
+        std::vector<std::string> prefix_paths;
     };
 
     DependencyDefaults dependency_defaults(const BuildConfiguration& configuration,
@@ -156,6 +157,10 @@ namespace {
             if (has_template_property(dependency, "libs", abstract_packages, compiler)) {
                 append_unique(result.libraries, template_value(dependency, "libs"));
             }
+            // Prefix is a built-in property; every package has a resolvable
+            // installation prefix regardless of whether it is explicitly declared
+            // in the package's properties list.
+            result.prefix_paths.push_back(template_value(dependency, "prefix"));
         }
 
         // The package itself should be added to the library paths
@@ -282,6 +287,8 @@ namespace user_config_generator {
                            join(paths.library_paths, ";"));
             append_default(result, explicit_options, toolchain, "CMAKE_INSTALL_RPATH",
                            join(paths.library_paths, ";"));
+            append_default(result, explicit_options, toolchain, "CMAKE_PREFIX_PATH",
+                           join(paths.prefix_paths, ";"));
         }
 
         return result;
