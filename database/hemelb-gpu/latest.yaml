@@ -9,7 +9,7 @@ recipe:
         type: git
         url: https://github.com/UCL-CCS/HemePure-GPU
         releases:
-            - version: isc26
+            - version: default
               tag: HIP-CUDA-ROCM_SL
 
     dependencies:
