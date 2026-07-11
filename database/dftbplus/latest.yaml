@@ -114,6 +114,14 @@ recipe:
                           - condition: ${dftbplus.config.WITH_MPI} false && ${dftbplus.config.WITH_GPU} true
                             value: ${magma.ldflags} ${magma.libs}
 
+                - name: CMAKE_PREFIX_PATH
+                  enabled_value:
+                      conditions:
+                          - condition: ${dftbplus.config.WITH_MPI} true && ${dftbplus.config.WITH_ELSI} true
+                            value: ${elsi.prefix}
+                          - condition: ${dftbplus.config.WITH_MPI} false && ${dftbplus.config.WITH_GPU} true
+                            value: ${magma.prefix}
+
         stages:
             - target:
             - target: install
