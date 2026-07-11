@@ -91,10 +91,20 @@ build:
 ```yaml
 build:
     stages:
-        - target:           # Default target (null = `make`)
+        - target:           # Default target (null = toolchain default)
           multithreaded: true
-        - target: install   # `make install`
+        - target: install   # Install target
 ```
+
+The default command produced for a stage depends on the package's
+[`toolchain`](#choose-the-toolchain):
+
+- **`autotools` / `make`**: `make -j{N}` → `make install`
+- **`cmake`**: `cmake --build build --parallel {N}` → `cmake --install build`
+- **No toolchain** (generic): No defaults. Stages must carry an explicit
+  `configurations.command` to produce any output, or they are silently
+  discarded. Use `preprocessing`/`postprocessing` or the top-level
+  `configurations.command` instead.
 
 ### Add environment variables
 
@@ -184,7 +194,9 @@ build:
 With `toolchain: make`, options are passed as environment variables to `make`
 (e.g., `make CC=gcc PREFIX=/path`).
 
-### Package without a build system
+### Package with a custom build (no toolchain)
+
+Without a toolchain, stages must carry explicit commands to produce any output:
 
 ```yaml
 source:
@@ -194,12 +206,20 @@ source:
           url: https://example.com/package-1.0.0.tar.gz
 
 build:
-    preprocessing:
-        - "./configure --prefix=${package.prefix}"
+    preprocessing: ./configure --prefix=${package.prefix}
     stages:
         - target:
+          configurations:
+              command: make -j${KEZ_NPROC}
         - target: install
+          configurations:
+              command: make install
 ```
+
+> **Warning:** Without the per-stage `configurations.command`, these stages would
+> emit no shell commands — there are no toolchain defaults to fall back on. Use
+> the [`toolchain`](#choose-the-toolchain) field when the package uses
+> autotools, cmake, or plain make with standard conventions.
 
 ### Package with conditional options
 

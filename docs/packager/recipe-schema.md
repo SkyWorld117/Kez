@@ -113,6 +113,12 @@ shell commands are emitted for that configuration block. This is useful for
 packages like `intel-oneapi-mkl` that declare configurable options exclusively
 for dependent packages to reference via the template system.
 
+> **Stages follow the same rule.** For packages with no toolchain, stages
+> produce commands only when they carry their own `configurations.command`
+> (see [`stages`](#stages) below). Stages without a `configurations` block
+> — or with a `configurations` block that lacks an explicit `command` — are
+> silently dropped because there is no toolchain default to fall back on.
+
 ### `overrides`
 
 Modifies build parameters of dependencies. Defined in the schema but not currently
@@ -165,9 +171,54 @@ stages:
 
 A `target` of `~` (null) means the default target.
 
+##### Stage commands depend on the toolchain
+
+For **toolchain-backed packages** (`autotools`, `cmake`, `make`), each stage
+produces a command using the toolchain's default, optionally overridden by
+the stage's `configurations.command`:
+
+| Toolchain | Default for stage (null target) | Default for install target |
+|---|---|---|
+| `autotools` | `make -j{N}` | `make install` |
+| `cmake` | `cmake --build build --parallel {N}` | `cmake --install build` |
+| `make` | `make -j{N}` | `make install` |
+
+For packages **with no toolchain** (generic), `default_stage_command()` returns
+nothing — stages produce commands **only** when they carry an explicit
+`configurations.command`:
+
+```yaml
+# Generic package: stage produces no command without explicit command
+stages:
+  - target:
+  - target: install
+
+# Generic package: stage works with explicit command
+stages:
+  - target:
+    configurations:
+      command: make -j${kez.arch.cores}
+  - target: install
+    configurations:
+      command: make install
+```
+
+Stages that produce no commands are **silently dropped** during user-config
+generation — they do not appear in the generated YAML and are never executed.
+This applies to all packages, not just generic ones.
+
+> **Rule of thumb:** If a stage has no `configurations` block at all, it is
+> discarded. If it has a `configurations` block but no `command`, the
+> configuration's options and environment variables are still computed for
+> template resolution (e.g. `${pkg.config.*}`, `${pkg.env.*}`), but no shell
+> command is emitted for the stage unless a toolchain default exists or the
+> `command` is explicitly set.
+
 Some packages have no `stages` at all, only `preprocessing`/`postprocessing`.
-These are typically binary installers that copy prebuilt files rather than
-compiling from source (e.g., `cmake`, `cuda`, `nodejs`).
+This is common for binary installers that copy prebuilt files rather than
+compiling from source (e.g., `cmake`, `cuda`, `nodejs`), and for generic
+packages that handle all the work through the top-level `configurations`
+command or `preprocessing`/`postprocessing`.
 
 #### `environment`
 
