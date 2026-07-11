@@ -3,12 +3,11 @@ recipe:
     name: fio
     description: Flexible I/O tester
     type: package
-    toolchain: autotools
 
     source:
         type: tarball
         releases:
-            - version: isc26
+            - version: 3.42
               url: https://github.com/axboe/fio/archive/refs/tags/fio-3.42.tar.gz
 
     dependencies:
@@ -16,16 +15,32 @@ recipe:
 
     build:
         configurations:
+            command: ./configure
             options:
-                - name: extra-cflags
+                - name: --extra-cflags
                   description: C Flags
                   user_configurable: true
                   enabled_value:
-                      default: ${libaio.includes}
-                - name: extra-ldflags
+                      default: -O3 ${libaio.includes}
+
+                - name: --extra-ldflags
                   description: LD flags
                   enabled_value:
                       default: ${libaio.ldflags}
+
+                - name: --cc
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
+
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${fio.prefix}
         stages:
             - target:
+              configurations:
+                  command: make -j${KEZ_NPROC}
             - target: install
+              configurations:
+                  command: make -j${KEZ_NPROC} install

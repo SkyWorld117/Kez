@@ -2,7 +2,7 @@
 kez:
     fio:
         description: Flexible I/O tester
-        version: isc26
+        version: 3.42
         compiler: system
         build:
             configurations:
