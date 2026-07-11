@@ -37,7 +37,7 @@ recipe:
             - target: install
 
     properties:
-        lib: ${hepmc3.prefix}/lib
+        lib: ${hepmc3.prefix}/lib64
         libs:
-            default: -lhepmc3
+            default: -lHepMC3 -lHepMC3search
         include: ${hepmc3.prefix}/include

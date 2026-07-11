@@ -8,6 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 6.40.02
+              url: https://root.cern/download/root_v6.40.02.source.tar.gz
             - version: 6.36.04
               url: https://root.cern/download/root_v6.36.04.source.tar.gz
 

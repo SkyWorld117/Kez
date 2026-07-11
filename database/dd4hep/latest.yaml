@@ -93,6 +93,4 @@ recipe:
 
     properties:
         lib: ${dd4hep.prefix}/lib
-        libs:
-            default: -ldd4hep
         include: ${dd4hep.prefix}/include

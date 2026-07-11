@@ -18,7 +18,7 @@ recipe:
             - target: install
 
     properties:
-        lib: ${sio.prefix}/lib
+        lib: ${sio.prefix}/lib64
         libs:
             default: -lsio
         include: ${sio.prefix}/include

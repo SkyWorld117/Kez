@@ -32,7 +32,7 @@ recipe:
             - target: install
 
     properties:
-        lib: ${lcio.prefix}/lib
+        lib: ${lcio.prefix}/lib64
         libs:
-            default: -llcio -llcioconvert -llcioutils -llciomisc
+            default: -llcio -llcioDict
         include: ${lcio.prefix}/include

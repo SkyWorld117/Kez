@@ -47,7 +47,5 @@ recipe:
             - target: install
 
     properties:
-        lib: ${geant4.prefix}/lib
-        libs:
-            default: -lGeant4
+        lib: ${geant4.prefix}/lib64
         include: ${geant4.prefix}/include

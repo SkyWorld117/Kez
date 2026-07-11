@@ -9,8 +9,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 8.3.16
-              url: https://pythia.org/download/pythia83/pythia8316.tar
+            - version: 8.3.17
+              url: https://pythia.org/releases/pythia83/pythia8317.tgz
 
     build:
         configurations:
