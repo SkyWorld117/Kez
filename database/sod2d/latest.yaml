@@ -17,7 +17,7 @@ recipe:
         - hdf5
 
     build:
-        # postprocessing: exit 0
+        preprocessing: git submodule init && git submodule update
 
         configurations:
             options:
@@ -28,18 +28,22 @@ recipe:
                       default: ${hdf5.prefix}
 
                 - name: USE_GPU
+                  user_configurable: true
                   enabled_value:
                       default: ON
 
                 - name: GPU_CUDA
+                  user_configurable: true
                   enabled_value:
-                      default: 13.1
+                      default: 13.2
 
                 - name: TOOL_MESHPART
+                  user_configurable: true
                   enabled_value:
                       default: ON
 
                 - name: USE_PORDER
+                  user_configurable: true
                   enabled_value:
                       default: 8
 
