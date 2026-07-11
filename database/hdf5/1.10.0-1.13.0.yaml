@@ -1,0 +1,48 @@
+---
+recipe:
+    name: hdf5
+    description: High-performance data management and storage suite
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.13.0
+              url: https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.13/hdf5-1.13.0/src/hdf5-1.13.0.tar.gz
+            - version: 1.12.1
+              url: https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.gz
+            - version: 1.10.11
+              url: https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.11/src/hdf5-1.10.11.tar.gz
+
+    build:
+        configurations:
+            options:
+                - name: enable-cxx
+                  description: Compile the C++ interface
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: enable-fortran
+                  description: Compile the Fortran interface
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: enable-parallel
+                  description: Search for MPI-IO and MPI support
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  requires: [mpi]
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${hdf5.prefix}/lib
+        libs:
+            default: -lhdf5
+        include: ${hdf5.prefix}/include

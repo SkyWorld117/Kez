@@ -3,36 +3,113 @@ recipe:
     name: hdf5
     description: High-performance data management and storage suite
     type: package
-    toolchain: autotools
+    toolchain: cmake
 
     source:
         type: tarball
         releases:
-            - version: 1.10.11
-              url: https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.11/src/hdf5-1.10.11.tar.gz
+            - version: 2.1.1
+              url: https://github.com/HDFGroup/hdf5/releases/download/2.1.1/hdf5-2.1.1.tar.gz
 
     build:
         configurations:
+        # self.define_from_variant("HDF5_ENABLE_SUBFILING_VFD", "subfiling"),
+        # self.define_from_variant("HDF5_ENABLE_MAP_API", "map"),
+        # self.define_from_variant("HDF5_ENABLE_SZIP_SUPPORT", "szip"),
+        # self.define_from_variant("HDF5_ENABLE_SZIP_ENCODING", "szip"),
+        # self.define_from_variant("BUILD_SHARED_LIBS", "shared"),
+        # self.define("ONLY_SHARED_LIBS", False),
+        # self.define_from_variant("HDF5_ENABLE_PARALLEL", "mpi"),
+        # self.define_from_variant("HDF5_ENABLE_THREADSAFE", "threadsafe"),
+        # self.define_from_variant("HDF5_BUILD_HL_LIB", "hl"),
+        # self.define_from_variant("HDF5_BUILD_CPP_LIB", "cxx"),
+        # self.define_from_variant("HDF5_BUILD_FORTRAN", "fortran"),
+        # self.define_from_variant("HDF5_BUILD_JAVA", "java"),
+        # self.define_from_variant("HDF5_BUILD_TOOLS", "tools"),
             options:
-                - name: enable-cxx
-                  description: Compile the C++ interface
-                  user_configurable: true
-                  enabled:
-                      default: false
-
-                - name: enable-fortran
-                  description: Compile the Fortran interface
-                  user_configurable: true
-                  enabled:
-                      default: false
-
-                - name: enable-parallel
-                  description: Search for MPI-IO and MPI support
+                - name: BUILD_SHARED_LIBS
+                  description: Build shared libraries
                   user_configurable: true
                   enabled:
                       default: true
-                  requires: [mpi]
+                  enabled_value:
+                      default: ON
 
+                - name: ONLY_SHARED_LIBS
+                  description: Build only shared libraries
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: OFF
+
+                - name: HDF5_BUILD_CPP_LIB
+                  description: Build C++ library
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ON
+
+                - name: HDF5_BUILD_FORTRAN_LIB
+                  description: Build Fortran library
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ON
+
+                - name: HDF5_BUILD_HL_LIB
+                  description: Build High Level library
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+
+                - name: HDF5_BUILD_TOOLS
+                  description: Build tools
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+
+                - name: HDF5_ENABLE_PARALLEL
+                  description: Enable parallel support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ON
+                  requires:
+                      - mpi
+
+                - name: MPI_C_COMPILER
+                  description: MPI C compiler
+                  enabled:
+                      conditions:
+                          - condition: ${hdf5.config.HDF5_ENABLE_PARALLEL} true
+                            value: true
+                  enabled_value:
+                      default: ${mpi.c}
+
+                - name: MPI_CXX_COMPILER
+                  description: MPI C++ compiler
+                  enabled:
+                      conditions:
+                          - condition: ${hdf5.config.HDF5_ENABLE_PARALLEL} true
+                            value: true
+                  enabled_value:
+                      default: ${mpi.cxx}
+
+                - name: MPI_Fortran_COMPILER
+                  description: MPI Fortran compiler
+                  enabled:
+                      conditions:
+                          - condition: ${hdf5.config.HDF5_ENABLE_PARALLEL} true
+                            value: true
+                  enabled_value:
+                      default: ${mpi.fort}
         stages:
             - target:
             - target: install
