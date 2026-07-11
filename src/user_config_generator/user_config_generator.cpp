@@ -116,9 +116,13 @@ namespace {
             if (dirname.rfind(prefix, 0) != 0) continue;
             std::string version = dirname.substr(prefix.size());
             if (type == PackageType::Mpi) {
-                std::size_t last_dash = version.find_last_of('-');
-                if (last_dash != std::string::npos) {
-                    version = version.substr(0, last_dash);
+                // Directory format: <name>-<version>-<compiler> where <compiler>
+                // is either "system" or a "<compiler_name>-<compiler_version>"
+                // pair.  MPI versions are semver-like (dots only, never dashes),
+                // so the first dash always separates version from compiler.
+                std::size_t first_dash = version.find('-');
+                if (first_dash != std::string::npos) {
+                    version = version.substr(0, first_dash);
                 }
             }
 

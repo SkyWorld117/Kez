@@ -445,6 +445,19 @@ namespace {
         if (requested_name == compiler_name) {
             return compiler_version;
         }
+        // If the requested package is the "parent" of the current compiler
+        // (e.g. nvhpc is the parent of nvhpc-compilers), use the compiler's
+        // version rather than the first source release of the parent.
+        if (compiler_version != "system" && compiler_version != "latest") {
+            const PackageConfigPtr compiler_config = parser_package_config(context, compiler_name);
+            const Property* parent_prop            = find_property(*compiler_config, "parent");
+            if (parent_prop != nullptr && std::holds_alternative<std::string>(parent_prop->data)) {
+                const std::string& parent_name = std::get<std::string>(parent_prop->data);
+                if (parent_name == requested_name) {
+                    return compiler_version;
+                }
+            }
+        }
         if (config->source.has_value() && !config->source->releases.empty()) {
             return config->source->releases.front().version;
         }
@@ -486,10 +499,7 @@ namespace {
         if (package_name == "compiler") {
             const auto [compiler_name, compiler_version] = current_compiler(context);
             if (property_name == "prefix") {
-                return compiler_version == "system" ? context.settings.system_prefix.string()
-                                                    : (context.settings.compilers_prefix /
-                                                       (compiler_name + "-" + compiler_version))
-                                                          .string();
+                return parser_package_prefix(compiler_name, context);
             }
             PackageConfigPtr compiler = get_db_config(
                 compiler_name, compiler_version == "system" ? "latest" : compiler_version);

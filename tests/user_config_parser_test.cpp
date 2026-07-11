@@ -430,13 +430,14 @@ recipe:
         ASSERT_EQ(plan[0].commands.size(), 1U);
         const std::string& command = plan[0].commands[0];
         EXPECT_NE(command.find("./configure --enable-feature"), std::string::npos);
-        EXPECT_NE(command.find("CC=\"/opt/compilers/nvhpc-compilers-1.0/bin/nvc\""),
+        EXPECT_NE(command.find("CC=\"/opt/compilers/nvhpc-compilers-1.0/nvhpc-compilers/bin/nvc\""),
                   std::string::npos);
         EXPECT_NE(command.find("CXXFLAGS=\"-O3 -I/opt/env/library/include\""), std::string::npos);
-        EXPECT_NE(command.find("LDFLAGS=\"-L/opt/compilers/nvhpc-compilers-1.0/lib "
-                               "-Xlinker -rpath,/opt/compilers/nvhpc-compilers-1.0/lib "
-                               "-L/opt/env/library/lib -Xlinker -rpath,/opt/env/library/lib\""),
-                  std::string::npos);
+        EXPECT_NE(
+            command.find("LDFLAGS=\"-L/opt/compilers/nvhpc-compilers-1.0/nvhpc-compilers/lib "
+                         "-Xlinker -rpath,/opt/compilers/nvhpc-compilers-1.0/nvhpc-compilers/lib "
+                         "-L/opt/env/library/lib -Xlinker -rpath,/opt/env/library/lib\""),
+            std::string::npos);
         EXPECT_EQ(command.find("LIBS="), std::string::npos);
     }
 
