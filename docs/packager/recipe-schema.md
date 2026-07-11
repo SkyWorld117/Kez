@@ -339,13 +339,90 @@ recipe:
 
 Abstract packages typically have no `source`, `build`, `dependencies`, or `properties`
 sections. The concrete packages define their properties under the abstract package name
-to provide a unified interface. For example, `openmpi` defines `mpi.c`, `mpi.cxx`,
-`mpi.fort` so that dependencies can reference `mpi.cxx` regardless of which MPI is
-selected.
+to provide a unified interface.
 
-When generating a user configuration, the system asks the user to choose an
-implementation. When installing via command line, the system uses the
-[advisor lookup table](../../src/dependency_resolver/advisor.cpp) for automatic selection.
+### Property Namespace Sharing
+
+Concrete implementations of an abstract package declare their properties under
+simple names (e.g. `c`, `cxx`, `fort`), and the template system resolves
+abstract-name references (e.g. `${mpi.c}`) by first mapping the abstract name
+to its concrete implementation, then looking up the simple property on that
+config. This convention provides a stable, unified property namespace for
+dependents regardless of which implementation is selected.
+
+For example, the abstract `mpi` package is implemented by `openmpi` and `mpich`.
+Template resolution works as follows:
+
+| Template reference | When `mpi→openmpi` | When `mpi→mpich` |
+|---|---|---|
+| `${mpi.c}` | `${openmpi.prefix}/bin/mpicc` | `${mpich.prefix}/bin/mpicc` |
+| `${mpi.cxx}` | `${openmpi.prefix}/bin/mpicxx` | `${mpich.prefix}/bin/mpicxx` |
+
+A recipe that depends on `mpi` can reference `${mpi.cxx}` and the template
+resolver will redirect to the selected concrete package's property —
+no recipe needs to know whether `openmpi` or `mpich` was chosen.
+
+This convention is not enforced by the parser but is critical for correct
+template resolution across different implementations.
+
+### The `.use-<concrete>` Mechanism
+
+When a user configuration is parsed and an abstract package is resolved to a
+concrete implementation, the system auto-generates boolean named option states
+with the pattern `<abstract_name>.use-<concrete_name>` for every implementation
+of each abstract package. These states are injected into the option state and
+can be used in condition expressions.
+
+For example, when `mpi` is resolved to `openmpi` via
+`recipe.abstract_packages: { mpi: openmpi }`, the parser creates:
+
+| Property | Value |
+|---|---|
+| `mpi.use-openmpi` | `true` |
+| `mpi.use-mpich` | `false` |
+| `mpi.use-intel-oneapi-mpi` | `false` |
+| _(...and so on for each implementation)_ |
+
+These properties enable conditional configuration based on the chosen
+implementation:
+
+```yaml
+conditions:
+  - condition: ${mpi.use-mpich} true
+    action: set
+    value: -DMPICH_FOUND
+```
+
+### Selection
+
+When generating a user configuration interactively (`kez uconf`), the system
+prompts the user to choose a concrete implementation for each abstract package
+from its `implementations` list.
+
+When installing via command line (`kez install <package>`), the system uses
+the advisor lookup table (`src/dependency_resolver/advisor.cpp`) for automatic
+selection based on the target architecture:
+
+```yaml
+# heuristics/advice.yaml
+advice:
+  blas:
+    x86_64: intel-oneapi-mkl
+    arm64: nvpl
+  mpi:
+    x86_64: openmpi
+    arm64: openmpi
+```
+
+### Selection Validation
+
+The parser validates the user's selections against the database. If
+`recipe.abstract_packages` contains an entry where the value is not a valid
+implementation of the abstract package, parsing terminates with:
+`'<implementation>' does not implement abstract package '<abstract_name>'`
+
+See [Abstract Package Resolution](user-config-format.md#abstract-package-resolution)
+in the User Configuration Format for how this interacts with user-editable configs.
 
 
 ## Configuration Guidelines
