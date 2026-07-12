@@ -25,6 +25,4 @@ recipe:
 
     properties:
         lib: ${flex.prefix}/lib
-        libs:
-            default: -lfl
         include: ${flex.prefix}/include
