@@ -27,43 +27,16 @@ namespace {
      *        configuration.
      *
      * Reads the `KEZ_WORKDIR` environment variable and looks for a
-     * `config.yaml` file inside that directory.  If the file exists and
-     * contains a scalar `settings.default_compiler` key, its value is
-     * returned (e.g. "gcc", "llvm", "oneapi").  Otherwise the function
-     * returns the fallback string "system", meaning no user-configured
-     * default compiler was found and the system compiler should be used.
-     *
-     * The lookup is deliberately non-fatal: every missing or malformed
-     * input (unset `KEZ_WORKDIR`, missing file, missing key, non-map
-     * `settings`, non-scalar value) silently degrades to "system".
+     * `config.yaml` file inside that directory.
      *
      * @return The configured default compiler family as a string, or
      *         "system" if none is configured.
      */
     std::string configured_default_compiler() {
         const std::string work_directory = get_env_var_noerr("KEZ_WORKDIR");
-        if (work_directory.empty()) {
-            return "system";
-        }
-
         const std::filesystem::path path = std::filesystem::path(work_directory) / "config.yaml";
-        if (!std::filesystem::is_regular_file(path)) {
-            return "system";
-        }
-
-        const YAML::Node document = cached_yaml_load(path);
-        if (!yaml_has(document, "settings")) {
-            return "system";
-        }
-        const YAML::Node settings = document["settings"];
-        if (!settings.IsMap() || !yaml_has(settings, "default_compiler")) {
-            return "system";
-        }
-        const YAML::Node compiler = settings["default_compiler"];
-        if (!compiler.IsScalar()) {
-            return "system";
-        }
-        return yaml_scalar(compiler, "settings.default_compiler");
+        const YAML::Node document        = cached_yaml_load(path);
+        return yaml_scalar(document["settings"]["default_compiler"], "settings.default_compiler");
     }
 
     std::unordered_set<std::string> resolved_targets(
