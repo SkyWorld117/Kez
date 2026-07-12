@@ -288,29 +288,21 @@ while true; do
         break
     fi
 
-    # Wait for any background job to finish.  If wait-n is interrupted by
-    # a signal (e.g. keyboard interrupt), retry so long as children remain.
-    completed_status=0
-    while true; do
-        wait -n 2>/dev/null && completed_status=0 || completed_status=$?
-        # If exit status is > 128 the wait was interrupted by a signal;
-        # retry if there are still running children.
-        if (( completed_status <= 128 )) || ! kill -0 "${package_pids[@]}" 2>/dev/null; then
-            break
-        fi
-    done
-
-    # Find the earliest-started package whose PID is no longer running.
-    # Iterating in plan order preserves the original deterministic
-    # completion order (earliest-started packages are processed first).
+    # Wait for the earliest-started running package (lowest plan index
+    # with a non-empty PID).  This guarantees deterministic processing
+    # order: packages are completed in the same order they were started.
     completed_index=-1
+    completed_status=0
     for (( index = 0; index < ${#plan_packages[@]}; index++ )); do
         pid=${package_pids[$index]:-}
-        if [[ -n $pid ]] && ! kill -0 "$pid" 2>/dev/null; then
-            completed_index=$index
-            package_pids[$index]=
-            break
+        if [[ -z $pid ]]; then
+            # Already processed; skip to the next.
+            continue
         fi
+        wait "$pid" 2>/dev/null && completed_status=0 || completed_status=$?
+        package_pids[$index]=
+        completed_index=$index
+        break
     done
 
     if (( completed_index < 0 )); then
