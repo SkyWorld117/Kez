@@ -68,7 +68,7 @@ fetch_gnu() {
     # GNU mirror (usually much faster)
     # local url="https://ftpmirror.gnu.org/gnu/${pkg}/"
 
-    echo $(fetch_web "${pkg}" "${version}" "${url}" "${ext}")
+    fetch_web "${pkg}" "${version}" "${url}" "${ext}"
 }
 
 fetch_isl() {
@@ -76,7 +76,7 @@ fetch_isl() {
     local version="${1}"
     local ext="${2:-tar.xz}"
 
-    echo $(fetch_web "isl" "${version}" "${url}" "${ext}")
+    fetch_web "isl" "${version}" "${url}" "${ext}"
 }
 
 fetch_rust() {
@@ -121,7 +121,7 @@ fetch_perl() {
     local version="${1}"
     local ext="tar.gz"
 
-    echo $(fetch_web "perl" "${version}" "${url}" "${ext}")
+    fetch_web "perl" "${version}" "${url}" "${ext}"
 }
 
 fetch_git() {
@@ -130,7 +130,7 @@ fetch_git() {
     local version="${1}"
     local ext="${2:-tar.xz}"
 
-    echo $(fetch_web "git" "${version}" "${url}" "${ext}")
+    fetch_web "git" "${version}" "${url}" "${ext}"
 }
 
 fetch_github() {
