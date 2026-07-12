@@ -45,10 +45,10 @@
  *                       `database/<pkg>/latest.yaml`) to include in the config.
  *                       Each name is matched case-sensitively against the
  *                       package database.
- * @param interactive    If true, the generator may prompt the user for
- *                       interactive choices when resolving abstract packages
- *                       and optional dependencies. If false, selections are
- *                       made automatically based on the architecture heuristics.
+ * @param interactive    If true, prompt for grouped build options and derive
+ *                       their optional packages from enabled states, then
+ *                       prompt for abstract-package implementations. If false,
+ *                       selections use the architecture heuristics.
  *
  * @return A YAML::Node containing the full configuration tree. The function
  *         terminates with ERROR() rather than returning on failure.

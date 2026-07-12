@@ -30,15 +30,25 @@ using DependencyLists = std::pair<std::vector<std::string>, std::vector<std::str
  * exists only for abstract packages that were actually encountered while
  * traversing the dependency graph.
  *
- * Selections are made either interactively (the user is prompted to pick from
- * the package's `implementations` list) or automatically via the heuristics
- * advisor, depending on the `interactive` flag passed to
- * resolve_dependencies().
+ * Selections are made either interactively from a mutually-exclusive list or
+ * automatically via the heuristics advisor. In interactive mode, selecting no
+ * implementation also uses the advisor default.
  *
  * @see resolve_dependencies()
  * @see advise()
  */
 using AbstractPackageSelections = std::unordered_map<std::string, std::string>;
+
+/**
+ * @brief Enabled-state overrides chosen by the interactive user-config UI.
+ *
+ * The outer key is a concrete package name and the inner key is a build-option
+ * name.  Every option shown by the interactive checklist is recorded, including
+ * unchecked options, so generated YAML can override both true and false recipe
+ * defaults consistently.
+ */
+using InteractiveOptionSelections =
+    std::unordered_map<std::string, std::unordered_map<std::string, bool>>;
 
 /**
  * @brief The complete result of dependency resolution for one or more target
@@ -64,13 +74,17 @@ using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelection
  *      reachable from it, the function retrieves the package's database
  *      configuration and collects its essential (hard) dependencies via
  *      get_essential_dependencies().  Optional (conditional) dependencies are
- *      handled according to the @p interactive flag (see below).
+ *      handled according to the @p interactive flag (see below). Interactive
+ *      discovery groups configurable options by the optional package they
+ *      require before asking for option states.
  *
  *   2. **Abstract-package resolution** -- If a package's type is
  *      PackageType::Abstract, a concrete implementation must be selected.
- *      In interactive mode the user is prompted; in non-interactive mode the
- *      heuristics advisor (advise()) is consulted.  The chosen implementation
- *      is then resolved in the same manner.  Abstract packages that are
+ *      In interactive mode the implementation selector is shown after optional
+ *      packages and their build options have been processed. In
+ *      non-interactive mode the heuristics advisor (advise()) is consulted
+ *      directly. The chosen implementation is then resolved in the same
+ *      manner. Abstract packages that are
  *      **not** among the initial targets and whose type is PackageType::System,
  *      PackageType::Compiler, or PackageType::Mpi are treated as leaf nodes
  *      (their transitive dependencies are **not** traversed).
@@ -92,11 +106,13 @@ using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelection
  *                       vectors and the map are empty).
  * @param interactive    Controls how abstract-package implementations and
  *                       optional dependencies are selected:
- *                       - **true**  -- The function reads from stdin.  For each
- *                           abstract package, it prints the available
- *                           implementations and waits for the user to type one.
- *                           For each optional dependency it asks "Include ...
- *                           (y/n)?".
+ *                       - **true**  -- The function reads from stdin. It
+ *                           presents one grouped build-option checklist per
+ *                           optional package and includes that package whenever
+ *                           at least one requiring option is enabled. It then
+ *                           presents mutually-exclusive abstract implementation
+ *                           lists. An empty implementation selection uses the
+ *                           advisor default.
  *                       - **false** -- Implementations are chosen automatically
  *                           by calling the heuristics advisor (advise()).
  *                           Optional dependencies are excluded and an INFO
@@ -144,3 +160,20 @@ using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelection
  */
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
                                           bool interactive);
+
+/**
+ * @brief Resolve dependencies and return interactive build-option decisions.
+ *
+ * This overload is intended for user-configuration generation.  Its dependency
+ * result is identical to the two-argument overload, while @p option_selections
+ * receives the option states chosen after optional-package discovery.  The map
+ * is cleared before resolution.  In non-interactive mode it remains empty.
+ *
+ * @param package_names       Top-level package names to resolve.
+ * @param interactive         Whether to run the terminal selection workflow.
+ * @param option_selections   Output map for package/option enabled states. May
+ *                            be @c nullptr when the caller does not need them.
+ */
+DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
+                                          bool interactive,
+                                          InteractiveOptionSelections* option_selections);

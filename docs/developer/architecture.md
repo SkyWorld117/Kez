@@ -120,6 +120,7 @@ Shared utility functions.
 | `bash_utils.cpp` | Shell quoting, env var helpers |
 | `file_utils.cpp` | Filesystem operations |
 | `string_utils.cpp` | String splitting, trimming, joining |
+| `terminal_ui.cpp` | Raw-terminal single/multiple selection controls |
 | `yaml_utils.cpp` | YAML serialization helpers |
 | `colored_io/` | Colored terminal output (info/success/warning/error) |
 

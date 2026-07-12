@@ -132,7 +132,13 @@ YAML includes all dependencies, build options, and environment variables that ar
 marked as `user_configurable: true` in the database.
 
 - Without `--save`, prints the configuration to stdout.
-- With `--save FILE`, writes it to the specified file.
+- With `--save FILE`, starts an interactive workflow and writes the result to
+  the specified file. Options are grouped by the optional package they require;
+  enabling at least one option automatically includes that package. Use the
+  arrow keys or `j`/`k` to move, Space to toggle, and Enter to confirm.
+  Abstract-package implementations are selected afterward from a mutually
+  exclusive list. Confirming that list without a selection uses the default
+  from `heuristics/advice.yaml`.
 
 ---
 

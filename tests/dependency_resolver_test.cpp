@@ -8,8 +8,8 @@
  *   - Resolution of abstract packages (via advice/heuristics) and boundary
  *     package types (system, compiler) whose sub-dependencies are not admitted
  *     into the install set.
- *   - Interactive (stdin-driven) selection of optional dependencies and
- *     abstract-package implementations.
+ *   - Interactive (stdin-driven) build-option selection, derived optional
+ *     dependencies, and abstract-package implementations.
  *   - An integration test that exercises the full resolver against the real
  *     database to verify shared-implementation deduplication and ordering.
  *
@@ -204,6 +204,7 @@ recipe:
     configurations:
       options:
         - name: optional-feature
+          user_configurable: true
           requires: [optional-library]
 )");
         write_package("required", R"(
@@ -278,7 +279,12 @@ recipe:
         EXPECT_EQ(compiler.first.first, std::vector<std::string>({"compiler", "compiler-core"}));
     }
 
-    TEST_F(TemporaryResolverDatabase, InteractiveModeSelectsOptionalAndAbstractPackages) {
+    TEST_F(TemporaryResolverDatabase, InteractiveModeDerivesOptionalAndSelectsAbstractPackages) {
+        write_advice(R"(
+advice:
+  abstract-api:
+    x86_64: implementation
+)");
         write_package("application", R"(
 recipe:
   name: application
@@ -288,6 +294,7 @@ recipe:
     configurations:
       options:
         - name: optional-feature
+          user_configurable: true
           requires: [optional-library]
 )");
         write_package("abstract-api", R"(
@@ -310,6 +317,17 @@ recipe:
             as_set(result.first.first),
             std::unordered_set<std::string>({"application", "implementation", "optional-library"}));
         EXPECT_EQ(result.second.at("abstract-api"), "implementation");
+
+        std::istringstream excluded_input("n\n implementation \n");
+        previous_input = std::cin.rdbuf(excluded_input.rdbuf());
+        testing::internal::CaptureStdout();
+        const DependencyResolution excluded = resolve_dependencies({"application"}, true);
+        static_cast<void>(testing::internal::GetCapturedStdout());
+        std::cin.rdbuf(previous_input);
+
+        EXPECT_EQ(as_set(excluded.first.first),
+                  std::unordered_set<std::string>({"application", "implementation"}));
+        EXPECT_EQ(excluded.second.at("abstract-api"), "implementation");
     }
 
     TEST(DependencyResolverIntegration, ResolvesARepositoryPackageWithSharedImplementations) {

@@ -135,11 +135,51 @@ namespace {
         return latest_version;
     }
 
+    void apply_option_list_selections(YAML::Node options,
+                                      const std::unordered_map<std::string, bool>& selections) {
+        if (!options || !options.IsSequence()) {
+            return;
+        }
+        for (YAML::Node option : options) {
+            if (!option["name"] || !option["name"].IsScalar()) {
+                continue;
+            }
+            const auto selected = selections.find(option["name"].as<std::string>());
+            if (selected != selections.end()) {
+                option["enabled"] = selected->second;
+            }
+        }
+    }
+
+    /** @brief Apply interactive enabled states to top-level and stage options. */
+    void apply_option_selections(YAML::Node package_output,
+                                 const std::unordered_map<std::string, bool>& selections) {
+        const YAML::Node build = package_output["build"];
+        if (!build || !build.IsMap()) {
+            return;
+        }
+        const YAML::Node configurations = build["configurations"];
+        if (configurations && configurations.IsMap()) {
+            apply_option_list_selections(configurations["options"], selections);
+        }
+        const YAML::Node stages = build["stages"];
+        if (!stages || !stages.IsSequence()) {
+            return;
+        }
+        for (YAML::Node stage : stages) {
+            const YAML::Node stage_configurations = stage["configurations"];
+            if (stage_configurations && stage_configurations.IsMap()) {
+                apply_option_list_selections(stage_configurations["options"], selections);
+            }
+        }
+    }
+
     void append_package_config(YAML::Node& output, const PackageConfig& package,
                                const std::vector<std::string>& all_dependencies,
                                const std::unordered_set<std::string>& all_dependency_set,
                                const std::unordered_set<std::string>& target_packages,
                                const AbstractPackageSelections& abstract_packages,
+                               const InteractiveOptionSelections& option_selections,
                                const std::string& default_compiler) {
         YAML::Node package_output(YAML::NodeType::Map);
         if (package.description.has_value()) {
@@ -198,6 +238,11 @@ namespace {
             }
         }
 
+        const auto selections = option_selections.find(package.name);
+        if (selections != option_selections.end()) {
+            apply_option_selections(package_output, selections->second);
+        }
+
         output["kez"][package.name] = package_output;
     }
 }  // namespace
@@ -208,7 +253,9 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
 
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
                            const std::string& default_compiler) {
-    DependencyResolution resolution = resolve_dependencies(package_names, interactive);
+    InteractiveOptionSelections option_selections;
+    DependencyResolution resolution =
+        resolve_dependencies(package_names, interactive, &option_selections);
     const std::vector<std::string>& all_dependencies   = resolution.first.first;
     const std::vector<std::string>& dependencies       = resolution.first.second;
     const AbstractPackageSelections& abstract_packages = resolution.second;
@@ -248,7 +295,8 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
     for (const std::string& dependency : dependencies) {
         const PackageConfigPtr package = get_db_config(dependency);
         append_package_config(output, *package, all_dependencies, all_dependency_set,
-                              target_packages, abstract_packages, default_compiler);
+                              target_packages, abstract_packages, option_selections,
+                              default_compiler);
     }
     return output;
 }

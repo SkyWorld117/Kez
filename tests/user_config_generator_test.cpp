@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <fstream>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <user_config_generator/configurations_filter.hpp>
@@ -446,6 +447,80 @@ recipe:
                   std::vector<std::string>({"mpi"}));
         EXPECT_EQ(result["kez"]["implementation"]["version"].as<std::string>(), "5.0.0");
         EXPECT_EQ(result["kez"]["implementation"]["build"]["configurations"]["options"].size(), 1U);
+    }
+
+    TEST_F(TemporaryGeneratorDatabase,
+           InteractiveGenerationGroupsSharedOptionsAndAppliesTheirSelections) {
+        write_file(path_ / "heuristics" / "advice.yaml", R"(
+advice:
+  mpi:
+    x86_64: implementation
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [child, mpi]
+  build:
+    configurations:
+      options:
+        - name: application-feature
+          user_configurable: true
+          enabled:
+            default: false
+          requires: [optional-library, second-library]
+)");
+        write_package("child", R"(
+recipe:
+  name: child
+  type: package
+  build:
+    stages:
+      - target: build
+        configurations:
+          options:
+            - name: child-feature
+              user_configurable: true
+              enabled:
+                default: true
+              requires: [optional-library]
+)");
+        write_package("mpi", R"(
+recipe:
+  name: mpi
+  type: abstract
+  implementations: [implementation]
+)");
+        write_package("implementation", "recipe: {name: implementation, type: package}\n");
+        write_package("optional-library", "recipe: {name: optional-library, type: package}\n");
+        write_package("second-library", "recipe: {name: second-library, type: package}\n");
+
+        std::istringstream input("y\nn\n\n\n");
+        std::streambuf* previous_input = std::cin.rdbuf(input.rdbuf());
+        testing::internal::CaptureStdout();
+        const YAML::Node result  = gen_user_config({"application"}, true, "system");
+        const std::string output = testing::internal::GetCapturedStdout();
+        std::cin.rdbuf(previous_input);
+
+        const YAML::Node application_options =
+            result["kez"]["application"]["build"]["configurations"]["options"];
+        const YAML::Node child_options =
+            result["kez"]["child"]["build"]["stages"][0]["configurations"]["options"];
+        EXPECT_TRUE(find_option(application_options, "application-feature")["enabled"].as<bool>());
+        EXPECT_FALSE(find_option(child_options, "child-feature")["enabled"].as<bool>());
+        EXPECT_EQ(result["recipe"]["abstract_packages"]["mpi"].as<std::string>(), "implementation");
+        EXPECT_EQ(as_set(result["recipe"]["dependencies"]),
+                  std::unordered_set<std::string>({"application", "child", "implementation",
+                                                   "optional-library", "second-library"}));
+
+        const std::size_t optional_heading =
+            output.find("Optional package optional-library is required by the following options:");
+        const std::size_t abstract_heading =
+            output.find("Abstract package mpi has the following implementations:");
+        ASSERT_NE(optional_heading, std::string::npos);
+        ASSERT_NE(abstract_heading, std::string::npos);
+        EXPECT_LT(optional_heading, abstract_heading);
+        EXPECT_EQ(output.find("Include optional package 'optional-library'?"), std::string::npos);
     }
 
     TEST_F(TemporaryGeneratorDatabase, UsesLatestInstalledMpiAndVendorVersions) {

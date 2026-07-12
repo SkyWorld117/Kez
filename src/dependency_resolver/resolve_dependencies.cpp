@@ -5,130 +5,148 @@
 #include <dependency_resolver/advisor.hpp>
 #include <dependency_resolver/essential_dependencies.hpp>
 #include <dependency_resolver/optional_dependencies.hpp>
+#include <dependency_resolver/requirements.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <dependency_resolver/toposort.hpp>
 #include <iostream>
+#include <unordered_map>
 #include <unordered_set>
 #include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
+#include <utils/terminal_ui.hpp>
 
 namespace {
-    /**
-     * @brief State that accumulates during a dependency-resolution pass.
-     *
-     * Carries the target package set, the user-interactive flag, the
-     * adjacency list being built, the set of system-type packages
-     * encountered, the mapping from abstract package names to concrete
-     * implementations that have been chosen so far, and the decisions
-     * already made about optional dependencies.
-     */
+    struct OptionReference {
+        std::string package;
+        std::string option;
+        std::vector<std::string> requirements;
+    };
+
+    /** @brief Mutable data accumulated during one dependency-resolution call. */
     struct ResolutionState {
         std::unordered_set<std::string> target_packages;
         bool interactive = false;
         DependencyGraph adjacency_list;
         std::unordered_set<std::string> system_packages;
         AbstractPackageSelections abstract_packages;
+        std::vector<std::string> abstract_order;
+        std::unordered_set<std::string> encountered_abstract_packages;
         std::unordered_map<std::string, bool> optional_package_choices;
+        std::vector<std::string> optional_package_order;
+        std::unordered_map<std::string, std::vector<OptionReference>> option_references;
+        InteractiveOptionSelections option_selections;
     };
 
-    /**
-     * @brief Resolve an abstract package name to its concrete implementation.
-     *
-     * Looks up @p package_name in the in-progress selections. If a choice has
-     * already been recorded (via a previous call to select_implementation),
-     * that concrete name is returned immediately; otherwise the abstract name
-     * itself is returned unchanged.
-     *
-     * @param state       Current resolution state holding the selection map.
-     * @param package_name  The package name to resolve (may be abstract).
-     * @return The concrete implementation name if one has been chosen,
-     *         otherwise @p package_name unchanged.
-     */
     std::string resolve_abstract(const ResolutionState& state, const std::string& package_name) {
         const auto selected = state.abstract_packages.find(package_name);
         return selected == state.abstract_packages.end() ? package_name : selected->second;
     }
 
+    void validate_implementation(const std::string& abstract_package, const PackageConfig& config,
+                                 const std::string& implementation) {
+        if (std::find(config.implementations.begin(), config.implementations.end(),
+                      implementation) == config.implementations.end()) {
+            ERROR("Dependency advice selected '" + implementation +
+                  "', which does not implement '" + abstract_package + "'");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     std::string select_implementation(ResolutionState& state, const std::string& abstract_package,
                                       const PackageConfig& config) {
+        state.encountered_abstract_packages.insert(abstract_package);
         const auto selected = state.abstract_packages.find(abstract_package);
         if (selected != state.abstract_packages.end()) {
             return selected->second;
         }
 
-        std::string implementation;
-        if (state.interactive) {
-            INFO("Package '" + abstract_package +
-                 "' is abstract. Please select one of the following implementations:");
-            for (const std::string& candidate : config.implementations) {
-                INFO("- " + candidate);
-            }
-            while (true) {
-                INFO("Enter the implementation name: ");
-                std::string input;
-                if (!std::getline(std::cin, input)) {
-                    ERROR("Input ended while selecting an implementation for '" + abstract_package +
-                          "'");
-                    exit(EXIT_FAILURE);
-                }
-                implementation = trim(input);
-                if (std::find(config.implementations.begin(), config.implementations.end(),
-                              implementation) != config.implementations.end()) {
-                    break;
-                }
-                ERROR("Invalid implementation selected: " + implementation);
-            }
-        } else {
-            implementation = advise(abstract_package);
-            INFO("Selected implementation for '" + abstract_package + "': " + implementation);
-            if (std::find(config.implementations.begin(), config.implementations.end(),
-                          implementation) == config.implementations.end()) {
-                ERROR("Dependency advice selected '" + implementation +
-                      "', which does not implement '" + abstract_package + "'");
-                exit(EXIT_FAILURE);
-            }
-        }
-
+        const std::string implementation = advise(abstract_package);
+        validate_implementation(abstract_package, config, implementation);
         state.abstract_packages.emplace(abstract_package, implementation);
+        state.abstract_order.push_back(abstract_package);
+        if (!state.interactive) {
+            INFO("Selected implementation for '" + abstract_package + "': " + implementation);
+        }
         return implementation;
     }
 
-    std::vector<std::string> select_dependencies(ResolutionState& state,
-                                                 const std::string& package_name) {
-        std::vector<std::string> dependencies = get_essential_dependencies(package_name);
-        const std::vector<std::string> optional_dependencies =
-            get_optional_dependencies(package_name);
-        bool printed_heading = false;
+    void register_option(ResolutionState& state, const std::string& requirement,
+                         const std::string& package, const BuildOption& option) {
+        std::vector<OptionReference>& references = state.option_references[requirement];
+        const auto duplicate                     = std::find_if(
+            references.begin(), references.end(), [&](const OptionReference& reference) {
+                return reference.package == package && reference.option == option.name;
+            });
+        if (duplicate == references.end()) {
+            references.push_back({package, option.name, option.requires});
+        } else {
+            for (const std::string& option_requirement : option.requires) {
+                append_unique(duplicate->requirements, option_requirement);
+            }
+        }
+    }
 
+    void register_options(ResolutionState& state, const std::string& package,
+                          const BuildConfiguration& configuration) {
+        for (const BuildOption& option : configuration.options) {
+            if (!option.user_configurable) {
+                continue;
+            }
+            for (const std::string& requirement : option.requires) {
+                register_option(state, requirement, package, option);
+            }
+        }
+    }
+
+    void register_optional_requirements(ResolutionState& state, const PackageConfig& config) {
+        for (const std::string& dependency : get_optional_dependencies(config.name)) {
+            if (std::find(config.dependencies.begin(), config.dependencies.end(), dependency) !=
+                config.dependencies.end()) {
+                continue;
+            }
+            if (state.optional_package_choices.emplace(dependency, false).second) {
+                state.optional_package_order.push_back(dependency);
+            }
+        }
+        if (!config.build.has_value()) {
+            return;
+        }
+        if (config.build->configurations.has_value()) {
+            register_options(state, config.name, *config.build->configurations);
+        }
+        for (const BuildStage& stage : config.build->stages) {
+            if (stage.configurations.has_value()) {
+                register_options(state, config.name, *stage.configurations);
+            }
+        }
+    }
+
+    std::vector<std::string> select_dependencies(ResolutionState& state,
+                                                 const PackageConfig& config) {
+        std::vector<std::string> dependencies = get_essential_dependencies(config.name);
+        const std::vector<std::string> optional_dependencies =
+            get_optional_dependencies(config.name);
+
+        if (state.interactive) {
+            register_optional_requirements(state, config);
+        }
+        bool printed_heading = false;
         for (const std::string& dependency : optional_dependencies) {
             if (std::find(dependencies.begin(), dependencies.end(), dependency) !=
                 dependencies.end()) {
                 continue;
             }
-
-            auto choice = state.optional_package_choices.find(dependency);
-            if (choice == state.optional_package_choices.end()) {
+            bool include = false;
+            if (state.interactive) {
+                include = state.optional_package_choices.at(dependency);
+            } else {
                 if (!printed_heading) {
-                    INFO("Optional dependencies for '" + package_name + "':");
+                    INFO("Optional dependencies for '" + config.name + "':");
                     printed_heading = true;
                 }
-                bool include = false;
-                if (state.interactive) {
-                    INFO("- Include optional dependency: " + dependency + "? (y/n)");
-                    std::string input;
-                    if (!std::getline(std::cin, input)) {
-                        ERROR("Input ended while selecting optional dependency '" + dependency +
-                              "'");
-                        exit(EXIT_FAILURE);
-                    }
-                    input   = trim(input);
-                    include = input == "y" || input == "Y";
-                } else {
-                    INFO("- Exclude optional dependency: " + dependency);
-                }
-                choice = state.optional_package_choices.emplace(dependency, include).first;
+                INFO("- Exclude optional dependency: " + dependency);
             }
-            if (choice->second) {
+            if (include) {
                 append_unique(dependencies, dependency);
             }
         }
@@ -161,41 +179,161 @@ namespace {
             return;
         }
 
-        std::vector<std::string> dependencies  = select_dependencies(state, concrete_package);
+        std::vector<std::string> dependencies  = select_dependencies(state, *config);
         state.adjacency_list[concrete_package] = dependencies;
         for (const std::string& dependency : dependencies) {
             build_adjacency_list(state, dependency);
         }
     }
 
+    void build_graph(ResolutionState& state, const std::vector<std::string>& package_names) {
+        state.adjacency_list.clear();
+        state.system_packages.clear();
+        state.encountered_abstract_packages.clear();
+        for (const std::string& package_name : package_names) {
+            build_adjacency_list(state, package_name);
+        }
+    }
+
     DependencyGraph unify_adjacency_list(const ResolutionState& state) {
-        DependencyGraph unified_adjacency_list;
+        DependencyGraph unified;
         for (const auto& [package, dependencies] : state.adjacency_list) {
             std::vector<std::string>& unified_dependencies =
-                unified_adjacency_list[resolve_abstract(state, package)];
+                unified[resolve_abstract(state, package)];
             for (const std::string& dependency : dependencies) {
                 append_unique(unified_dependencies, resolve_abstract(state, dependency));
             }
         }
-        return unified_adjacency_list;
+        return unified;
+    }
+
+    void update_optional_package_choices(ResolutionState& state) {
+        for (auto& choice : state.optional_package_choices) {
+            choice.second = false;
+        }
+        for (const auto& group : state.option_references) {
+            const std::vector<OptionReference>& references = group.second;
+            for (const OptionReference& reference : references) {
+                const auto package = state.option_selections.find(reference.package);
+                if (package == state.option_selections.end()) {
+                    continue;
+                }
+                const auto option = package->second.find(reference.option);
+                if (option == package->second.end() || !option->second) {
+                    continue;
+                }
+                for (const std::string& requirement : reference.requirements) {
+                    const auto optional = state.optional_package_choices.find(requirement);
+                    if (optional != state.optional_package_choices.end()) {
+                        optional->second = true;
+                    }
+                }
+            }
+        }
+    }
+
+    void select_build_options(ResolutionState& state,
+                              const std::vector<std::string>& package_names) {
+        std::unordered_set<std::string> prompted;
+        while (true) {
+            build_graph(state, package_names);
+            std::vector<std::string> unprompted;
+            for (const std::string& dependency : state.optional_package_order) {
+                if (prompted.find(dependency) == prompted.end()) {
+                    unprompted.push_back(dependency);
+                }
+            }
+            if (unprompted.empty()) {
+                return;
+            }
+
+            for (const std::string& dependency : unprompted) {
+                prompted.insert(dependency);
+                const auto group = state.option_references.find(dependency);
+                if (group == state.option_references.end()) {
+                    continue;
+                }
+
+                std::vector<const OptionReference*> available;
+                std::vector<std::string> labels;
+                std::vector<bool> selected;
+                for (const OptionReference& reference : group->second) {
+                    available.push_back(&reference);
+                    labels.push_back(reference.package + "." + reference.option);
+                    selected.push_back(
+                        state.option_selections[reference.package][reference.option]);
+                }
+                if (available.empty()) {
+                    continue;
+                }
+
+                std::cout << "Optional package " << dependency
+                          << " is required by the following options:\n";
+                selected = terminal_select_multiple("Do you want to enable the following options?",
+                                                    labels, selected);
+                for (std::size_t index = 0; index < available.size(); ++index) {
+                    state.option_selections[available[index]->package][available[index]->option] =
+                        selected[index];
+                }
+            }
+            update_optional_package_choices(state);
+        }
+    }
+
+    void select_abstract_packages(ResolutionState& state,
+                                  const std::vector<std::string>& package_names) {
+        std::size_t prompted = 0;
+        while (true) {
+            while (prompted < state.abstract_order.size()) {
+                const std::string abstract_package = state.abstract_order[prompted++];
+                const PackageConfigPtr config      = get_db_config(abstract_package);
+                std::cout << "Abstract package " << abstract_package
+                          << " has the following implementations:\n";
+                const std::optional<std::size_t> selected = terminal_select_one(
+                    "Do you want to use the following implementation?", config->implementations);
+                if (selected.has_value()) {
+                    state.abstract_packages[abstract_package] = config->implementations[*selected];
+                } else {
+                    state.abstract_packages[abstract_package] = advise(abstract_package);
+                    validate_implementation(abstract_package, *config,
+                                            state.abstract_packages[abstract_package]);
+                }
+                INFO("Selected implementation for '" + abstract_package +
+                     "': " + state.abstract_packages[abstract_package]);
+            }
+
+            build_graph(state, package_names);
+            if (prompted == state.abstract_order.size()) {
+                return;
+            }
+        }
     }
 
     std::vector<std::string> filter_system_packages(
         const std::vector<std::string>& packages,
         const std::unordered_set<std::string>& system_packages) {
-        std::vector<std::string> filtered_packages;
-        filtered_packages.reserve(packages.size());
+        std::vector<std::string> filtered;
+        filtered.reserve(packages.size());
         for (const std::string& package : packages) {
             if (system_packages.find(package) == system_packages.end()) {
-                filtered_packages.push_back(package);
+                filtered.push_back(package);
             }
         }
-        return filtered_packages;
+        return filtered;
     }
 }  // namespace
 
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
                                           bool interactive) {
+    return resolve_dependencies(package_names, interactive, nullptr);
+}
+
+DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
+                                          bool interactive,
+                                          InteractiveOptionSelections* option_selections) {
+    if (option_selections != nullptr) {
+        option_selections->clear();
+    }
     if (package_names.empty()) {
         return {};
     }
@@ -203,14 +341,30 @@ DependencyResolution resolve_dependencies(const std::vector<std::string>& packag
     ResolutionState state;
     state.target_packages.insert(package_names.begin(), package_names.end());
     state.interactive = interactive;
-    for (const std::string& package_name : package_names) {
-        build_adjacency_list(state, package_name);
+    if (interactive) {
+        select_build_options(state, package_names);
+        select_abstract_packages(state, package_names);
+    } else {
+        build_graph(state, package_names);
+    }
+
+    for (auto selection = state.abstract_packages.begin();
+         selection != state.abstract_packages.end();) {
+        if (state.encountered_abstract_packages.find(selection->first) ==
+            state.encountered_abstract_packages.end()) {
+            selection = state.abstract_packages.erase(selection);
+        } else {
+            ++selection;
+        }
     }
 
     std::vector<std::string> all_packages = topological_sort(unify_adjacency_list(state));
     std::reverse(all_packages.begin(), all_packages.end());
     std::vector<std::string> filtered_packages =
         filter_system_packages(all_packages, state.system_packages);
+    if (option_selections != nullptr) {
+        *option_selections = std::move(state.option_selections);
+    }
     return {{std::move(all_packages), std::move(filtered_packages)},
             std::move(state.abstract_packages)};
 }

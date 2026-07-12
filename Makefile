@@ -57,6 +57,7 @@ LIB_SOURCES := \
 	$(SRC_DIR)/utils/bash_utils.cpp \
 	$(SRC_DIR)/utils/file_utils.cpp \
 	$(SRC_DIR)/utils/string_utils.cpp \
+	$(SRC_DIR)/utils/terminal_ui.cpp \
 	$(SRC_DIR)/utils/yaml_utils.cpp
 LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 CLI_SOURCES := \

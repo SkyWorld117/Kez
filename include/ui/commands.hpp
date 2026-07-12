@@ -127,11 +127,11 @@ void execute_utilities(const CommandArguments& arguments);
  *                                            stdout
  *                   - `-h` / `--help`      : Print usage and return
  *
- * @note When `--save` is used the generation runs in interactive mode, which
- *       prompts the user to select implementations for abstract packages and
- *       to choose which optional dependencies to include.  Without `--save`
- *       defaults are used (abstract packages resolved via heuristics, optional
- *       dependencies excluded).
+ * @note When `--save` is used the generation runs in interactive mode. It
+ *       presents grouped checklists for options that require optional packages,
+ *       derives the optional dependency set from enabled options, and then
+ *       selects abstract-package implementations. Without `--save`, abstract
+ *       packages use heuristics and optional dependencies are excluded.
  *
  * @see execute_install
  * @see gen_user_config
