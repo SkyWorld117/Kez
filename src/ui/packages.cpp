@@ -89,7 +89,7 @@ void execute_uconf(const CommandArguments& arguments) {
             output_path = argument.substr(7);
             interactive = true;
         } else if (!argument.empty() && argument.front() == '-') {
-            ERROR("Unknown template option: " + argument);
+            ERROR("Unknown uconf option: " + argument);
             exit(EXIT_FAILURE);
         } else {
             packages.push_back(argument);
