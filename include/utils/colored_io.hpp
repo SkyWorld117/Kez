@@ -14,13 +14,26 @@
 #include <utils/string_utils.hpp>
 
 /**
+ * @enum PrintLevel
+ * @brief Identifies the severity or category of a message to print.
+ *
+ * Each level maps to a distinct prefix, ANSI colour, and output stream:
+ *   - @c Debug   → "[D]:" / cyan   / stdout
+ *   - @c Info    → "[I]:" / blue    / stdout
+ *   - @c Warning → "[W]:" / yellow  / stdout
+ *   - @c Error   → "[E]:" / red     / stderr
+ *   - @c Success → "[S]:" / green   / stdout
+ */
+enum class PrintLevel { Debug, Info, Warning, Error, Success };
+
+/**
  * @def INFO(message)
  * @brief Print an informational message prefixed with "[I]:".
  *
  * @param message The text to print.
  * @see print_info
  */
-#define INFO(message) print_info(message)
+#define INFO(message) print(PrintLevel::Info, message)
 
 /**
  * @def WARNING(message)
@@ -29,7 +42,7 @@
  * @param message The text to print.
  * @see print_warning
  */
-#define WARNING(message) print_warning(message)
+#define WARNING(message) print(PrintLevel::Warning, message)
 
 /**
  * @def ERROR(message)
@@ -38,7 +51,7 @@
  * @param message The text to print.
  * @see print_error
  */
-#define ERROR(message) print_error(message)
+#define ERROR(message) print(PrintLevel::Error, message)
 
 /**
  * @def SUCCESS(message)
@@ -47,7 +60,7 @@
  * @param message The text to print.
  * @see print_success
  */
-#define SUCCESS(message) print_success(message)
+#define SUCCESS(message) print(PrintLevel::Success, message)
 
 /**
  * @def DEBUG(message)
@@ -108,74 +121,36 @@ template <int Last, int... Ts> inline std::string color(const std::string& text)
 }
 
 /**
- * @brief Print a debug-prefixed message to stdout.
+ * @brief Print a message with a level-specific prefix, colour, and stream.
  *
- * The message is formatted as `[D]: <message>` with the
- * `Color::DEBUG` (cyan) ANSI foreground.
+ * Dispatches on @p level to select the prefix string, ANSI colour code, and
+ * output stream (std::cout for all levels except @c Error which uses
+ * std::cerr).  ANSI codes are suppressed when stdout is not a TTY.
  *
+ * @param level   The severity/category of the message (see @ref PrintLevel).
  * @param message The text to print.
  *
- * @note This function is always defined; use the `DEBUG` macro to
- *       conditionally compile the call site away in release builds.
- *
- * @see DEBUG macro
+ * @see PrintLevel
+ * @see color
  */
-inline void print_debug(const std::string& message) {
-    std::cout << color<Color::DEBUG>("[D]: " + message) << std::endl;
-}
-
-/**
- * @brief Print an info-prefixed message to stdout.
- *
- * The message is formatted as `[I]: <message>` with the
- * `Color::INFO` (blue) ANSI foreground.
- *
- * @param message The text to print.
- */
-inline void print_info(const std::string& message) {
-    std::cout << color<Color::INFO>("[I]: " + message) << std::endl;
-}
-
-/**
- * @brief Print a warning-prefixed message to stdout.
- *
- * The message is formatted as `[W]: <message>` with the
- * `Color::WARNING` (yellow) ANSI foreground.
- *
- * @param message The text to print.
- */
-inline void print_warning(const std::string& message) {
-    std::cout << color<Color::WARNING>("[W]: " + message) << std::endl;
-}
-
-/**
- * @brief Print an error-prefixed message to stderr.
- *
- * Unlike the other print helpers, this function writes to `std::cerr`
- * rather than `std::cout`. The message is formatted as `[E]: <message>`
- * with the `Color::ERROR` (red) ANSI foreground.
- *
- * @param message The text to print.
- *
- * @warning Output goes to stderr so that errors remain visible even when
- *          stdout is redirected. The color check still uses `isatty` on
- *          `STDOUT_FILENO`, so when only stderr is a TTY the colors will
- *          be suppressed.
- */
-inline void print_error(const std::string& message) {
-    std::cerr << color<Color::ERROR>("[E]: " + message) << std::endl;
-}
-
-/**
- * @brief Print a success-prefixed message to stdout.
- *
- * The message is formatted as `[S]: <message>` with the
- * `Color::SUCCESS` (green) ANSI foreground.
- *
- * @param message The text to print.
- */
-inline void print_success(const std::string& message) {
-    std::cout << color<Color::SUCCESS>("[S]: " + message) << std::endl;
+inline void print(PrintLevel level, const std::string& message) {
+    switch (level) {
+        case PrintLevel::Debug:
+            std::cout << color<Color::DEBUG>("[D]: " + message) << std::endl;
+            break;
+        case PrintLevel::Info:
+            std::cout << color<Color::INFO>("[I]: " + message) << std::endl;
+            break;
+        case PrintLevel::Warning:
+            std::cout << color<Color::WARNING>("[W]: " + message) << std::endl;
+            break;
+        case PrintLevel::Error:
+            std::cerr << color<Color::ERROR>("[E]: " + message) << std::endl;
+            break;
+        case PrintLevel::Success:
+            std::cout << color<Color::SUCCESS>("[S]: " + message) << std::endl;
+            break;
+    }
 }
 
 /**

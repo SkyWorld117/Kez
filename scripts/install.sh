@@ -8,13 +8,10 @@ set -Eeuo pipefail
 # Ensure KEZ_HOME is set; default to the project root (parent of the scripts directory)
 : ${KEZ_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 
-KEZ_INFO=${KEZ_HOME}/bin/print_info
-KEZ_WARNING=${KEZ_HOME}/bin/print_warning
-KEZ_ERROR=${KEZ_HOME}/bin/print_error
-KEZ_SUCCESS=${KEZ_HOME}/bin/print_success
+KEZ_PRINT=${KEZ_HOME}/bin/kez_print
 
 if [[ $# -lt 2 || $# -gt 3 ]]; then
-    ${KEZ_ERROR} "Usage: install.sh <environment> <plan> [--force]"
+    "${KEZ_PRINT}" error "Usage: install.sh <environment> <plan> [--force]"
     exit 2
 fi
 
@@ -24,18 +21,18 @@ force=false
 if [[ ${3:-} == "--force" ]]; then
     force=true
 elif [[ -n ${3:-} ]]; then
-    ${KEZ_ERROR} "Unknown option: $3"
+    "${KEZ_PRINT}" error "Unknown option: $3"
     exit 2
 fi
 
 if [[ ! -f $plan_file ]] || [[ $(head -n 1 -- "$plan_file") != "# kez-install-plan-v1" ]]; then
-    ${KEZ_ERROR} "Invalid Kez installation plan: $plan_file"
+    "${KEZ_PRINT}" error "Invalid Kez installation plan: $plan_file"
     exit 2
 fi
 
 install_jobs=${KEZ_INSTALL_JOBS:-1}
 if [[ ! $install_jobs =~ ^[1-9][0-9]*$ ]]; then
-    ${KEZ_ERROR} "KEZ_INSTALL_JOBS must be a positive integer"
+    "${KEZ_PRINT}" error "KEZ_INSTALL_JOBS must be a positive integer"
     exit 2
 fi
 
@@ -96,13 +93,13 @@ cleanup_package_work_dir() {
 
 kez_plan_begin() {
     if (( current_package_index >= 0 )); then
-        ${KEZ_ERROR} "Invalid installation plan: nested package"
+        "${KEZ_PRINT}" error "Invalid installation plan: nested package"
         return 2
     fi
 
     local package=$1
     if [[ -n ${package_indices[$package]+set} ]]; then
-        ${KEZ_ERROR} "Invalid installation plan: duplicate package '$package'"
+        "${KEZ_PRINT}" error "Invalid installation plan: duplicate package '$package'"
         return 2
     fi
 
@@ -119,7 +116,7 @@ kez_plan_begin() {
 
 kez_plan_depends() {
     if (( current_package_index < 0 )); then
-        ${KEZ_ERROR} "Invalid installation plan: dependency outside a package"
+        "${KEZ_PRINT}" error "Invalid installation plan: dependency outside a package"
         return 2
     fi
     printf '%s\n' "$1" >> "$plan_runtime_dir/$current_package_index/dependencies"
@@ -127,7 +124,7 @@ kez_plan_depends() {
 
 kez_plan_command() {
     if (( current_package_index < 0 )); then
-        ${KEZ_ERROR} "Invalid installation plan: command outside a package"
+        "${KEZ_PRINT}" error "Invalid installation plan: command outside a package"
         return 2
     fi
 
@@ -138,7 +135,7 @@ kez_plan_command() {
 
 kez_plan_end() {
     if (( current_package_index < 0 )); then
-        ${KEZ_ERROR} "Invalid installation plan: package end without package"
+        "${KEZ_PRINT}" error "Invalid installation plan: package end without package"
         return 2
     fi
     current_package_index=-1
@@ -149,14 +146,14 @@ kez_plan_end() {
 source "$plan_file"
 
 if (( current_package_index >= 0 )); then
-    ${KEZ_ERROR} "Invalid installation plan: package was not closed"
+    "${KEZ_PRINT}" error "Invalid installation plan: package was not closed"
     exit 2
 fi
 
 for index in "${!plan_packages[@]}"; do
     package=${plan_packages[$index]}
     if [[ $force == false ]] && package_is_recorded "$package"; then
-        ${KEZ_WARNING} "Package $package is already installed; skipping."
+        "${KEZ_PRINT}" warning "Package $package is already installed; skipping."
         package_status[$index]=skipped
     fi
 done
@@ -254,7 +251,7 @@ start_package() {
     local log_file
     log_file=$(package_log_file "$package")
 
-    ${KEZ_INFO} "Processing package: $package (log: $log_file)"
+    "${KEZ_PRINT}" info "Processing package: $package (log: $log_file)"
     package_status[$index]=running
     (
         trap - EXIT
@@ -296,14 +293,14 @@ finish_running_position() {
         package_status[$index]=done
         mark_package_installed "$package"
         cleanup_package_work_dir "$package"
-        ${KEZ_SUCCESS} "Completed package: $package"
+        "${KEZ_PRINT}" success "Completed package: $package"
         return 0
     fi
 
     package_status[$index]=failed
     # Do not clean up the work directory on failure, so the user can inspect it for debugging.
     # cleanup_package_work_dir "$package"
-    ${KEZ_ERROR} "Package $package failed. Read log file: $log_file"
+    "${KEZ_PRINT}" error "Package $package failed. Read log file: $log_file"
     return "$status"
 }
 
@@ -364,7 +361,7 @@ if (( failure_status != 0 )); then
 fi
 
 if has_pending_packages; then
-    ${KEZ_ERROR} "Invalid installation plan: dependency cycle or missing dependency prevented progress"
+    "${KEZ_PRINT}" error "Invalid installation plan: dependency cycle or missing dependency prevented progress"
     exit 2
 fi
 
@@ -379,6 +376,6 @@ if command -v yq >/dev/null 2>&1 && [[ -n ${KEZ_HOME:-} && -n ${KEZ_WORKDIR:-} ]
     modulefile="$modulefiles_dir/$(basename -- "$target_env")"
     if [[ ! -f $modulefile ]]; then
         "${KEZ_HOME}/scripts/gen_modulefile.sh" "$target_env" > "$modulefile"
-        ${KEZ_SUCCESS} "Created module file: $modulefile"
+        "${KEZ_PRINT}" success "Created module file: $modulefile"
     fi
 fi

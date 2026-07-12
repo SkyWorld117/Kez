@@ -584,6 +584,6 @@ make -C "${KEZ_HOME}" -B -j"${KEZ_NPROC}"
 
 # End of Script
 # ----------------------------------------------------
-${KEZ_HOME}/bin/print_success "Kez environment initialization complete."
+${KEZ_HOME}/bin/kez_print success "Kez environment initialization complete."
 
 set +Eeuo pipefail

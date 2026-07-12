@@ -86,13 +86,13 @@ LIBRARY := $(LIB_DIR)/libkez.a
 TEST_BINARY := $(BIN_DIR)/test_database
 CLI_BINARY := $(BIN_DIR)/kez
 COMPLETION_BINARY := $(BIN_DIR)/kez_completion
-PRINT_BINARIES := $(BIN_DIR)/print_info $(BIN_DIR)/print_success $(BIN_DIR)/print_warning $(BIN_DIR)/print_error
+PRINT_BINARY := $(BIN_DIR)/kez_print
 
 .DEFAULT_GOAL := all
 
 .PHONY: all test clean
 
-all: $(LIBRARY) $(CLI_BINARY) $(COMPLETION_BINARY) $(PRINT_BINARIES)
+all: $(LIBRARY) $(CLI_BINARY) $(COMPLETION_BINARY) $(PRINT_BINARY)
 
 test: $(TEST_BINARY)
 	$(TEST_BINARY)
@@ -110,16 +110,7 @@ $(CLI_BINARY): $(CLI_OBJECTS) $(LIBRARY) | $(BIN_DIR)
 $(COMPLETION_BINARY): $(COMPLETION_OBJECT) $(LIBRARY) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-$(BIN_DIR)/print_info: $(SRC_DIR)/utils/colored_io/info.cpp $(LIBRARY) | $(BIN_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
-
-$(BIN_DIR)/print_success: $(SRC_DIR)/utils/colored_io/success.cpp $(LIBRARY) | $(BIN_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
-
-$(BIN_DIR)/print_warning: $(SRC_DIR)/utils/colored_io/warning.cpp $(LIBRARY) | $(BIN_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
-
-$(BIN_DIR)/print_error: $(SRC_DIR)/utils/colored_io/error.cpp $(LIBRARY) | $(BIN_DIR)
+$(BIN_DIR)/kez_print: $(SRC_DIR)/utils/colored_io.cpp $(LIBRARY) | $(BIN_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
@@ -134,7 +125,7 @@ $(LIB_DIR) $(BIN_DIR):
 	mkdir -p $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(LIBRARY) $(TEST_BINARY) $(CLI_BINARY) $(COMPLETION_BINARY)
+	rm -rf $(OBJ_DIR) $(LIBRARY) $(TEST_BINARY) $(CLI_BINARY) $(COMPLETION_BINARY) $(PRINT_BINARY)
 
 -include $(LIB_OBJECTS:.o=.d) $(CLI_OBJECTS:.o=.d) $(COMPLETION_OBJECT:.o=.d) \
 	$(TEST_OBJECTS:.o=.d)

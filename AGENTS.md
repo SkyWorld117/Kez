@@ -70,7 +70,7 @@ Headers and sources share the same component subdirectories. Each component corr
 - `factory/` — Parses factory profiles (buildspace/launch/scheduler templates) emitted as part of the install plan.
 - `utils/` — Generic helpers shared across components: `yaml_utils`, `string_utils`, `file_utils`, `bash_utils`, `dump`, `terminal_ui`, and `colored_io` (the `ERROR`/info/warning/success printers; `colors.h` holds the raw ANSI codes).
 
-Entry points: `src/main.cpp` builds the `kez` CLI binary (`run_ui`); `src/bash_completion_main.cpp` builds the `kez_completion` helper. The Makefile also produces small `print_info`/`print_warning`/`print_error`/`print_success` binaries used by `scripts/install.sh`.
+Entry points: `src/main.cpp` builds the `kez` CLI binary (`run_ui`); `src/bash_completion_main.cpp` builds the `kez_completion` helper. The Makefile also produces a small `kez_print` binary used by shell scripts.
 
 ### Bash frontend (`scripts/` + `tools/` + root shims)
 

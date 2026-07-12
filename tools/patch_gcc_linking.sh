@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-KEZ_INFO=${KEZ_HOME}/bin/print_info
+KEZ_PRINT=${KEZ_HOME}/bin/kez_print
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <gcc-prefix>"
@@ -16,8 +16,8 @@ GCC_PREFIX="$1"
 SPEC_DIR=$("${GCC_PREFIX}/bin/gcc" -print-libgcc-file-name | xargs dirname)
 SPEC_FILE="${SPEC_DIR}/specs"
 
-if [ -f ${KEZ_INFO} ]; then
-    ${KEZ_INFO} "Generating specs file at: ${SPEC_FILE}"
+if [ -x "${KEZ_PRINT}" ]; then
+    "${KEZ_PRINT}" info "Generating specs file at: ${SPEC_FILE}"
 else
     echo "Generating specs file at: ${SPEC_FILE}"
 fi
@@ -72,8 +72,8 @@ for dir in "lib64" "lib"; do
 done
 
 chmod 644 "${SPEC_FILE}"
-if [ -f ${KEZ_INFO} ]; then
-    ${KEZ_INFO} "Specs configuration complete."
+if [ -x "${KEZ_PRINT}" ]; then
+    "${KEZ_PRINT}" info "Specs configuration complete."
 else
     echo "Specs configuration complete."
 fi

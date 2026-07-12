@@ -32,7 +32,7 @@ to `PATH`.
 | CLI binary | `bin/kez` | Main `kez` command |
 | Completion binary | `bin/kez_completion` | Bash completion helper |
 | Test binary | `bin/test_database` | Unit test runner |
-| Print helpers | `bin/print_info`, `bin/print_success`, `bin/print_warning`, `bin/print_error` | Colored output tools |
+| Print helper | `bin/kez_print` | Colored output tool (takes type: info/warning/error/success) |
 
 ### Compile Options
 
