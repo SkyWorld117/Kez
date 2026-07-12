@@ -115,6 +115,8 @@ You can also initialize using a distro-provided compiler instead of building one
 kez init --use-distro-compiler
 ```
 
+In this case the distro compiler will be used for all further package installations. It is highly recommended **NOT** to use this option unless you are sure that the distro compiler is compatible with all the packages you want to install, or you can choose to install another compiler later and use that compiler as the default one.
+
 It is recommended to run this command on the login node or a compute node with full compiling toolchain installed. The essential packages are listed in `manifest.yaml`.
 
 ## Usage
