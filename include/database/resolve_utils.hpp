@@ -101,8 +101,8 @@ inline PackageConfigPtr property_config(const std::string& package,
  *
  * @see has_property()  For the alias rules applied during lookup.
  */
-inline bool has_template_property(const std::string& package, const std::string& property,
-                                  const AbstractPackageSelections& abstract_packages,
-                                  const std::string& compiler) {
+inline bool package_has_property(const std::string& package, const std::string& property,
+                                 const AbstractPackageSelections& abstract_packages,
+                                 const std::string& compiler) {
     return has_property(*property_config(package, abstract_packages, compiler), property);
 }

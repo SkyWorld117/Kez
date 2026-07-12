@@ -109,25 +109,25 @@ namespace {
                                            const std::string& compiler) {
         DependencyDefaults result;
 
-        if (has_template_property("compiler", "ldflags", abstract_packages, compiler)) {
+        if (package_has_property("compiler", "ldflags", abstract_packages, compiler)) {
             append_unique(result.linker_flags, template_value("compiler", "ldflags"));
         }
-        if (has_template_property("compiler", "lib", abstract_packages, compiler)) {
+        if (package_has_property("compiler", "lib", abstract_packages, compiler)) {
             append_unique(result.library_paths, template_value("compiler", "lib"));
         }
 
         for (const std::string& dependency :
              active_dependencies(configuration, package, dependencies, abstract_packages)) {
-            if (has_template_property(dependency, "includes", abstract_packages, compiler)) {
+            if (package_has_property(dependency, "includes", abstract_packages, compiler)) {
                 append_unique(result.include_flags, template_value(dependency, "includes"));
             }
-            if (has_template_property(dependency, "ldflags", abstract_packages, compiler)) {
+            if (package_has_property(dependency, "ldflags", abstract_packages, compiler)) {
                 append_unique(result.linker_flags, template_value(dependency, "ldflags"));
             }
-            if (has_template_property(dependency, "lib", abstract_packages, compiler)) {
+            if (package_has_property(dependency, "lib", abstract_packages, compiler)) {
                 append_unique(result.library_paths, template_value(dependency, "lib"));
             }
-            if (has_template_property(dependency, "libs", abstract_packages, compiler)) {
+            if (package_has_property(dependency, "libs", abstract_packages, compiler)) {
                 append_unique(result.libraries, template_value(dependency, "libs"));
             }
             // Prefix is a built-in property; every package has a resolvable
@@ -137,10 +137,10 @@ namespace {
         }
 
         // The package itself should be added to the library paths
-        if (has_template_property(package.name, "ldflags", abstract_packages, compiler)) {
+        if (package_has_property(package.name, "ldflags", abstract_packages, compiler)) {
             append_unique(result.linker_flags, template_value(package.name, "ldflags"));
         }
-        if (has_template_property(package.name, "lib", abstract_packages, compiler)) {
+        if (package_has_property(package.name, "lib", abstract_packages, compiler)) {
             append_unique(result.library_paths, template_value(package.name, "lib"));
         }
 
@@ -152,10 +152,10 @@ namespace {
                                   const AbstractPackageSelections& abstract_packages,
                                   const std::string& compiler) {
         if (std::find(dependencies.begin(), dependencies.end(), "mpi") != dependencies.end() &&
-            has_template_property("mpi", property, abstract_packages, compiler)) {
+            package_has_property("mpi", property, abstract_packages, compiler)) {
             return template_value("mpi", property);
         }
-        if (has_template_property("compiler", property, abstract_packages, compiler)) {
+        if (package_has_property("compiler", property, abstract_packages, compiler)) {
             return template_value("compiler", property);
         }
         return {};
