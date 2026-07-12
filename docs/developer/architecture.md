@@ -51,7 +51,6 @@ Builds a dependency graph and determines the installation order.
 | File | Responsibility |
 |---|---|
 | `advisor.cpp` | Lookup table for default implementations (e.g., `blas` → `intel-oneapi-mkl` on x86_64) |
-| `essential_dependencies.cpp` | Collects non-optional dependencies |
 | `optional_dependencies.cpp` | Handles optional dependency selection |
 | `requirements.cpp` | Evaluates dependency requirements |
 | `resolve_dependencies.cpp` | Dependency DAG construction and resolution |

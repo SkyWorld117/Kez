@@ -3,7 +3,6 @@
 #include <database/config.hpp>
 #include <database/database.hpp>
 #include <dependency_resolver/advisor.hpp>
-#include <dependency_resolver/essential_dependencies.hpp>
 #include <dependency_resolver/optional_dependencies.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
@@ -123,7 +122,7 @@ namespace {
 
     std::vector<std::string> select_dependencies(ResolutionState& state,
                                                  const PackageConfig& config) {
-        std::vector<std::string> dependencies = get_essential_dependencies(config.name);
+        std::vector<std::string> dependencies = get_db_config(config.name)->dependencies;
         const std::vector<std::string> optional_dependencies =
             get_optional_dependencies(config.name);
 

@@ -72,8 +72,8 @@ using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelection
  *
  *   1. **Adjacency-list construction** -- For each target and every package
  *      reachable from it, the function retrieves the package's database
- *      configuration and collects its essential (hard) dependencies via
- *      get_essential_dependencies().  Optional (conditional) dependencies are
+ *      configuration and collects its essential (hard) dependencies from
+ *      its database config.  Optional (conditional) dependencies are
  *      handled according to the @p interactive flag (see below). Interactive
  *      discovery groups configurable options by the optional package they
  *      require before asking for option states.
@@ -146,7 +146,6 @@ using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelection
  *          - the chosen concrete package itself cannot be found in the database,
  *          - stdin input fails (EOF or read error) during interactive mode.
  *
- * @see get_essential_dependencies()   Collects hard dependencies of a package.
  * @see get_optional_dependencies()    Collects conditional dependencies.
  * @see topological_sort()             Produces the initial topological order.
  * @see advise()                       Heuristics-based implementation picker.

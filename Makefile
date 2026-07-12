@@ -36,7 +36,6 @@ LIB_SOURCES := \
 	$(SRC_DIR)/database/parser_utils.cpp \
 	$(SRC_DIR)/database/source_parser.cpp \
 	$(SRC_DIR)/dependency_resolver/advisor.cpp \
-	$(SRC_DIR)/dependency_resolver/essential_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/optional_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/requirements.cpp \
 	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \

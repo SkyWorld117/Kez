@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <database/database.hpp>
-#include <dependency_resolver/essential_dependencies.hpp>
 #include <dependency_resolver/optional_dependencies.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <dependency_resolver/toposort.hpp>
@@ -167,7 +166,7 @@ recipe:
               requires: [stage-optional]
 )");
 
-        EXPECT_EQ(get_essential_dependencies("root"), std::vector<std::string>({"required"}));
+        EXPECT_EQ(get_db_config("root")->dependencies, std::vector<std::string>({"required"}));
         EXPECT_EQ(get_optional_dependencies("root"),
                   std::vector<std::string>(
                       {"environment-optional", "shared", "option-optional", "stage-optional"}));
