@@ -524,7 +524,6 @@ if [[ -n "$folder_and_version" ]]; then
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -DCMAKE_INSTALL_PREFIX="${KEZ_SYSTEM}" \
         -DCMAKE_BUILD_TYPE=Release \
-        -DYAML_BUILD_SHARED_LIBS=ON \
         -DCMAKE_BUILD_RPATH="${KEZ_SYSTEM}/lib;${KEZ_SYSTEM}/lib64" \
         -DCMAKE_INSTALL_RPATH="${KEZ_SYSTEM}/lib;${KEZ_SYSTEM}/lib64" \
         -DCMAKE_EXE_LINKER_FLAGS="-L${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib64"

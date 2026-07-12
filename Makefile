@@ -16,7 +16,7 @@ CXXFLAGS ?= -O3 -flto
 CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic -MMD -MP
 LDFLAGS := -L$(KEZ_SYSTEM)/lib -L$(KEZ_SYSTEM)/lib64 \
 	-Wl,-rpath,$(KEZ_SYSTEM)/lib -Wl,-rpath,$(KEZ_SYSTEM)/lib64
-LDLIBS := -lyaml-cpp
+LDLIBS := $(KEZ_SYSTEM)/lib64/libyaml-cpp.a
 TEST_LDLIBS := -lgtest -lgtest_main -pthread
 
 SRC_DIR := src
@@ -109,8 +109,8 @@ $(CLI_BINARY): $(CLI_OBJECTS) $(LIBRARY) | $(BIN_DIR)
 $(COMPLETION_BINARY): $(COMPLETION_OBJECT) $(LIBRARY) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-$(BIN_DIR)/kez_print: $(SRC_DIR)/utils/colored_io.cpp $(LIBRARY) | $(BIN_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+$(BIN_DIR)/kez_print: $(SRC_DIR)/utils/colored_io.cpp | $(BIN_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
