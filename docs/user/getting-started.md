@@ -101,7 +101,7 @@ settings:
 
 To make Kez as distribution-independent as possible, it creates a mini toolchain which contains a GCC compiler, GNU build system, cmake set, and other essential tools. This toolchain is isolated from the system environment and can be easily managed within the Kez environment.
 
-This process takes however quite some time and compute power, so it is recommended to run it on a dedicated compute node.
+This process takes quite some time and compute power, so it is recommended to run it on a dedicated compute node.
 
 You can initialize the toolchain by running the following command:
 
