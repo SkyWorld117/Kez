@@ -62,12 +62,12 @@ Determines where the package is installed:
 
 Describes how Kez fetches the source code or prebuilt binaries.
 
-| Source type | Count | Description |
-|---|---|---|
-| `tarball` | 79 | `.tar.gz`, `.tar.xz`, `.tgz` archives |
-| `git` | 22 | Git repository (uses `tag` field) |
-| `script` | 3 | Self-contained installer script |
-| `zip` | 2 | `.zip` archives |
+| Source type | Description |
+|---|---|
+| `tarball` | `.tar.gz`, `.tar.xz`, `.tgz` archives |
+| `git` | Git repository (uses `tag` field) |
+| `script` | Self-contained installer script |
+| `zip` | `.zip` archives |
 
 ```yaml
 source:
@@ -94,12 +94,12 @@ dependencies:
 
 ### `toolchain`
 
-| Toolchain | Count | Behaviour |
-|---|---|---|
-| `autotools` | 50 | Generates `./configure` commands with `--`-prefixed options |
-| `cmake` | 29 | Generates `cmake ..` commands with `-D`-prefixed options |
-| `make` | 11 | Plain `make`; options are injected as environment variables |
-| _(none)_ | 30 | No standard build-system wrappers; use `preprocessing`/`postprocessing` |
+| Toolchain | Behaviour |
+|---|---|
+| `autotools` | Generates `./configure` commands with `--`-prefixed options |
+| `cmake` | Generates `cmake ..` commands with `-D`-prefixed options |
+| `make` | Plain `make`; options are injected as environment variables |
+| _(none)_ | No standard build-system wrappers; use `preprocessing`/`postprocessing` |
 
 Abstract and external packages do not have a toolchain. Vendor packages using a
 `script` source type also typically have no toolchain — their installation logic
