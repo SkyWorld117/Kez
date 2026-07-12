@@ -68,7 +68,7 @@ Headers and sources share the same component subdirectories. Each component corr
 - `rebuild/` — Powers `install --rebuild <pkg>` (a.k.a. `-R`): reads an environment's installed set from `state.yaml`, inverts a `BashCommandPlan`'s dependency edges into a dependents map, and computes the transitive closure of a target's dependents to produce the filtered rebuild plan. Pure functions over `BashCommandPlan` (from `parser/`).
 - `ui/` — The interactive front end: `commands`/`ui` dispatch subcommands (`init`, `install`, `packages`, `environment`, `factory`, ...), `ui_utils` and `bash_completion` support them. `install.cpp` hosts the `install --rebuild`/`-R` path, which narrows the plan to the rebuild set and forces it through `scripts/install.sh`.
 - `factory/` — Parses factory profiles (buildspace/launch/scheduler templates) emitted as part of the install plan.
-- `utils/` — Generic helpers shared across components: `yaml_utils`, `string_utils`, `file_utils`, `bash_utils`, `dump`, and `colored_io` (the `ERROR`/info/warning/success printers; `colors.h` holds the raw ANSI codes).
+- `utils/` — Generic helpers shared across components: `yaml_utils`, `string_utils`, `file_utils`, `bash_utils`, `dump`, `terminal_ui`, and `colored_io` (the `ERROR`/info/warning/success printers; `colors.h` holds the raw ANSI codes).
 
 Entry points: `src/main.cpp` builds the `kez` CLI binary (`run_ui`); `src/bash_completion_main.cpp` builds the `kez_completion` helper. The Makefile also produces small `print_info`/`print_warning`/`print_error`/`print_success` binaries used by `scripts/install.sh`.
 
