@@ -73,6 +73,8 @@ namespace {
 paths:
   mpis: mpis
   vendors: vendors
+system-stack:
+  gcc: 11.5.0
 )");
             clear_db_cache();
         }

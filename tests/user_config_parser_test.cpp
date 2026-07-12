@@ -74,7 +74,8 @@ namespace {
             setenv("KEZ_HOME", path_.c_str(), 1);
             setenv("KEZ_ARCH", "x86_64", 1);
             setenv("CFLAGS", "host flags", 1);
-            write_package("gcc", R"(
+
+            const std::string gcc_recipe = R"(
 recipe:
   name: gcc
   type: compiler
@@ -82,7 +83,14 @@ recipe:
     c: /usr/bin/gcc
     cxx: /usr/bin/g++
     fort: /usr/bin/gfortran
-)");
+)";
+
+            // Provide a manifest.yaml so that parse_compiler("system") can
+            // look up the system gcc version.  The version "11.5.0" will
+            // not match any version-range file, so select_config_path falls
+            // back to latest.yaml — no extra recipe file is needed.
+            write_file(path_ / "manifest.yaml", "system-stack:\n  gcc: 11.5.0\n");
+            write_package("gcc", gcc_recipe);
             clear_db_cache();
         }
 
