@@ -1,0 +1,211 @@
+---
+recipe:
+    name: code-saturne
+    description: >
+        EDF's general-purpose Computational Fluid Dynamics (CFD) tool handling
+        incompressible or expandable flows with or without heat transfer and
+        turbulence, with dedicated modules for radiative heat transfer,
+        combustion, magneto-hydrodynamics, compressible flows, two-phase flows,
+        and atmospheric flows.
+    type: package
+    toolchain: autotools
+
+    source:
+        type: git
+        url: https://github.com/code-saturne/code_saturne
+        releases:
+            - version: 9.2.0
+              tag: v9.2.0
+            - version: 9.0.2
+              tag: v9.0.2
+            - version: 8.2.2
+              tag: v8.2.2
+
+    # Core dependencies always required for a useful build.
+    # Optional library features are handled via build options below.
+    dependencies:
+        - mpi
+        - zlib
+
+    build:
+        # Generate the configure script from the autotools sources.
+        # The git archive does not ship a pre-generated configure script.
+        preprocessing: cd ${source} && ./sbin/bootstrap
+
+        configurations:
+            options:
+                # ── Core build options ──────────────────────────────────────
+                - name: enable-openmp
+                  description: Enable OpenMP parallelism
+                  enabled:
+                      default: true
+                  disabled_format: disable-openmp
+
+                - name: enable-debug
+                  description: Reduce optimization for debugging
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  disabled_format: disable-debug
+
+                - name: enable-shared
+                  description: Build shared libraries
+                  enabled:
+                      default: true
+                  disabled_format: disable-shared
+
+                - name: enable-long-gnum
+                  description: >
+                      Enable 64-bit global numbering (cs_gnum_t).
+                      Recommended for large meshes.
+                  enabled:
+                      default: true
+                  disabled_format: disable-long-gnum
+
+                - name: with-mpi
+                  description: Path to MPI installation
+                  enabled_value:
+                      default: ${mpi.prefix}
+
+                # ── GUI / front-end options ────────────────────────────────
+                - name: disable-gui
+                  description: >
+                      Disable the GUI. Recommended for server and HPC
+                      environments where PyQt5/PySide6 are not available.
+                  user_configurable: true
+                  enabled:
+                      default: true
+
+                - name: disable-frontend
+                  description: Disable front-end elements
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: disable-backend
+                  description: Disable back-end elements
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                # ── I/O dependencies ───────────────────────────────────────
+                - name: with-hdf5
+                  description: Path to HDF5 installation
+                  user_configurable: true
+                  enabled_value:
+                      default: ${hdf5.prefix}
+                  requires: [hdf5]
+
+                - name: with-cgns
+                  description: Path to CGNS installation (CFD General Notation System)
+                  enabled_value:
+                      default: ${cgns.prefix}
+                  requires: [cgns]
+
+                - name: with-med
+                  description: Path to MED installation (SALOME data exchange)
+                  enabled_value:
+                      default: ${med.prefix}
+                  requires: [med]
+
+                # ── Mesh partitioning dependencies ─────────────────────────
+                - name: with-scotch
+                  description: Path to SCOTCH installation (graph partitioning)
+                  user_configurable: true
+                  enabled_value:
+                      default: ${scotch.prefix}
+                  requires: [scotch]
+
+                - name: with-metis
+                  description: Path to METIS installation (graph partitioning)
+                  user_configurable: true
+                  enabled_value:
+                      default: ${metis.prefix}
+                  requires: [metis]
+
+                # ── GPU acceleration ───────────────────────────────────────
+                - name: enable-cuda
+                  description: Enable CUDA GPU offload
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  requires: [cuda]
+
+                - name: NVCC
+                  description: Path to NVCC installation (CUDA compiler)
+                  enabled:
+                      conditions:
+                          - condition: ${code-saturne.config.enable-cuda} true
+                            value: true
+                  enabled_value:
+                      default: ${cuda.prefix}/bin/nvcc
+                  requires: [cuda]
+
+                - name: NVCCFLAGS
+                  description: Additional flags for NVCC compilation
+                  user_configurable: true
+                  enabled:
+                      conditions:
+                          - condition: ${code-saturne.config.enable-cuda} true
+                            value: true
+                  enabled_value:
+                      default: -O3
+                      conditions:
+                          - condition: ${code-saturne.config.with-nccl} true
+                            action: append
+                            value: -I${nvhpc-nccl.prefix}/include
+                  requires: [cuda]
+
+                - name: with-cublas
+                  description: Path to cuBLAS installation (CUDA BLAS library)
+                  enabled:
+                      conditions:
+                          - condition: ${code-saturne.config.enable-cuda} true
+                            value: true
+                  enabled_value:
+                      default: ${cuda.prefix}
+                  requires: [cuda]
+
+                - name: with-cusparse
+                  description: Path to cuSPARSE installation (CUDA sparse linear algebra library)
+                  enabled:
+                      conditions:
+                          - condition: ${code-saturne.config.enable-cuda} true
+                            value: true
+                  enabled_value:
+                      default: ${cuda.prefix}
+                  requires: [cuda]
+
+                - name: with-nccl
+                  description: Path to NCCL installation (NVIDIA Collective Communications Library)
+                  user_configurable: true
+                  enabled_value:
+                      default: ${nvhpc-nccl.prefix}
+                  requires: [cuda, nvhpc-nccl]
+
+                # ── Solver dependencies ────────────────────────────────────
+                - name: with-mumps
+                  description: Path to MUMPS installation (sparse direct solver)
+                  enabled_value:
+                      default: ${mumps.prefix}
+                  requires: [mumps]
+
+                - name: with-petsc
+                  description: Path to PETSc installation (iterative solver framework)
+                  enabled_value:
+                      default: ${petsc.prefix}
+                  requires: [petsc]
+
+                - name: with-hypre
+                  description: Path to HYPRE installation (scalable preconditioners)
+                  enabled_value:
+                      default: ${hypre.prefix}
+                  requires: [hypre]
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${code-saturne.prefix}/lib
+        include: ${code-saturne.prefix}/include
