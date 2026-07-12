@@ -20,6 +20,4 @@ recipe:
 
     properties:
         lib: ${bison.prefix}/lib
-        libs:
-            default: -lbison
         include: ${bison.prefix}/include
