@@ -1,17 +1,13 @@
-#include <yaml-cpp/yaml.h>
-
 #include <algorithm>
 #include <cctype>
 #include <database/database.hpp>
+#include <database/resolve_utils.hpp>
 #include <dependency_resolver/requirements.hpp>
-#include <filesystem>
 #include <string>
 #include <unordered_set>
 #include <user_config_generator/config_transformer.hpp>
 #include <utility>
-#include <utils/bash_utils.hpp>
 #include <utils/string_utils.hpp>
-#include <utils/yaml_utils.hpp>
 #include <vector>
 
 namespace {
@@ -56,38 +52,6 @@ namespace {
         }
         const std::size_t value = name.find('=');
         return value == std::string::npos ? name : name.substr(0, value);
-    }
-
-    std::pair<std::string, std::string> parse_compiler(const std::string& compiler) {
-        if (compiler.empty() || compiler == "system") {
-            // Read the system gcc version from manifest.yaml
-            const std::string kez_home = get_env_var("KEZ_HOME");
-            const auto manifest_path   = std::filesystem::path(kez_home) / "manifest.yaml";
-            const YAML::Node manifest  = cached_yaml_load(manifest_path);
-            return {"gcc", yaml_scalar(manifest["system-stack"]["gcc"], "system-stack.gcc")};
-        }
-        const std::size_t separator = compiler.find('@');
-        if (separator == std::string::npos) {
-            return {compiler, "latest"};
-        }
-        return {compiler.substr(0, separator), compiler.substr(separator + 1)};
-    }
-
-    PackageConfigPtr property_config(const std::string& package,
-                                     const AbstractPackageSelections& abstract_packages,
-                                     const std::string& compiler) {
-        if (package == "compiler") {
-            const auto [compiler_name, compiler_version] = parse_compiler(compiler);
-            return get_db_config(compiler_name, compiler_version);
-        }
-        const auto abstract = abstract_packages.find(package);
-        return get_db_config(abstract == abstract_packages.end() ? package : abstract->second);
-    }
-
-    bool has_template_property(const std::string& package, const std::string& property,
-                               const AbstractPackageSelections& abstract_packages,
-                               const std::string& compiler) {
-        return has_property(*property_config(package, abstract_packages, compiler), property);
     }
 
     std::string template_value(const std::string& package, const std::string& property) {
