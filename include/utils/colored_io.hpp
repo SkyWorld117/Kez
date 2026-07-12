@@ -14,26 +14,13 @@
 #include <utils/string_utils.hpp>
 
 /**
- * @enum PrintLevel
- * @brief Identifies the severity or category of a message to print.
- *
- * Each level maps to a distinct prefix, ANSI colour, and output stream:
- *   - @c Debug   → "[D]:" / cyan   / stdout
- *   - @c Info    → "[I]:" / blue    / stdout
- *   - @c Warning → "[W]:" / yellow  / stdout
- *   - @c Error   → "[E]:" / red     / stderr
- *   - @c Success → "[S]:" / green   / stdout
- */
-enum class PrintLevel { Debug, Info, Warning, Error, Success };
-
-/**
  * @def INFO(message)
  * @brief Print an informational message prefixed with "[I]:".
  *
  * @param message The text to print.
  * @see print_info
  */
-#define INFO(message) print(PrintLevel::Info, message)
+#define INFO(message) std::cout << color<Color::INFO>(std::string("[I]: ") + (message)) << std::endl
 
 /**
  * @def WARNING(message)
@@ -42,7 +29,8 @@ enum class PrintLevel { Debug, Info, Warning, Error, Success };
  * @param message The text to print.
  * @see print_warning
  */
-#define WARNING(message) print(PrintLevel::Warning, message)
+#define WARNING(message) \
+    std::cout << color<Color::WARNING>(std::string("[W]: ") + (message)) << std::endl
 
 /**
  * @def ERROR(message)
@@ -51,7 +39,8 @@ enum class PrintLevel { Debug, Info, Warning, Error, Success };
  * @param message The text to print.
  * @see print_error
  */
-#define ERROR(message) print(PrintLevel::Error, message)
+#define ERROR(message) \
+    std::cerr << color<Color::ERROR>(std::string("[E]: ") + (message)) << std::endl
 
 /**
  * @def SUCCESS(message)
@@ -60,7 +49,8 @@ enum class PrintLevel { Debug, Info, Warning, Error, Success };
  * @param message The text to print.
  * @see print_success
  */
-#define SUCCESS(message) print(PrintLevel::Success, message)
+#define SUCCESS(message) \
+    std::cout << color<Color::SUCCESS>(std::string("[S]: ") + (message)) << std::endl
 
 /**
  * @def DEBUG(message)
@@ -73,7 +63,8 @@ enum class PrintLevel { Debug, Info, Warning, Error, Success };
  * @see print_debug
  */
 #ifdef DDEBUG
-#define DEBUG(message) print_debug(message)
+#define DEBUG(message) \
+    std::cout << color<Color::DEBUG>(std::string("[D]: ") + (message)) << std::endl
 #else
 #define DEBUG(message) \
     do {               \
@@ -117,39 +108,6 @@ template <int Last, int... Ts> inline std::string color(const std::string& text)
                std::to_string(Last) + "m" + text + "\033[0m";
     } else {
         return text;
-    }
-}
-
-/**
- * @brief Print a message with a level-specific prefix, colour, and stream.
- *
- * Dispatches on @p level to select the prefix string, ANSI colour code, and
- * output stream (std::cout for all levels except @c Error which uses
- * std::cerr).  ANSI codes are suppressed when stdout is not a TTY.
- *
- * @param level   The severity/category of the message (see @ref PrintLevel).
- * @param message The text to print.
- *
- * @see PrintLevel
- * @see color
- */
-inline void print(PrintLevel level, const std::string& message) {
-    switch (level) {
-        case PrintLevel::Debug:
-            std::cout << color<Color::DEBUG>("[D]: " + message) << std::endl;
-            break;
-        case PrintLevel::Info:
-            std::cout << color<Color::INFO>("[I]: " + message) << std::endl;
-            break;
-        case PrintLevel::Warning:
-            std::cout << color<Color::WARNING>("[W]: " + message) << std::endl;
-            break;
-        case PrintLevel::Error:
-            std::cerr << color<Color::ERROR>("[E]: " + message) << std::endl;
-            break;
-        case PrintLevel::Success:
-            std::cout << color<Color::SUCCESS>("[S]: " + message) << std::endl;
-            break;
     }
 }
 
