@@ -1,12 +1,17 @@
+#include <yaml-cpp/yaml.h>
+
 #include <algorithm>
 #include <cctype>
 #include <database/database.hpp>
 #include <dependency_resolver/requirements.hpp>
+#include <filesystem>
 #include <string>
 #include <unordered_set>
 #include <user_config_generator/config_transformer.hpp>
 #include <utility>
+#include <utils/bash_utils.hpp>
 #include <utils/string_utils.hpp>
+#include <utils/yaml_utils.hpp>
 #include <vector>
 
 namespace {
@@ -55,7 +60,11 @@ namespace {
 
     std::pair<std::string, std::string> parse_compiler(const std::string& compiler) {
         if (compiler.empty() || compiler == "system") {
-            return {"gcc", "system"};
+            // Read the system gcc version from manifest.yaml
+            const std::string kez_home = get_env_var("KEZ_HOME");
+            const auto manifest_path   = std::filesystem::path(kez_home) / "manifest.yaml";
+            const YAML::Node manifest  = cached_yaml_load(manifest_path);
+            return {"gcc", yaml_scalar(manifest["system-stack"]["gcc"], "system-stack.gcc")};
         }
         const std::size_t separator = compiler.find('@');
         if (separator == std::string::npos) {
