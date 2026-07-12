@@ -64,7 +64,7 @@ namespace {
 }  // namespace
 
 /**
- * @brief Runs the `uconf` subcommand: generates a user configuration template for the
+ * @brief Runs the `uconf` subcommand: generates a user configurable YAML for the
  *        given packages, optionally writing it to a file with --save.
  */
 void execute_uconf(const CommandArguments& arguments) {
@@ -104,7 +104,7 @@ void execute_uconf(const CommandArguments& arguments) {
     if (output_path.empty()) {
         std::cout << YAML::Dump(config) << '\n';
     } else {
-        write_yaml(config, output_path, "Configuration template written to: " + output_path);
+        write_yaml(config, output_path, "Configurable YAML written to: " + output_path);
     }
 }
 
