@@ -51,3 +51,15 @@ At the moment, the repository is mainly maintained by Team RACKlette. If you wan
 The `main` branch is protected, any form of update or contribution should be done through pull requests.
 
 A pull request should pass the test suite (`make test`) and should ideally be tested on a real HPC cluster before merging. The test suite covers the C++ backend components including database parsing, dependency resolution, user config generation, and command-line parsing.
+
+### Database Contributions
+
+Database contributions are welcome! If you want to add a new package, please follow the existing structure in the `database` folder. Each package should have its own YAML file with the necessary metadata, dependencies, and build instructions. Make sure to test your package on a real HPC cluster and ensure that it builds and installs correctly. Notice that **ALL** the dependencies of the package should be present in the database, and the package is tested with all of them. Otherwise, the package will be rejected.
+
+### AI Contributions
+
+Yes, we are open to AI contributions! However, you need to follow the guidelines below:
+
+- A natural human must be responsible for the final code submission.
+- The AI-generated code should be reviewed and tested by a human before submission. If the corresponding human cannot answer questions about the code, it will be rejected.
+- The AI-generated code should be short and simple, because we review each pull request manually and we cannot spend too much time on reviewing complex code.
