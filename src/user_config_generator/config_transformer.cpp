@@ -55,7 +55,7 @@ namespace {
 
     std::pair<std::string, std::string> parse_compiler(const std::string& compiler) {
         if (compiler.empty() || compiler == "system") {
-            return {"gcc", "latest"};
+            return {"gcc", "system"};
         }
         const std::size_t separator = compiler.find('@');
         if (separator == std::string::npos) {
