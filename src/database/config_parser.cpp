@@ -91,7 +91,6 @@ namespace {
         for (std::size_t i = 0; i < node.size(); ++i) {
             const std::string override_path = path + "[" + std::to_string(i) + "]";
             YAML::Node override_node        = node[i];
-            expect_map(override_node, override_path, context);
             check_keys(override_node, {"condition", "target", "action", "value"}, override_path,
                        context);
 
@@ -146,10 +145,8 @@ namespace {
 
 PackageConfigPtr parse_config_document(const YAML::Node& document,
                                        const DatabaseParserContext& context) {
-    expect_map(document, "document", context);
     check_keys(document, {"recipe"}, "document", context);
     YAML::Node recipe = required_node(document, "recipe", "document", context);
-    expect_map(recipe, "recipe", context);
     check_keys(recipe,
                {"name", "description", "author", "type", "toolchain", "source", "dependencies",
                 "overrides", "build", "properties", "implementations"},

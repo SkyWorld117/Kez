@@ -49,7 +49,6 @@ namespace {
     ConfigurableValue<T> parse_configurable(const YAML::Node& node, const std::string& path,
                                             const DatabaseParserContext& context,
                                             ValueParser parse_value) {
-        expect_map(node, path, context);
         check_keys(node, {"default", "conditions"}, path, context);
         ConfigurableValue<T> result;
         if (yaml_has(node, "default") && !node["default"].IsNull()) {
@@ -61,7 +60,6 @@ namespace {
             for (std::size_t i = 0; i < conditions.size(); ++i) {
                 const std::string condition_path = path + ".conditions[" + std::to_string(i) + "]";
                 YAML::Node condition_node        = conditions[i];
-                expect_map(condition_node, condition_path, context);
                 check_keys(condition_node, {"condition", "action", "value"}, condition_path,
                            context);
 
@@ -146,7 +144,6 @@ namespace {
      */
     EnvironmentVariable parse_environment_variable(const YAML::Node& node, const std::string& path,
                                                    const DatabaseParserContext& context) {
-        expect_map(node, path, context);
         check_keys(
             node, {"name", "description", "user_configurable", "requires", "default", "conditions"},
             path, context);
@@ -181,7 +178,6 @@ namespace {
 
     BuildOption parse_option(const YAML::Node& node, const std::string& path,
                              const DatabaseParserContext& context) {
-        expect_map(node, path, context);
         check_keys(node,
                    {"name", "description", "user_configurable", "enabled", "enabled_format",
                     "disabled_format", "requires", "enabled_value", "disabled_value"},
@@ -218,7 +214,6 @@ namespace {
 
 BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::string& path,
                                              const DatabaseParserContext& context) {
-    expect_map(node, path, context);
     check_keys(node, {"command", "environment", "options"}, path, context);
 
     BuildConfiguration result;
@@ -253,7 +248,6 @@ BuildConfiguration parse_build_configuration(const YAML::Node& node, const std::
 
 Build parse_build(const YAML::Node& node, const std::string& path,
                   const DatabaseParserContext& context) {
-    expect_map(node, path, context);
     check_keys(node, {"preprocessing", "postprocessing", "configurations", "stages"}, path,
                context);
 
@@ -270,7 +264,6 @@ Build parse_build(const YAML::Node& node, const std::string& path,
         for (std::size_t i = 0; i < stages.size(); ++i) {
             const std::string stage_path = path + ".stages[" + std::to_string(i) + "]";
             YAML::Node stage_node        = stages[i];
-            expect_map(stage_node, stage_path, context);
             check_keys(stage_node, {"target", "multithreaded", "configurations"}, stage_path,
                        context);
 

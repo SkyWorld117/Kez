@@ -44,7 +44,6 @@ namespace {
 
 Source parse_source(const YAML::Node& node, const std::string& path,
                     const DatabaseParserContext& context) {
-    expect_map(node, path, context);
     check_keys(node, {"type", "url", "releases"}, path, context);
 
     Source result;
@@ -62,7 +61,6 @@ Source parse_source(const YAML::Node& node, const std::string& path,
     for (std::size_t i = 0; i < releases.size(); ++i) {
         const std::string release_path = path + ".releases[" + std::to_string(i) + "]";
         YAML::Node release_node        = releases[i];
-        expect_map(release_node, release_path, context);
         check_keys(release_node, {"version", "url", "tag"}, release_path, context);
 
         Release release;
