@@ -246,29 +246,6 @@ std::string parser_package_prefix(const std::string& package_name,
                                   UserConfigParserContext& context);
 
 /**
- * @brief Check whether a package declares a specific property.
- *
- * Consults the package's database configuration for a property matching
- * @p property_name.  This function respects the property aliasing rules
- * defined by @ref has_property() (e.g. "includes" is aliased to "include",
- * "ldflags"/"nvldflags" to "lib").
- *
- * @param package_name   The canonical name of the package to query.
- * @param property_name  The property name to look up (e.g. "include", "lib",
- *                       "includes", "ldflags").
- * @param context        The parser context that provides access to loaded
- *                       database configurations (via @p packages and
- *                       @p extra_configs).
- * @return @c true if the package has the property (or an alias matches),
- *         @c false otherwise.
- *
- * @see has_property()  For the alias rules applied during lookup.
- * @see find_property()  For the direct property search without aliasing.
- */
-bool parser_package_has_property(const std::string& package_name, const std::string& property_name,
-                                 UserConfigParserContext& context);
-
-/**
  * @brief Generate the shell source commands for a resolved user package and
  *        append them to the command list.
  *

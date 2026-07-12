@@ -334,19 +334,6 @@ namespace {
                    : "-L" + path + " -Wl,-rpath," + path;
     }
 
-    /** @brief Retrieves the PackageConfig for a property lookup, resolving "compiler" to the active compiler and abstract packages to their concrete implementation. */
-    PackageConfigPtr property_package_config(const std::string& package_name,
-                                             UserConfigParserContext& context) {
-        if (package_name == "compiler") {
-            const auto [compiler_name, compiler_version] = current_compiler(context);
-            return get_db_config(compiler_name,
-                                 compiler_version == "system" ? "latest" : compiler_version);
-        }
-        const auto abstract = context.abstract_packages.find(package_name);
-        return parser_package_config(
-            context, abstract == context.abstract_packages.end() ? package_name : abstract->second);
-    }
-
     /** @brief Applies parser conditions to a ConfigurableValue<std::string>, returning the resulting string. */
     std::string apply_string_value(const ConfigurableValue<std::string>& configurable,
                                    UserConfigParserContext& context) {
@@ -715,11 +702,4 @@ std::string parser_package_prefix(const std::string& package_name,
             .string();
     }
     return (context.settings.install_prefix / requested_name).string();
-}
-
-/** @brief Checks whether a package has a named property, accounting for abstract-to-concrete resolution. */
-bool parser_package_has_property(const std::string& package_name, const std::string& property_name,
-                                 UserConfigParserContext& context) {
-    const PackageConfigPtr config = property_package_config(package_name, context);
-    return has_property(*config, property_name);
 }
