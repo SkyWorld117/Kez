@@ -182,20 +182,6 @@ namespace {
                left.disabled_value == right.disabled_value;
     }
 
-    bool option_values_equal(const std::unordered_map<std::string, ParsedOptionState>& left,
-                             const std::unordered_map<std::string, ParsedOptionState>& right) {
-        if (left.size() != right.size()) {
-            return false;
-        }
-        for (const auto& [name, value] : left) {
-            const auto parsed = right.find(name);
-            if (parsed == right.end() || !option_state_equal(value, parsed->second)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     void compute_environment(const BuildConfiguration& configuration,
                              const YAML::Node& user_configuration, const PackageConfig& package,
                              UserConfigParserContext& context, bool use_user_values,
@@ -225,8 +211,14 @@ namespace {
             if (required && apply_conditions) {
                 value = apply_parser_conditions(variable.value, value, context);
             }
-            context.environment_values[&variable]                                    = value;
-            context.named_environment_values[package.name + ".env." + variable.name] = value;
+            const std::string env_key = package.name + ".env." + variable.name;
+            const auto previous_env   = context.named_environment_values.find(env_key);
+            if (previous_env == context.named_environment_values.end() ||
+                previous_env->second != value) {
+                ++context.config_version;
+            }
+            context.environment_values[&variable]     = value;
+            context.named_environment_values[env_key] = value;
         }
     }
 
@@ -270,7 +262,15 @@ namespace {
             if (required && option.enabled.has_value() && apply_conditions) {
                 state.enabled = apply_parser_conditions(*option.enabled, state.enabled, context);
             }
-            const std::string key            = package.name + ".config." + option.name;
+            const std::string key = package.name + ".config." + option.name;
+
+            // Save a copy of the previous pass's state before line 274 modifies the map,
+            // so the convergence check below compares against the correct baseline.
+            const auto preexisting = context.named_option_values.find(key);
+            const bool is_new      = preexisting == context.named_option_values.end();
+            const ParsedOptionState previous_state =
+                is_new ? ParsedOptionState {} : preexisting->second;
+
             context.named_option_values[key] = state;
 
             if (required && option.user_configurable && use_user_values) {
@@ -294,6 +294,9 @@ namespace {
                 state.disabled_value =
                     apply_parser_conditions(*option.disabled_value, state.disabled_value, context);
             }
+            if (is_new || !option_state_equal(previous_state, state)) {
+                ++context.config_version;
+            }
             context.option_values[&option]   = state;
             context.named_option_values[key] = state;
         }
@@ -310,8 +313,7 @@ namespace {
     }
 
     bool compute_values(UserConfigParserContext& context, bool apply_conditions) {
-        const auto previous_options     = context.named_option_values;
-        const auto previous_environment = context.named_environment_values;
+        const std::size_t previous_version = context.config_version;
 
         for (const ParsedUserPackage& package : context.packages) {
             context.current_package = package.requested_name;
@@ -335,8 +337,7 @@ namespace {
                 }
             }
         }
-        return !option_values_equal(previous_options, context.named_option_values) ||
-               previous_environment != context.named_environment_values;
+        return context.config_version != previous_version;
     }
 
     void precompute_values(UserConfigParserContext& context) {

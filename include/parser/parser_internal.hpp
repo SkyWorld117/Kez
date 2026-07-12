@@ -146,6 +146,11 @@ struct UserConfigParserContext {
     /// (from the user config's "options" section).
     std::unordered_map<std::string, ParsedOptionState> named_option_values;
 
+    /// Monotonically increasing version counter bumped on every option or
+    /// environment-value change.  Used by precompute_values() to detect
+    /// convergence in O(1) instead of comparing the full maps.
+    std::size_t config_version = 0;
+
     /// Set of template names currently being resolved, used to detect and
     /// reject recursive template expansions.
     std::unordered_set<std::string> resolving_templates;
