@@ -54,8 +54,11 @@ kez () {
     fi
 
     if [[ $intercept -eq 1 ]]; then
-        local shell_commands
-        shell_commands="$("${KEZ_HOME}/bin/kez" "$@")" || return $?
+        local shell_commands ret=0
+        shell_commands="$("${KEZ_HOME}/bin/kez" "$@")" || ret=$?
+        if (( ret )); then
+            return $ret
+        fi
         eval "${shell_commands}"
     else
         "${KEZ_HOME}/bin/kez" "$@"
