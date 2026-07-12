@@ -43,12 +43,11 @@ if [[ ! -f $state_file ]]; then
 fi
 
 plan_runtime_dir="$target_env/.tmp/.kez-plan-$$"
-status_dir="$target_env/.tmp/.kez-status-$$"
-rm -rf -- "$plan_runtime_dir" "$status_dir"
-mkdir -p -- "$plan_runtime_dir" "$status_dir"
+rm -rf -- "$plan_runtime_dir"
+mkdir -p -- "$plan_runtime_dir"
 
 cleanup_runtime() {
-    rm -rf -- "$plan_runtime_dir" "$status_dir"
+    rm -rf -- "$plan_runtime_dir"
 }
 trap cleanup_runtime EXIT
 
@@ -56,9 +55,9 @@ declare -a plan_packages=()
 declare -a package_status=()
 declare -a package_command_counts=()
 declare -a package_pids=()
-declare -a running_indices=()
 declare -A package_indices=()
 current_package_index=-1
+running_count=0
 
 sanitize_name() {
     local value=$1
@@ -257,69 +256,9 @@ start_package() {
         trap - EXIT
         set +e
         run_package_body "$index"
-        status=$?
-        printf '%s\n' "$status" > "$status_dir/$index.status.tmp"
-        mv "$status_dir/$index.status.tmp" "$status_dir/$index.status"
-        exit "$status"
     ) &
     package_pids[$index]=$!
-    running_indices+=("$index")
-}
-
-finish_running_position() {
-    local position=$1
-    local index=${running_indices[$position]}
-    local package=${plan_packages[$index]}
-    local log_file
-    local status
-    local pid
-    local new_running=()
-    local running_index
-
-    log_file=$(package_log_file "$package")
-    status=$(<"$status_dir/$index.status")
-    pid=${package_pids[$index]}
-    wait "$pid" >/dev/null 2>&1 || true
-    package_pids[$index]=
-
-    for running_index in "${!running_indices[@]}"; do
-        if [[ $running_index != "$position" ]]; then
-            new_running+=("${running_indices[$running_index]}")
-        fi
-    done
-    running_indices=("${new_running[@]}")
-
-    if (( status == 0 )); then
-        package_status[$index]=done
-        mark_package_installed "$package"
-        cleanup_package_work_dir "$package"
-        "${KEZ_PRINT}" success "Completed package: $package"
-        return 0
-    fi
-
-    package_status[$index]=failed
-    # Do not clean up the work directory on failure, so the user can inspect it for debugging.
-    # cleanup_package_work_dir "$package"
-    "${KEZ_PRINT}" error "Package $package failed. Read log file: $log_file"
-    return "$status"
-}
-
-wait_for_finished_package() {
-    local position
-    local status
-    while true; do
-        for position in "${!running_indices[@]}"; do
-            if [[ -f $status_dir/${running_indices[$position]}.status ]]; then
-                if finish_running_position "$position"; then
-                    return 0
-                else
-                    status=$?
-                    return "$status"
-                fi
-            fi
-        done
-        sleep 0.1
-    done
+    (( running_count += 1 ))
 }
 
 has_pending_packages() {
@@ -334,7 +273,8 @@ has_pending_packages() {
 
 failure_status=0
 while true; do
-    while (( failure_status == 0 && ${#running_indices[@]} < install_jobs )); do
+    # Start as many ready packages as the job limit and failure status allow
+    while (( failure_status == 0 && running_count < install_jobs )); do
         find_next_ready_package
         if (( next_ready_index < 0 )); then
             break
@@ -342,17 +282,61 @@ while true; do
         start_package "$next_ready_index"
     done
 
-    if (( ${#running_indices[@]} == 0 )); then
+    # If nothing is running, all pending packages have unmet dependencies
+    # or we're out of work — exit the scheduling loop.
+    if (( running_count == 0 )); then
         break
     fi
 
-    if wait_for_finished_package; then
-        status=0
-    else
-        status=$?
+    # Wait for any background job to finish.  If wait-n is interrupted by
+    # a signal (e.g. keyboard interrupt), retry so long as children remain.
+    completed_status=0
+    while true; do
+        wait -n 2>/dev/null && completed_status=0 || completed_status=$?
+        # If exit status is > 128 the wait was interrupted by a signal;
+        # retry if there are still running children.
+        if (( completed_status <= 128 )) || ! kill -0 "${package_pids[@]}" 2>/dev/null; then
+            break
+        fi
+    done
+
+    # Find the earliest-started package whose PID is no longer running.
+    # Iterating in plan order preserves the original deterministic
+    # completion order (earliest-started packages are processed first).
+    completed_index=-1
+    for (( index = 0; index < ${#plan_packages[@]}; index++ )); do
+        pid=${package_pids[$index]:-}
+        if [[ -n $pid ]] && ! kill -0 "$pid" 2>/dev/null; then
+            completed_index=$index
+            package_pids[$index]=
+            break
+        fi
+    done
+
+    if (( completed_index < 0 )); then
+        # No tracked child exited — this shouldn't happen, but protect
+        # against an infinite loop.
+        "${KEZ_PRINT}" error "Installation error: lost track of a running package"
+        exit 2
     fi
-    if (( status != 0 && failure_status == 0 )); then
-        failure_status=$status
+
+    package=${plan_packages[$completed_index]}
+    log_file=$(package_log_file "$package")
+    running_count=$(( running_count - 1 ))
+
+    if (( completed_status == 0 )); then
+        package_status[$completed_index]=done
+        mark_package_installed "$package"
+        cleanup_package_work_dir "$package"
+        "${KEZ_PRINT}" success "Completed package: $package"
+    else
+        package_status[$completed_index]=failed
+        # Do not clean up the work directory on failure, so the user can
+        # inspect it for debugging.
+        "${KEZ_PRINT}" error "Package $package failed. Read log file: $log_file"
+        if (( failure_status == 0 )); then
+            failure_status=$completed_status
+        fi
     fi
 done
 
