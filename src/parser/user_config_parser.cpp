@@ -352,12 +352,10 @@ namespace {
         user_config_error("conditional configuration values did not converge");
     }
 
-    void append_configuration_commands(const BuildConfiguration& configuration,
-                                       const PackageConfig& package, Toolchain toolchain,
+    void append_configuration_commands(const BuildConfiguration& configuration, Toolchain toolchain,
                                        const std::string& command, UserConfigParserContext& context,
                                        std::vector<std::string>& commands) {
         std::string resolved_command = resolve_parser_scalar(command, context);
-        (void) package;
         const std::string options = render_configuration_options(configuration, toolchain, context);
         if (!options.empty()) {
             resolved_command += (resolved_command.empty() ? "" : " ") + options;
@@ -458,8 +456,7 @@ namespace {
             if (package.database_config->toolchain() != Toolchain::None ||
                 build.configurations->command.has_value()) {
                 append_configuration_commands(
-                    *build.configurations, *package.database_config,
-                    package.database_config->toolchain(),
+                    *build.configurations, package.database_config->toolchain(),
                     build.configurations->command.value_or(default_command.value_or("")), context,
                     commands);
             }
@@ -482,8 +479,8 @@ namespace {
                 // (values are still available for templating).
                 if (package.database_config->toolchain() != Toolchain::None ||
                     stage.configurations->command.has_value()) {
-                    append_configuration_commands(*stage.configurations, *package.database_config,
-                                                  Toolchain::None, command, context, commands);
+                    append_configuration_commands(*stage.configurations, Toolchain::None, command,
+                                                  context, commands);
                 }
             } else if (!command.empty()) {
                 commands.push_back(resolve_parser_scalar(command, context));
