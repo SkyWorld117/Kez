@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <parser/user_config_parser.hpp>
 #include <string>
+#include <ui/commands.hpp>
 #include <vector>
 
 /**
@@ -66,6 +67,19 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
  *                    diagnostic (e.g. "environment name").
  */
 void validate_path_component(const std::string& value, const std::string& description);
+
+/**
+ * @brief Extract and validate a single required name argument from the command
+ *        line.  The argument list must have exactly two elements: the subcommand
+ *        name and the name value.  If not, the program terminates with an error
+ *        message indicating that @p action_description requires exactly one name.
+ *
+ * @param arguments           The full command-line arguments (subcommand + name).
+ * @param action_description  Human-readable action label used in the error
+ *                            message (e.g. "env create").
+ * @return The validated name string (arguments[1]).
+ */
+std::string required_name(const CommandArguments& arguments, const std::string& action_description);
 
 /**
  * @brief Execute an external command synchronously via the system shell.

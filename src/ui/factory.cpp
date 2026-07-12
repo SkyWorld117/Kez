@@ -53,17 +53,6 @@ namespace {
                      "  -S, --with-slurm   Run scripts/install.sh through sbatch\n";
     }
 
-    /** @brief Validates and returns the single factory name argument for a given action. */
-    std::string required_factory_name(const CommandArguments& arguments,
-                                      const std::string& action) {
-        if (arguments.size() != 2) {
-            ERROR("factory " + action + " requires exactly one name");
-            exit(EXIT_FAILURE);
-        }
-        validate_path_component(arguments[1], "factory name");
-        return arguments[1];
-    }
-
     /** @brief Returns the root directory under which all factories are stored. */
     std::filesystem::path factories_root() { return configured_work_path("factories"); }
 
@@ -426,9 +415,9 @@ void execute_factory(const CommandArguments& arguments) {
 
     const std::string& action = arguments.front();
     if (action == "create") {
-        create_factory(required_factory_name(arguments, action));
+        create_factory(required_name(arguments, "factory " + action));
     } else if (action == "remove") {
-        remove_factory(required_factory_name(arguments, action));
+        remove_factory(required_name(arguments, "factory " + action));
     } else if (action == "list") {
         if (arguments.size() != 1) {
             ERROR("factory list does not accept additional arguments");
@@ -436,7 +425,7 @@ void execute_factory(const CommandArguments& arguments) {
         }
         list_directories(factories_root(), "factories");
     } else if (action == "enter") {
-        const std::string name = required_factory_name(arguments, action);
+        const std::string name = required_name(arguments, "factory " + action);
         if (!get_env_var_noerr("KEZ_FACTORY").empty()) {
             ERROR("A factory is already selected: " + get_env_var_noerr("KEZ_FACTORY"));
             exit(EXIT_FAILURE);

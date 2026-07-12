@@ -26,16 +26,6 @@ namespace {
         std::cout << "Usage: kez " << command << " <load|unload|list|which|remove> [name]\n";
     }
 
-    /** @brief Extract and validate a single required name argument from the command line. */
-    std::string required_name(const CommandArguments& arguments, const std::string& action) {
-        if (arguments.size() != 2) {
-            ERROR(action + " requires exactly one name");
-            exit(EXIT_FAILURE);
-        }
-        validate_path_component(arguments[1], action + " name");
-        return arguments[1];
-    }
-
     /** @brief Create a managed directory, erroring if it already exists. */
     void create_managed_directory(const std::filesystem::path& path,
                                   const std::string& description) {
