@@ -40,7 +40,7 @@
  * @see print_error
  */
 #define ERROR(message) \
-    std::cerr << color<Color::ERROR>(std::string("[E]: ") + (message)) << std::endl
+    std::cerr << color<Color::ERROR>(std::string("[E]: ") + (message), STDERR_FILENO) << std::endl
 
 /**
  * @def SUCCESS(message)
@@ -92,18 +92,24 @@
  * @tparam Last The last ANSI code in the sequence (e.g. `Color::RED`).
  * @tparam Ts   Zero or more preceding ANSI codes (e.g. `Color::BOLD`).
  * @param text  The plain-text string to wrap.
- * @return The input string wrapped in `\033[...m ... \033[0m` when stdout is
- *         a TTY, or the unchanged input otherwise.
+ * @param fd    File descriptor to test with isatty() (default STDOUT_FILENO).
+ *              Pass STDERR_FILENO when the output goes to stderr so that
+ *              ANSI codes are emitted when stderr is a terminal even if
+ *              stdout has been redirected.
+ * @return The input string wrapped in `\033[...m ... \033[0m` when the
+ *         given file descriptor is a TTY, or the unchanged input otherwise.
  *
  * @par Usage example
  * @code
  *   std::cout << color<Color::RED, Color::BOLD>("Hello") << std::endl;
+ *   std::cerr << color<Color::ERROR>("Oops", STDERR_FILENO) << std::endl;
  * @endcode
  *
  * @see Color (colors.h) for the available color and modifier constants.
  */
-template <int Last, int... Ts> inline std::string color(const std::string& text) {
-    if (isatty(STDOUT_FILENO)) {
+template <int Last, int... Ts>
+inline std::string color(const std::string& text, int fd = STDOUT_FILENO) {
+    if (isatty(fd)) {
         return "\033[" + ((std::to_string(Ts) + ";") + ... + std::string("")) +
                std::to_string(Last) + "m" + text + "\033[0m";
     } else {
