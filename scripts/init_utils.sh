@@ -46,12 +46,8 @@ fetch_web() {
         return 1
     fi
 
-    if [ ${ext} = "tar.xz" ]; then
+    if [[ "${ext}" == "tar.xz" ]] || [[ "${ext}" == "tar.gz" ]] || [[ "${ext}" == "tar.bz2" ]]; then
         tar -xf "${KEZ_SYSTEM_TMP}/${filename}"
-    elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${KEZ_SYSTEM_TMP}/${filename}"
-    elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${KEZ_SYSTEM_TMP}/${filename}"
     else
         echo >&2 "Unsupported file extension: ${ext}"
         return 1
@@ -151,7 +147,7 @@ fetch_github() {
         tag="v${version}"
     else
         tag=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null)
-        
+
         if [[ -z "$tag" || "$tag" == "null" ]]; then
             warn "Could not fetch latest version for ${repo}, using fallback"
             return 1
@@ -202,7 +198,7 @@ fetch_elfutils() {
 
 fetch_gcc() {
     local version="${1}"
-    local ext="${2:-tar.xz}"
+    local ext="tar.xz"
 
     if ! check_installation "gcc"; then
         return 0
@@ -226,16 +222,7 @@ fetch_gcc() {
         return 1
     fi
 
-    if [ ${ext} = "tar.xz" ]; then
-        tar -xf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
-    elif [ ${ext} = "tar.gz" ]; then
-        tar -xzf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
-    elif [ ${ext} = "tar.bz2" ]; then
-        tar -xjf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
-    else
-        echo >&2 "Unsupported file extension: ${ext}"
-        return 1
-    fi
+    tar -xf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
 
     local version="${basename#gcc-}"
     echo "${basename}::${version}"
