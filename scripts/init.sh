@@ -142,7 +142,7 @@ fi
 # zlib
 version=$(yq -r '.system-stack.zlib' "${KEZ_HOME}/manifest.yaml")
 folder_and_version=$(fetch_github "madler/zlib" "${version}")
-if check_installation "zlib"; then
+if ! is_installed "zlib"; then
     echo "Installing zlib..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -217,7 +217,7 @@ fi
 # binutils (without headers)
 if [[ use_distro_compiler -eq 1 ]]; then
     echo "Using the system's default compiler, skipping binutils installation..."
-    if check_installation "ld"; then
+    if ! is_installed "ld"; then
         ln -sf /usr/bin/ld "${KEZ_SYSTEM}/bin/ld"
         ln -sf /usr/bin/ar "${KEZ_SYSTEM}/bin/ar"
         ln -sf /usr/bin/nm "${KEZ_SYSTEM}/bin/nm"
@@ -260,7 +260,7 @@ fi
 # gcc
 if [[ use_distro_compiler -eq 1 ]]; then
     echo "Using the system's default compiler, skipping gcc installation..."
-    if check_installation "gcc"; then
+    if ! is_installed "gcc"; then
         ln -sf /usr/bin/gcc "${KEZ_SYSTEM}/bin/gcc"
         ln -sf /usr/bin/g++ "${KEZ_SYSTEM}/bin/g++"
         ln -sf /usr/bin/gfortran "${KEZ_SYSTEM}/bin/gfortran"
@@ -429,7 +429,7 @@ else
 fi
 
 # cmake
-if check_installation "cmake"; then
+if ! is_installed "cmake"; then
     echo "Installing cmake..."
     version=$(yq -r '.system-stack.cmake' "${KEZ_HOME}/manifest.yaml")
     if [[ "${version}" == "latest" ]]; then
@@ -556,7 +556,7 @@ else
 fi
 
 # patchelf
-if check_installation "patchelf"; then
+if ! is_installed "patchelf"; then
     echo "Installing patchelf..."
     version=$(yq -r '.dependencies.patchelf' "${KEZ_HOME}/manifest.yaml")
     if [[ "${version}" == "latest" ]]; then

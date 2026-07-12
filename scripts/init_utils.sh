@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
-check_installation() {
+# Check whether a package has been installed (recorded in state.yaml).
+# Returns 0 if installed, 1 if not installed.
+is_installed() {
     local pkg="$1"
-    if $(yq -r ".state | has(\"${pkg}\")" "${KEZ_SYSTEM}/state.yaml"); then
-        return 1
-    else
+    if yq -e ".state | has(\"${pkg}\")" "${KEZ_SYSTEM}/state.yaml" >/dev/null 2>&1; then
         return 0
+    else
+        return 1
     fi
 }
 
@@ -15,7 +17,7 @@ fetch_web() {
     local url="$3"
     local ext="${4:-tar.xz}"
 
-    if ! check_installation "${pkg}"; then
+    if is_installed "${pkg}"; then
         return 0
     fi
 
@@ -83,7 +85,7 @@ fetch_rust() {
     local url=https://forge.rust-lang.org/infra/archive-stable-version-installers.html
     local version="${1}"
 
-    if ! check_installation "rust"; then
+    if is_installed "rust"; then
         return 0
     fi
 
@@ -138,7 +140,7 @@ fetch_github() {
     local version="${2}"
 
     local pkg="${repo##*/}"
-    if ! check_installation "${pkg}"; then
+    if is_installed "${pkg}"; then
         return 0
     fi
 
@@ -171,7 +173,7 @@ fetch_github() {
 fetch_elfutils() {
     local version="${1}"
 
-    if ! check_installation "elfutils"; then
+    if is_installed "elfutils"; then
         return 0
     fi
 
@@ -200,7 +202,7 @@ fetch_gcc() {
     local version="${1}"
     local ext="tar.xz"
 
-    if ! check_installation "gcc"; then
+    if is_installed "gcc"; then
         return 0
     fi
 
