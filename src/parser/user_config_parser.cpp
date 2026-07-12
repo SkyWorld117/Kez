@@ -1,7 +1,6 @@
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
-#include <cctype>
 #include <cstdlib>
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>

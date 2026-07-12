@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cctype>
 #include <database/database.hpp>
 #include <database/resolve_utils.hpp>
 #include <dependency_resolver/requirements.hpp>
