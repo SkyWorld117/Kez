@@ -59,17 +59,23 @@ else
     export KEZ_DB="${KEZ_HOME}/database"
     export KEZ_ENV="${KEZ_WORKDIR}/$(yq -r '.paths.environment' "${KEZ_HOME}/manifest.yaml")"
 
-    SYSTEM_BIN="${KEZ_WORKDIR}/$(yq -r '.paths.system' "${KEZ_HOME}/manifest.yaml")/bin"
-    UTILITIES_BIN="${KEZ_WORKDIR}/$(yq -r '.paths.utilities' "${KEZ_HOME}/manifest.yaml")/bin"
+    SYSTEM_PATH="${KEZ_WORKDIR}/$(yq -r '.paths.system' "${KEZ_HOME}/manifest.yaml")"
+    UTILITIES_PATH="${KEZ_WORKDIR}/$(yq -r '.paths.utilities' "${KEZ_HOME}/manifest.yaml")"
 
-    if [[ ":$PATH:" != *":${SYSTEM_BIN}:"* ]]; then
-        export PATH="${SYSTEM_BIN}:${PATH}"
-    fi
-    if [[ ":$PATH:" != *":${UTILITIES_BIN}:"* ]]; then
-        export PATH="${UTILITIES_BIN}:${PATH}"
+    # Add the system bin directory to PATH (single, no subdirectories)
+    if [[ -d "${SYSTEM_PATH}/bin" && ":$PATH:" != *":${SYSTEM_PATH}/bin:"* ]]; then
+        export PATH="${SYSTEM_PATH}/bin:${PATH}"
     fi
 
-    unset SYSTEM_BIN UTILITIES_BIN
+    # Utilities may be split into per-package subdirectories; add each bin/.
+    for util_dir in "${UTILITIES_PATH}"/*/; do
+        [[ -d "${util_dir}/bin" ]] || continue
+        if [[ ":$PATH:" != *":${util_dir}/bin:"* ]]; then
+            export PATH="${util_dir}/bin:${PATH}"
+        fi
+    done
+
+    unset SYSTEM_PATH UTILITIES_PATH
 
     # Load main script
     source "${KEZ_HOME}/main.sh"
