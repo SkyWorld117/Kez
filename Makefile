@@ -77,6 +77,7 @@ TEST_SOURCES := \
 	tests/dependency_resolver_test.cpp \
 	tests/factory_test.cpp \
 	tests/rebuild_test.cpp \
+	tests/ui_utils_test.cpp \
 	tests/utils_test.cpp \
 	tests/user_config_parser_test.cpp \
 	tests/user_config_generator_test.cpp

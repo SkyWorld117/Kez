@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <database/database.hpp>
 #include <dependency_resolver/optional_dependencies.hpp>
+#include <dependency_resolver/requirements.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <dependency_resolver/toposort.hpp>
 #include <filesystem>
@@ -186,6 +187,20 @@ recipe:
         EXPECT_EXIT(static_cast<void>(topological_sort(cyclic)),
                     ::testing::ExitedWithCode(EXIT_FAILURE),
                     "Dependency cycle detected: a -> b -> c -> a");
+    }
+
+    TEST(DependencyRequirements, AcceptsConcreteAndSelectedAbstractDependencies) {
+        const AbstractPackageSelections selections             = {{"blas", "openblas"}};
+        const std::vector<std::string> vector_dependencies     = {"compiler", "openblas"};
+        const std::unordered_set<std::string> set_dependencies = {"compiler", "openblas"};
+
+        EXPECT_TRUE(requirements_satisfied({}, vector_dependencies, selections));
+        EXPECT_TRUE(requirements_satisfied({"compiler", "blas"}, vector_dependencies, selections));
+        EXPECT_TRUE(requirements_satisfied({"compiler", "blas"}, set_dependencies, selections));
+        EXPECT_FALSE(requirements_satisfied({"missing"}, vector_dependencies, selections));
+        EXPECT_FALSE(
+            requirements_satisfied({"blas"}, std::vector<std::string> {"compiler"}, selections));
+        EXPECT_FALSE(requirements_satisfied({"lapack"}, set_dependencies, selections));
     }
 
     TEST_F(TemporaryResolverDatabase, ResolvesAbstractAndBoundaryPackagesWithoutLeakingState) {

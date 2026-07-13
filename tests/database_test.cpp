@@ -226,6 +226,49 @@ recipe:
                     ::testing::ExitedWithCode(EXIT_FAILURE), "Overlapping database config ranges");
     }
 
+    TEST(PackageConfig, ProvidesToolchainDefaultsAndPropertyAliases) {
+        GenericPackageConfig generic;
+        AutotoolsPackageConfig autotools;
+        CMakePackageConfig cmake;
+        MakePackageConfig make;
+
+        const BuildStage parallel {"all", true, std::nullopt};
+        const BuildStage serial {"check", false, std::nullopt};
+        const BuildStage untargeted {std::nullopt, true, std::nullopt};
+
+        EXPECT_EQ(generic.toolchain(), Toolchain::None);
+        EXPECT_EQ(generic.default_configuration_command(), std::nullopt);
+        EXPECT_EQ(generic.default_stage_command(parallel, 8), std::nullopt);
+
+        EXPECT_EQ(autotools.toolchain(), Toolchain::Autotools);
+        EXPECT_EQ(autotools.default_configuration_command(), "./configure");
+        EXPECT_EQ(autotools.default_stage_command(parallel, 8), "make -j8 all");
+        EXPECT_EQ(autotools.default_stage_command(serial, 8), "make check");
+
+        EXPECT_EQ(cmake.toolchain(), Toolchain::CMake);
+        EXPECT_EQ(cmake.default_configuration_command(), "cmake -B build");
+        EXPECT_EQ(cmake.default_stage_command(parallel, 8),
+                  "cmake --build build --parallel 8 --target all");
+        EXPECT_EQ(cmake.default_stage_command(serial, 8), "cmake --build build --target check");
+        EXPECT_EQ(cmake.default_stage_command(BuildStage {"install", false, std::nullopt}, 8),
+                  "cmake --install build");
+
+        EXPECT_EQ(make.toolchain(), Toolchain::Make);
+        EXPECT_EQ(make.default_configuration_command(), std::nullopt);
+        EXPECT_EQ(make.default_stage_command(untargeted, 0), "make");
+
+        generic.properties = {{"include", std::string("/include")},
+                              {"lib", std::string("/lib")},
+                              {"libs", std::string("-lkez")}};
+        ASSERT_NE(find_property(generic, "libs"), nullptr);
+        EXPECT_EQ(find_property(generic, "missing"), nullptr);
+        EXPECT_TRUE(has_property(generic, "incflags"));
+        EXPECT_TRUE(has_property(generic, "ldflags"));
+        EXPECT_TRUE(has_property(generic, "nvldflags"));
+        EXPECT_TRUE(has_property(generic, "libs"));
+        EXPECT_FALSE(has_property(generic, "bin"));
+    }
+
     TEST(DatabaseIntegration, ParsesEveryRepositoryConfig) {
         const std::filesystem::path database = std::filesystem::path(KEZ_SOURCE_DIR) / "database";
         setenv("KEZ_DB", database.c_str(), 1);
