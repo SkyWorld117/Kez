@@ -68,7 +68,7 @@ else
     fi
 
     # Utilities may be split into per-package subdirectories; add each bin/.
-    for util_dir in "${UTILITIES_PATH}"/*/; do
+    for util_dir in "${UTILITIES_PATH}"/*; do
         [[ -d "${util_dir}/bin" ]] || continue
         if [[ ":$PATH:" != *":${util_dir}/bin:"* ]]; then
             export PATH="${util_dir}/bin:${PATH}"

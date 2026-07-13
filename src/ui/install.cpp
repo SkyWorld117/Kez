@@ -9,7 +9,7 @@
  *     submission, and the `--rebuild` workflow.
  *   - **utilities** – Manages the shared utilities environment via `add`
  *     (forwarding to the install pipeline), `remove` (deleting a single package),
- *     `reload` (updating PATH), and `empty` (removing all packages).
+ *     and `empty` (removing all packages).
  *
  * Both paths converge on run_install_plan(), which writes the parsed
  * BashCommandPlan to a temporary script and executes it through
@@ -33,7 +33,6 @@
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 #include <utils/file_utils.hpp>
-#include <utils/string_utils.hpp>
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
@@ -421,57 +420,15 @@ namespace {
     }
 
     /**
-     * @brief Emit shell commands to prepend each utility package's bin/
-     *        directory to PATH.
-     *
-     * Scans every subdirectory under <work>/utilities/ and, for each package
-     * that has a bin/ subdirectory, emits a guarded ``export PATH=...`` command
-     * that prepends it to PATH only if it is not already present.  The output
-     * is intended to be evaluated by the calling shell via the wrapper in
-     * main.sh (``kez utilities reload``).
-     *
-     * This mirrors the logic in setup-env.sh that initialises PATH from the
-     * utilities tree at shell-login time.
-     */
-    void reload_utilities() {
-        const std::filesystem::path root = configured_work_path("utilities");
-        if (!std::filesystem::is_directory(root)) {
-            INFO("Utilities environment does not exist; nothing to reload.");
-            return;
-        }
-
-        std::vector<std::string> bin_dirs;
-        for (const auto& entry : std::filesystem::directory_iterator(root)) {
-            if (!entry.is_directory()) continue;
-            const std::string name = entry.path().filename().string();
-            if (name.empty() || name[0] == '.') continue;
-
-            const auto bin_dir = entry.path() / "bin";
-            if (std::filesystem::is_directory(bin_dir)) {
-                bin_dirs.push_back(bin_dir.string());
-            }
-        }
-
-        if (bin_dirs.empty()) {
-            INFO("No utility packages with bin/ directories found.");
-            return;
-        }
-
-        // Emit a single export PATH that prepends all collected bin directories.
-        // This follows the same pattern as emit_environment_activation() — no
-        // duplicate-guard, as the wrapper in main.sh evaluates the output into
-        // the current shell and the user is expected to call reload sparingly.
-        // The paths are single-quoted for safe shell evaluation.
-        std::cout << "export PATH=" << shell_single_quote(join(bin_dirs, ":")) << ":\"${PATH}\";\n";
-    }
-
-    /**
      * @brief Remove a single package from the shared utilities environment.
      *
      * Validates the package name, deletes its directory tree under
      * <work>/utilities/, and removes the package from state.yaml so that
      * subsequent operations (e.g. a rebuild) do not reference a
      * half-removed package.
+     *
+     * PATH cleanup is handled by the shell wrapper in main.sh after the
+     * binary returns, so this function only performs filesystem operations.
      *
      * @param package  The name of the utility package to remove.
      *
@@ -539,7 +496,7 @@ void execute_install(const CommandArguments& arguments) { install(arguments, fal
  */
 void execute_utilities(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
-        std::cout << "Usage: kez utilities <add|remove|reload|empty> [options]\n";
+        std::cout << "Usage: kez utilities <add|remove|empty> [options]\n";
         return;
     }
     if (arguments.front() == "remove") {
@@ -548,14 +505,6 @@ void execute_utilities(const CommandArguments& arguments) {
             exit(EXIT_FAILURE);
         }
         remove_utilities_package(arguments[1]);
-        return;
-    }
-    if (arguments.front() == "reload") {
-        if (arguments.size() != 1) {
-            ERROR("utilities reload does not accept additional arguments");
-            exit(EXIT_FAILURE);
-        }
-        reload_utilities();
         return;
     }
     if (arguments.front() == "empty") {

@@ -205,7 +205,7 @@ namespace {
     std::vector<std::string> utilities_suggestions(int current_word_index,
                                                    const std::vector<std::string>& words) {
         if (current_word_index == 2) {
-            return {"add", "remove", "reload", "empty", "-h", "--help"};
+            return {"add", "remove", "empty", "-h", "--help"};
         }
         if (word_at(words, 2) == "add") {
             return install_suggestions(current_word_index, words, true);
