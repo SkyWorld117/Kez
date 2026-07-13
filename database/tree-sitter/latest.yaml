@@ -11,4 +11,6 @@ recipe:
               url: https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.8/tree-sitter-cli-linux-${kez.arch.tree-sitter}.zip
 
     build:
-        postprocessing: cp tree-sitter* ${tree-sitter.prefix}/bin/
+        postprocessing: |-
+            mkdir -p ${tree-sitter.prefix}/bin
+            cp tree-sitter* ${tree-sitter.prefix}/bin/

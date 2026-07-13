@@ -11,4 +11,6 @@ recipe:
               url: https://github.com/BurntSushi/ripgrep/releases/download/15.1.0/ripgrep-15.1.0-${kez.arch.ripgrep}.tar.gz
 
     build:
-        postprocessing: cp rg ${ripgrep.prefix}/bin/
+        postprocessing: |-
+            mkdir -p ${ripgrep.prefix}/bin
+            cp rg ${ripgrep.prefix}/bin/

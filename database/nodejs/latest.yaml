@@ -11,4 +11,6 @@ recipe:
               url: https://nodejs.org/dist/v24.15.0/node-v24.15.0-linux-${kez.arch.nodejs}.tar.xz
 
     build:
-        postprocessing: cp -r ${source}/* ${nodejs.prefix}/
+        postprocessing: |-
+            mkdir -p ${nodejs.prefix}
+            cp -r ${source}/* ${nodejs.prefix}/

@@ -3,7 +3,6 @@ recipe:
     name: luarocks
     description: LuaRocks - a package manager for Lua modules
     type: package
-    toolchain: autotools
 
     source:
         type: tarball
@@ -16,8 +15,14 @@ recipe:
 
     build:
         configurations:
+            command: ./configure
             options:
-                - name: with-lua
+                - name: --prefix
+                  description: Installation prefix
+                  enabled_value:
+                      default: ${luarocks.prefix}
+
+                - name: --with-lua
                   description: Path to Lua installation
                   enabled_value:
                       default: ${lua.prefix}
