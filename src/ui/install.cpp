@@ -115,7 +115,8 @@ namespace {
                    "  -e, --env NAME         Target application environment\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                    "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
-                   "      --rebuild PACKAGE  Rebuild a package and its dependents in the env\n";
+                   "      --rebuild PACKAGE  Rebuild a package and its dependents in the env\n"
+                   "                         (may be combined with --read)\n";
         }
     }
 
@@ -306,41 +307,79 @@ namespace {
     /**
      * @brief Rebuild a single package and its transitive dependents.
      *
-     * Loads the installed package list for the target environment, generates a
-     * fresh user config, computes the rebuild set from the dependency graph,
-     * and re-runs the install plan confined to that set.
+     * Two modes:
+     *
+     *   1. **Without `--read`** (default) — loads the installed package list
+     *      from the target environment's ``state.yaml``, regenerates a fresh
+     *      user config from those names, and rebuilds the target + dependents.
+     *      The target must already be installed in the environment.
+     *
+     *   2. **With `--read <config.yaml>`** — loads the user's custom config
+     *      file instead, applies any ``--config`` overrides, and rebuilds the
+     *      target + dependents according to that config.  The target must
+     *      appear somewhere in the parsed plan (not necessarily as a top-level
+     *      target in the config).
+     *
+     * In both modes the plan is narrowed to the transitive dependent closure
+     * of the target and the install script is run with ``--force`` so that
+     * already-recorded packages are reinstalled.
+     *
+     * @param options  Parsed command-line options.  `rebuild_package` must be
+     *                 set; when `read_file` is true, `positional` must contain
+     *                 exactly one path (the config file).
+     * @param utility  Whether this is a utility install (always false for
+     *                 rebuild, as the flag is rejected earlier).
      */
-    void rebuild(const InstallOptions& options) {
-        if (options.read_file) {
-            ERROR("--rebuild cannot be combined with --read");
-            exit(EXIT_FAILURE);
-        }
-        if (!options.positional.empty()) {
-            ERROR("--rebuild does not accept package arguments");
-            exit(EXIT_FAILURE);
-        }
+    void rebuild(const InstallOptions& options, bool utility) {
         if (options.rebuild_package.empty()) {
             ERROR("--rebuild requires a package name");
             exit(EXIT_FAILURE);
         }
 
-        const std::filesystem::path prefix = resolve_application_prefix(options.environment);
-        if (!std::filesystem::is_directory(prefix)) {
-            ERROR("Environment does not exist: " + prefix.string());
-            exit(EXIT_FAILURE);
+        YAML::Node user_config;
+        std::filesystem::path prefix;
+
+        if (options.read_file) {
+            // Mode 2: use the user-provided config
+            user_config = load_install_config(options);
+            apply_cmdline_config(user_config, options.overrides);
+            prefix = installation_prefix(user_config, options.environment, utility);
+        } else {
+            // Mode 1: regenerate from installed packages
+            if (!options.positional.empty()) {
+                ERROR("--rebuild does not accept package arguments");
+                exit(EXIT_FAILURE);
+            }
+            prefix = resolve_application_prefix(options.environment);
+            if (!std::filesystem::is_directory(prefix)) {
+                ERROR("Environment does not exist: " + prefix.string());
+                exit(EXIT_FAILURE);
+            }
+            const std::vector<std::string> installed = load_installed_packages(prefix);
+            if (std::find(installed.begin(), installed.end(), options.rebuild_package) ==
+                installed.end()) {
+                ERROR("Package '" + options.rebuild_package + "' is not installed in " +
+                      prefix.string());
+                exit(EXIT_FAILURE);
+            }
+            user_config = gen_user_config(installed, false);
         }
 
-        const std::vector<std::string> installed = load_installed_packages(prefix);
-        if (std::find(installed.begin(), installed.end(), options.rebuild_package) ==
-            installed.end()) {
-            ERROR("Package '" + options.rebuild_package + "' is not installed in " +
-                  prefix.string());
-            exit(EXIT_FAILURE);
-        }
-
-        const YAML::Node user_config            = gen_user_config(installed, false);
         const UserConfigParserSettings settings = load_user_config_parser_settings(prefix);
         const BashCommandPlan plan              = parse_user_config(user_config, settings);
+
+        // Verify the target package appears in the parsed plan.
+        bool found = false;
+        for (const PackageCommands& pkg : plan) {
+            if (pkg.package == options.rebuild_package) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ERROR("Package '" + options.rebuild_package + "' is not part of the install plan");
+            exit(EXIT_FAILURE);
+        }
 
         const std::vector<std::string> rebuild_set =
             compute_rebuild_set(plan, options.rebuild_package);
@@ -356,8 +395,8 @@ namespace {
             return;
         }
 
-        // --force is required: every rebuild-set member is already recorded in state.yaml and
-        // would otherwise be skipped. The filtered plan contains only the rebuild set.
+        // --force is required: every rebuild-set member is already recorded in
+        // state.yaml and would otherwise be skipped.
         run_install_plan(prefix, filtered, settings, true, options.with_slurm);
     }
 
@@ -378,7 +417,7 @@ namespace {
         }
 
         if (options.rebuild) {
-            rebuild(options);
+            rebuild(options, utility);
             return;
         }
 

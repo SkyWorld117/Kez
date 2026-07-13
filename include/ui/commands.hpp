@@ -66,7 +66,9 @@ void execute_update(const CommandArguments& arguments);
  *
  * The `--rebuild` option recomputes the transitive closure of a target
  * package's dependents and reinstalls only that subset within an already-
- * populated environment.
+ * populated environment.  When combined with `--read`, the user-provided
+ * config file is used instead of an auto-generated one, allowing changes
+ * to a custom config to flow through to the rebuilt packages.
  *
  * @param arguments  Command-line tokens after the `install` subcommand.
  *                   Supported options:

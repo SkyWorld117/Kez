@@ -172,6 +172,11 @@ namespace {
         if (previous == "--config" || previous == "-c") {
             return {};
         }
+        if (previous == "--rebuild" || previous == "-R") {
+            std::vector<std::string> result = help_options();
+            append(result, database_packages());
+            return result;
+        }
 
         std::vector<std::string> result;
         if (current_word_index == (utility ? 3 : 2)) {
