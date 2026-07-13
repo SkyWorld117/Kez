@@ -338,15 +338,49 @@ void execute_info(const CommandArguments& arguments) {
 
 /**
  * @brief Runs the `dbcheck` subcommand: validates every recipe in the database
- *        directory, reporting the total count of validated configurations.
+ *        directory, or only the packages named with `--only`.
  */
 void execute_dbcheck(const CommandArguments& arguments) {
-    if (!arguments.empty()) {
-        if (arguments.size() == 1 && (arguments.front() == "-h" || arguments.front() == "--help")) {
-            std::cout << "Usage: kez dbcheck\n";
-            return;
+    if (arguments.empty()) {
+        // No arguments -- check the entire database.
+        const std::filesystem::path database = get_env_var("KEZ_DB");
+        if (!std::filesystem::is_directory(database)) {
+            ERROR("Database directory does not exist: " + database.string());
+            exit(EXIT_FAILURE);
         }
-        ERROR("dbcheck does not accept arguments");
+        std::vector<std::string> packages;
+        for (const auto& entry : std::filesystem::directory_iterator(database)) {
+            if (entry.is_directory()) {
+                packages.push_back(entry.path().filename().string());
+            }
+        }
+        std::sort(packages.begin(), packages.end());
+        std::size_t configurations = 0;
+        for (const std::string& package : packages) {
+            get_db_config(package);  // Also validates version-range selection and overlap.
+            for (const auto& entry : std::filesystem::directory_iterator(database / package)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
+                    if (entry.path().filename() != "latest.yaml") {
+                        parse_db_config(entry.path());
+                    }
+                    ++configurations;
+                }
+            }
+        }
+        SUCCESS("Validated " + std::to_string(configurations) + " configurations for " +
+                std::to_string(packages.size()) + " packages.");
+        return;
+    }
+
+    // Check for help.
+    if (arguments.size() == 1 && (arguments.front() == "-h" || arguments.front() == "--help")) {
+        std::cout << "Usage: kez dbcheck [--only <package>...]\n";
+        return;
+    }
+
+    // Parse --only.
+    if (arguments.front() != "--only") {
+        ERROR("Unknown dbcheck option: " + arguments.front());
         exit(EXIT_FAILURE);
     }
 
@@ -355,17 +389,30 @@ void execute_dbcheck(const CommandArguments& arguments) {
         ERROR("Database directory does not exist: " + database.string());
         exit(EXIT_FAILURE);
     }
+
     std::vector<std::string> packages;
-    for (const auto& entry : std::filesystem::directory_iterator(database)) {
-        if (entry.is_directory()) {
-            packages.push_back(entry.path().filename().string());
+    for (std::size_t index = 1; index < arguments.size(); ++index) {
+        const std::string& arg = arguments[index];
+        if (!arg.empty() && arg.front() == '-') {
+            ERROR("Unknown dbcheck option: " + arg);
+            exit(EXIT_FAILURE);
         }
+        packages.push_back(arg);
     }
-    std::sort(packages.begin(), packages.end());
+    if (packages.empty()) {
+        ERROR("--only requires at least one package name");
+        exit(EXIT_FAILURE);
+    }
+
     std::size_t configurations = 0;
     for (const std::string& package : packages) {
-        get_db_config(package);  // Also validates version-range selection and overlap.
-        for (const auto& entry : std::filesystem::directory_iterator(database / package)) {
+        const std::filesystem::path package_dir = database / package;
+        if (!std::filesystem::is_directory(package_dir)) {
+            ERROR("Package not found in database: " + package);
+            exit(EXIT_FAILURE);
+        }
+        get_db_config(package);
+        for (const auto& entry : std::filesystem::directory_iterator(package_dir)) {
             if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
                 if (entry.path().filename() != "latest.yaml") {
                     parse_db_config(entry.path());

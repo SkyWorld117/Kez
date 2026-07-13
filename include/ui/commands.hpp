@@ -241,16 +241,17 @@ void execute_mpi(const CommandArguments& arguments);
 void execute_info(const CommandArguments& arguments);
 
 /**
- * @brief Parse and validate the entire package database.
+ * @brief Parse and validate the package database.
  *
- * Iterates over every package directory under @c KEZ_DB, parses each YAML
- * configuration (including non-latest version files), and validates version-
- * range selection and overlap.  Reports the total number of validated
- * configurations and packages on success.
+ * Without options, iterates over every package directory under @c KEZ_DB,
+ * parses each YAML configuration (including non-latest version files), and
+ * validates version-range selection and overlap.  When @c --only is given,
+ * validation is restricted to the named packages.
  *
  * @param arguments  Command-line tokens after the `dbcheck` subcommand.
- *                   No arguments are accepted.
- *                   - `-h` / `--help` : Print usage and return
+ *                   Supported options:
+ *                   - `--only <package>...` : Check only the listed packages
+ *                   - `-h` / `--help`       : Print usage and return
  *
  * @note Terminates with an error if @c KEZ_DB does not exist or if any
  *       configuration fails to parse.

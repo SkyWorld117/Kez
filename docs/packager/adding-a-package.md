@@ -131,7 +131,10 @@ properties:
 ## 4. Test the Recipe
 
 ```bash
-# Validate basic parsing
+# Validate basic parsing (check just your new package)
+kez dbcheck --only <package_name>
+
+# Or validate the entire database
 kez dbcheck
 
 # Generate a user configuration

@@ -49,11 +49,27 @@ Use `--with-system` to also refresh the system environment (same as `kez init --
 Parse and validate the package database.
 
 ```
-Usage: kez dbcheck
+Usage: kez dbcheck [--only <package>...]
+
+  --only <package>...  Check only the listed packages instead of the entire database
 ```
 
-Reads every recipe in the database and reports any parsing errors. Useful for
-package developers to validate their YAML files before submitting changes.
+Without options, reads every recipe in the database and reports any parsing errors.
+With `--only`, validation is restricted to the named packages — useful for quickly
+checking a new or modified recipe without scanning the full database.
+
+**Examples:**
+
+```bash
+# Validate the entire database
+kez dbcheck
+
+# Check just one package
+kez dbcheck --only zlib
+
+# Check multiple specific packages
+kez dbcheck --only zlib hdf5 openmpi
+```
 
 ---
 

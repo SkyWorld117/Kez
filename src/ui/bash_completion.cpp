@@ -287,6 +287,20 @@ namespace {
         return {};
     }
 
+    std::vector<std::string> dbcheck_suggestions(int current_word_index,
+                                                 const std::vector<std::string>& words) {
+        const std::string previous = word_at(words, current_word_index - 1);
+        if (previous == "--only") {
+            return database_packages();
+        }
+
+        std::vector<std::string> result = help_options();
+        if (!contains(words, "--only")) {
+            result.push_back("--only");
+        }
+        return result;
+    }
+
     std::vector<std::string> command_suggestions(int current_word_index,
                                                  const std::vector<std::string>& words) {
         if (current_word_index == 1) {
@@ -326,7 +340,7 @@ namespace {
             return info_suggestions(current_word_index, words);
         }
         if (command == "dbcheck") {
-            return help_options();
+            return dbcheck_suggestions(current_word_index, words);
         }
         return {};
     }
