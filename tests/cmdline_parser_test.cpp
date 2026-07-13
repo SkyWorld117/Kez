@@ -28,6 +28,19 @@
 
 namespace {
 
+    std::string install_plan_package_block(const std::string& plan, const std::string& package) {
+        const std::string begin = "kez_plan_begin " + package + "\n";
+        const std::size_t start = plan.find(begin);
+        if (start == std::string::npos) {
+            return {};
+        }
+        const std::size_t end = plan.find("kez_plan_end\n", start);
+        if (end == std::string::npos) {
+            return {};
+        }
+        return plan.substr(start, end + std::string("kez_plan_end\n").size() - start);
+    }
+
     /**
  * @test AppliesMapIndexAndNamedSequenceOverrides
  *
@@ -139,6 +152,71 @@ kez:
         ASSERT_EQ(std::system((executor + " --force").c_str()), 0);
         EXPECT_EQ(read_file(counter.string()), "x\nx\n");
         EXPECT_EQ(read_file((target / "state.yaml").string()), "state:\n  - test-package\n");
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(CommandLineParser, BashExecutorTracksVersionMapState) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-install-map-state-test-" + std::to_string(getpid()));
+        const std::filesystem::path target  = directory / "system";
+        const std::filesystem::path plan    = directory / "plan.sh";
+        const std::filesystem::path counter = directory / "counter";
+        std::filesystem::remove_all(directory);
+
+        write_install_plan({{"test-package",
+                             {"printf 'x\\n' >> " + shell_single_quote(counter.string()),
+                              "printf '1.2.3\\n' > \"$KEZ_PACKAGE_VERSION_FILE\""},
+                             {}}},
+                           plan);
+        const std::string executor =
+            "KEZ_INSTALL_STATE_FORMAT=map env -u KEZ_HOME -u KEZ_WORKDIR bash " +
+            shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") + " " +
+            shell_single_quote(target.string()) + " " + shell_single_quote(plan.string());
+
+        ASSERT_EQ(std::system(executor.c_str()), 0);
+        ASSERT_EQ(std::system(executor.c_str()), 0);
+        EXPECT_EQ(read_file(counter.string()), "x\n");
+        EXPECT_EQ(read_file((target / "state.yaml").string()), "state:\n  test-package: 1.2.3\n");
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(CommandLineParser, InitPlanEnforcesBootstrapCompilerDependencies) {
+        const std::filesystem::path directory = std::filesystem::temp_directory_path() /
+                                                ("kez-init-plan-test-" + std::to_string(getpid()));
+        const std::filesystem::path plan      = directory / "plan.sh";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(directory);
+
+        const std::string generate =
+            "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) + " bash -c " +
+            shell_single_quote("source \"$KEZ_HOME/scripts/init.sh\"; write_init_plan \"$1\" 0") +
+            " bash " + shell_single_quote(plan.string());
+        ASSERT_EQ(std::system(generate.c_str()), 0);
+
+        const std::string contents = read_file(plan.string());
+        EXPECT_EQ(contents.rfind("# kez-install-plan-v1\n", 0), 0U);
+
+        const std::string binutils = install_plan_package_block(contents, "binutils");
+        EXPECT_NE(binutils.find("kez_plan_depends gmp\n"), std::string::npos);
+        EXPECT_NE(binutils.find("kez_plan_depends zstd\n"), std::string::npos);
+        const std::string gcc = install_plan_package_block(contents, "gcc");
+        EXPECT_NE(gcc.find("kez_plan_depends binutils\n"), std::string::npos);
+
+        for (const std::string& package : {"elfutils", "m4", "autoconf", "automake", "libtool",
+                                           "make", "perl", "git", "yaml-cpp", "googletest"}) {
+            const std::string block = install_plan_package_block(contents, package);
+            ASSERT_FALSE(block.empty()) << package;
+            EXPECT_NE(block.find("kez_plan_depends gcc\n"), std::string::npos) << package;
+        }
+
+        for (const std::string& package : {"cmake", "rust", "patchelf"}) {
+            const std::string block = install_plan_package_block(contents, package);
+            ASSERT_FALSE(block.empty()) << package;
+            EXPECT_EQ(block.find("kez_plan_depends gcc\n"), std::string::npos) << package;
+        }
 
         std::filesystem::remove_all(directory);
     }

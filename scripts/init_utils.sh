@@ -4,11 +4,23 @@
 # Returns 0 if installed, 1 if not installed.
 is_installed() {
     local pkg="$1"
-    if yq -e ".state | has(\"${pkg}\")" "${KEZ_SYSTEM}/state.yaml" >/dev/null 2>&1; then
+    if PACKAGE_NAME="${pkg}" yq -e '.state | has(strenv(PACKAGE_NAME))' \
+        "${KEZ_SYSTEM}/state.yaml" >/dev/null 2>&1; then
         return 0
     else
         return 1
     fi
+}
+
+# Report the resolved version to install.sh.  The executor records it only
+# after the complete package function succeeds.
+record_package_version() {
+    local version="$1"
+    if [[ -z "${KEZ_PACKAGE_VERSION_FILE:-}" ]]; then
+        echo >&2 "KEZ_PACKAGE_VERSION_FILE is not set"
+        return 1
+    fi
+    printf '%s\n' "${version}" > "${KEZ_PACKAGE_VERSION_FILE}"
 }
 
 fetch_web() {

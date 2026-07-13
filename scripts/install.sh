@@ -8,7 +8,28 @@ set -Eeuo pipefail
 # Ensure KEZ_HOME is set; default to the project root (parent of the scripts directory)
 : ${KEZ_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 
-KEZ_PRINT=${KEZ_HOME}/bin/kez_print
+kez_print_fn() {
+    local level=$1
+    shift
+    if [[ $level == error ]]; then
+        printf '[E]: %s\n' "$*" >&2
+    elif [[ $level == warning ]]; then
+        printf '[W]: %s\n' "$*" >&2
+    elif [[ $level == info ]]; then
+        printf '[I]: %s\n' "$*"
+    elif [[ $level == success ]]; then
+        printf '[S]: %s\n' "$*"
+    else
+        printf '%s\n' "$*"
+    fi
+}
+
+# KEZ_PRINT=${KEZ_HOME}/bin/kez_print
+if [[ -f ${KEZ_HOME}/bin/kez_print ]]; then
+    KEZ_PRINT=${KEZ_HOME}/bin/kez_print
+else
+    KEZ_PRINT=kez_print_fn
+fi
 
 if [[ $# -lt 2 || $# -gt 3 ]]; then
     "${KEZ_PRINT}" error "Usage: install.sh <environment> <plan> [--force]"
@@ -33,6 +54,14 @@ fi
 install_jobs=${KEZ_INSTALL_JOBS:-1}
 if [[ ! $install_jobs =~ ^[1-9][0-9]*$ ]]; then
     "${KEZ_PRINT}" error "KEZ_INSTALL_JOBS must be a positive integer"
+    exit 2
+fi
+
+# Application environments store an ordered sequence of package names.  The
+# system environment built by init.sh stores a package-to-version map instead.
+state_format=${KEZ_INSTALL_STATE_FORMAT:-sequence}
+if [[ $state_format != sequence && $state_format != map ]]; then
+    "${KEZ_PRINT}" error "KEZ_INSTALL_STATE_FORMAT must be 'sequence' or 'map'"
     exit 2
 fi
 
@@ -77,12 +106,33 @@ package_work_dir() {
 }
 
 package_is_recorded() {
-    grep -Fqx -- "  - $1" "$state_file"
+    if [[ $state_format == map ]]; then
+        PACKAGE_NAME=$1 yq -e '.state | has(strenv(PACKAGE_NAME))' "$state_file" >/dev/null 2>&1
+    else
+        grep -Fqx -- "  - $1" "$state_file"
+    fi
 }
 
 mark_package_installed() {
-    if ! package_is_recorded "$1"; then
-        printf '  - %s\n' "$1" >> "$state_file"
+    local package=$1
+    local index=$2
+
+    if package_is_recorded "$package"; then
+        return 0
+    fi
+
+    if [[ $state_format == map ]]; then
+        local version_file="$plan_runtime_dir/$index/version"
+        local version
+        if [[ ! -s $version_file ]]; then
+            "${KEZ_PRINT}" error "Package $package did not report its installed version"
+            return 2
+        fi
+        version=$(<"$version_file")
+        PACKAGE_NAME=$package PACKAGE_VERSION=$version \
+            yq -i '.state[strenv(PACKAGE_NAME)] = strenv(PACKAGE_VERSION)' "$state_file"
+    else
+        printf '  - %s\n' "$package" >> "$state_file"
     fi
 }
 
@@ -200,6 +250,12 @@ run_package_body() {
     } >> "$log_file"
 
     cd "$work_dir" || return 1
+    if [[ $state_format == map ]]; then
+        export KEZ_PACKAGE_VERSION_FILE="$plan_runtime_dir/$index/version"
+        rm -f -- "$KEZ_PACKAGE_VERSION_FILE"
+    else
+        unset KEZ_PACKAGE_VERSION_FILE
+    fi
     for ((command_index = 0; command_index < package_command_counts[$index]; ++command_index)); do
         command=$(<"$plan_runtime_dir/$index/command-$command_index")
         execute_package_command "$command" "$log_file"
@@ -318,7 +374,7 @@ while true; do
 
     if (( completed_status == 0 )); then
         package_status[$completed_index]=done
-        mark_package_installed "$package"
+        mark_package_installed "$package" "$completed_index"
         cleanup_package_work_dir "$package"
         "${KEZ_PRINT}" success "Completed package: $package"
     else
@@ -341,7 +397,8 @@ if has_pending_packages; then
     exit 2
 fi
 
-if command -v yq >/dev/null 2>&1 && [[ -n ${KEZ_HOME:-} && -n ${KEZ_WORKDIR:-} ]]; then
+if [[ $state_format == sequence ]] && command -v yq >/dev/null 2>&1 && \
+    [[ -n ${KEZ_HOME:-} && -n ${KEZ_WORKDIR:-} ]]; then
     modulefiles_path=$(yq -r '.paths.modulefiles' "$KEZ_HOME/manifest.yaml")
     if [[ $modulefiles_path == /* ]]; then
         modulefiles_dir=$modulefiles_path

@@ -1,54 +1,18 @@
 #!/usr/bin/env bash
 
-# Remove some problematic environment variables that may interfere with the installation process
-unset CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
-unset LIBRARY_PATH LD_LIBRARY_PATH
-unset PKG_CONFIG_PATH
-unset CMAKE_PREFIX_PATH CMAKE_LIBRARY_PATH CMAKE_INCLUDE_PATH
+# Build the nearly distribution-independent system environment.  Package
+# functions are executed by install.sh so independent nodes in the bootstrap
+# dependency graph can run concurrently.
 
-set -Eeuo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# This script creates a nearly distribution-independent environment.
-# This environment offers the essential system utilities.
-
-KEZ_SYSTEM="${KEZ_WORKDIR}/$(yq -r '.paths.system' "${KEZ_HOME}/manifest.yaml")"
-KEZ_UTILITIES="${KEZ_WORKDIR}/$(yq -r '.paths.utilities' "${KEZ_HOME}/manifest.yaml")"
-KEZ_SYSTEM_TMP="${KEZ_SYSTEM}/.tmp"
-
-mkdir -p "${KEZ_SYSTEM}" "${KEZ_UTILITIES}" "${KEZ_SYSTEM_TMP}"
-
-source ${KEZ_HOME}/scripts/init_utils.sh
-
-if [ ! -f "${KEZ_SYSTEM}/state.yaml" ]; then
-    echo "state:" > "${KEZ_SYSTEM}/state.yaml"
-fi
-
-if [ "${1:-}" == "--refresh" ] || [ "${2:-}" == "--refresh" ]; then
-    if [ -d "${KEZ_SYSTEM}" ]; then
-        rm -rf "${KEZ_SYSTEM}"/*
-        rm -rf "${KEZ_SYSTEM_TMP}"/*
+build_gmp() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.gmp' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "gmp" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "gmp is already installed, skipping..."
+        return 0
     fi
-    mkdir -p "${KEZ_SYSTEM}"
-    echo "state:" > "${KEZ_SYSTEM}/state.yaml"
-fi
 
-use_distro_compiler=0
-if [ "${1:-}" == "--use-distro-compiler" ] || [ "${2:-}" == "--use-distro-compiler" ]; then
-    use_distro_compiler=1
-fi
-
-cd "${KEZ_SYSTEM_TMP}"
-
-
-# PHASE 1: Mathematical Libraries
-# ----------------------------------------------------
-
-# gmp
-version=$(yq -r '.system-stack.gmp' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "gmp" "${version}")
-if [[ -n "$folder_and_version" ]]; then
     echo "Installing gmp..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -60,16 +24,18 @@ if [[ -n "$folder_and_version" ]]; then
         --enable-static
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  gmp: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "gmp is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# mpfr
-version=$(yq -r '.system-stack.mpfr' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "mpfr" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_mpfr() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.mpfr' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "mpfr" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "mpfr is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing mpfr..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -83,16 +49,18 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  mpfr: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "mpfr is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# mpc
-version=$(yq -r '.system-stack.mpc' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "mpc" "${version}" "tar.gz")
-if [[ -n "$folder_and_version" ]]; then
+build_mpc() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.mpc' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "mpc" "${version}" "tar.gz")
+    if [[ -z $folder_and_version ]]; then
+        echo "mpc is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing mpc..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -106,16 +74,18 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  mpc: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "mpc is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# isl
-version=$(yq -r '.system-stack.isl' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_isl "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_isl() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.isl' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_isl "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "isl is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing isl..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -129,38 +99,37 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  isl: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "isl is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
+build_zlib() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.zlib' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_github "madler/zlib" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "zlib is already installed, skipping..."
+        return 0
+    fi
 
-# PHASE 2: Compression Libraries
-# ----------------------------------------------------
-
-# zlib
-version=$(yq -r '.system-stack.zlib' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_github "madler/zlib" "${version}")
-if ! is_installed "zlib"; then
     echo "Installing zlib..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
-    ./configure \
-        --prefix="${KEZ_SYSTEM}"
+    ./configure --prefix="${KEZ_SYSTEM}"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  zlib: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "zlib is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# xz
-version=$(yq -r '.system-stack.xz' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_github "tukaani-project/xz" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_xz() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.xz' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_github "tukaani-project/xz" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "xz is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing xz..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -171,140 +140,146 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  xz: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "xz is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# lz4
-version=$(yq -r '.system-stack.lz4' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_github "lz4/lz4" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_lz4() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.lz4' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_github "lz4/lz4" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "lz4 is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing lz4..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
-    make -j"${KEZ_NPROC}" install PREFIX="${KEZ_SYSTEM}" LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  lz4: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "lz4 is already installed, skipping..."
-fi
+    make -j"${KEZ_NPROC}" install PREFIX="${KEZ_SYSTEM}" \
+        LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
+    record_package_version "${version}"
+}
 
-# zstd
-version=$(yq -r '.system-stack.zstd' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_github "facebook/zstd" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_zstd() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.zstd' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_github "facebook/zstd" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "zstd is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing zstd..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
     CFLAGS="-I${KEZ_SYSTEM}/include" \
-    CXXFLAGS="-I${KEZ_SYSTEM}/include" \
-    LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib" \
-    make -j"${KEZ_NPROC}" install PREFIX="${KEZ_SYSTEM}" HAVE_ZLIB=1 HAVE_LZ4=1 HAVE_LZMA=1
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  zstd: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "zstd is already installed, skipping..."
-fi
+        CXXFLAGS="-I${KEZ_SYSTEM}/include" \
+        LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib" \
+        make -j"${KEZ_NPROC}" install PREFIX="${KEZ_SYSTEM}" HAVE_ZLIB=1 HAVE_LZ4=1 \
+        HAVE_LZMA=1
+    record_package_version "${version}"
+}
 
-
-# PHASE 3: Essential System Tools
-# ----------------------------------------------------
-
-# binutils (without headers)
-if [[ use_distro_compiler -eq 1 ]]; then
-    echo "Using the system's default compiler, skipping binutils installation..."
-    if ! is_installed "ld"; then
+build_binutils() {
+    local version folder_and_version folder
+    if [[ ${KEZ_INIT_USE_DISTRO_COMPILER} == 1 ]]; then
+        echo "Using the system's default compiler, skipping binutils installation..."
+        mkdir -p "${KEZ_SYSTEM}/bin"
         ln -sf /usr/bin/ld "${KEZ_SYSTEM}/bin/ld"
         ln -sf /usr/bin/ar "${KEZ_SYSTEM}/bin/ar"
         ln -sf /usr/bin/nm "${KEZ_SYSTEM}/bin/nm"
         ln -sf /usr/bin/objdump "${KEZ_SYSTEM}/bin/objdump"
         ln -sf /usr/bin/strip "${KEZ_SYSTEM}/bin/strip"
-        echo -e "  binutils: distro" >> "${KEZ_SYSTEM}/state.yaml"
+        record_package_version distro
+        return 0
     fi
-else
+
     version=$(yq -r '.system-stack.binutils' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "binutils" "${version}")
-    if [[ -n "$folder_and_version" ]]; then
-        echo "Installing binutils..."
-        folder="${folder_and_version%%::*}"
-        version="${folder_and_version##*::}"
-        cd "${KEZ_SYSTEM_TMP}/${folder}"
-        ./configure \
-            --prefix="${KEZ_SYSTEM}" \
-            --includedir="${KEZ_SYSTEM_TMP}/include" \
-            --disable-multilib \
-            --disable-nls \
-            --enable-gold \
-            --enable-ld \
-            --enable-compressed-debug-sections=all \
-            --enable-default-compressed-debug-sections-algorithm=zstd \
-            --with-gmp="${KEZ_SYSTEM}" \
-            --with-mpfr="${KEZ_SYSTEM}" \
-            --with-mpc="${KEZ_SYSTEM}" \
-            --with-isl="${KEZ_SYSTEM}" \
-            --with-zstd="${KEZ_SYSTEM}" \
-            LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
-        make -j"${KEZ_NPROC}"
-        make install -j"${KEZ_NPROC}"
-        cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-        echo -e "  binutils: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-    else
+    if [[ -z $folder_and_version ]]; then
         echo "binutils is already installed, skipping..."
+        return 0
     fi
-fi
 
-# gcc
-if [[ use_distro_compiler -eq 1 ]]; then
-    echo "Using the system's default compiler, skipping gcc installation..."
-    if ! is_installed "gcc"; then
+    echo "Installing binutils..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${KEZ_SYSTEM_TMP}/${folder}"
+    ./configure \
+        --prefix="${KEZ_SYSTEM}" \
+        --includedir="${KEZ_SYSTEM_TMP}/include" \
+        --disable-multilib \
+        --disable-nls \
+        --enable-gold \
+        --enable-ld \
+        --enable-compressed-debug-sections=all \
+        --enable-default-compressed-debug-sections-algorithm=zstd \
+        --with-gmp="${KEZ_SYSTEM}" \
+        --with-mpfr="${KEZ_SYSTEM}" \
+        --with-mpc="${KEZ_SYSTEM}" \
+        --with-isl="${KEZ_SYSTEM}" \
+        --with-zstd="${KEZ_SYSTEM}" \
+        LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
+    make -j"${KEZ_NPROC}"
+    make install -j"${KEZ_NPROC}"
+    record_package_version "${version}"
+}
+
+build_gcc() {
+    local version folder_and_version folder
+    if [[ ${KEZ_INIT_USE_DISTRO_COMPILER} == 1 ]]; then
+        echo "Using the system's default compiler, skipping gcc installation..."
+        mkdir -p "${KEZ_SYSTEM}/bin"
         ln -sf /usr/bin/gcc "${KEZ_SYSTEM}/bin/gcc"
         ln -sf /usr/bin/g++ "${KEZ_SYSTEM}/bin/g++"
         ln -sf /usr/bin/gfortran "${KEZ_SYSTEM}/bin/gfortran"
-        echo -e "  gcc: distro" >> "${KEZ_SYSTEM}/state.yaml"
+        record_package_version distro
+        return 0
     fi
-else
+
     version=$(yq -r '.system-stack.gcc' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gcc "${version}")
-    if [[ -n "$folder_and_version" ]]; then
-        echo "Installing gcc..."
-        folder="${folder_and_version%%::*}"
-        version="${folder_and_version##*::}"
-        cd "${KEZ_SYSTEM_TMP}/${folder}"
-        ./configure \
-            --prefix="${KEZ_SYSTEM}" \
-            --enable-languages=c,c++,fortran \
-            --disable-multilib \
-            --disable-nls \
-            --with-gmp="${KEZ_SYSTEM}" \
-            --with-mpfr="${KEZ_SYSTEM}" \
-            --with-mpc="${KEZ_SYSTEM}" \
-            --with-isl="${KEZ_SYSTEM}" \
-            --with-zstd-include="${KEZ_SYSTEM}/include" \
-            --with-zstd-lib="${KEZ_SYSTEM}/lib" \
-            --with-stage1-ldflags="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64" \
-            --with-boot-ldflags="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64"
-        export LD_RUN_PATH="${KEZ_SYSTEM}/lib:${KEZ_SYSTEM}/lib64"
-        make -j"${KEZ_NPROC}"
-        make install -j"${KEZ_NPROC}"
-        unset LD_RUN_PATH
-
-        ${KEZ_HOME}/tools/patch_gcc_linking.sh "${KEZ_SYSTEM}"
-
-        cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-        echo -e "  gcc: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-    else
+    if [[ -z $folder_and_version ]]; then
         echo "gcc is already installed, skipping..."
+        return 0
     fi
-fi
 
-# elfutils
-version=$(yq -r '.system-stack.elfutils' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_elfutils "${version}")
-if [[ -n "$folder_and_version" ]]; then
+    echo "Installing gcc..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${KEZ_SYSTEM_TMP}/${folder}"
+    ./configure \
+        --prefix="${KEZ_SYSTEM}" \
+        --enable-languages=c,c++,fortran \
+        --disable-multilib \
+        --disable-nls \
+        --with-gmp="${KEZ_SYSTEM}" \
+        --with-mpfr="${KEZ_SYSTEM}" \
+        --with-mpc="${KEZ_SYSTEM}" \
+        --with-isl="${KEZ_SYSTEM}" \
+        --with-zstd-include="${KEZ_SYSTEM}/include" \
+        --with-zstd-lib="${KEZ_SYSTEM}/lib" \
+        --with-stage1-ldflags="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64" \
+        --with-boot-ldflags="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64"
+    export LD_RUN_PATH="${KEZ_SYSTEM}/lib:${KEZ_SYSTEM}/lib64"
+    make -j"${KEZ_NPROC}"
+    make install -j"${KEZ_NPROC}"
+    unset LD_RUN_PATH
+    "${KEZ_HOME}/tools/patch_gcc_linking.sh" "${KEZ_SYSTEM}"
+    record_package_version "${version}"
+}
+
+build_elfutils() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.elfutils' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_elfutils "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "elfutils is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing elfutils..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -316,20 +291,18 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  elfutils: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "elfutils is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
+build_m4() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.m4' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "m4" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "m4 is already installed, skipping..."
+        return 0
+    fi
 
-# PHASE 4: Build Tools
-# ----------------------------------------------------
-
-# m4
-version=$(yq -r '.system-stack.m4' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "m4" "${version}")
-if [[ -n "$folder_and_version" ]]; then
     echo "Installing m4..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -339,39 +312,43 @@ if [[ -n "$folder_and_version" ]]; then
         --enable-c++ \
         --enable-threads=isoc+posix \
         --disable-nls \
-    LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
+        LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  m4: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "m4 is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# autoconf
-version=$(yq -r '.system-stack.autoconf' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "autoconf" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_autoconf() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.autoconf' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "autoconf" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "autoconf is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing autoconf..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
     ./configure \
         --prefix="${KEZ_SYSTEM}" \
-    M4="${KEZ_SYSTEM}/bin/m4" \
-    LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
+        M4="${KEZ_SYSTEM}/bin/m4" \
+        LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  autoconf: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "autoconf is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# automake
-version=$(yq -r '.system-stack.automake' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "automake" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_automake() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.automake' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "automake" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "automake is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing automake..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -381,16 +358,18 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  automake: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "automake is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# libtool
-version=$(yq -r '.system-stack.libtool' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "libtool" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_libtool() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.libtool' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "libtool" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "libtool is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing libtool..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -402,16 +381,18 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  libtool: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "libtool is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# make
-version=$(yq -r '.system-stack.make' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_gnu "make" "${version}" "tar.gz")
-if [[ -n "$folder_and_version" ]]; then
+build_make() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.make' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_gnu "make" "${version}" "tar.gz")
+    if [[ -z $folder_and_version ]]; then
+        echo "make is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing make..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -422,53 +403,61 @@ if [[ -n "$folder_and_version" ]]; then
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  make: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "make is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# cmake
-if ! is_installed "cmake"; then
+build_cmake() {
+    local version cmake_tag cmake_tag_arch
     echo "Installing cmake..."
     version=$(yq -r '.system-stack.cmake' "${KEZ_HOME}/manifest.yaml")
-    if [[ "${version}" == "latest" ]]; then
-        cmake_tag="$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" | jq -r '.tag_name')"
+    if [[ $version == latest ]]; then
+        cmake_tag=$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" |
+            jq -r '.tag_name')
     else
         cmake_tag="v${version}"
     fi
-    if [ "${KEZ_ARCH}" = "x86_64" ]; then
+    if [[ ${KEZ_ARCH} == x86_64 ]]; then
         cmake_tag_arch="${cmake_tag#v}-linux-x86_64"
-    elif [ "${KEZ_ARCH}" = "arm64" ]; then
+    elif [[ ${KEZ_ARCH} == arm64 ]]; then
         cmake_tag_arch="${cmake_tag#v}-linux-aarch64"
+    else
+        echo >&2 "Unsupported architecture: ${KEZ_ARCH}"
+        return 1
     fi
-    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/cmake-${cmake_tag_arch}.sh" "https://github.com/Kitware/CMake/releases/download/${cmake_tag}/cmake-${cmake_tag_arch}.sh"
-    bash "${KEZ_SYSTEM_TMP}/cmake-${cmake_tag_arch}.sh" --skip-license --prefix="${KEZ_SYSTEM}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  cmake: ${cmake_tag#v}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "cmake is already installed, skipping..."
-fi
+    wget --quiet --show-progress \
+        --output-document="${KEZ_SYSTEM_TMP}/cmake-${cmake_tag_arch}.sh" \
+        "https://github.com/Kitware/CMake/releases/download/${cmake_tag}/cmake-${cmake_tag_arch}.sh"
+    bash "${KEZ_SYSTEM_TMP}/cmake-${cmake_tag_arch}.sh" --skip-license \
+        --prefix="${KEZ_SYSTEM}"
+    record_package_version "${cmake_tag#v}"
+}
 
-# rust/cargo
-version=$(yq -r '.system-stack.rust' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_rust "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_rust() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.rust' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_rust "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "rust/cargo is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing rust/cargo..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
     ./install.sh --prefix="${KEZ_SYSTEM}" --without=rust-docs
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  rust: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "rust/cargo is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# perl
-version=$(yq -r '.system-stack.perl' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_perl "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_perl() {
+    local version folder_and_version folder bin base_bin unversioned_bin
+    version=$(yq -r '.system-stack.perl' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_perl "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "perl is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing perl..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -476,21 +465,24 @@ if [[ -n "$folder_and_version" ]]; then
     ./Configure -Dprefix="${KEZ_SYSTEM}" -Dusethreads -Dusedevel -de
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    for bin in "${KEZ_SYSTEM}/bin/"*${version}; do
-        base_bin="$(basename "$bin")"
+    for bin in "${KEZ_SYSTEM}/bin/"*"${version}"; do
+        [[ -e $bin ]] || continue
+        base_bin=$(basename "$bin")
         unversioned_bin="${base_bin%%${version}}"
         ln -sf "$bin" "${KEZ_SYSTEM}/bin/${unversioned_bin}"
     done
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  perl: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "perl is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# git
-version=$(yq -r '.system-stack.git' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_git "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_git() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.git' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_git "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "git is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing git..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -501,25 +493,24 @@ if [[ -n "$folder_and_version" ]]; then
         CFLAGS="-O3"
     make all -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  git: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "git is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
+build_yaml_cpp() {
+    local version folder_and_version folder
+    version=$(yq -r '.dependencies.yaml-cpp' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_github "jbeder/yaml-cpp" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "yaml-cpp is already installed, skipping..."
+        return 0
+    fi
 
-# PHASE 5: Essential Tools for Kez
-# ----------------------------------------------------
-
-# yaml-cpp
-version=$(yq -r '.dependencies.yaml-cpp' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_github "jbeder/yaml-cpp" "${version}")
-if [[ -n "$folder_and_version" ]]; then
     echo "Installing yaml-cpp..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
-    mkdir build && cd build
+    mkdir build
+    cd build
     cmake .. \
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -DCMAKE_INSTALL_PREFIX="${KEZ_SYSTEM}" \
@@ -529,17 +520,19 @@ if [[ -n "$folder_and_version" ]]; then
         -DCMAKE_EXE_LINKER_FLAGS="-L${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib64"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    version=${version#yaml-cpp-}
-    echo -e "  yaml-cpp: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "yaml-cpp is already installed, skipping..."
-fi
+    version="${version#yaml-cpp-}"
+    record_package_version "${version}"
+}
 
-# googletest
-version=$(yq -r '.dependencies.googletest' "${KEZ_HOME}/manifest.yaml")
-folder_and_version=$(fetch_github "google/googletest" "${version}")
-if [[ -n "$folder_and_version" ]]; then
+build_googletest() {
+    local version folder_and_version folder
+    version=$(yq -r '.dependencies.googletest' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_github "google/googletest" "${version}")
+    if [[ -z $folder_and_version ]]; then
+        echo "googletest is already installed, skipping..."
+        return 0
+    fi
+
     echo "Installing googletest..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
@@ -549,40 +542,243 @@ if [[ -n "$folder_and_version" ]]; then
     cmake .. -DCMAKE_INSTALL_PREFIX="${KEZ_SYSTEM}"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    cd "${KEZ_SYSTEM_TMP}" && rm -rf *
-    echo -e "  googletest: ${version}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "googletest is already installed, skipping..."
-fi
+    record_package_version "${version}"
+}
 
-# patchelf
-if ! is_installed "patchelf"; then
+build_patchelf() {
+    local version patchelf_tag patchelf_tag_arch
     echo "Installing patchelf..."
     version=$(yq -r '.dependencies.patchelf' "${KEZ_HOME}/manifest.yaml")
-    if [[ "${version}" == "latest" ]]; then
-        patchelf_tag="$(curl -s "https://api.github.com/repos/NixOS/patchelf/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null)"
+    if [[ $version == latest ]]; then
+        patchelf_tag=$(curl -s \
+            "https://api.github.com/repos/NixOS/patchelf/releases/latest" 2>/dev/null |
+            jq -r '.tag_name' 2>/dev/null)
     else
         patchelf_tag="v${version}"
     fi
-    patchelf_tag_arch=""
-    if [ "${KEZ_ARCH}" = "x86_64" ]; then
+    if [[ ${KEZ_ARCH} == x86_64 ]]; then
         patchelf_tag_arch="${patchelf_tag}-x86_64"
-    elif [ "${KEZ_ARCH}" = "arm64" ]; then
+    elif [[ ${KEZ_ARCH} == arm64 ]]; then
         patchelf_tag_arch="${patchelf_tag}-aarch64"
+    else
+        echo >&2 "Unsupported architecture: ${KEZ_ARCH}"
+        return 1
     fi
-    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/patchelf.tar.gz" "https://github.com/NixOS/patchelf/releases/download/${patchelf_tag}/patchelf-${patchelf_tag_arch}.tar.gz"
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/patchelf.tar.gz" \
+        "https://github.com/NixOS/patchelf/releases/download/${patchelf_tag}/patchelf-${patchelf_tag_arch}.tar.gz"
     tar -xzf "${KEZ_SYSTEM_TMP}/patchelf.tar.gz" -C "${KEZ_SYSTEM}"
-    echo -e "  patchelf: ${patchelf_tag#v}" >> "${KEZ_SYSTEM}/state.yaml"
-else
-    echo "patchelf is already installed, skipping..."
+    record_package_version "${patchelf_tag#v}"
+}
+
+init_plan_package() {
+    local plan_file=$1
+    local package=$2
+    local use_distro_compiler=$3
+    shift 3
+    local dependency command
+
+    printf -v command 'bash %q --build-package %q' "${KEZ_HOME}/scripts/init.sh" "${package}"
+    if [[ $use_distro_compiler == 1 ]]; then
+        command+=' --use-distro-compiler'
+    fi
+
+    printf 'kez_plan_begin %q\n' "${package}" >> "${plan_file}"
+    for dependency in "$@"; do
+        printf 'kez_plan_depends %q\n' "${dependency}" >> "${plan_file}"
+    done
+    printf 'kez_plan_command %q\n' "${command}" >> "${plan_file}"
+    printf 'kez_plan_end\n' >> "${plan_file}"
+}
+
+# Emit the same plan protocol as the C++ backend.  Prebuilt tools have no GCC
+# edge and can bootstrap in parallel; every source build after GCC has an
+# explicit GCC edge so it cannot accidentally use the distribution compiler.
+write_init_plan() {
+    local plan_file=$1
+    local use_distro_compiler=$2
+    printf '# kez-install-plan-v1\n' > "${plan_file}"
+
+    init_plan_package "${plan_file}" gmp "${use_distro_compiler}"
+    init_plan_package "${plan_file}" mpfr "${use_distro_compiler}" gmp
+    init_plan_package "${plan_file}" mpc "${use_distro_compiler}" gmp mpfr
+    init_plan_package "${plan_file}" isl "${use_distro_compiler}" gmp
+    init_plan_package "${plan_file}" zlib "${use_distro_compiler}"
+    init_plan_package "${plan_file}" xz "${use_distro_compiler}"
+    init_plan_package "${plan_file}" lz4 "${use_distro_compiler}"
+    init_plan_package "${plan_file}" zstd "${use_distro_compiler}" zlib xz lz4
+    init_plan_package "${plan_file}" binutils "${use_distro_compiler}" gmp mpfr mpc isl zstd
+    init_plan_package "${plan_file}" gcc "${use_distro_compiler}" binutils
+
+    init_plan_package "${plan_file}" cmake "${use_distro_compiler}"
+    init_plan_package "${plan_file}" rust "${use_distro_compiler}"
+    init_plan_package "${plan_file}" patchelf "${use_distro_compiler}"
+
+    init_plan_package "${plan_file}" elfutils "${use_distro_compiler}" gcc
+    init_plan_package "${plan_file}" m4 "${use_distro_compiler}" gcc
+    init_plan_package "${plan_file}" autoconf "${use_distro_compiler}" gcc m4
+    init_plan_package "${plan_file}" automake "${use_distro_compiler}" gcc autoconf
+    init_plan_package "${plan_file}" libtool "${use_distro_compiler}" gcc m4
+    init_plan_package "${plan_file}" make "${use_distro_compiler}" gcc
+    init_plan_package "${plan_file}" perl "${use_distro_compiler}" gcc
+    init_plan_package "${plan_file}" git "${use_distro_compiler}" gcc
+    init_plan_package "${plan_file}" yaml-cpp "${use_distro_compiler}" gcc cmake
+    init_plan_package "${plan_file}" googletest "${use_distro_compiler}" gcc cmake
+}
+
+cleanup_init_plan() {
+    if [[ -n ${KEZ_INIT_PLAN_FILE:-} ]]; then
+        rm -f -- "${KEZ_INIT_PLAN_FILE}"
+    fi
+}
+
+configure_package_environment() {
+    local package=$1
+
+    # All package workers get an executor-owned private scratch directory.
+    export KEZ_SYSTEM_TMP=$PWD
+    export PATH="${KEZ_SYSTEM}/bin:${PATH}"
+    mkdir -p "${KEZ_SYSTEM}" "${KEZ_SYSTEM}/bin" "${KEZ_UTILITIES}" "${KEZ_SYSTEM_TMP}"
+
+    case $package in
+        elfutils | m4 | autoconf | automake | libtool | make | perl | git | yaml-cpp | googletest)
+            if [[ ! -x ${KEZ_SYSTEM}/bin/gcc || ! -x ${KEZ_SYSTEM}/bin/g++ ]]; then
+                echo >&2 "Package ${package} requires the Kez GCC toolchain"
+                return 1
+            fi
+            export CC="${KEZ_SYSTEM}/bin/gcc"
+            export CXX="${KEZ_SYSTEM}/bin/g++"
+            export FC="${KEZ_SYSTEM}/bin/gfortran"
+            ;;
+    esac
+}
+
+build_package() {
+    local package=$1
+    configure_package_environment "${package}"
+
+    case $package in
+        gmp) build_gmp ;;
+        mpfr) build_mpfr ;;
+        mpc) build_mpc ;;
+        isl) build_isl ;;
+        zlib) build_zlib ;;
+        xz) build_xz ;;
+        lz4) build_lz4 ;;
+        zstd) build_zstd ;;
+        binutils) build_binutils ;;
+        gcc) build_gcc ;;
+        elfutils) build_elfutils ;;
+        m4) build_m4 ;;
+        autoconf) build_autoconf ;;
+        automake) build_automake ;;
+        libtool) build_libtool ;;
+        make) build_make ;;
+        cmake) build_cmake ;;
+        rust) build_rust ;;
+        perl) build_perl ;;
+        git) build_git ;;
+        yaml-cpp) build_yaml_cpp ;;
+        googletest) build_googletest ;;
+        patchelf) build_patchelf ;;
+        *)
+            echo >&2 "Unknown system package: ${package}"
+            return 2
+            ;;
+    esac
+}
+
+set_init_paths() {
+    : "${KEZ_HOME:?KEZ_HOME is not set}"
+    : "${KEZ_WORKDIR:?KEZ_WORKDIR is not set}"
+    export KEZ_SYSTEM="${KEZ_WORKDIR}/$(yq -r '.paths.system' "${KEZ_HOME}/manifest.yaml")"
+    export KEZ_UTILITIES="${KEZ_WORKDIR}/$(yq -r '.paths.utilities' "${KEZ_HOME}/manifest.yaml")"
+}
+
+run_package_mode() {
+    local package=$1
+    shift
+    KEZ_INIT_USE_DISTRO_COMPILER=0
+    if [[ ${1:-} == --use-distro-compiler ]]; then
+        KEZ_INIT_USE_DISTRO_COMPILER=1
+        shift
+    fi
+    if (( $# != 0 )); then
+        echo >&2 "Unknown package build option: $1"
+        return 2
+    fi
+    export KEZ_INIT_USE_DISTRO_COMPILER
+
+    unset CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
+    unset LIBRARY_PATH LD_LIBRARY_PATH PKG_CONFIG_PATH
+    unset CMAKE_PREFIX_PATH CMAKE_LIBRARY_PATH CMAKE_INCLUDE_PATH
+    set_init_paths
+    source "${KEZ_HOME}/scripts/init_utils.sh"
+    build_package "${package}"
+}
+
+main() {
+    local refresh=0
+    local use_distro_compiler=0
+    local argument plan_file install_jobs
+
+    for argument in "$@"; do
+        case $argument in
+            --refresh) refresh=1 ;;
+            --use-distro-compiler) use_distro_compiler=1 ;;
+            *)
+                echo >&2 "Unknown init option: ${argument}"
+                return 2
+                ;;
+        esac
+    done
+
+    : "${KEZ_NPROC:?KEZ_NPROC is not set}"
+    if [[ ! $KEZ_NPROC =~ ^[1-9][0-9]*$ ]]; then
+        echo >&2 "KEZ_NPROC must be a positive integer"
+        return 2
+    fi
+
+    unset CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
+    unset LIBRARY_PATH LD_LIBRARY_PATH PKG_CONFIG_PATH
+    unset CMAKE_PREFIX_PATH CMAKE_LIBRARY_PATH CMAKE_INCLUDE_PATH
+    set_init_paths
+    local system_tmp="${KEZ_SYSTEM}/.tmp"
+    mkdir -p "${KEZ_SYSTEM}" "${KEZ_UTILITIES}" "${system_tmp}"
+
+    if (( refresh == 1 )); then
+        rm -rf "${KEZ_SYSTEM:?}/"*
+        rm -rf "${system_tmp:?}/"*
+        mkdir -p "${KEZ_SYSTEM}" "${KEZ_SYSTEM}/bin" "${system_tmp}"
+    fi
+    if [[ ! -f ${KEZ_SYSTEM}/state.yaml ]]; then
+        printf 'state:\n' > "${KEZ_SYSTEM}/state.yaml"
+    fi
+
+    plan_file=$(mktemp "${system_tmp}/init-plan.XXXXXX")
+    KEZ_INIT_PLAN_FILE=${plan_file}
+    trap cleanup_init_plan EXIT
+    write_init_plan "${plan_file}" "${use_distro_compiler}"
+
+    install_jobs=${KEZ_INSTALL_JOBS:-${KEZ_NPROC}}
+    KEZ_INSTALL_STATE_FORMAT=map KEZ_INSTALL_JOBS="${install_jobs}" \
+        bash "${KEZ_HOME}/scripts/install.sh" "${KEZ_SYSTEM}" "${plan_file}"
+
+    export PATH="${KEZ_SYSTEM}/bin:${PATH}"
+    make -C "${KEZ_HOME}" -B -j"${KEZ_NPROC}"
+    "${KEZ_HOME}/bin/kez_print" success "Kez environment initialization complete."
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    set -Eeuo pipefail
+    if [[ ${1:-} == --build-package ]]; then
+        if (( $# < 2 )); then
+            echo >&2 "Usage: init.sh --build-package <package> [--use-distro-compiler]"
+            exit 2
+        fi
+        package=$2
+        shift 2
+        run_package_mode "${package}" "$@"
+    else
+        main "$@"
+    fi
 fi
-
-# Kez
-make -C "${KEZ_HOME}" -B -j"${KEZ_NPROC}"
-
-
-# End of Script
-# ----------------------------------------------------
-${KEZ_HOME}/bin/kez_print success "Kez environment initialization complete."
-
-set +Eeuo pipefail
