@@ -82,7 +82,7 @@ TEST_SOURCES := \
 	tests/user_config_generator_test.cpp
 TEST_OBJECTS := $(TEST_SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LIBRARY := $(LIB_DIR)/libkez.a
-TEST_BINARY := $(BIN_DIR)/test_database
+TEST_BINARY := $(BIN_DIR)/kez_tests
 CLI_BINARY := $(BIN_DIR)/kez
 COMPLETION_BINARY := $(BIN_DIR)/kez_completion
 PRINT_BINARY := $(BIN_DIR)/kez_print

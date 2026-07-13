@@ -31,7 +31,7 @@ to `PATH`.
 | Static library | `lib/libkez.a` | Core library (parser, resolver, database, utils) |
 | CLI binary | `bin/kez` | Main `kez` command |
 | Completion binary | `bin/kez_completion` | Bash completion helper |
-| Test binary | `bin/test_database` | Unit test runner |
+| Test binary | `bin/kez_tests` | Unit test runner |
 | Print helper | `bin/kez_print` | Colored output tool (takes type: info/warning/error/success) |
 
 ### Compile Options
@@ -53,7 +53,7 @@ Kez uses [Google Test](https://github.com/google/googletest) for C++ unit tests.
 make test
 
 # Run tests manually (after building)
-./bin/test_database
+./bin/kez_tests
 ```
 
 ### Test Files
