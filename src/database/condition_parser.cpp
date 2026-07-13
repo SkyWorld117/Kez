@@ -1,7 +1,7 @@
 #include <cctype>
 #include <database/condition_parser.hpp>
 #include <database/parser_utils.hpp>
-#include <functional>
+#include <string>
 #include <vector>
 
 namespace {
@@ -103,28 +103,57 @@ namespace {
     }
 }  // namespace
 
-void validate_condition(const std::string& expression, const YAML::Node& node,
-                        const std::string& path, const DatabaseParserContext& context) {
-    const std::vector<std::string> tokens = tokenize_condition(expression, node, path, context);
-    if (tokens.empty()) {
-        fail_config(node, path, "must not be empty", context);
+// Simple recursive-descent parser for condition expressions, implemented
+// as plain member functions on a state struct rather than std::function
+// lambdas with mutual recursion.
+struct ConditionParser {
+    const std::vector<std::string>& tokens;
+    std::size_t position;
+    const YAML::Node& node;
+    const std::string& path;
+    const DatabaseParserContext& context;
+
+    // or → and ("||" and)*
+    void parse_or() {
+        parse_and();
+        while (position < tokens.size() && tokens[position] == "||") {
+            ++position;
+            parse_and();
+        }
     }
 
-    std::size_t position = 0;
-    std::function<void()> parse_or;
-    std::function<void()> parse_and;
-    std::function<void()> parse_unary;
-    std::function<void()> parse_primary;
+    // and → unary ("&&" unary)*
+    void parse_and() {
+        parse_unary();
+        while (position < tokens.size() && tokens[position] == "&&") {
+            ++position;
+            parse_unary();
+        }
+    }
 
-    // Parses a primary expression: parenthesized sub-expression, a boolean
-    // literal (true/false), a required-package condition, an environment-
-    // variable condition, a version comparison, or an option condition
-    // (optionally preceded by an option name).
-    parse_primary = [&] {
+    // unary → "not" unary | primary
+    void parse_unary() {
+        if (position < tokens.size() && tokens[position] == "not") {
+            ++position;
+            parse_unary();
+        } else {
+            parse_primary();
+        }
+    }
+
+    // primary → "(" or ")"
+    //         | "true" | "false"
+    //         | "required" name
+    //         | "environment" name
+    //         | "version" comparison
+    //         | [name] ("true" | "false" | "enabled" | "disabled") [name]
+    void parse_primary() {
         if (position >= tokens.size()) {
             fail_config(node, path, "ends before a condition was provided", context);
         }
-        if (tokens[position] == "(") {
+        const std::string& tok = tokens[position];
+
+        if (tok == "(") {
             ++position;
             parse_or();
             if (position >= tokens.size() || tokens[position] != ")") {
@@ -133,11 +162,11 @@ void validate_condition(const std::string& expression, const YAML::Node& node,
             ++position;
             return;
         }
-        if (tokens[position] == "true" || tokens[position] == "false") {
+        if (tok == "true" || tok == "false") {
             ++position;
             return;
         }
-        if (tokens[position] == "required" || tokens[position] == "environment") {
+        if (tok == "required" || tok == "environment") {
             ++position;
             if (position >= tokens.size() || tokens[position] == "(" || tokens[position] == ")" ||
                 tokens[position] == "&&" || tokens[position] == "||") {
@@ -146,7 +175,7 @@ void validate_condition(const std::string& expression, const YAML::Node& node,
             ++position;
             return;
         }
-        if (tokens[position] == "version") {
+        if (tok == "version") {
             ++position;
             if (position >= tokens.size()) {
                 fail_config(node, path, "is missing a version comparison", context);
@@ -156,7 +185,9 @@ void validate_condition(const std::string& expression, const YAML::Node& node,
             return;
         }
 
-        // Option condition: optionally preceded by an option name token.
+        // Option condition: consume the option-name token (if present) then
+        // expect true / false / enabled / disabled, optionally followed by
+        // another option-name token.
         ++position;
         if (position >= tokens.size() ||
             (tokens[position] != "true" && tokens[position] != "false" &&
@@ -168,42 +199,21 @@ void validate_condition(const std::string& expression, const YAML::Node& node,
             tokens[position] != ")") {
             ++position;
         }
-    };
+    }
+};
 
-    // Parses a unary expression: optionally prefixed by one or more "not"
-    // operators, followed by a primary expression.
-    parse_unary = [&] {
-        if (position < tokens.size() && tokens[position] == "not") {
-            ++position;
-            parse_unary();
-        } else {
-            parse_primary();
-        }
-    };
+void validate_condition(const std::string& expression, const YAML::Node& node,
+                        const std::string& path, const DatabaseParserContext& context) {
+    const std::vector<std::string> tokens = tokenize_condition(expression, node, path, context);
+    if (tokens.empty()) {
+        fail_config(node, path, "must not be empty", context);
+    }
 
-    // Parses a conjunction: a unary expression followed by zero or more
-    // "&&" unary-expression pairs.
-    parse_and = [&] {
-        parse_unary();
-        while (position < tokens.size() && tokens[position] == "&&") {
-            ++position;
-            parse_unary();
-        }
-    };
-
-    // Parses a disjunction: an and-expression followed by zero or more
-    // "||" and-expression pairs.
-    parse_or = [&] {
-        parse_and();
-        while (position < tokens.size() && tokens[position] == "||") {
-            ++position;
-            parse_and();
-        }
-    };
-
-    parse_or();
-    if (position != tokens.size()) {
-        fail_config(node, path, "contains unexpected token '" + tokens[position] + "'", context);
+    ConditionParser parser {tokens, 0, node, path, context};
+    parser.parse_or();
+    if (parser.position != tokens.size()) {
+        fail_config(node, path, "contains unexpected token '" + tokens[parser.position] + "'",
+                    context);
     }
 }
 
