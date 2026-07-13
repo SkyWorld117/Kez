@@ -12,8 +12,8 @@ kez:
                           - name: COMPFLAGS
                             description: Fortran compiler flags
                             enabled: true
-                            enabled_value: -O3 -fallow-argument-mismatch ${compiler.omp_flags} ${blas.includes} ${lapack.includes} 
-                                ${scalapack.includes} ${fftw3-api.includes} ${libxc.includes}
+                            enabled_value: -O3 -fallow-argument-mismatch ${compiler.omp_flags} ${blas.incflags} ${lapack.incflags} 
+                                ${scalapack.incflags} ${fftw3-api.incflags} ${libxc.incflags}
                           - name: MULT_KERN
                             description: Matrix multiplication kernel
                             enabled: true

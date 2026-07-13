@@ -145,7 +145,7 @@ recipe:
                   description: C++ compiler flags for Release build
                   user_configurable: true
                   enabled_value:
-                      default: -O3 -DEIGEN_USE_MKL_ALL ${intel-oneapi-mkl.includes}
+                      default: -O3 -DEIGEN_USE_MKL_ALL ${intel-oneapi-mkl.incflags}
 
                 - name: CMAKE_EXE_LINKER_FLAGS
                   description: Executable linker flags

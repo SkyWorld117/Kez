@@ -32,12 +32,12 @@ recipe:
                       - name: CFLAGS
                         description: C compiler flags
                         user_configurable: true
-                        default: -O3 ${zlib.includes} ${lz4.includes} ${xz.includes}
+                        default: -O3 ${zlib.incflags} ${lz4.incflags} ${xz.incflags}
 
                       - name: CXXFLAGS
                         description: C++ compiler flags
                         user_configurable: true
-                        default: -O3 ${zlib.includes} ${lz4.includes} ${xz.includes}
+                        default: -O3 ${zlib.incflags} ${lz4.incflags} ${xz.incflags}
 
                       - name: LDFLAGS
                         description: Linker flags

@@ -229,11 +229,11 @@ recipe:
                   description: C compiler flags
                   user_configurable: true
                   enabled_value:
-                      default: -O3 ${compiler.includes} ${mpi.includes}
+                      default: -O3 ${compiler.incflags} ${mpi.incflags}
                       conditions:
                           - condition: ${mpip.config.disable-libunwind} false
                             action: append
-                            value: ${libunwind.includes}
+                            value: ${libunwind.incflags}
 
                 - name: LDFLAGS
                   description: linker flags, e.g. -L<lib dir> if you have libraries in a nonstandard directory <lib dir>
@@ -258,11 +258,11 @@ recipe:
                 - name: CPPFLAGS
                   description: (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if you have headers in a nonstandard directory <include dir>
                   enabled_value:
-                      default: ${compiler.includes} ${mpi.includes}
+                      default: ${compiler.incflags} ${mpi.incflags}
                       conditions:
                           - condition: ${mpip.config.disable-libunwind} false
                             action: append
-                            value: ${libunwind.includes}
+                            value: ${libunwind.incflags}
 
                 - name: F77
                   description: Fortran 77 compiler command

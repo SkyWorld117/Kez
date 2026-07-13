@@ -123,12 +123,12 @@ recipe:
                 - name: FOAM_EXTRA_CFLAGS
                   description: Extra compiler flags for OpenFOAM to bake RPATH
                   user_configurable: true
-                  default: ${spuma.nvldflags} ${gmp.includes} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+                  default: ${spuma.nvldflags} ${gmp.incflags} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
 
                 - name: FOAM_EXTRA_CXXFLAGS
                   description: Extra C++ compiler flags for OpenFOAM to bake RPATH
                   user_configurable: true
-                  default: ${spuma.nvldflags} ${gmp.includes} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+                  default: ${spuma.nvldflags} ${gmp.incflags} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
 
                 - name: FOAM_EXTRA_LDFLAGS
                   description: Extra linker flags for OpenFOAM to bake RPATH

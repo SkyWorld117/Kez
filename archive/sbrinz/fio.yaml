@@ -10,7 +10,7 @@ kez:
                     - name: --extra-cflags
                       description: C Flags
                       enabled: true
-                      enabled_value: -O3 ${libaio.includes}
+                      enabled_value: -O3 ${libaio.incflags}
     libaio:
         description: The Linux-native asynchronous I/O facility
         version: master

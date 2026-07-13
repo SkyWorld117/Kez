@@ -52,13 +52,13 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${elsi.includes} ${cuda.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${elsi.incflags} ${cuda.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${elsi.includes} ${cuda.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${elsi.incflags} ${cuda.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${elsi.includes} ${cuda.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${elsi.incflags} ${cuda.incflags}
                     - name: CMAKE_MODULE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${elsi.ldflags} 
@@ -101,16 +101,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3 -fallow-argument-mismatch ${mpi.includes} ${lapack.includes} ${scalapack.includes} ${elpa.includes}
+                      enabled_value: -O3 -fallow-argument-mismatch ${mpi.incflags} ${lapack.incflags} ${scalapack.incflags} ${elpa.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3 -fallow-argument-mismatch ${mpi.includes} ${lapack.includes} ${scalapack.includes} ${elpa.includes}
+                      enabled_value: -O3 -fallow-argument-mismatch ${mpi.incflags} ${lapack.incflags} ${scalapack.incflags} ${elpa.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 -fallow-argument-mismatch ${mpi.includes} ${lapack.includes} ${scalapack.includes} ${elpa.includes}
+                      enabled_value: -O3 -fallow-argument-mismatch ${mpi.incflags} ${lapack.incflags} ${scalapack.incflags} ${elpa.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${lapack.includes} ${scalapack.includes} ${elpa.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${lapack.incflags} ${scalapack.incflags} ${elpa.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${elpa.ldflags} ${elsi.ldflags} 
@@ -245,16 +245,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${mpi.includes} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${cuda.includes}
+                      enabled_value: ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${cuda.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${cuda.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${cuda.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${cuda.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${cuda.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${blas.includes} ${lapack.includes} ${scalapack.includes} ${cuda.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${cuda.incflags}
     nvhpc:
         version: 26.5
     intel-oneapi-mkl:

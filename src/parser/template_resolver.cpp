@@ -491,7 +491,7 @@ namespace {
             PackageConfigPtr compiler = get_db_config(
                 compiler_name, compiler_version == "system" ? "latest" : compiler_version);
             if (find_property(*compiler, property_name) == nullptr) {
-                if (property_name == "includes" && find_property(*compiler, "include") != nullptr) {
+                if (property_name == "incflags" && find_property(*compiler, "include") != nullptr) {
                     return format_include_path(
                         resolve_parser_scalar("${compiler.include}", context));
                 }
@@ -543,7 +543,7 @@ namespace {
         }
 
         const PackageConfigPtr config = parser_package_config(context, package_name);
-        if (property_name == "includes") {
+        if (property_name == "incflags") {
             return format_include_path(
                 resolve_parser_scalar("${" + template_package_name + ".include}", context));
         }

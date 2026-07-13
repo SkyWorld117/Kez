@@ -107,16 +107,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${mpi.includes}
+                      enabled_value: ${mpi.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags}

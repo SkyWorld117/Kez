@@ -252,7 +252,7 @@ recipe:
 
                 - name: SCALAPACK_FCFLAGS
                   enabled_value:
-                      default: ${scalapack.includes}
+                      default: ${scalapack.incflags}
 
                 - name: SCALAPACK_LDFLAGS
                   enabled_value:

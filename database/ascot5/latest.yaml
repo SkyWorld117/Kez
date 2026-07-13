@@ -83,10 +83,10 @@ recipe:
                   conditions:
                       - condition: ${ascot5.config.GPU} true
                         action: set
-                        value: ${nvhpc-compilers.c} ${hdf5.includes} ${hdf5.ldflags} ${mpi.includes} ${mpi.ldflags} ${mpi.libs}
+                        value: ${nvhpc-compilers.c} ${hdf5.incflags} ${hdf5.ldflags} ${mpi.incflags} ${mpi.ldflags} ${mpi.libs}
                       - condition: ${ascot5.config.MPI} true
                         action: set
-                        value: ${mpi.c} ${hdf5.includes} ${hdf5.ldflags}
+                        value: ${mpi.c} ${hdf5.incflags} ${hdf5.ldflags}
 
     build:
         # Delete setting -O2 in the Makefile, to let the user set their own flag

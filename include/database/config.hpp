@@ -69,7 +69,7 @@ enum class ValueAction {
  *        expression evaluates to true at resolution time.
  *
  * Condition expressions reference properties of the package and its
- * dependencies (e.g. ``"lib"``, ``"includes"``) and are evaluated by
+ * dependencies (e.g. ``"lib"``, ``"incflags"``) and are evaluated by
  * the condition parser.  The @ref action field controls how @ref value
  * is combined with the base (default) value.
  *
@@ -509,7 +509,7 @@ inline const Property* find_property(const PackageConfig& config, const std::str
  * convenience:
  * | Requested name  | Also checks for |
  * |-----------------|-----------------|
- * | ``"includes"``  | ``"include"``   |
+ * | ``"incflags"``  | ``"include"``   |
  * | ``"ldflags"``   | ``"lib"``       |
  * | ``"nvldflags"`` | ``"lib"``       |
  *
@@ -524,7 +524,7 @@ inline bool has_property(const PackageConfig& config, const std::string& propert
     if (find_property(config, property) != nullptr) {
         return true;
     }
-    if (property == "includes") {
+    if (property == "incflags") {
         return find_property(config, "include") != nullptr;
     }
     if (property == "ldflags" || property == "nvldflags") {

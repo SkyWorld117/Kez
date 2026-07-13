@@ -49,16 +49,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${sst-core.includes} ${mpi.includes} ${python.includes} ${goblinhmcsim.includes}
+                      enabled_value: ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${sst-core.includes} ${mpi.includes} ${python.includes} ${goblinhmcsim.includes}
+                      enabled_value: -O3 ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${sst-core.includes} ${mpi.includes} ${python.includes} ${goblinhmcsim.includes}
+                      enabled_value: -O3 ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${sst-core.includes} ${mpi.includes} ${python.includes} ${goblinhmcsim.includes}
+                      enabled_value: -O3 ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${sst-core.ldflags} ${mpi.ldflags} ${python.ldflags} ${dramsim3.ldflags} ${intelpin.ldflags} 
@@ -91,16 +91,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${mpi.includes} ${python.includes} ${hdf5.includes}
+                      enabled_value: ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${python.includes} ${hdf5.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${python.includes} ${hdf5.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${python.includes} ${hdf5.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${python.ldflags} ${hdf5.ldflags} ${sst-core.ldflags}
@@ -222,16 +222,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${mpi.includes}
+                      enabled_value: ${mpi.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags}

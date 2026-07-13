@@ -21,7 +21,7 @@ Access any property declared by another package:
 | `${foo.include}` | Raw include directory of package `foo` |
 | `${foo.ldflags}` | Linker flags derived from `lib` |
 | `${foo.nvldflags}` | NVIDIA linker-driver syntax flags |
-| `${foo.includes}` | Compiler `-I` flags derived from `include` |
+| `${foo.incflags}` | Compiler `-I` flags derived from `include` |
 | `${foo.prefix}` | Installation prefix of package `foo` |
 | `${foo.version}` | Version of package `foo` |
 | `${foo.libs}` | Link libraries of package `foo` |

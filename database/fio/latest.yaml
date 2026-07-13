@@ -21,7 +21,7 @@ recipe:
                   description: C Flags
                   user_configurable: true
                   enabled_value:
-                      default: -O3 ${libaio.includes}
+                      default: -O3 ${libaio.incflags}
 
                 - name: --extra-ldflags
                   description: LD flags

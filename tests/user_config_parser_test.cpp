@@ -360,7 +360,7 @@ recipe:
   toolchain: cmake
   dependencies: [library]
   build:
-    preprocessing: echo ${library.includes} ${library.ldflags} ${library.nvldflags}
+    preprocessing: echo ${library.incflags} ${library.ldflags} ${library.nvldflags}
     configurations:
       command: cmake -B build
       options:
@@ -373,7 +373,7 @@ recipe:
 
         YAML::Node user_config = gen_user_config({"application"}, false, "system");
         find_option(user_config["kez"]["application"]["build"]["configurations"]["options"],
-                    "CMAKE_CXX_FLAGS")["enabled_value"] = "-Og ${library.includes}";
+                    "CMAKE_CXX_FLAGS")["enabled_value"] = "-Og ${library.incflags}";
 
         const BashCommandPlan plan = parse_user_config(user_config, settings());
 

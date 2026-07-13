@@ -40,20 +40,20 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes} 
-                          ${cuda.includes}
+                      enabled_value: ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags} 
+                          ${cuda.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes}
-                          ${cuda.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags}
+                          ${cuda.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes}
-                          ${cuda.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags}
+                          ${cuda.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes} ${prrte.includes} ${ucx.includes} ${numactl.includes}
-                          ${cuda.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags}
+                          ${cuda.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} 
@@ -91,16 +91,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
+                      enabled_value: ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
+                      enabled_value: -O3 ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
+                      enabled_value: -O3 ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.includes} ${cuda.includes} ${gdrcopy.includes}
+                      enabled_value: -O3 ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${rdma-core.ldflags} ${cuda.ldflags} ${gdrcopy.ldflags}
@@ -127,16 +127,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+                      enabled_value: ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes} ${pmix.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
     pmix:
         description: Process Management Interface for Exascale
         version: 6.0.0
@@ -158,16 +158,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${hwloc.includes} ${libevent.includes}
+                      enabled_value: ${hwloc.incflags} ${libevent.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.includes} ${libevent.includes}
+                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags}
@@ -223,16 +223,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${openssl.includes}
+                      enabled_value: ${openssl.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${openssl.includes}
+                      enabled_value: -O3 ${openssl.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${openssl.includes}
+                      enabled_value: -O3 ${openssl.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${openssl.includes}
+                      enabled_value: -O3 ${openssl.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${openssl.ldflags}
@@ -269,16 +269,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                      enabled_value: ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                      enabled_value: -O3 ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                      enabled_value: -O3 ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes} ${lz4.includes} ${libpciaccess.includes} ${libxml2.includes} ${cuda.includes}
+                      enabled_value: -O3 ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags} ${cuda.ldflags}
@@ -303,16 +303,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${zlib.includes} ${xz.includes}
+                      enabled_value: ${zlib.incflags} ${xz.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes} ${xz.includes}
+                      enabled_value: -O3 ${zlib.incflags} ${xz.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes} ${xz.includes}
+                      enabled_value: -O3 ${zlib.incflags} ${xz.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes} ${xz.includes}
+                      enabled_value: -O3 ${zlib.incflags} ${xz.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${xz.ldflags}
@@ -337,16 +337,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${zlib.includes}
+                      enabled_value: ${zlib.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes}
+                      enabled_value: -O3 ${zlib.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes}
+                      enabled_value: -O3 ${zlib.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.includes}
+                      enabled_value: -O3 ${zlib.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${zlib.ldflags}

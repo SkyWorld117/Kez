@@ -117,8 +117,8 @@ namespace {
 
         for (const std::string& dependency :
              active_dependencies(configuration, package, dependencies, abstract_packages)) {
-            if (package_has_property(dependency, "includes", abstract_packages, compiler)) {
-                append_unique(result.include_flags, template_value(dependency, "includes"));
+            if (package_has_property(dependency, "incflags", abstract_packages, compiler)) {
+                append_unique(result.include_flags, template_value(dependency, "incflags"));
             }
             if (package_has_property(dependency, "ldflags", abstract_packages, compiler)) {
                 append_unique(result.linker_flags, template_value(dependency, "ldflags"));

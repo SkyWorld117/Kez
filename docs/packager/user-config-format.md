@@ -329,8 +329,8 @@ The following options are generated for every package with
 | `CC` | `${compiler.c}` (or `${mpi.c}` when MPI is a dependency) |
 | `CXX` | `${compiler.cxx}` (or `${mpi.cxx}` when MPI is a dependency) |
 | `FC` | `${compiler.fort}` (or `${mpi.fort}` when MPI is a dependency) |
-| `CPPFLAGS` | `${<dep>.includes}` for each active dependency |
-| `CFLAGS` | `-O3 ${<dep>.includes}` for each active dependency |
+| `CPPFLAGS` | `${<dep>.incflags}` for each active dependency |
+| `CFLAGS` | `-O3 ${<dep>.incflags}` for each active dependency |
 | `CXXFLAGS` | Same derivation as `CFLAGS` |
 | `FCFLAGS` | Same derivation as `CFLAGS` |
 | `LDFLAGS` | `${<dep>.ldflags}` for each active dependency |
@@ -351,7 +351,7 @@ The following options are generated for every package with
 | `CMAKE_C_COMPILER` | `${compiler.c}` (or `${mpi.c}` when MPI is a dependency) |
 | `CMAKE_CXX_COMPILER` | `${compiler.cxx}` (or `${mpi.cxx}` when MPI is a dependency) |
 | `CMAKE_Fortran_COMPILER` | `${compiler.fort}` (or `${mpi.fort}` when MPI is a dependency) |
-| `CMAKE_C_FLAGS` | `-O3 ${<dep>.includes}` for each active dependency |
+| `CMAKE_C_FLAGS` | `-O3 ${<dep>.incflags}` for each active dependency |
 | `CMAKE_CXX_FLAGS` | Same derivation as `CMAKE_C_FLAGS` |
 | `CMAKE_Fortran_FLAGS` | Same derivation as `CMAKE_C_FLAGS` |
 | `CMAKE_CUDA_FLAGS` | Same derivation as `CMAKE_C_FLAGS` |
@@ -367,8 +367,8 @@ The following options are generated for every package with
 The template defaults are derived from the package's resolved dependencies:
 
 **Include flags** (`-I` equivalents): Collected from every active dependency
-that declares an `includes` or `include` property. Each contributes
-`${<dep>.includes}`.
+that declares an `incflags` or `include` property. Each contributes
+`${<dep>.incflags}`.
 
 **Linker flags** (`-L` / `-Wl,...` equivalents): Collected from every active
 dependency that declares `ldflags` or `lib` properties, plus the compiler's

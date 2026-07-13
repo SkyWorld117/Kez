@@ -71,16 +71,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${mpi.includes} ${zlib.includes} ${hdf5.includes} ${metis.includes} ${cuda.includes} ${nvhpc-nccl.includes}
+                      enabled_value: ${mpi.incflags} ${zlib.incflags} ${hdf5.incflags} ${metis.incflags} ${cuda.incflags} ${nvhpc-nccl.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${zlib.includes} ${hdf5.includes} ${metis.includes} ${cuda.includes} ${nvhpc-nccl.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${zlib.incflags} ${hdf5.incflags} ${metis.incflags} ${cuda.incflags} ${nvhpc-nccl.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${zlib.includes} ${hdf5.includes} ${metis.includes} ${cuda.includes} ${nvhpc-nccl.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${zlib.incflags} ${hdf5.incflags} ${metis.incflags} ${cuda.incflags} ${nvhpc-nccl.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes} ${zlib.includes} ${hdf5.includes} ${metis.includes} ${cuda.includes} ${nvhpc-nccl.includes}
+                      enabled_value: -O3 ${mpi.incflags} ${zlib.incflags} ${hdf5.incflags} ${metis.incflags} ${cuda.incflags} ${nvhpc-nccl.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${zlib.ldflags} ${hdf5.ldflags} ${metis.ldflags} ${cuda.ldflags} 
@@ -200,16 +200,16 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.includes}
+                      enabled_value: -O3 ${mpi.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${mpi.libs}

@@ -91,7 +91,7 @@ inline PackageConfigPtr property_config(const std::string& package,
  * property_config() for the resolution semantics.
  *
  * @param package            The package name to check.
- * @param property           The property name (e.g. "includes", "ldflags").
+ * @param property           The property name (e.g. "incflags", "ldflags").
  * @param abstract_packages  Map from abstract package names to concrete
  *                           implementations.
  * @param compiler           Compiler specification string (passed through
