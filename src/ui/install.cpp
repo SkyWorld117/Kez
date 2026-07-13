@@ -8,7 +8,8 @@
  *     YAML config (`--read`), dry-run mode, config-value overrides, Slurm
  *     submission, and the `--rebuild` workflow.
  *   - **utilities** – Manages the shared utilities environment via `add`
- *     (forwarding to the install pipeline) and `empty` (removing all packages).
+ *     (forwarding to the install pipeline), `remove` (deleting a single package),
+ *     `reload` (updating PATH), and `empty` (removing all packages).
  *
  * Both paths converge on run_install_plan(), which writes the parsed
  * BashCommandPlan to a temporary script and executes it through
@@ -31,7 +32,9 @@
 #include <user_config_generator/user_config_generator.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
+#include <utils/file_utils.hpp>
 #include <utils/string_utils.hpp>
+#include <utils/yaml_utils.hpp>
 #include <vector>
 
 namespace {
@@ -461,6 +464,67 @@ namespace {
         // The paths are single-quoted for safe shell evaluation.
         std::cout << "export PATH=" << shell_single_quote(join(bin_dirs, ":")) << ":\"${PATH}\";\n";
     }
+
+    /**
+     * @brief Remove a single package from the shared utilities environment.
+     *
+     * Validates the package name, deletes its directory tree under
+     * <work>/utilities/, and removes the package from state.yaml so that
+     * subsequent operations (e.g. a rebuild) do not reference a
+     * half-removed package.
+     *
+     * @param package  The name of the utility package to remove.
+     *
+     * @warning Terminates the process with EXIT_FAILURE if the package is not
+     *          installed or cannot be deleted.
+     */
+    void remove_utilities_package(const std::string& package) {
+        validate_path_component(package, "utility package name");
+
+        const std::filesystem::path root     = configured_work_path("utilities");
+        const std::filesystem::path pkg_path = root / package;
+
+        if (!std::filesystem::is_directory(pkg_path)) {
+            ERROR("Utility package is not installed: " + package);
+            exit(EXIT_FAILURE);
+        }
+
+        // Remove the package directory tree.
+        std::error_code error;
+        std::filesystem::remove_all(pkg_path, error);
+        if (error) {
+            ERROR("Failed to remove utility package '" + package + "': " + error.message());
+            exit(EXIT_FAILURE);
+        }
+
+        // Remove the package from state.yaml, if it exists.
+        const std::filesystem::path state_file = root / "state.yaml";
+        if (std::filesystem::is_regular_file(state_file)) {
+            YAML::Node document;
+            try {
+                document = YAML::LoadFile(state_file.string());
+            } catch (const YAML::Exception& err) {
+                ERROR("Failed to parse utilities state file: " + state_file.string() + "\n" +
+                      err.what());
+                exit(EXIT_FAILURE);
+            }
+
+            if (yaml_has(document, "state") && document["state"].IsSequence()) {
+                YAML::Node updated;
+                updated["state"] = YAML::Node(YAML::NodeType::Sequence);
+
+                for (const YAML::Node& entry : document["state"]) {
+                    if (!entry.IsScalar()) continue;
+                    if (entry.as<std::string>() == package) continue;
+                    updated["state"].push_back(entry);
+                }
+
+                write_yaml(updated, state_file.string());
+            }
+        }
+
+        SUCCESS("Utility package removed: " + package);
+    }
 }  // namespace
 
 /**
@@ -475,7 +539,15 @@ void execute_install(const CommandArguments& arguments) { install(arguments, fal
  */
 void execute_utilities(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
-        std::cout << "Usage: kez utilities <add|reload|empty> [options]\n";
+        std::cout << "Usage: kez utilities <add|remove|reload|empty> [options]\n";
+        return;
+    }
+    if (arguments.front() == "remove") {
+        if (arguments.size() != 2) {
+            ERROR("utilities remove requires exactly one package name");
+            exit(EXIT_FAILURE);
+        }
+        remove_utilities_package(arguments[1]);
         return;
     }
     if (arguments.front() == "reload") {
