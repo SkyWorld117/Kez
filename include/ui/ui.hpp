@@ -19,7 +19,7 @@
  *              `argv[2..]` are forwarded to the command handler.
  *
  * @see  CommandArguments (std::vector<std::string>) in commands.hpp
- * @see  execute_init, execute_install, execute_info, execute_selfcheck,
+ * @see  execute_init, execute_install, execute_info, execute_dbcheck,
  *       execute_update, execute_utilities, execute_uconf,
  *       execute_environment, execute_compiler, execute_mpi, execute_factory
  *

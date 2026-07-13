@@ -337,16 +337,16 @@ void execute_info(const CommandArguments& arguments) {
 }
 
 /**
- * @brief Runs the `selfcheck` subcommand: validates every recipe in the database
+ * @brief Runs the `dbcheck` subcommand: validates every recipe in the database
  *        directory, reporting the total count of validated configurations.
  */
-void execute_selfcheck(const CommandArguments& arguments) {
+void execute_dbcheck(const CommandArguments& arguments) {
     if (!arguments.empty()) {
         if (arguments.size() == 1 && (arguments.front() == "-h" || arguments.front() == "--help")) {
-            std::cout << "Usage: kez selfcheck\n";
+            std::cout << "Usage: kez dbcheck\n";
             return;
         }
-        ERROR("selfcheck does not accept arguments");
+        ERROR("dbcheck does not accept arguments");
         exit(EXIT_FAILURE);
     }
 

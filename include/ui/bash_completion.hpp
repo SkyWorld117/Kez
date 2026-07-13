@@ -12,7 +12,7 @@
  *
  * Suggestions are derived from:
  *   - The set of valid subcommands (`init`, `install`, `env`, `compiler`,
- *     `mpi`, `factory`, `uconf`, `info`, `utilities`, `selfcheck`, etc.).
+ *     `mpi`, `factory`, `uconf`, `info`, `utilities`, `dbcheck`, etc.).
  *   - Subcommand-specific flags and options (e.g. `--dry-run`, `--force`,
  *     `--env`, `--read`).  Single-use options that have already appeared on
  *     the command line are **not** suggested again.

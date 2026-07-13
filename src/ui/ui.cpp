@@ -32,7 +32,7 @@ namespace {
                      "  mpi         Manage installed MPI environments\n"
                      "  factory     Manage batch build and profiling factories\n"
                      "  info        Show package metadata\n"
-                     "  selfcheck   Parse and validate the package database\n\n"
+                     "  dbcheck     Parse and validate the package database\n\n"
                      "Run 'kez <command> --help' for command-specific help.\n";
     }
 }  // namespace
@@ -82,8 +82,8 @@ void run_ui(int argc, char* argv[]) {
         execute_factory(arguments);
     } else if (command == "info") {
         execute_info(arguments);
-    } else if (command == "selfcheck") {
-        execute_selfcheck(arguments);
+    } else if (command == "dbcheck") {
+        execute_dbcheck(arguments);
     } else {
         ERROR("Unknown command: " + command);
         print_help();

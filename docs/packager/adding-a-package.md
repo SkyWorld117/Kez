@@ -132,7 +132,7 @@ properties:
 
 ```bash
 # Validate basic parsing
-kez selfcheck
+kez dbcheck
 
 # Generate a user configuration
 kez uconf <package_name>
@@ -141,7 +141,7 @@ kez uconf <package_name>
 kez uconf <package_name> --save /tmp/test-config.yaml
 ```
 
-If `kez selfcheck` reports errors, check:
+If `kez dbcheck` reports errors, check:
 - YAML syntax (missing `---`, incorrect indentation)
 - Required fields (`name`, `type` are mandatory)
 - Source URLs are reachable

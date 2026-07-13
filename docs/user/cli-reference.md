@@ -44,12 +44,12 @@ Use `--with-system` to also refresh the system environment (same as `kez init --
 
 ---
 
-### `kez selfcheck`
+### `kez dbcheck`
 
 Parse and validate the package database.
 
 ```
-Usage: kez selfcheck
+Usage: kez dbcheck
 ```
 
 Reads every recipe in the database and reports any parsing errors. Useful for

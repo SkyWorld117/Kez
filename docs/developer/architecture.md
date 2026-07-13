@@ -106,7 +106,7 @@ Command-line interface, implemented with lightweight manual argument parsing.
 | `factory.cpp` | `factory` commands |
 | `init.cpp` | `init` and `update` commands |
 | `install.cpp` | `install` and `utilities` commands |
-| `packages.cpp` | `info`, `uconf`, `selfcheck` commands |
+| `packages.cpp` | `info`, `uconf`, `dbcheck` commands |
 | `ui_utils.cpp` | Shared utilities: path resolution, environment activation, etc. |
 | `bash_completion.cpp` | Bash completion logic (used by `kez_completion` binary) |
 

@@ -290,9 +290,8 @@ namespace {
     std::vector<std::string> command_suggestions(int current_word_index,
                                                  const std::vector<std::string>& words) {
         if (current_word_index == 1) {
-            return {"init",      "update",   "install", "uconf",   "utilities",
-                    "env",       "compiler", "mpi",     "factory", "info",
-                    "selfcheck", "-h",       "--help",  "-V",      "--version"};
+            return {"init",    "update", "install", "uconf", "utilities", "env", "compiler", "mpi",
+                    "factory", "info",   "dbcheck", "-h",    "--help",    "-V",  "--version"};
         }
 
         const std::string command = word_at(words, 1);
@@ -326,7 +325,7 @@ namespace {
         if (command == "info") {
             return info_suggestions(current_word_index, words);
         }
-        if (command == "selfcheck") {
+        if (command == "dbcheck") {
             return help_options();
         }
         return {};

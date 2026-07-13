@@ -236,7 +236,7 @@ void execute_mpi(const CommandArguments& arguments);
  *
  * @note Terminates with an error if the package is not found in the database.
  *
- * @see execute_selfcheck
+ * @see execute_dbcheck
  */
 void execute_info(const CommandArguments& arguments);
 
@@ -248,7 +248,7 @@ void execute_info(const CommandArguments& arguments);
  * range selection and overlap.  Reports the total number of validated
  * configurations and packages on success.
  *
- * @param arguments  Command-line tokens after the `selfcheck` subcommand.
+ * @param arguments  Command-line tokens after the `dbcheck` subcommand.
  *                   No arguments are accepted.
  *                   - `-h` / `--help` : Print usage and return
  *
@@ -259,7 +259,7 @@ void execute_info(const CommandArguments& arguments);
  * @see get_db_config
  * @see parse_db_config
  */
-void execute_selfcheck(const CommandArguments& arguments);
+void execute_dbcheck(const CommandArguments& arguments);
 
 /**
  * @brief Manage batch build and profiling factories.
