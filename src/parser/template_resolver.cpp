@@ -543,19 +543,17 @@ namespace {
         }
 
         const PackageConfigPtr config = parser_package_config(context, package_name);
-        if (find_property(*config, property_name) == nullptr) {
-            if (property_name == "includes" && find_property(*config, "include") != nullptr) {
-                return format_include_path(
-                    resolve_parser_scalar("${" + template_package_name + ".include}", context));
-            }
-            if ((property_name == "ldflags" || property_name == "nvldflags") &&
-                find_property(*config, "lib") != nullptr) {
-                const std::string path =
-                    resolve_parser_scalar("${" + template_package_name + ".lib}", context);
-                return property_name == "nvldflags" ? format_nvidia_library_path(path)
-                                                    : format_library_path(path, context);
-            }
+        if (property_name == "includes") {
+            return format_include_path(
+                resolve_parser_scalar("${" + template_package_name + ".include}", context));
         }
+        if (property_name == "ldflags" || property_name == "nvldflags") {
+            const std::string path =
+                resolve_parser_scalar("${" + template_package_name + ".lib}", context);
+            return property_name == "nvldflags" ? format_nvidia_library_path(path)
+                                                : format_library_path(path, context);
+        }
+
         return resolve_declared_property(name, *config, property_name, context);
     }
 
