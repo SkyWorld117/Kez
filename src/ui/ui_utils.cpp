@@ -230,24 +230,104 @@ void list_directories(const std::filesystem::path& root, const std::string& head
     }
 }
 
+/**
+ * @brief Collect the bin, man, and pkg-config directories under each
+ *        package subdirectory of an environment root, mimicking the
+ *        logic in gen_modulefile.sh.
+ *
+ * Hidden directories (names starting with '.') are skipped so that
+ * internal directories like .tmp are not included.
+ */
+namespace {
+    struct EnvironmentPaths {
+        std::vector<std::string> path_dirs;
+        std::vector<std::string> man_dirs;
+        std::vector<std::string> pkgcfg_dirs;
+    };
+
+    EnvironmentPaths collect_environment_paths(const std::filesystem::path& prefix) {
+        EnvironmentPaths result;
+        if (!std::filesystem::is_directory(prefix)) {
+            return result;
+        }
+        for (const auto& entry : std::filesystem::directory_iterator(prefix)) {
+            if (!entry.is_directory()) continue;
+            const std::string name = entry.path().filename().string();
+            if (name.empty() || name[0] == '.') continue;
+
+            const auto pkg_dir = entry.path();
+
+            const auto bin_dir = pkg_dir / "bin";
+            if (std::filesystem::is_directory(bin_dir)) {
+                result.path_dirs.push_back(bin_dir.string());
+            }
+
+            const auto man_dir = pkg_dir / "share" / "man";
+            if (std::filesystem::is_directory(man_dir)) {
+                result.man_dirs.push_back(man_dir.string());
+            }
+
+            for (const char* rel : {"lib/pkgconfig", "lib64/pkgconfig", "share/pkgconfig"}) {
+                const auto cfg_dir = pkg_dir / rel;
+                if (std::filesystem::is_directory(cfg_dir)) {
+                    result.pkgcfg_dirs.push_back(cfg_dir.string());
+                }
+            }
+        }
+        return result;
+    }
+}  // namespace
+
 void emit_environment_activation(const std::filesystem::path& prefix, const std::string& variable,
                                  const std::string& value) {
-    std::cout << "export PATH=" << shell_single_quote((prefix / "bin").string())
-              << ":\"${PATH}\"; export " << variable << '=' << shell_single_quote(value) << '\n';
+    const EnvironmentPaths paths = collect_environment_paths(prefix);
+
+    if (!paths.path_dirs.empty()) {
+        std::cout << "export PATH=" << shell_single_quote(join(paths.path_dirs, ":"))
+                  << ":\"${PATH}\"; ";
+    }
+    if (!paths.man_dirs.empty()) {
+        std::cout << "export MANPATH=" << shell_single_quote(join(paths.man_dirs, ":"))
+                  << ":\"${MANPATH}\"; ";
+    }
+    if (!paths.pkgcfg_dirs.empty()) {
+        std::cout << "export PKG_CONFIG_PATH=" << shell_single_quote(join(paths.pkgcfg_dirs, ":"))
+                  << ":\"${PKG_CONFIG_PATH}\"; ";
+    }
+    std::cout << "export " << variable << '=' << shell_single_quote(value) << '\n';
 }
 
 void emit_environment_deactivation(const std::filesystem::path& prefix,
                                    const std::string& variable) {
-    std::cout << "kez_remove_path=" << shell_single_quote((prefix / "bin").string())
-              << "; kez_new_path=''; kez_old_ifs=\"$IFS\"; "
-                 "IFS=: read -r -a kez_path_parts <<< \"$PATH\"; IFS=\"$kez_old_ifs\"; "
-                 "for kez_path_entry in \"${kez_path_parts[@]}\"; do "
-                 "if [ \"$kez_path_entry\" != \"$kez_remove_path\" ]; then "
-                 "if [ -z \"$kez_new_path\" ]; then kez_new_path=\"$kez_path_entry\"; "
-                 "else kez_new_path=\"$kez_new_path:$kez_path_entry\"; fi; fi; done; "
-                 "export PATH=\"$kez_new_path\"; unset "
-              << variable
-              << "; unset kez_remove_path kez_new_path kez_old_ifs kez_path_entry kez_path_parts\n";
+    const EnvironmentPaths paths = collect_environment_paths(prefix);
+
+    // Emit a reusable helper that filters entries matching any of the
+    // given patterns out of a colon-separated variable.
+    auto emit_remove = [](const std::string& var, const std::vector<std::string>& dirs) {
+        if (dirs.empty()) return;
+        std::cout << "kez_rm=";
+        for (std::size_t i = 0; i < dirs.size(); ++i) {
+            if (i > 0) std::cout << ':';
+            std::cout << shell_single_quote(dirs[i]);
+        }
+        std::cout << "; kez_nw=''; kez_ifs=\"$IFS\"; IFS=:; "
+                     "for kez_p in $"
+                  << var
+                  << "; do "
+                     "case \":$kez_rm:\" in *\":$kez_p:\"*) ;; *) "
+                     "kez_nw=\"${kez_nw:+$kez_nw:}$kez_p\"; esac; done; "
+                     "IFS=\"$kez_ifs\"; "
+                     "export "
+                  << var
+                  << "=\"$kez_nw\"; "
+                     "unset kez_rm kez_nw kez_ifs kez_p; ";
+    };
+
+    emit_remove("PATH", paths.path_dirs);
+    emit_remove("MANPATH", paths.man_dirs);
+    emit_remove("PKG_CONFIG_PATH", paths.pkgcfg_dirs);
+
+    std::cout << "unset " << variable << '\n';
 }
 
 void print_command_plan(const BashCommandPlan& plan) {

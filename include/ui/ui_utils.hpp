@@ -105,39 +105,39 @@ void run_external_command(const std::string& command);
 void list_directories(const std::filesystem::path& root, const std::string& heading);
 
 /**
- * @brief Emit a shell command that sets an environment variable at activation
- *        time.
+ * @brief Emit shell commands that set up an environment for activation.
  *
- * Prints a line of the form:
- * @code
- *   export <variable>="<prefix><value>"
- * @endcode
- * The `prefix` is typically a path constructed from the install prefix or work
- * path; `variable` is the environment variable name; `value` is the value to
- * assign (the prefix is prepended without a separator).
+ * Iterates over every non-hidden subdirectory under @p prefix (mimicking
+ * ``gen_modulefile.sh``) and prepends each package's ``bin/`` directory to
+ * ``PATH``, ``share/man`` to ``MANPATH``, and ``lib/pkgconfig`` /
+ * ``lib64/pkgconfig`` / ``share/pkgconfig`` to ``PKG_CONFIG_PATH``.
+ * Finally, sets the marker @p variable to @p value.
  *
- * @param prefix    An optional path or string prepended to the value.
- * @param variable  The environment variable name (e.g. "PATH", "LD_LIBRARY_PATH").
- * @param value     The value to set the variable to.
+ * @param prefix    The environment root whose package subdirectories are
+ *                  scanned (e.g. ``<work>/applications/<name>``).
+ * @param variable  The environment variable name to set as an activation
+ *                  marker (e.g. ``KEZ_ACTIVE_ENV``).
+ * @param value     The value to assign to @p variable.
  */
 void emit_environment_activation(const std::filesystem::path& prefix, const std::string& variable,
                                  const std::string& value);
 
 /**
- * @brief Emit a shell command that removes a path from ``PATH`` and unsets an
- *        environment variable during environment deactivation.
+ * @brief Emit shell commands that undo an environment activation.
  *
- * Prints a compound shell command that:
- *   1. Removes ``<prefix>/bin`` from the ``PATH`` environment variable.
- *   2. Unsets the named @p variable.
+ * Removes every ``bin/``, ``share/man/``, and pkg-config path that
+ * emit_environment_activation() would have added from ``PATH``,
+ * ``MANPATH``, and ``PKG_CONFIG_PATH``, then unsets the marker
+ * @p variable.
  *
  * The output is intended to be evaluated by the calling shell (via ``eval``)
  * and is produced by ``main.sh`` when the user runs ``kez env exit``,
  * ``kez compiler unload``, or ``kez mpi unload``.
  *
- * @param prefix    The environment root whose ``bin/`` subdirectory is to be
- *                  removed from ``PATH``.
- * @param variable  The environment variable name to unset (e.g. ``"KEZ_ACTIVE_ENV"``,
+ * @param prefix    The environment root whose package subdirectories are
+ *                  scanned (same value passed to the corresponding
+ *                  emit_environment_activation call).
+ * @param variable  The marker variable to unset (e.g. ``"KEZ_ACTIVE_ENV"``,
  *                  ``"KEZ_COMPILER"``, ``"KEZ_MPI"``).
  */
 void emit_environment_deactivation(const std::filesystem::path& prefix,
