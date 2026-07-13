@@ -93,13 +93,17 @@ void execute_install(const CommandArguments& arguments);
 /**
  * @brief Manage the shared utilities environment.
  *
- * Supports two sub-actions:
- * - `add`  : Install one or more packages into the shared utilities directory
- *            (delegates to the same install logic as @c execute_install).
- * - `empty`: Remove all packages from the utilities environment.
+ * Supports three sub-actions:
+ * - `add`   : Install one or more packages into the shared utilities directory
+ *             (delegates to the same install logic as @c execute_install).
+ * - `reload`: Emit shell commands that add every utility package's ``bin/``
+ *             directory to ``PATH``.  Intended to be evaluated by the shell
+ *             wrapper in ``main.sh`` so that newly installed utilities become
+ *             available in the current shell without re-sourcing ``setup-env.sh``.
+ * - `empty` : Remove all packages from the utilities environment.
  *
  * @param arguments  Command-line tokens after the `utilities` subcommand.
- *                   The first token must be `add` or `empty`.
+ *                   The first token must be `add`, `reload`, or `empty`.
  *                   For `add`, subsequent tokens are treated as install
  *                   options (see @c execute_install) followed by package names.
  *                   - `-h` / `--help` : Print usage and return

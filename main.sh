@@ -2,6 +2,7 @@
 
 # Wrapper script that forwards arguments to the binary except:
 
+# - `utilities reload`
 # - `env enter <env>`
 # - `env exit`
 # - `compiler load <compiler>`
@@ -50,6 +51,8 @@ kez () {
     elif [[ "${1:-}" == "mpi" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1
     elif [[ "${1:-}" == "factory" && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
+        intercept=1
+    elif [[ "${1:-}" == "utilities" && "${2:-}" == "reload" ]]; then
         intercept=1
     fi
 
