@@ -11,6 +11,25 @@
 #include <vector>
 
 /**
+ * @brief Name-to-node lookup tables for one user build configuration.
+ *
+ * The user configuration stores environment variables and options as YAML
+ * sequences.  These maps are built once while loading a package so the
+ * fixed-point evaluator can retrieve user values without rescanning those
+ * sequences on every pass.
+ *
+ * Duplicate names retain the first YAML entry, matching the parser's previous
+ * linear-search behavior.
+ */
+struct UserConfigurationIndex {
+    /// User environment entries keyed by their @c name field.
+    std::unordered_map<std::string, YAML::Node> environment;
+
+    /// User option entries keyed by their @c name field.
+    std::unordered_map<std::string, YAML::Node> options;
+};
+
+/**
  * @brief A fully-resolved user package combining user configuration with database metadata.
  *
  * During parsing, each entry in the user's configuration is desugared into one of
@@ -39,6 +58,12 @@ struct ParsedUserPackage {
     /// structural transformations.  @c std::nullopt until the build has been
     /// resolved for this package.
     std::optional<Build> transformed_build;
+
+    /// Indexed values for the top-level @ref Build::configurations entry.
+    UserConfigurationIndex build_configuration_index;
+
+    /// Indexed values for build stages, aligned with @ref Build::stages.
+    std::vector<UserConfigurationIndex> stage_configuration_indices;
 };
 
 /**

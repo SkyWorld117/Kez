@@ -290,6 +290,103 @@ recipe:
         EXPECT_EQ(local_plan[1].commands[0], "cp -a '" + local_source.string() + "' source");
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase,
+           ResolvesIndexedValuesForTopLevelAndOutOfOrderStageConfigurations) {
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: top-configure
+      environment:
+        - name: KEZ_INDEX_TOP_A
+          user_configurable: true
+          default: default-a
+        - name: KEZ_INDEX_TOP_B
+          user_configurable: true
+          default: default-b
+      options:
+        - name: TOP_A
+          user_configurable: true
+          enabled_value:
+            default: default-a
+        - name: TOP_B
+          user_configurable: true
+          enabled_value:
+            default: default-b
+    stages:
+      - target: build
+        configurations:
+          command: build-stage
+          options:
+            - name: BUILD_VALUE
+              user_configurable: true
+              enabled_value:
+                default: default-build
+      - target:
+        configurations:
+          command: default-stage
+          environment:
+            - name: KEZ_INDEX_STAGE_ENV
+              user_configurable: true
+              default: default-stage
+)");
+
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  application:
+    compiler: system
+    build:
+      configurations:
+        environment:
+          - name: KEZ_INDEX_TOP_B
+            value: user-b
+          - name: KEZ_INDEX_TOP_A
+            value: user-a
+        options:
+          - name: TOP_B
+            enabled: true
+            enabled_value: user-b
+            disabled_value: ~
+          - name: TOP_A
+            enabled: true
+            enabled_value: user-a
+            disabled_value: ~
+      stages:
+        - target:
+          configurations:
+            environment:
+              - name: KEZ_INDEX_STAGE_ENV
+                value: user-stage
+        - target: build
+          configurations:
+            options:
+              - name: BUILD_VALUE
+                enabled: true
+                enabled_value: user-build
+                disabled_value: ~
+recipe:
+  abstract_packages: {}
+  dependencies: [application]
+  targets: [application]
+)");
+
+        unsetenv("KEZ_INDEX_TOP_A");
+        unsetenv("KEZ_INDEX_TOP_B");
+        unsetenv("KEZ_INDEX_STAGE_ENV");
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        EXPECT_EQ(plan[0].commands,
+                  std::vector<std::string>(
+                      {"export KEZ_INDEX_TOP_A=\"user-a\"", "export KEZ_INDEX_TOP_B=\"user-b\"",
+                       "top-configure TOP_A=\"user-a\" TOP_B=\"user-b\"", "unset KEZ_INDEX_TOP_A",
+                       "unset KEZ_INDEX_TOP_B", "build-stage BUILD_VALUE=\"user-build\"",
+                       "export KEZ_INDEX_STAGE_ENV=\"user-stage\"", "default-stage",
+                       "unset KEZ_INDEX_STAGE_ENV"}));
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase, ResolvesAbstractPropertiesAndSelectionConditions) {
         write_package("mpi", R"(
 recipe:

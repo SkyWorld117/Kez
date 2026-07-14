@@ -57,31 +57,97 @@ namespace {
         return yaml_scalar(node[key], "setting '" + key + "'");
     }
 
-    YAML::Node find_named_user_value(const YAML::Node& sequence, const std::string& name,
-                                     const std::string& description) {
+    void index_named_user_values(const YAML::Node& sequence, const std::string& description,
+                                 std::unordered_map<std::string, YAML::Node>& result) {
         if (!sequence.IsDefined() || sequence.IsNull()) {
-            return YAML::Node();
+            return;
         }
         if (!sequence.IsSequence()) {
             user_config_error(description + " must be a sequence");
         }
+        result.reserve(sequence.size());
         for (const YAML::Node& candidate : sequence) {
             if (!candidate.IsMap() || !yaml_has(candidate, "name")) {
                 user_config_error(description + " entries must contain a name");
             }
-            if (yaml_scalar(candidate["name"], description + " name") == name) {
-                return candidate;
-            }
+            result.emplace(yaml_scalar(candidate["name"], description + " name"), candidate);
         }
-        return YAML::Node();
     }
 
-    bool targets_match(const std::optional<std::string>& database_target,
-                       const YAML::Node& user_target) {
-        if (!database_target.has_value()) {
-            return !user_target.IsDefined() || user_target.IsNull();
+    UserConfigurationIndex index_user_configuration(const YAML::Node& configuration) {
+        UserConfigurationIndex result;
+        if (yaml_has(configuration, "environment")) {
+            index_named_user_values(configuration["environment"], "user environment configuration",
+                                    result.environment);
         }
-        return user_target.IsScalar() && user_target.Scalar() == *database_target;
+        if (yaml_has(configuration, "options")) {
+            index_named_user_values(configuration["options"], "user option configuration",
+                                    result.options);
+        }
+        return result;
+    }
+
+    struct UserStageNodeIndex {
+        std::optional<YAML::Node> untargeted_stage;
+        std::unordered_map<std::string, YAML::Node> targeted_stages;
+    };
+
+    UserStageNodeIndex index_user_stages(const YAML::Node& user_package) {
+        UserStageNodeIndex result;
+        if (!yaml_has(user_package, "build") || !yaml_has(user_package["build"], "stages")) {
+            return result;
+        }
+        const YAML::Node stages = user_package["build"]["stages"];
+        if (!stages.IsSequence()) {
+            user_config_error("build.stages must be a sequence");
+        }
+        result.targeted_stages.reserve(stages.size());
+        for (const YAML::Node& candidate : stages) {
+            if (!candidate.IsMap()) {
+                user_config_error("build.stages entries must be maps");
+            }
+            const YAML::Node target =
+                yaml_has(candidate, "target") ? candidate["target"] : YAML::Node();
+            if (!target.IsDefined() || target.IsNull()) {
+                if (!result.untargeted_stage.has_value()) {
+                    result.untargeted_stage = candidate;
+                }
+            } else if (target.IsScalar()) {
+                result.targeted_stages.emplace(target.Scalar(), candidate);
+            }
+        }
+        return result;
+    }
+
+    YAML::Node indexed_user_stage(const UserStageNodeIndex& stages, const BuildStage& stage) {
+        if (!stage.target.has_value()) {
+            return stages.untargeted_stage.value_or(YAML::Node());
+        }
+        const auto user_stage = stages.targeted_stages.find(*stage.target);
+        return user_stage == stages.targeted_stages.end() ? YAML::Node() : user_stage->second;
+    }
+
+    YAML::Node user_configuration(const YAML::Node& user_node) {
+        return yaml_has(user_node, "configurations") ? user_node["configurations"] : YAML::Node();
+    }
+
+    void index_user_package_configurations(ParsedUserPackage& package) {
+        if (!package.transformed_build.has_value()) {
+            return;
+        }
+
+        const YAML::Node user_build =
+            yaml_has(package.user_config, "build") ? package.user_config["build"] : YAML::Node();
+        package.build_configuration_index =
+            index_user_configuration(user_configuration(user_build));
+
+        const Build& build              = *package.transformed_build;
+        const UserStageNodeIndex stages = index_user_stages(package.user_config);
+        package.stage_configuration_indices.reserve(build.stages.size());
+        for (const BuildStage& stage : build.stages) {
+            package.stage_configuration_indices.push_back(
+                index_user_configuration(user_configuration(indexed_user_stage(stages, stage))));
+        }
     }
 
     std::string option_name(const std::string& name, Toolchain toolchain) {
@@ -131,40 +197,6 @@ namespace {
         return join(options);
     }
 
-    YAML::Node find_user_stage(const YAML::Node& user_package, const BuildStage& stage) {
-        if (!yaml_has(user_package, "build") || !yaml_has(user_package["build"], "stages")) {
-            return YAML::Node();
-        }
-        const YAML::Node stages = user_package["build"]["stages"];
-        if (!stages.IsSequence()) {
-            user_config_error("build.stages must be a sequence");
-        }
-        for (const YAML::Node& candidate : stages) {
-            if (!candidate.IsMap()) {
-                user_config_error("build.stages entries must be maps");
-            }
-            const YAML::Node target =
-                yaml_has(candidate, "target") ? candidate["target"] : YAML::Node();
-            if (targets_match(stage.target, target)) {
-                return candidate;
-            }
-        }
-        return YAML::Node();
-    }
-
-    YAML::Node user_configuration(const YAML::Node& user_package,
-                                  const BuildStage* stage = nullptr) {
-        if (stage == nullptr) {
-            if (yaml_has(user_package, "build") &&
-                yaml_has(user_package["build"], "configurations")) {
-                return user_package["build"]["configurations"];
-            }
-            return YAML::Node();
-        }
-        const YAML::Node user_stage = find_user_stage(user_package, *stage);
-        return yaml_has(user_stage, "configurations") ? user_stage["configurations"] : YAML::Node();
-    }
-
     std::string configurable_user_string(
         const YAML::Node& user_value, const std::string& key,
         const std::optional<ConfigurableValue<std::string>>& value) {
@@ -182,28 +214,25 @@ namespace {
     }
 
     void compute_environment(const BuildConfiguration& configuration,
-                             const YAML::Node& user_configuration, const PackageConfig& package,
-                             UserConfigParserContext& context, bool use_user_values,
-                             bool apply_conditions) {
-        const YAML::Node user_environment = yaml_has(user_configuration, "environment")
-                                                ? user_configuration["environment"]
-                                                : YAML::Node();
+                             const UserConfigurationIndex& user_configuration,
+                             const PackageConfig& package, UserConfigParserContext& context,
+                             bool use_user_values, bool apply_conditions) {
         for (const EnvironmentVariable& variable : configuration.environment) {
             const bool required = requirements_satisfied(variable.requires, context.dependencies,
                                                          context.abstract_packages);
             std::string value;
             if (required && variable.user_configurable && use_user_values) {
-                const YAML::Node user_value = find_named_user_value(
-                    user_environment, variable.name, "user environment configuration");
-                if (!user_value.IsDefined()) {
+                const auto user_value = user_configuration.environment.find(variable.name);
+                if (user_value == user_configuration.environment.end()) {
                     user_config_error("package '" + package.name +
                                       "' is missing configurable "
                                       "environment variable '" +
                                       variable.name + "'");
                 }
-                value = yaml_has(user_value, "value") && !user_value["value"].IsNull()
-                            ? yaml_scalar(user_value["value"], "environment variable value")
-                            : "";
+                value =
+                    yaml_has(user_value->second, "value") && !user_value->second["value"].IsNull()
+                        ? yaml_scalar(user_value->second["value"], "environment variable value")
+                        : "";
             } else if (required) {
                 value = variable.value.default_value.value_or("");
             }
@@ -222,22 +251,20 @@ namespace {
     }
 
     void compute_options(const BuildConfiguration& configuration,
-                         const YAML::Node& user_configuration, const PackageConfig& package,
-                         UserConfigParserContext& context, bool use_user_values,
-                         bool apply_conditions) {
-        const YAML::Node user_options =
-            yaml_has(user_configuration, "options") ? user_configuration["options"] : YAML::Node();
+                         const UserConfigurationIndex& user_configuration,
+                         const PackageConfig& package, UserConfigParserContext& context,
+                         bool use_user_values, bool apply_conditions) {
         for (const BuildOption& option : configuration.options) {
             const bool required = requirements_satisfied(option.requires, context.dependencies,
                                                          context.abstract_packages);
             YAML::Node user_value;
             if (required && option.user_configurable && use_user_values) {
-                user_value =
-                    find_named_user_value(user_options, option.name, "user option configuration");
-                if (!user_value.IsDefined()) {
+                const auto indexed_value = user_configuration.options.find(option.name);
+                if (indexed_value == user_configuration.options.end()) {
                     user_config_error("package '" + package.name +
                                       "' is missing configurable option '" + option.name + "'");
                 }
+                user_value = indexed_value->second;
             }
 
             ParsedOptionState state;
@@ -302,9 +329,9 @@ namespace {
     }
 
     void compute_configuration(const BuildConfiguration& configuration,
-                               const YAML::Node& user_configuration, const PackageConfig& package,
-                               UserConfigParserContext& context, bool use_user_values,
-                               bool apply_conditions) {
+                               const UserConfigurationIndex& user_configuration,
+                               const PackageConfig& package, UserConfigParserContext& context,
+                               bool use_user_values, bool apply_conditions) {
         compute_environment(configuration, user_configuration, package, context, use_user_values,
                             apply_conditions);
         compute_options(configuration, user_configuration, package, context, use_user_values,
@@ -324,14 +351,19 @@ namespace {
                                           package.database_config->type != PackageType::Mpi) ||
                                          yaml_has(package.user_config, "build");
             if (build.configurations.has_value()) {
-                compute_configuration(
-                    *build.configurations, user_configuration(package.user_config),
-                    *package.database_config, context, use_user_values, apply_conditions);
+                compute_configuration(*build.configurations, package.build_configuration_index,
+                                      *package.database_config, context, use_user_values,
+                                      apply_conditions);
             }
-            for (const BuildStage& stage : build.stages) {
+            for (std::size_t stage_index = 0; stage_index < build.stages.size(); ++stage_index) {
+                const BuildStage& stage = build.stages[stage_index];
                 if (stage.configurations.has_value()) {
+                    if (stage_index >= package.stage_configuration_indices.size()) {
+                        user_config_error("internal user stage index is missing for package '" +
+                                          package.database_config->name + "'");
+                    }
                     compute_configuration(
-                        *stage.configurations, user_configuration(package.user_config, &stage),
+                        *stage.configurations, package.stage_configuration_indices[stage_index],
                         *package.database_config, context, use_user_values, apply_conditions);
                 }
             }
@@ -673,8 +705,10 @@ namespace {
             const std::size_t index = context.packages.size();
             context.package_indices.emplace(dependency, index);
             context.package_aliases.emplace(config->name, dependency);
-            context.packages.push_back(
-                {dependency, user_package, std::move(config), std::move(transformed_build)});
+            ParsedUserPackage package {
+                dependency, user_package, std::move(config), std::move(transformed_build), {}, {}};
+            index_user_package_configurations(package);
+            context.packages.push_back(std::move(package));
         }
     }
 
