@@ -2,23 +2,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
-
-/**
- * @brief A pair of package-name vectors representing the resolved dependency lists.
- *
- * The first element contains **all** resolved packages (including system-level
- * packages such as those of type PackageType::System, PackageType::Compiler, or
- * PackageType::Mpi) in the legacy resolver's dependent-before-dependency order.
- * The second element contains only the non-system subset of those packages,
- * preserving the same relative ordering.  Both vectors are produced by the
- * resolve_dependencies() function.
- *
- * @see DependencyResolution
- * @see resolve_dependencies()
- */
-using DependencyLists = std::pair<std::vector<std::string>, std::vector<std::string>>;
 
 /**
  * @brief A mapping from abstract package names to their selected concrete
@@ -54,15 +38,36 @@ using InteractiveOptionSelections =
  * @brief The complete result of dependency resolution for one or more target
  *        packages.
  *
- * A pair whose:
- *   - **first** member is a DependencyLists containing the ordered, resolved
- *     package lists (all packages, then non-system packages only).
- *   - **second** member is an AbstractPackageSelections mapping every abstract
- *     package encountered to the concrete implementation that was chosen for it.
- *
- * @see resolve_dependencies()
+ * Replaces the legacy nested-pair representation with named fields so that
+ * callers can write @c result.all_packages instead of @c result.first.first.
  */
-using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelections>;
+struct DependencyResolution {
+    /**
+     * @brief All resolved packages (including system-level packages such as
+     *        PackageType::System, PackageType::Compiler, or PackageType::Mpi)
+     *        in dependent-before-dependency order.
+     *
+     * This is the reverse of a standard topological order: a package that
+     * depends on others appears earlier in the list than its dependencies.
+     */
+    std::vector<std::string> all_packages;
+
+    /**
+     * @brief The subset of @ref all_packages that excludes system-level
+     *        packages, preserving the same relative ordering.
+     *
+     * System packages (types System, Compiler, Mpi, Vendor) are assumed to be
+     * pre-installed by the platform environment and are not built by Kez.
+     * This list contains only packages that Kez must actually build from source.
+     */
+    std::vector<std::string> buildable_packages;
+
+    /**
+     * @brief Maps every abstract package encountered during resolution to the
+     *        concrete implementation that was chosen for it.
+     */
+    AbstractPackageSelections abstract_packages;
+};
 
 /**
  * @brief Resolve the full dependency graph for one or more target packages.
@@ -119,12 +124,13 @@ using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelection
  *                           message is printed for each excluded dependency.
  *
  * @return A DependencyResolution containing:
- *         - **first.first**  -- All resolved packages (including system-level
+ *         - **all_packages**       -- All resolved packages (including system
  *           packages) in dependent-before-dependency order.
- *         - **first.second** -- The subset of non-system packages from the
- *           above list, preserving the same relative ordering.
- *         - **second**       -- The map of abstract package name to chosen
- *           concrete implementation for every abstract package encountered.
+ *         - **buildable_packages** -- The subset of non-system packages from
+ *           the above list, preserving the same relative ordering.
+ *         - **abstract_packages**  -- The map of abstract package name to
+ *           chosen concrete implementation for every abstract package
+ *           encountered.
  *
  * @note **Ordering semantics.**  The returned package lists use the legacy
  *       resolver's "dependent-before-dependency" convention: a package that
@@ -152,10 +158,6 @@ using DependencyResolution = std::pair<DependencyLists, AbstractPackageSelection
  * @see PackageType                    Enum whose values drive traversal policy
  *                                     (System, Compiler, Mpi, Abstract, ...).
  * @see get_db_config()                Database lookup backing the resolution.
- * @see DependencyLists                Return-type component for the package
- *                                     vectors.
- * @see AbstractPackageSelections      Return-type component for the abstract
- *                                     resolution map.
  */
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
                                           bool interactive);

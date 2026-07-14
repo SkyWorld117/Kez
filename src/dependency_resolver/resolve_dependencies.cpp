@@ -364,6 +364,6 @@ DependencyResolution resolve_dependencies(const std::vector<std::string>& packag
     if (option_selections != nullptr) {
         *option_selections = std::move(state.option_selections);
     }
-    return {{std::move(all_packages), std::move(filtered_packages)},
-            std::move(state.abstract_packages)};
+    return DependencyResolution {std::move(all_packages), std::move(filtered_packages),
+                                 std::move(state.abstract_packages)};
 }

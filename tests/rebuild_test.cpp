@@ -85,7 +85,7 @@ namespace {
 
         write_state("state: [unterminated\n");
         EXPECT_EXIT(static_cast<void>(load_installed_packages(path_)),
-                    ::testing::ExitedWithCode(EXIT_FAILURE), "Failed to parse state file");
+                    ::testing::ExitedWithCode(EXIT_FAILURE), "Failed to parse YAML file");
     }
 
     TEST(BuildDependentsMap, InvertsEdges) {

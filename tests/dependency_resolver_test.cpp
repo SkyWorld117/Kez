@@ -302,33 +302,33 @@ recipe:
         const std::unordered_set<std::string> expected_all = {
             "application",          "required",       "transitive", "implementation",
             "implementation-child", "system-library", "compiler"};
-        EXPECT_EQ(as_set(result.first.first), expected_all);
-        EXPECT_EQ(as_set(result.first.second),
+        EXPECT_EQ(as_set(result.all_packages), expected_all);
+        EXPECT_EQ(as_set(result.buildable_packages),
                   std::unordered_set<std::string>({"application", "required", "transitive",
                                                    "implementation", "implementation-child",
                                                    "compiler"}));
-        EXPECT_EQ(result.second.at("abstract-api"), "implementation");
-        EXPECT_TRUE(appears_before(result.first.first, "application", "required"));
-        EXPECT_TRUE(appears_before(result.first.first, "required", "transitive"));
-        EXPECT_TRUE(appears_before(result.first.first, "implementation", "implementation-child"));
+        EXPECT_EQ(result.abstract_packages.at("abstract-api"), "implementation");
+        EXPECT_TRUE(appears_before(result.all_packages, "application", "required"));
+        EXPECT_TRUE(appears_before(result.all_packages, "required", "transitive"));
+        EXPECT_TRUE(appears_before(result.all_packages, "implementation", "implementation-child"));
         EXPECT_EQ(
-            result.first.first.end(),
-            std::find(result.first.first.begin(), result.first.first.end(), "optional-library"));
-        EXPECT_EQ(result.first.first.end(),
-                  std::find(result.first.first.begin(), result.first.first.end(),
+            result.all_packages.end(),
+            std::find(result.all_packages.begin(), result.all_packages.end(), "optional-library"));
+        EXPECT_EQ(result.all_packages.end(),
+                  std::find(result.all_packages.begin(), result.all_packages.end(),
                             "ignored-system-child"));
-        EXPECT_EQ(result.first.first.end(),
-                  std::find(result.first.first.begin(), result.first.first.end(), "compiler-core"));
+        EXPECT_EQ(result.all_packages.end(), std::find(result.all_packages.begin(),
+                                                       result.all_packages.end(), "compiler-core"));
         EXPECT_NE(output.find("Selected implementation for 'abstract-api': implementation"),
                   std::string::npos);
         EXPECT_NE(output.find("Exclude optional dependency: optional-library"), std::string::npos);
 
         const DependencyResolution second = resolve_dependencies({"standalone"}, false);
-        EXPECT_EQ(second.first.first, std::vector<std::string>({"standalone"}));
-        EXPECT_TRUE(second.second.empty());
+        EXPECT_EQ(second.all_packages, std::vector<std::string>({"standalone"}));
+        EXPECT_TRUE(second.abstract_packages.empty());
 
         const DependencyResolution compiler = resolve_dependencies({"compiler"}, false);
-        EXPECT_EQ(compiler.first.first, std::vector<std::string>({"compiler", "compiler-core"}));
+        EXPECT_EQ(compiler.all_packages, std::vector<std::string>({"compiler", "compiler-core"}));
     }
 
     TEST_F(TemporaryResolverDatabase, InteractiveModeDerivesOptionalAndSelectsAbstractPackages) {
@@ -366,9 +366,9 @@ recipe:
         std::cin.rdbuf(previous_input);
 
         EXPECT_EQ(
-            as_set(result.first.first),
+            as_set(result.all_packages),
             std::unordered_set<std::string>({"application", "implementation", "optional-library"}));
-        EXPECT_EQ(result.second.at("abstract-api"), "implementation");
+        EXPECT_EQ(result.abstract_packages.at("abstract-api"), "implementation");
 
         std::istringstream excluded_input("n\n implementation \n");
         previous_input = std::cin.rdbuf(excluded_input.rdbuf());
@@ -377,9 +377,9 @@ recipe:
         static_cast<void>(testing::internal::GetCapturedStdout());
         std::cin.rdbuf(previous_input);
 
-        EXPECT_EQ(as_set(excluded.first.first),
+        EXPECT_EQ(as_set(excluded.all_packages),
                   std::unordered_set<std::string>({"application", "implementation"}));
-        EXPECT_EQ(excluded.second.at("abstract-api"), "implementation");
+        EXPECT_EQ(excluded.abstract_packages.at("abstract-api"), "implementation");
     }
 
     TEST(DependencyResolverIntegration, ResolvesARepositoryPackageWithSharedImplementations) {
@@ -394,15 +394,15 @@ recipe:
         static_cast<void>(testing::internal::GetCapturedStdout());
         clear_db_cache();
 
-        EXPECT_EQ(result.second.at("blas"), "intel-oneapi-mkl");
-        EXPECT_EQ(result.second.at("lapack"), "intel-oneapi-mkl");
-        EXPECT_EQ(result.second.at("fftw3-api"), "intel-oneapi-mkl");
-        EXPECT_EQ(result.second.at("scalapack"), "intel-oneapi-mkl");
-        EXPECT_EQ(result.second.at("mpi"), "openmpi");
+        EXPECT_EQ(result.abstract_packages.at("blas"), "intel-oneapi-mkl");
+        EXPECT_EQ(result.abstract_packages.at("lapack"), "intel-oneapi-mkl");
+        EXPECT_EQ(result.abstract_packages.at("fftw3-api"), "intel-oneapi-mkl");
+        EXPECT_EQ(result.abstract_packages.at("scalapack"), "intel-oneapi-mkl");
+        EXPECT_EQ(result.abstract_packages.at("mpi"), "openmpi");
         EXPECT_EQ(
-            std::count(result.first.first.begin(), result.first.first.end(), "intel-oneapi-mkl"),
+            std::count(result.all_packages.begin(), result.all_packages.end(), "intel-oneapi-mkl"),
             1);
-        EXPECT_TRUE(appears_before(result.first.first, "conquest", "intel-oneapi-mkl"));
+        EXPECT_TRUE(appears_before(result.all_packages, "conquest", "intel-oneapi-mkl"));
     }
 
 }  // namespace
