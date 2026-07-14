@@ -2,7 +2,9 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <filesystem>
 #include <string>
+#include <system_error>
 
 /**
  * @brief Read an entire file into a string.
@@ -87,3 +89,54 @@ void write_yaml(const YAML::Node& node, const std::string& path,
  * @param path  Target filesystem path for the YAML output.
  */
 void write_yaml_atomic(const YAML::Node& node, const std::string& path);
+
+// -----------------------------------------------------------------------
+// Non-throwing filesystem helpers
+//
+// These wrappers accept a std::error_code parameter so that callers never
+// hit a std::filesystem exception.  Mutation helpers that must succeed on
+// normal paths print a descriptive error and terminate via ERROR().
+// -----------------------------------------------------------------------
+
+/**
+ * @brief Wrapper around std::filesystem::is_regular_file that uses
+ *        std::error_code and never throws.
+ */
+inline bool fs_regular_file(const std::filesystem::path& path) noexcept {
+    std::error_code ec;
+    return std::filesystem::is_regular_file(path, ec);
+}
+
+/**
+ * @brief Wrapper around std::filesystem::is_directory that uses
+ *        std::error_code and never throws.
+ */
+inline bool fs_directory(const std::filesystem::path& path) noexcept {
+    std::error_code ec;
+    return std::filesystem::is_directory(path, ec);
+}
+
+/**
+ * @brief Wrapper around std::filesystem::exists that uses
+ *        std::error_code and never throws.
+ */
+inline bool fs_exists(const std::filesystem::path& path) noexcept {
+    std::error_code ec;
+    return std::filesystem::exists(path, ec);
+}
+
+/**
+ * @brief Create a directory and all its parents, printing an error and
+ *        terminating on failure.
+ *
+ * Never throws; uses std::error_code internally.
+ */
+void fs_create_dirs(const std::filesystem::path& path);
+
+/**
+ * @brief Remove a file or directory and all its contents, printing an
+ *        error and terminating on failure.
+ *
+ * Never throws; uses std::error_code internally.
+ */
+void fs_remove_all(const std::filesystem::path& path);

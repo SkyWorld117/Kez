@@ -7,6 +7,7 @@
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
+#include <utils/file_utils.hpp>
 
 namespace {
     /**
@@ -29,31 +30,21 @@ namespace {
     /** @brief Create a managed directory, erroring if it already exists. */
     void create_managed_directory(const std::filesystem::path& path,
                                   const std::string& description) {
-        if (std::filesystem::exists(path)) {
+        if (fs_exists(path)) {
             ERROR(description + " already exists: " + path.filename().string());
             exit(EXIT_FAILURE);
         }
-        std::error_code error;
-        std::filesystem::create_directories(path, error);
-        if (error) {
-            ERROR("Failed to create " + description + ": " + error.message());
-            exit(EXIT_FAILURE);
-        }
+        fs_create_dirs(path);
         SUCCESS(description + " created: " + path.filename().string());
     }
 
     /** @brief Remove a managed directory, erroring if it does not exist. */
     void remove_directory(const std::filesystem::path& path, const std::string& description) {
-        if (!std::filesystem::is_directory(path)) {
+        if (!fs_directory(path)) {
             ERROR(description + " does not exist: " + path.filename().string());
             exit(EXIT_FAILURE);
         }
-        std::error_code error;
-        std::filesystem::remove_all(path, error);
-        if (error) {
-            ERROR("Failed to remove " + description + ": " + error.message());
-            exit(EXIT_FAILURE);
-        }
+        fs_remove_all(path);
         SUCCESS(description + " removed: " + path.filename().string());
     }
 
@@ -61,7 +52,7 @@ namespace {
     void remove_modulefile(const std::filesystem::path& env_path) {
         const std::filesystem::path modulefiles_dir = configured_work_path("modulefiles");
         const std::filesystem::path modulefile      = modulefiles_dir / env_path.filename();
-        if (std::filesystem::exists(modulefile)) {
+        if (fs_exists(modulefile)) {
             std::error_code error;
             std::filesystem::remove(modulefile, error);
             if (error) {
@@ -74,7 +65,7 @@ namespace {
 
     /** @brief Remove all contents of a managed directory while keeping the directory itself. */
     void empty_directory(const std::filesystem::path& path, const std::string& description) {
-        if (!std::filesystem::is_directory(path)) {
+        if (!fs_directory(path)) {
             ERROR(description + " does not exist: " + path.filename().string());
             exit(EXIT_FAILURE);
         }
@@ -126,7 +117,7 @@ namespace {
                 exit(EXIT_FAILURE);
             }
             const std::filesystem::path prefix = root / name;
-            if (!std::filesystem::is_directory(prefix)) {
+            if (!fs_directory(prefix)) {
                 ERROR(singular + " does not exist: " + name);
                 exit(EXIT_FAILURE);
             }
@@ -211,7 +202,7 @@ void execute_environment(const CommandArguments& arguments) {
             ERROR("An application environment is already active: " + current);
             exit(EXIT_FAILURE);
         }
-        if (!std::filesystem::is_directory(path)) {
+        if (!fs_directory(path)) {
             ERROR("Environment does not exist: " + name);
             exit(EXIT_FAILURE);
         }

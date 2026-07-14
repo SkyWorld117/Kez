@@ -73,7 +73,7 @@ namespace {
     /** @brief Creates a new empty factory directory tree (recipes, buildspace, runspace). */
     void create_factory(const std::string& name) {
         const std::filesystem::path path = factory_path(name);
-        if (std::filesystem::exists(path)) {
+        if (fs_exists(path)) {
             ERROR("Factory already exists: " + name);
             exit(EXIT_FAILURE);
         }
@@ -95,7 +95,7 @@ namespace {
     /** @brief Removes an existing factory directory tree. */
     void remove_factory(const std::string& name) {
         const std::filesystem::path path = factory_path(name);
-        if (!std::filesystem::is_directory(path)) {
+        if (!fs_directory(path)) {
             ERROR("Factory does not exist: " + name);
             exit(EXIT_FAILURE);
         }
@@ -134,7 +134,7 @@ namespace {
     /** @brief Collects and sorts the YAML recipe files from a factory's recipes directory. */
     std::vector<std::filesystem::path> recipe_files(const std::filesystem::path& factory) {
         const std::filesystem::path recipes = factory / "recipes";
-        if (!std::filesystem::is_directory(recipes)) {
+        if (!fs_directory(recipes)) {
             ERROR("Factory is missing recipes directory: " + factory.string());
             exit(EXIT_FAILURE);
         }
@@ -176,7 +176,7 @@ namespace {
 
         const std::filesystem::path script =
             std::filesystem::path(get_env_var("KEZ_HOME")) / "scripts" / "install.sh";
-        if (!std::filesystem::is_regular_file(script)) {
+        if (!fs_regular_file(script)) {
             ERROR("Installation executor does not exist: " + script.string());
             exit(EXIT_FAILURE);
         }
@@ -208,7 +208,7 @@ namespace {
     void build_factory(const CommandArguments& arguments) {
         const FactoryBuildOptions options   = parse_build_options(arguments);
         const std::filesystem::path factory = active_factory_path();
-        if (!std::filesystem::is_directory(factory)) {
+        if (!fs_directory(factory)) {
             ERROR("Factory does not exist: " + factory.filename().string());
             exit(EXIT_FAILURE);
         }
@@ -237,11 +237,11 @@ namespace {
      */
     std::filesystem::path factory_config_file(const std::filesystem::path& factory) {
         const std::filesystem::path current = factory / "runspace" / "config.yaml";
-        if (std::filesystem::is_regular_file(current)) {
+        if (fs_regular_file(current)) {
             return current;
         }
         const std::filesystem::path legacy = factory / "config.yaml";
-        if (std::filesystem::is_regular_file(legacy)) {
+        if (fs_regular_file(legacy)) {
             return legacy;
         }
         ERROR("Factory profile configuration not found: " + current.string());
@@ -298,7 +298,7 @@ namespace {
     /** @brief Runs every profile defined in the currently active factory's runspace config. */
     void run_factory() {
         const std::filesystem::path factory = active_factory_path();
-        if (!std::filesystem::is_directory(factory)) {
+        if (!fs_directory(factory)) {
             ERROR("Factory does not exist: " + factory.filename().string());
             exit(EXIT_FAILURE);
         }
@@ -314,7 +314,7 @@ namespace {
         for (const FactoryBuildspace& buildspace_config : plan) {
             const std::filesystem::path buildspace =
                 factory / "buildspace" / buildspace_config.name;
-            if (!std::filesystem::is_directory(buildspace)) {
+            if (!fs_directory(buildspace)) {
                 ERROR("Factory buildspace does not exist: " + buildspace_config.name);
                 exit(EXIT_FAILURE);
             }
@@ -347,7 +347,7 @@ namespace {
         std::vector<std::filesystem::path> result;
         for (const char* name : {"kez.out", "kez.err"}) {
             const std::filesystem::path path = space / name;
-            if (std::filesystem::is_regular_file(path)) {
+            if (fs_regular_file(path)) {
                 result.push_back(path);
             }
         }
@@ -369,7 +369,7 @@ namespace {
     /** @brief Summarises output from every buildspace/profile combination in the active factory. */
     void summarize_factory() {
         const std::filesystem::path factory = active_factory_path();
-        if (!std::filesystem::is_directory(factory)) {
+        if (!fs_directory(factory)) {
             ERROR("Factory does not exist: " + factory.filename().string());
             exit(EXIT_FAILURE);
         }
@@ -431,7 +431,7 @@ void execute_factory(const CommandArguments& arguments) {
             ERROR("A factory is already selected: " + get_env_var_noerr("KEZ_FACTORY"));
             exit(EXIT_FAILURE);
         }
-        if (!std::filesystem::is_directory(factory_path(name))) {
+        if (!fs_directory(factory_path(name))) {
             ERROR("Factory does not exist: " + name);
             exit(EXIT_FAILURE);
         }

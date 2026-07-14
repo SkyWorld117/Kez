@@ -78,3 +78,20 @@ void write_yaml_atomic(const YAML::Node& node, const std::string& path) {
         exit(EXIT_FAILURE);
     }
 }
+
+void fs_create_dirs(const std::filesystem::path& path) {
+    std::error_code ec;
+    if (!std::filesystem::create_directories(path, ec) && ec) {
+        ERROR("Failed to create directory '" + path.string() + "': " + ec.message());
+        exit(EXIT_FAILURE);
+    }
+}
+
+void fs_remove_all(const std::filesystem::path& path) {
+    std::error_code ec;
+    std::filesystem::remove_all(path, ec);
+    if (ec) {
+        ERROR("Failed to remove '" + path.string() + "': " + ec.message());
+        exit(EXIT_FAILURE);
+    }
+}
