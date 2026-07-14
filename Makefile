@@ -41,6 +41,10 @@ LIB_SOURCES := \
 	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/toposort.cpp \
 	$(SRC_DIR)/factory/factory.cpp \
+	$(SRC_DIR)/parser/command_renderer.cpp \
+	$(SRC_DIR)/parser/condition_evaluator.cpp \
+	$(SRC_DIR)/parser/configuration_evaluator.cpp \
+	$(SRC_DIR)/parser/dependency_edges.cpp \
 	$(SRC_DIR)/parser/source_commands.cpp \
 	$(SRC_DIR)/parser/template_resolver.cpp \
 	$(SRC_DIR)/parser/user_config_parser.cpp \
