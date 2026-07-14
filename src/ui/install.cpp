@@ -41,11 +41,9 @@
 
 std::string install_executor_command(const std::filesystem::path& executor,
                                      const std::filesystem::path& prefix,
-                                     const std::filesystem::path& plan_path,
-                                     const std::string& install_jobs, bool force, bool with_slurm,
-                                     const std::string& slurm_job) {
-    std::string command = "KEZ_INSTALL_JOBS=" + shell_single_quote(install_jobs) + " bash " +
-                          shell_single_quote(executor.string()) + " " +
+                                     const std::filesystem::path& plan_path, bool force,
+                                     bool with_slurm, const std::string& slurm_job) {
+    std::string command = "bash " + shell_single_quote(executor.string()) + " " +
                           shell_single_quote(prefix.string()) + " " +
                           shell_single_quote(plan_path.string());
     if (force) {
@@ -179,8 +177,7 @@ namespace {
      * temporary file on completion.
      */
     void run_install_plan(const std::filesystem::path& prefix, const BashCommandPlan& plan,
-                          const UserConfigParserSettings& parser_settings, bool force,
-                          bool with_slurm) {
+                          bool force, bool with_slurm) {
         std::error_code error;
         std::filesystem::create_directories(prefix / ".tmp", error);
         if (error) {
@@ -199,10 +196,8 @@ namespace {
             exit(EXIT_FAILURE);
         }
 
-        const std::string install_jobs =
-            get_env_var_noerr("KEZ_INSTALL_JOBS", std::to_string(parser_settings.parallel_jobs));
-        run_external_command(install_executor_command(script, prefix, plan_path, install_jobs,
-                                                      force, with_slurm, "kez-install"));
+        run_external_command(
+            install_executor_command(script, prefix, plan_path, force, with_slurm, "kez-install"));
         std::filesystem::remove(plan_path, error);
         if (error) {
             WARNING("Could not remove installation plan: " + error.message());
@@ -293,7 +288,7 @@ namespace {
 
         // --force is required: every rebuild-set member is already recorded in
         // state.yaml and would otherwise be skipped.
-        run_install_plan(prefix, filtered, settings, true, options.with_slurm);
+        run_install_plan(prefix, filtered, true, options.with_slurm);
     }
 
     /**
@@ -333,7 +328,7 @@ namespace {
             return;
         }
 
-        run_install_plan(prefix, plan, parser_settings, options.force, options.with_slurm);
+        run_install_plan(prefix, plan, options.force, options.with_slurm);
     }
 
     /**

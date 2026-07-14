@@ -719,7 +719,7 @@ run_package_mode() {
 main() {
     local refresh=0
     local use_distro_compiler=0
-    local argument plan_file install_jobs
+    local argument plan_file
 
     for argument in "$@"; do
         case $argument in
@@ -759,8 +759,7 @@ main() {
     trap cleanup_init_plan EXIT
     write_init_plan "${plan_file}" "${use_distro_compiler}"
 
-    install_jobs=${KEZ_INSTALL_JOBS:-${KEZ_NPROC}}
-    KEZ_INSTALL_STATE_FORMAT=map KEZ_INSTALL_JOBS="${install_jobs}" \
+    KEZ_INSTALL_STATE_FORMAT=map \
         bash "${KEZ_HOME}/scripts/install.sh" "${KEZ_SYSTEM}" "${plan_file}"
 
     export PATH="${KEZ_SYSTEM}/bin:${PATH}"

@@ -10,9 +10,8 @@
 /** @brief Construct the fully quoted shell command for an installation plan. */
 std::string install_executor_command(const std::filesystem::path& executor,
                                      const std::filesystem::path& prefix,
-                                     const std::filesystem::path& plan_path,
-                                     const std::string& install_jobs, bool force, bool with_slurm,
-                                     const std::string& slurm_job);
+                                     const std::filesystem::path& plan_path, bool force,
+                                     bool with_slurm, const std::string& slurm_job);
 
 /** @brief Selected rebuild closure and filtered executable plan. */
 struct RebuildPlanSelection {

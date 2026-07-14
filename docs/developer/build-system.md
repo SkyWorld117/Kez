@@ -12,8 +12,8 @@ Set up the build environment before compiling:
 source setup-env.sh
 ```
 
-This sets `KEZ_WORKDIR`, `KEZ_HOME`, and `KEZ_NPROC`, and adds the system toolchain
-to `PATH`.
+This sets `KEZ_WORKDIR`, `KEZ_HOME`, `KEZ_NPROC`, and `KEZ_NJOBS`, and adds the
+system toolchain to `PATH`.
 
 ### Make Targets
 

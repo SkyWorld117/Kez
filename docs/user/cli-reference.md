@@ -105,6 +105,14 @@ non-interactive generation; this includes every available optional dependency
 so its options can be addressed with `--config`, while preserving recipe default
 values. Abstract packages are selected through `heuristics/advice.yaml`.
 
+**Parallelism during installation** is controlled by two environment variables
+set automatically by `setup-env.sh`:
+- `KEZ_NPROC` — number of processors per package build (`make -jN`).
+- `KEZ_NJOBS` — maximum number of packages to dispatch concurrently.
+
+Both must be set to a positive integer.  See the [Getting Started](getting-started.md#configuring)
+guide for the corresponding `config.yaml` settings.
+
 The `--rebuild` flag scans the environment's state, computes the transitive closure
 of packages that depend on `PACKAGE`, and reinstalls them in dependency order. It
 automatically implies `--force` for the rebuild set.

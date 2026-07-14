@@ -51,9 +51,8 @@ if [[ ! -f $plan_file ]] || [[ $(head -n 1 -- "$plan_file") != "# kez-install-pl
     exit 2
 fi
 
-install_jobs=${KEZ_INSTALL_JOBS:-1}
-if [[ ! $install_jobs =~ ^[1-9][0-9]*$ ]]; then
-    "${KEZ_PRINT}" error "KEZ_INSTALL_JOBS must be a positive integer"
+if [[ ! ${KEZ_NJOBS:-} =~ ^[1-9][0-9]*$ ]]; then
+    "${KEZ_PRINT}" error "KEZ_NJOBS must be a positive integer"
     exit 2
 fi
 
@@ -330,7 +329,7 @@ has_pending_packages() {
 failure_status=0
 while true; do
     # Start as many ready packages as the job limit and failure status allow
-    while (( failure_status == 0 && running_count < install_jobs )); do
+    while (( failure_status == 0 && running_count < KEZ_NJOBS )); do
         find_next_ready_package
         if (( next_ready_index < 0 )); then
             break

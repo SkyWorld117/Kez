@@ -83,6 +83,7 @@ else
 
     # Load configuration settings
     export KEZ_NPROC=$(yq -r '.settings.n_proc_for_build' "${KEZ_WORKDIR}/config.yaml")
+    export KEZ_NJOBS=$(yq -r '.settings.max_n_jobs_for_build' "${KEZ_WORKDIR}/config.yaml")
 
     # Add the work directory to MODULEPATH for module system integration
     MODULEFILES=${KEZ_WORKDIR}/$(yq -r '.paths.modulefiles' "${KEZ_HOME}/manifest.yaml")

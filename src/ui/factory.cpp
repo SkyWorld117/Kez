@@ -194,12 +194,8 @@ namespace {
             exit(EXIT_FAILURE);
         }
 
-        const unsigned int configured_jobs = load_user_config_parser_settings(prefix).parallel_jobs;
-        const std::string install_jobs =
-            get_env_var_noerr("KEZ_INSTALL_JOBS", std::to_string(configured_jobs));
-        run_external_command(install_executor_command(script, prefix, plan_path, install_jobs,
-                                                      options.force, options.with_slurm,
-                                                      "kez-factory-build"));
+        run_external_command(install_executor_command(script, prefix, plan_path, options.force,
+                                                      options.with_slurm, "kez-factory-build"));
 
         std::error_code error;
         std::filesystem::remove(plan_path, error);

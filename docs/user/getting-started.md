@@ -53,6 +53,7 @@ It looks like this by default:
 ```yaml
 settings:
   n_proc_for_build: 4
+  max_n_jobs_for_build: 2
 
   default_compiler: system
 
@@ -71,7 +72,9 @@ settings:
       version:
 ```
 
-`n_proc_for_build` specifies the number of processes to use for building packages. You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes.
+`n_proc_for_build` specifies the number of processes to use for building each package (e.g. `make -jN`). You can change it to match your system's capabilities. This is used unless a package requires explicitly not to be built with multiple processes.
+
+`max_n_jobs_for_build` specifies the maximum number of packages to build **in parallel** during installation. For example, with `n_proc_for_build: 32` and `max_n_jobs_for_build: 8`, up to eight packages are dispatched concurrently, each using up to 32 processors. These settings are exported as `KEZ_NPROC` and `KEZ_NJOBS` respectively after sourcing `setup-env.sh`.
 
 `default_compiler` specifies the default compiler to use when building packages. It can be set to `system` or a specific compiler in the `compilers` environment in the format of `<vendor>@<version>`. For example, if you have a GCC 11.4.0 installed in the `compilers` environment, you can set it to `gcc@11.4.0`.
 
@@ -84,6 +87,7 @@ Users are supposed to find the packages installed by their system administrators
 ```yaml
 settings:
   n_proc_for_build: 32
+  max_n_jobs_for_build: 8
 
   external:
     rdma-core:

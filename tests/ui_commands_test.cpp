@@ -18,16 +18,14 @@
 namespace {
 
     TEST(InstallCommand, BuildsExecutorCommandsAndSelectsRebuildPlans) {
-        const std::string direct =
-            install_executor_command("/opt/kez home/install.sh", "/tmp/env's", "/tmp/plan.sh", "8",
-                                     true, false, "kez-install");
-        EXPECT_NE(direct.find("KEZ_INSTALL_JOBS='8'"), std::string::npos);
+        const std::string direct = install_executor_command(
+            "/opt/kez home/install.sh", "/tmp/env's", "/tmp/plan.sh", true, false, "kez-install");
         EXPECT_NE(direct.find("'/opt/kez home/install.sh'"), std::string::npos);
         EXPECT_NE(direct.find("'/tmp/env'\\''s'"), std::string::npos);
         EXPECT_NE(direct.find(" --force"), std::string::npos);
 
         const std::string slurm = install_executor_command(
-            "/opt/install.sh", "/tmp/env", "/tmp/plan.sh", "4", false, true, "factory-job");
+            "/opt/install.sh", "/tmp/env", "/tmp/plan.sh", false, true, "factory-job");
         EXPECT_EQ(slurm.rfind("sbatch --wait --job-name=factory-job --wrap=", 0), 0U);
 
         const BashCommandPlan plan          = {{"application", {"build app"}, {"library"}},

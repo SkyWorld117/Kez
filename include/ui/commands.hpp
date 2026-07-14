@@ -48,7 +48,9 @@ void execute_init(const CommandArguments& arguments);
  *                   - `-h` / `--help`  : Print usage and return
  *
  * @note The environment variable @c KEZ_NPROC controls the number of parallel
- *       make jobs; it must be a positive integer.
+ *       make jobs; it must be a positive integer.  The environment variable
+ *       @c KEZ_NJOBS controls the maximum number of packages to build in
+ *       parallel during installation and must be set in the environment.
  *
  * @see execute_init
  */

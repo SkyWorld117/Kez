@@ -1,6 +1,7 @@
 ---
 settings:
     n_proc_for_build: 32
+    max_n_jobs_for_build: 8
 
     default_compiler: system
 

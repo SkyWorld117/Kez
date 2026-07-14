@@ -253,7 +253,7 @@ kez:
               {"left", "right"}}},
             plan);
         const std::string executor =
-            "KEZ_INSTALL_JOBS=2 env -u KEZ_HOME -u KEZ_WORKDIR bash " +
+            "KEZ_NJOBS=2 env -u KEZ_HOME -u KEZ_WORKDIR bash " +
             shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") + " " +
             shell_single_quote(target.string()) + " " + shell_single_quote(plan.string());
 
@@ -283,7 +283,7 @@ kez:
         write_install_plan({{"bad", {"printf 'hidden output\\n'", "printf 'boom\\n'; false"}, {}}},
                            plan);
         const std::string executor =
-            "KEZ_INSTALL_JOBS=2 env -u KEZ_HOME -u KEZ_WORKDIR bash " +
+            "KEZ_NJOBS=2 env -u KEZ_HOME -u KEZ_WORKDIR bash " +
             shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") + " " +
             shell_single_quote(target.string()) + " " + shell_single_quote(plan.string()) + " > " +
             shell_single_quote(output.string()) + " 2>&1";

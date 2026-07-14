@@ -80,7 +80,8 @@ struct UserConfigParserSettings {
      * @brief Number of parallel build jobs to use when compiling packages.
      *
      * Defaults to 1. Translated to the -j flag passed to the build system
-     * (e.g. make -j<N>).
+     * (e.g. make -j<N>).  Controlled by the @c KEZ_NPROC environment
+     * variable and the @c settings.n_proc_for_build config key.
      */
     unsigned int parallel_jobs = 1;
 
