@@ -360,5 +360,5 @@ BashCommandPlan parse_user_config_file(const std::filesystem::path& path,
     if (!std::filesystem::is_regular_file(path)) {
         user_config_error("user configuration file does not exist: " + path.string());
     }
-    return parse_user_config(YAML::LoadFile(path.string()), settings);
+    return parse_user_config(load_yaml_file(path), settings);
 }

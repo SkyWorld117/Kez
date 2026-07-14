@@ -70,3 +70,20 @@ void write_yaml(const YAML::Node& node, const std::string& path);
  */
 void write_yaml(const YAML::Node& node, const std::string& path,
                 const std::string& success_message);
+
+/**
+ * @brief Serialise a YAML node to a file using a temporary file and atomic
+ *        rename.
+ *
+ * Writes content to a temporary file in the same directory as @p path, then
+ * atomically renames it over @p path via @c std::filesystem::rename.  This
+ * prevents partial/corrupt output if the process is interrupted mid-write.
+ *
+ * On failure to create the temporary file, write to it, or rename it, the
+ * program terminates with a non-zero exit code after printing an error
+ * message via ERROR().
+ *
+ * @param node  The YAML::Node to serialise.
+ * @param path  Target filesystem path for the YAML output.
+ */
+void write_yaml_atomic(const YAML::Node& node, const std::string& path);

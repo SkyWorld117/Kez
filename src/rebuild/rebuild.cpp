@@ -1,6 +1,3 @@
-#include <yaml-cpp/yaml.h>
-
-#include <cstdlib>
 #include <filesystem>
 #include <parser/user_config_parser.hpp>
 #include <queue>
@@ -19,13 +16,7 @@ std::vector<std::string> load_installed_packages(const std::filesystem::path& en
         return {};
     }
 
-    YAML::Node document;
-    try {
-        document = YAML::LoadFile(state_file.string());
-    } catch (const YAML::Exception& err) {
-        ERROR("Failed to parse state file: " + state_file.string() + "\n" + err.what());
-        exit(EXIT_FAILURE);
-    }
+    const YAML::Node document = load_yaml_file(state_file);
 
     std::vector<std::string> packages;
     if (!yaml_has(document, "state")) {

@@ -16,6 +16,7 @@
 #include <utils/colored_io.hpp>
 #include <utils/file_utils.hpp>
 #include <utils/string_utils.hpp>
+#include <utils/yaml_utils.hpp>
 #include <vector>
 
 namespace {
@@ -249,7 +250,7 @@ namespace {
 
     /** @brief Parses a factory's runspace config.yaml into a FactoryPlan. */
     FactoryPlan load_factory_plan(const std::filesystem::path& factory) {
-        return parse_factory_config(YAML::LoadFile(factory_config_file(factory).string()));
+        return parse_factory_config(load_yaml_file(factory_config_file(factory)));
     }
 
     /**

@@ -32,7 +32,7 @@ BashCommandPlan parse_cmdline(const std::filesystem::path& file,
         ERROR("User configuration file does not exist: " + file.string());
         exit(EXIT_FAILURE);
     }
-    return parse_cmdline(YAML::LoadFile(file.string()), install_prefix, config_options);
+    return parse_cmdline(load_yaml_file(file), install_prefix, config_options);
 }
 
 BashCommandPlan parse_cmdline(const std::vector<std::string>& targets,

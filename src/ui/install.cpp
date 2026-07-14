@@ -231,7 +231,7 @@ namespace {
                 ERROR("User configuration file does not exist: " + path.string());
                 exit(EXIT_FAILURE);
             }
-            return YAML::LoadFile(path.string());
+            return load_yaml_file(path);
         }
         return gen_user_config(options.positional, false);
     }
@@ -496,14 +496,7 @@ namespace {
         // Remove the package from state.yaml, if it exists.
         const std::filesystem::path state_file = root / "state.yaml";
         if (std::filesystem::is_regular_file(state_file)) {
-            YAML::Node document;
-            try {
-                document = YAML::LoadFile(state_file.string());
-            } catch (const YAML::Exception& err) {
-                ERROR("Failed to parse utilities state file: " + state_file.string() + "\n" +
-                      err.what());
-                exit(EXIT_FAILURE);
-            }
+            YAML::Node document = load_yaml_file(state_file);
 
             if (yaml_has(document, "state") && document["state"].IsSequence()) {
                 YAML::Node updated;
@@ -515,7 +508,7 @@ namespace {
                     updated["state"].push_back(entry);
                 }
 
-                write_yaml(updated, state_file.string());
+                write_yaml_atomic(updated, state_file.string());
             }
         }
 

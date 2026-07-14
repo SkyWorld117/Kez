@@ -44,3 +44,37 @@ void write_yaml(const YAML::Node& node, const std::string& path,
     write_yaml(node, path);
     SUCCESS(success_message);
 }
+
+void write_yaml_atomic(const YAML::Node& node, const std::string& path) {
+    const std::filesystem::path target(path);
+    const std::filesystem::path dir = target.parent_path();
+
+    // Ensure the target directory exists.
+    std::filesystem::create_directories(dir);
+
+    // Write to a temporary file next to the target, then atomically rename.
+    const std::filesystem::path tmp_path =
+        dir / (std::string(".tmp_") + target.filename().string());
+
+    YAML::Emitter out;
+    out << node;
+
+    {
+        std::ofstream ofs(tmp_path);
+        if (!ofs) {
+            ERROR("Failed to create temporary file: " + tmp_path.string());
+            exit(EXIT_FAILURE);
+        }
+        ofs << out.c_str();
+        ofs << std::endl;
+    }
+
+    std::error_code ec;
+    std::filesystem::rename(tmp_path, target, ec);
+    if (ec) {
+        ERROR("Failed to rename temporary file to '" + path + "': " + ec.message());
+        // Try to clean up the temp file.
+        std::filesystem::remove(tmp_path, ec);
+        exit(EXIT_FAILURE);
+    }
+}

@@ -229,9 +229,9 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
     InteractiveOptionSelections option_selections;
     DependencyResolution resolution =
         resolve_dependencies(package_names, interactive, &option_selections);
-    const std::vector<std::string>& all_dependencies   = resolution.first.first;
-    const std::vector<std::string>& dependencies       = resolution.first.second;
-    const AbstractPackageSelections& abstract_packages = resolution.second;
+    const std::vector<std::string>& all_dependencies   = resolution.all_packages;
+    const std::vector<std::string>& dependencies       = resolution.buildable_packages;
+    const AbstractPackageSelections& abstract_packages = resolution.abstract_packages;
 
     if (dependencies.empty()) {
         std::string packages;

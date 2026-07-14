@@ -65,6 +65,20 @@ std::string yaml_scalar(const YAML::Node& node, const std::string& description);
 bool yaml_boolean(const YAML::Node& node, const std::string& description);
 
 /**
+ * @brief Load a YAML file from disk, terminating via ERROR() on failure.
+ *
+ * Opens and parses the file at @p path.  On I/O errors or YAML parse
+ * failures the program prints a descriptive error (including the file
+ * path and the parser's diagnostic) and exits with EXIT_FAILURE.
+ *
+ * @param path  Filesystem path to the YAML file to load.
+ * @return The root YAML::Node of the parsed document.
+ *
+ * @warning Never returns on failure.
+ */
+YAML::Node load_yaml_file(const std::filesystem::path& path);
+
+/**
  * @brief Load a YAML file with process-lifetime caching.
  *
  * Parses the file at @p path and returns the root YAML::Node.  The result is

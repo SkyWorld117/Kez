@@ -194,6 +194,6 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
 }
 
 PackageConfigPtr parse_db_config(const std::filesystem::path& config_path) {
-    YAML::Node document = YAML::LoadFile(config_path.string());
+    YAML::Node document = load_yaml_file(config_path);
     return parse_config_document(document, DatabaseParserContext {config_path});
 }

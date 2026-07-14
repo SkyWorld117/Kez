@@ -190,7 +190,7 @@ namespace {
                 user_config_error("system package state file does not exist: " +
                                   state_path.string());
             }
-            const YAML::Node state = YAML::LoadFile(state_path.string());
+            const YAML::Node state = load_yaml_file(state_path);
             if (yaml_has(state, "state") && yaml_has(state["state"], requested_name)) {
                 YAML::Node value = state["state"][requested_name];
                 return value.IsMap() && yaml_has(value, "version")

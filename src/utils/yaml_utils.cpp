@@ -26,13 +26,25 @@ namespace {
     std::unordered_map<std::string, YAML::Node> yaml_cache;
 }  // namespace
 
+YAML::Node load_yaml_file(const std::filesystem::path& path) {
+    try {
+        return YAML::LoadFile(path.string());
+    } catch (const YAML::BadFile&) {
+        ERROR("Cannot open YAML file: " + path.string());
+        exit(EXIT_FAILURE);
+    } catch (const YAML::Exception& err) {
+        ERROR("Failed to parse YAML file '" + path.string() + "':\n" + err.what());
+        exit(EXIT_FAILURE);
+    }
+}
+
 YAML::Node cached_yaml_load(const std::filesystem::path& path) {
     const std::string key = std::filesystem::absolute(path).lexically_normal().string();
     const auto cached     = yaml_cache.find(key);
     if (cached != yaml_cache.end()) {
         return cached->second;
     }
-    YAML::Node node = YAML::LoadFile(key);
+    YAML::Node node = load_yaml_file(path);
     yaml_cache.emplace(key, node);
     return node;
 }
