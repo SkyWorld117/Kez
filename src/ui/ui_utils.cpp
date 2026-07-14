@@ -6,8 +6,8 @@
 #include <database/database.hpp>
 #include <filesystem>
 #include <iostream>
-#include <parser/user_config_parser.hpp>
 #include <string>
+#include <uconf_parser/user_config_parser.hpp>
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
@@ -174,7 +174,8 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
         selected_environment = get_env_var_noerr("KEZ_ACTIVE_ENV");
     }
     if (selected_environment.empty()) {
-        ERROR("A target environment is required; pass --env <name> or run 'kez env enter <name>'");
+        ERROR(
+            "A target environment is required; pass --env <name> or run 'kez env activate <name>'");
         exit(EXIT_FAILURE);
     }
     validate_path_component(selected_environment, "environment name");

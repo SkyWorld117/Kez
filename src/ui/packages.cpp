@@ -7,11 +7,11 @@
 #include <database/database.hpp>
 #include <filesystem>
 #include <iostream>
-#include <parser/user_config_parser.hpp>
 #include <string>
+#include <uconf_generator/uconf_generator.hpp>
+#include <uconf_parser/user_config_parser.hpp>
 #include <ui/commands.hpp>
 #include <ui/ui_utils.hpp>
-#include <user_config_generator/user_config_generator.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 #include <utils/file_utils.hpp>

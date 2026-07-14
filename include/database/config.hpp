@@ -432,7 +432,7 @@ class GenericPackageConfig final : public PackageConfig {
  * Provides sensible defaults:
  * - Configuration command: ``./configure``
  *   (the install prefix and other flags are appended as separate
- *   options by @ref user_config_generator::transformed_configuration).
+ *   options by @ref uconf_generator::transformed_configuration).
  * - Build stage: ``make -j{N}``
  * - Install stage: ``make install``
  */
@@ -452,7 +452,7 @@ class AutotoolsPackageConfig final : public PackageConfig {
  * - Configuration command: ``cmake -B build``
  *   (additional CMake flags such as ``-DCMAKE_INSTALL_PREFIX``
  *   are appended as separate options by
- *   @ref user_config_generator::transformed_configuration).
+ *   @ref uconf_generator::transformed_configuration).
  * - Build stage: ``cmake --build build --parallel {N}``
  * - Install stage: ``cmake --install build``
  */

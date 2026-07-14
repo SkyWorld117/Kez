@@ -3,8 +3,8 @@
 #include <database/resolve_utils.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <string>
+#include <uconf_generator/config_transformer.hpp>
 #include <unordered_set>
-#include <user_config_generator/config_transformer.hpp>
 #include <utility>
 #include <utils/string_utils.hpp>
 #include <vector>
@@ -193,7 +193,7 @@ namespace {
 
 }  // namespace
 
-namespace user_config_generator {
+namespace uconf_generator {
 
     BuildConfiguration transformed_configuration(
         const BuildConfiguration& configuration, const PackageConfig& package, Toolchain toolchain,
@@ -283,4 +283,4 @@ namespace user_config_generator {
         return result;
     }
 
-}  // namespace user_config_generator
+}  // namespace uconf_generator

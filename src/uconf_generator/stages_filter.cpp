@@ -1,5 +1,5 @@
-#include <user_config_generator/configurations_filter.hpp>
-#include <user_config_generator/stages_filter.hpp>
+#include <uconf_generator/configurations_filter.hpp>
+#include <uconf_generator/stages_filter.hpp>
 
 YAML::Node filtered_stages(const std::vector<BuildStage>& stages,
                            const std::vector<std::string>& all_dependencies,

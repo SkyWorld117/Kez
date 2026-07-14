@@ -9,8 +9,8 @@
 #include <cstdlib>
 #include <database/config.hpp>
 #include <filesystem>
-#include <parser/parser_internal.hpp>
 #include <string>
+#include <uconf_parser/parser_internal.hpp>
 #include <utility>
 #include <utils/colored_io.hpp>
 #include <utils/yaml_utils.hpp>

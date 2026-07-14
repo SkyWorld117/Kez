@@ -2,8 +2,8 @@
 
 # Wrapper script that forwards arguments to the binary except:
 
-# - `env enter <env>`
-# - `env exit`
+# - `env activate <env>`
+# - `env deactivate`
 # - `compiler load <compiler>`
 # - `compiler unload`
 # - `mpi load <mpi>`
@@ -45,7 +45,7 @@ kez () {
 
     local intercept=0
 
-    if [[ ( "${1:-}" == "env" || "${1:-}" == "cellar" ) && ( "${2:-}" == "enter" || "${2:-}" == "exit" ) ]]; then
+    if [[ ( "${1:-}" == "env" || "${1:-}" == "cellar" ) && ( "${2:-}" == "activate" || "${2:-}" == "deactivate" ) ]]; then
         intercept=1
     elif [[ "${1:-}" == "compiler" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1

@@ -56,7 +56,7 @@ Builds a dependency graph and determines the installation order.
 | `resolve_dependencies.cpp` | Dependency DAG construction and resolution |
 | `toposort.cpp` | Reversed topological sort for build ordering |
 
-### `src/user_config_generator/`
+### `src/uconf_generator/`
 
 Transforms resolved dependencies into a user-editable YAML file.
 
@@ -67,9 +67,9 @@ Transforms resolved dependencies into a user-editable YAML file.
 | `environment_filter.cpp` | Filters environment variables for the user config |
 | `options_filter.cpp` | Filters build options for the user config |
 | `stages_filter.cpp` | Filters build stages for the user config |
-| `user_config_generator.cpp` | Orchestrates the full generation process |
+| `uconf_generator.cpp` | Orchestrates the full generation process |
 
-### `src/parser/`
+### `src/uconf_parser/`
 
 Parses user configuration YAML into an executable bash command plan.
 

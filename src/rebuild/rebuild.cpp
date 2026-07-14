@@ -1,8 +1,8 @@
 #include <filesystem>
-#include <parser/user_config_parser.hpp>
 #include <queue>
 #include <rebuild/rebuild.hpp>
 #include <string>
+#include <uconf_parser/user_config_parser.hpp>
 #include <unordered_map>
 #include <unordered_set>
 #include <utils/colored_io.hpp>

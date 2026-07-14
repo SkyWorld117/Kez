@@ -23,13 +23,13 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
-#include <parser/user_config_parser.hpp>
 #include <rebuild/rebuild.hpp>
 #include <string>
 #include <system_error>
+#include <uconf_generator/uconf_generator.hpp>
+#include <uconf_parser/user_config_parser.hpp>
 #include <ui/commands.hpp>
 #include <ui/ui_utils.hpp>
-#include <user_config_generator/user_config_generator.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 #include <utils/file_utils.hpp>
@@ -248,7 +248,7 @@ namespace {
             selected = get_env_var_noerr("KEZ_ACTIVE_ENV");
         }
         if (selected.empty()) {
-            ERROR("A target environment is required; pass --env <name> or run 'kez env enter "
+            ERROR("A target environment is required; pass --env <name> or run 'kez env activate "
                   "<name>'");
             exit(EXIT_FAILURE);
         }

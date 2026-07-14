@@ -61,7 +61,7 @@ make test
 | Test | Lines | What it covers |
 |---|---|---|
 | `user_config_parser_test.cpp` | 602 | User config YAML parsing and BashCommandPlan generation |
-| `user_config_generator_test.cpp` | 451 | User config YAML generation from resolved dependencies |
+| `uconf_generator_test.cpp` | 451 | User config YAML generation from resolved dependencies |
 | `dependency_resolver_test.cpp` | 306 | Dependency DAG construction and topological sort |
 | `database_test.cpp` | 234 | Database caching and config parsing |
 | `cmdline_parser_test.cpp` | 182 | Command-line override parsing |

@@ -7,8 +7,8 @@
 #include <cstdlib>
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>
-#include <parser/parser_internal.hpp>
 #include <string>
+#include <uconf_parser/parser_internal.hpp>
 #include <utils/condition_utils.hpp>
 #include <utils/string_utils.hpp>
 

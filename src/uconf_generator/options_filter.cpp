@@ -1,5 +1,5 @@
 #include <dependency_resolver/requirements.hpp>
-#include <user_config_generator/options_filter.hpp>
+#include <uconf_generator/options_filter.hpp>
 
 YAML::Node filtered_options(const std::vector<BuildOption>& options,
                             const std::vector<std::string>& all_dependencies,

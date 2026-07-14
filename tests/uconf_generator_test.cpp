@@ -1,5 +1,5 @@
 /**
- * @file    user_config_generator_test.cpp
+ * @file    uconf_generator_test.cpp
  * @brief   Unit tests for the user-config generation pipeline.
  *
  * Tests cover the individual filter components (`configurations_filter`,
@@ -20,11 +20,11 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <uconf_generator/configurations_filter.hpp>
+#include <uconf_generator/options_filter.hpp>
+#include <uconf_generator/stages_filter.hpp>
+#include <uconf_generator/uconf_generator.hpp>
 #include <unordered_set>
-#include <user_config_generator/configurations_filter.hpp>
-#include <user_config_generator/options_filter.hpp>
-#include <user_config_generator/stages_filter.hpp>
-#include <user_config_generator/user_config_generator.hpp>
 #include <vector>
 
 namespace {

@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <system_error>
-#include <user_config_generator/user_config_generator.hpp>
+#include <uconf_generator/uconf_generator.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 #include <utils/yaml_utils.hpp>

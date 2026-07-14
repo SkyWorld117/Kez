@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace user_config_generator {
+namespace uconf_generator {
 
     /**
      * @brief Transforms a package's build configuration by applying overrides,
@@ -96,4 +96,4 @@ namespace user_config_generator {
                                            const AbstractPackageSelections& abstract_packages,
                                            const std::string& compiler);
 
-}  // namespace user_config_generator
+}  // namespace uconf_generator

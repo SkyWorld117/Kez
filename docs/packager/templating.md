@@ -54,7 +54,7 @@ of the option (enabled or disabled), optionally followed by a value to check aga
 
 ## Resolution Order
 
-The template resolver (`src/parser/template_resolver.cpp`) performs substitution in
+The template resolver (`src/uconf_parser/template_resolver.cpp`) performs substitution in
 multiple passes:
 
 1. Resolve Kez predefined variables (`kez.prefix`, `kez.arch`, etc.)

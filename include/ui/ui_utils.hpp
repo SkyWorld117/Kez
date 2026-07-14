@@ -4,8 +4,8 @@
 
 #include <database/config.hpp>
 #include <filesystem>
-#include <parser/user_config_parser.hpp>
 #include <string>
+#include <uconf_parser/user_config_parser.hpp>
 #include <ui/commands.hpp>
 #include <vector>
 
@@ -131,7 +131,7 @@ void emit_environment_activation(const std::filesystem::path& prefix, const std:
  * @p variable.
  *
  * The output is intended to be evaluated by the calling shell (via ``eval``)
- * and is produced by ``main.sh`` when the user runs ``kez env exit``,
+ * and is produced by ``main.sh`` when the user runs ``kez env deactivate``,
  * ``kez compiler unload``, or ``kez mpi unload``.
  *
  * @param prefix    The environment root whose package subdirectories are

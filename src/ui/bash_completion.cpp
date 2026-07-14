@@ -133,11 +133,12 @@ namespace {
     std::vector<std::string> environment_suggestions(int current_word_index,
                                                      const std::vector<std::string>& words) {
         if (current_word_index == 2) {
-            return {"create", "remove", "list", "enter", "exit", "which", "empty", "-h", "--help"};
+            return {"create", "remove", "list", "activate", "deactivate",
+                    "which",  "empty",  "-h",   "--help"};
         }
         const std::string action = word_at(words, 2);
-        if (current_word_index == 3 &&
-            (action == "create" || action == "remove" || action == "enter" || action == "empty")) {
+        if (current_word_index == 3 && (action == "create" || action == "remove" ||
+                                        action == "activate" || action == "empty")) {
             return configured_directories("applications");
         }
         return {};

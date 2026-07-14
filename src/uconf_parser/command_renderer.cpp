@@ -6,8 +6,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <optional>
-#include <parser/parser_internal.hpp>
 #include <string>
+#include <uconf_parser/parser_internal.hpp>
 #include <utility>
 #include <utils/bash_utils.hpp>
 #include <utils/string_utils.hpp>

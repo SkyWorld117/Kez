@@ -20,7 +20,7 @@
  * silently omitted from the output sequence.
  *
  * The resulting YAML sequence is consumed downstream by the user config
- * generator pipeline (e.g. `config_transformer` and `user_config_generator`)
+ * generator pipeline (e.g. `config_transformer` and `uconf_generator`)
  * to produce the final user-editable configuration file.
  *
  * @param options            The raw build options from a package recipe's

@@ -191,7 +191,7 @@ UserConfigParserSettings load_user_config_parser_settings(
 /**
  * @brief Parse a pre-loaded YAML node into an executable BashCommandPlan.
  *
- * Interprets the configuration produced by the user_config_generator
+ * Interprets the configuration produced by the uconf_generator
  * pipeline.  The @p settings provide filesystem paths, architecture
  * details, external-package overrides, and the desired parallelism level.
  * Template markers in the YAML are resolved through the template resolver.

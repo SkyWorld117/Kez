@@ -41,20 +41,20 @@ LIB_SOURCES := \
 	$(SRC_DIR)/dependency_resolver/resolve_dependencies.cpp \
 	$(SRC_DIR)/dependency_resolver/toposort.cpp \
 	$(SRC_DIR)/factory/factory.cpp \
-	$(SRC_DIR)/parser/command_renderer.cpp \
-	$(SRC_DIR)/parser/condition_evaluator.cpp \
-	$(SRC_DIR)/parser/configuration_evaluator.cpp \
-	$(SRC_DIR)/parser/dependency_edges.cpp \
-	$(SRC_DIR)/parser/source_commands.cpp \
-	$(SRC_DIR)/parser/template_resolver.cpp \
-	$(SRC_DIR)/parser/user_config_parser.cpp \
+	$(SRC_DIR)/uconf_parser/command_renderer.cpp \
+	$(SRC_DIR)/uconf_parser/condition_evaluator.cpp \
+	$(SRC_DIR)/uconf_parser/configuration_evaluator.cpp \
+	$(SRC_DIR)/uconf_parser/dependency_edges.cpp \
+	$(SRC_DIR)/uconf_parser/source_commands.cpp \
+	$(SRC_DIR)/uconf_parser/template_resolver.cpp \
+	$(SRC_DIR)/uconf_parser/user_config_parser.cpp \
 	$(SRC_DIR)/rebuild/rebuild.cpp \
-	$(SRC_DIR)/user_config_generator/config_transformer.cpp \
-	$(SRC_DIR)/user_config_generator/configurations_filter.cpp \
-	$(SRC_DIR)/user_config_generator/environment_filter.cpp \
-	$(SRC_DIR)/user_config_generator/options_filter.cpp \
-	$(SRC_DIR)/user_config_generator/stages_filter.cpp \
-	$(SRC_DIR)/user_config_generator/user_config_generator.cpp \
+	$(SRC_DIR)/uconf_generator/config_transformer.cpp \
+	$(SRC_DIR)/uconf_generator/configurations_filter.cpp \
+	$(SRC_DIR)/uconf_generator/environment_filter.cpp \
+	$(SRC_DIR)/uconf_generator/options_filter.cpp \
+	$(SRC_DIR)/uconf_generator/stages_filter.cpp \
+	$(SRC_DIR)/uconf_generator/uconf_generator.cpp \
 	$(SRC_DIR)/ui/bash_completion.cpp \
 	$(SRC_DIR)/ui/ui_utils.cpp \
 	$(SRC_DIR)/utils/bash_utils.cpp \
@@ -84,7 +84,7 @@ TEST_SOURCES := \
 	tests/ui_utils_test.cpp \
 	tests/utils_test.cpp \
 	tests/user_config_parser_test.cpp \
-	tests/user_config_generator_test.cpp
+	tests/uconf_generator_test.cpp
 TEST_OBJECTS := $(TEST_SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LIBRARY := $(LIB_DIR)/libkez.a
 TEST_BINARY := $(BIN_DIR)/kez_tests

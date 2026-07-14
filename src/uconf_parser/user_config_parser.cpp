@@ -10,12 +10,12 @@
 #include <filesystem>
 #include <limits>
 #include <optional>
-#include <parser/parser_internal.hpp>
-#include <parser/user_config_parser.hpp>
 #include <string>
+#include <uconf_generator/config_transformer.hpp>
+#include <uconf_parser/parser_internal.hpp>
+#include <uconf_parser/user_config_parser.hpp>
 #include <unordered_map>
 #include <unordered_set>
-#include <user_config_generator/config_transformer.hpp>
 #include <utility>
 #include <utils/yaml_utils.hpp>
 #include <vector>
@@ -226,7 +226,7 @@ namespace {
                 user_config_error("package '" + dependency + "' must be a map");
             }
             PackageConfigPtr config = get_db_config(dependency, database_version(user_package));
-            std::optional<Build> transformed_build = user_config_generator::transformed_build(
+            std::optional<Build> transformed_build = uconf_generator::transformed_build(
                 *config, context.dependencies, context.abstract_packages,
                 package_compiler(user_package));
             const std::size_t index = context.packages.size();

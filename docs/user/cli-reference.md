@@ -202,10 +202,10 @@ A package of type `package` must be installed into an environment.
 
 ```bash
 kez env create my-simulation
-kez env enter my-simulation
+kez env activate my-simulation
 kez install fftw3
 kez install openmpi
-kez env exit
+kez env deactivate
 ```
 
 ---

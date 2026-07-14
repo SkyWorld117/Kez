@@ -8,12 +8,12 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <uconf_generator/config_transformer.hpp>
+#include <uconf_generator/configurations_filter.hpp>
+#include <uconf_generator/stages_filter.hpp>
+#include <uconf_generator/uconf_generator.hpp>
 #include <ui/ui_utils.hpp>
 #include <unordered_set>
-#include <user_config_generator/config_transformer.hpp>
-#include <user_config_generator/configurations_filter.hpp>
-#include <user_config_generator/stages_filter.hpp>
-#include <user_config_generator/user_config_generator.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
@@ -191,7 +191,7 @@ namespace {
             (package.type != PackageType::Compiler && package.type != PackageType::Mpi) ||
             target_packages.find(package.name) != target_packages.end();
         if (include_build && package.build.has_value()) {
-            const std::optional<Build> build = user_config_generator::transformed_build(
+            const std::optional<Build> build = uconf_generator::transformed_build(
                 package, all_dependency_set, abstract_packages, default_compiler);
             YAML::Node build_output(YAML::NodeType::Map);
             if (build->configurations.has_value()) {

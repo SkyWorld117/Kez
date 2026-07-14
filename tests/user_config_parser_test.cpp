@@ -17,10 +17,10 @@
 #include <filesystem>
 #include <fstream>
 #include <optional>
-#include <parser/user_config_parser.hpp>
 #include <rebuild/rebuild.hpp>
 #include <string>
-#include <user_config_generator/user_config_generator.hpp>
+#include <uconf_generator/uconf_generator.hpp>
+#include <uconf_parser/user_config_parser.hpp>
 #include <vector>
 
 namespace {

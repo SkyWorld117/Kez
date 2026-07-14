@@ -13,12 +13,12 @@ namespace {
      * @brief Print the usage message for the `env` top-level subcommand.
      *
      * Displays a single-line synopsis of the supported `kez env` actions
-     * (create, remove, list, enter, exit, which, empty) to stdout.
+     * (create, remove, list, activate, deactivate, which, empty) to stdout.
      *
      * This is a terminal helper; it never terminates the process.
      */
     void environment_help() {
-        std::cout << "Usage: kez env <create|remove|list|enter|exit|which|empty> [name]\n";
+        std::cout << "Usage: kez env <create|remove|list|activate|deactivate|which|empty> [name]\n";
     }
 
     /** @brief Print the usage message for a managed subcommand (compiler/mpi). */
@@ -157,7 +157,7 @@ namespace {
     }
 }  // namespace
 
-/** @brief Dispatch environment subcommands: list, which, exit, create, remove, empty, enter. */
+/** @brief Dispatch environment subcommands: list, which, deactivate, create, remove, empty, activate. */
 void execute_environment(const CommandArguments& arguments) {
     if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
         environment_help();
@@ -184,9 +184,9 @@ void execute_environment(const CommandArguments& arguments) {
                              : "Current application environment: " + current);
         return;
     }
-    if (action == "exit") {
+    if (action == "deactivate") {
         if (arguments.size() != 1) {
-            ERROR("env exit does not accept additional arguments");
+            ERROR("env deactivate does not accept additional arguments");
             exit(EXIT_FAILURE);
         }
         const std::string name =
@@ -205,7 +205,7 @@ void execute_environment(const CommandArguments& arguments) {
         remove_modulefile(path);
     } else if (action == "empty") {
         empty_directory(path, "Environment");
-    } else if (action == "enter") {
+    } else if (action == "activate") {
         const std::string current = get_env_var_noerr("KEZ_ACTIVE_ENV");
         if (!current.empty()) {
             ERROR("An application environment is already active: " + current);
