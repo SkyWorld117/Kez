@@ -1,69 +1,17 @@
-#include <cctype>
 #include <database/condition_parser.hpp>
 #include <database/parser_utils.hpp>
 #include <string>
-#include <vector>
+#include <utils/condition_utils.hpp>
 
 namespace {
+
     /**
-     * @brief Tokenizes a condition expression string into a sequence of tokens.
+     * @brief Validates a version-comparison expression from a package recipe.
      *
-     * Splits a logical condition expression (supporting parentheses, `&&`, `||`,
-     * and operand tokens) into a vector of strings. Whitespace is treated as a
-     * token separator. Parentheses become single-character tokens, double
-     * ampersand and double pipe become two-character tokens, and all other
-     * contiguous non-whitespace, non-operator characters are grouped into a
-     * single operand token.
-     *
-     * @param expression The raw condition expression string to tokenize.
-     * @param node       The YAML node from which the expression originated,
-     *                   used for error reporting.
-     * @param path       The YAML path to the node, used for error reporting.
-     * @param context    The parser context providing error-reporting utilities.
-     * @return std::vector<std::string> A vector of tokens in left-to-right
-     *         order.
-     *
-     * @note Terminates the program via `fail_config` if a single `&` or `|`
-     *       character is encountered (incomplete logical operator).
+     * Checks that the token begins with a template variable (${…}), that the
+     * template is well-formed, and that the comma-separated comparison
+     * clauses use valid operators (>=, <=, ==, !=, >, <).
      */
-    std::vector<std::string> tokenize_condition(const std::string& expression,
-                                                const YAML::Node& node, const std::string& path,
-                                                const DatabaseParserContext& context) {
-        std::vector<std::string> tokens;
-        std::string current;
-
-        // Flushes the current accumulative token into the token list and resets
-        // the accumulator. Called at every token boundary (whitespace or
-        // operator character).
-        auto flush = [&] {
-            if (!current.empty()) {
-                tokens.push_back(current);
-                current.clear();
-            }
-        };
-
-        for (std::size_t i = 0; i < expression.size(); ++i) {
-            const char character = expression[i];
-            if (std::isspace(static_cast<unsigned char>(character))) {
-                flush();
-            } else if (character == '(' || character == ')') {
-                flush();
-                tokens.emplace_back(1, character);
-            } else if (character == '&' || character == '|') {
-                flush();
-                if (i + 1 >= expression.size() || expression[i + 1] != character) {
-                    fail_config(node, path, "contains an incomplete logical operator", context);
-                }
-                tokens.emplace_back(2, character);
-                ++i;
-            } else {
-                current += character;
-            }
-        }
-        flush();
-        return tokens;
-    }
-
     void validate_version_condition(const std::string& token, const YAML::Node& node,
                                     const std::string& path, const DatabaseParserContext& context) {
         if (token.rfind("${", 0) != 0) {
@@ -74,7 +22,7 @@ namespace {
         if (closing == std::string::npos || closing == 2) {
             fail_config(node, path, "contains an invalid version template", context);
         }
-        std::string comparisons = token.substr(closing + 1);
+        const std::string comparisons = token.substr(closing + 1);
         if (comparisons.empty()) {
             fail_config(node, path, "contains no version comparison", context);
         }
@@ -101,120 +49,31 @@ namespace {
             begin = end + 1;
         }
     }
+
+    /**
+     * @brief Recursively walks a ConditionExpr AST and validates every
+     *        Version node's format.
+     */
+    void validate_version_nodes(const ConditionExpr& expr, const YAML::Node& node,
+                                const std::string& path, const DatabaseParserContext& context) {
+        if (expr.type == ConditionExpr::Version) {
+            validate_version_condition(expr.arg1, node, path, context);
+        }
+        for (const auto& child : expr.children) {
+            validate_version_nodes(child, node, path, context);
+        }
+    }
+
 }  // namespace
-
-// Simple recursive-descent parser for condition expressions, implemented
-// as plain member functions on a state struct rather than std::function
-// lambdas with mutual recursion.
-struct ConditionParser {
-    const std::vector<std::string>& tokens;
-    std::size_t position;
-    const YAML::Node& node;
-    const std::string& path;
-    const DatabaseParserContext& context;
-
-    // or → and ("||" and)*
-    void parse_or() {
-        parse_and();
-        while (position < tokens.size() && tokens[position] == "||") {
-            ++position;
-            parse_and();
-        }
-    }
-
-    // and → unary ("&&" unary)*
-    void parse_and() {
-        parse_unary();
-        while (position < tokens.size() && tokens[position] == "&&") {
-            ++position;
-            parse_unary();
-        }
-    }
-
-    // unary → "not" unary | primary
-    void parse_unary() {
-        if (position < tokens.size() && tokens[position] == "not") {
-            ++position;
-            parse_unary();
-        } else {
-            parse_primary();
-        }
-    }
-
-    // primary → "(" or ")"
-    //         | "true" | "false"
-    //         | "required" name
-    //         | "environment" name
-    //         | "version" comparison
-    //         | [name] ("true" | "false" | "enabled" | "disabled") [name]
-    void parse_primary() {
-        if (position >= tokens.size()) {
-            fail_config(node, path, "ends before a condition was provided", context);
-        }
-        const std::string& tok = tokens[position];
-
-        if (tok == "(") {
-            ++position;
-            parse_or();
-            if (position >= tokens.size() || tokens[position] != ")") {
-                fail_config(node, path, "contains unmatched parentheses", context);
-            }
-            ++position;
-            return;
-        }
-        if (tok == "true" || tok == "false") {
-            ++position;
-            return;
-        }
-        if (tok == "required" || tok == "environment") {
-            ++position;
-            if (position >= tokens.size() || tokens[position] == "(" || tokens[position] == ")" ||
-                tokens[position] == "&&" || tokens[position] == "||") {
-                fail_config(node, path, "is missing an operand", context);
-            }
-            ++position;
-            return;
-        }
-        if (tok == "version") {
-            ++position;
-            if (position >= tokens.size()) {
-                fail_config(node, path, "is missing a version comparison", context);
-            }
-            validate_version_condition(tokens[position], node, path, context);
-            ++position;
-            return;
-        }
-
-        // Option condition: consume the option-name token (if present) then
-        // expect true / false / enabled / disabled, optionally followed by
-        // another option-name token.
-        ++position;
-        if (position >= tokens.size() ||
-            (tokens[position] != "true" && tokens[position] != "false" &&
-             tokens[position] != "enabled" && tokens[position] != "disabled")) {
-            fail_config(node, path, "contains an invalid option condition", context);
-        }
-        ++position;
-        if (position < tokens.size() && tokens[position] != "&&" && tokens[position] != "||" &&
-            tokens[position] != ")") {
-            ++position;
-        }
-    }
-};
 
 void validate_condition(const std::string& expression, const YAML::Node& node,
                         const std::string& path, const DatabaseParserContext& context) {
-    const std::vector<std::string> tokens = tokenize_condition(expression, node, path, context);
-    if (tokens.empty()) {
-        fail_config(node, path, "must not be empty", context);
-    }
+    auto on_error = [&](const std::string& msg) { fail_config(node, path, msg, context); };
 
-    ConditionParser parser {tokens, 0, node, path, context};
-    parser.parse_or();
-    if (parser.position != tokens.size()) {
-        fail_config(node, path, "contains unexpected token '" + tokens[parser.position] + "'",
-                    context);
-    }
+    const ConditionExpr expr = parse_condition(expression, on_error);
+    // Additional validation specific to package-recipe conditions:
+    // check that version comparisons are well-formed.
+    validate_version_nodes(expr, node, path, context);
 }
 
 void validate_templates(const YAML::Node& node, const std::string& path,

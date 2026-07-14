@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utils/condition_utils.hpp>
 #include <vector>
 
 /**
@@ -170,6 +171,12 @@ struct UserConfigParserContext {
     /// Resolved option states keyed by a user-assigned name
     /// (from the user config's "options" section).
     std::unordered_map<std::string, ParsedOptionState> named_option_values;
+
+    /// Cache of parsed condition expressions, keyed by the raw expression
+    /// string.  Filled on demand by evaluate_parser_condition() so that the
+    /// fixed-point convergence loop does not re-tokenise and re-parse the
+    /// same conditions on every pass.
+    std::unordered_map<std::string, ConditionExpr> condition_parse_cache;
 
     /// Monotonically increasing version counter bumped on every option or
     /// environment-value change.  Used by precompute_parser_values() to detect

@@ -1,52 +1,18 @@
 /**
  * @file condition_evaluator.cpp
- * @brief Tokenization and evaluation of user-configuration conditions.
+ * @brief Evaluation of parsed condition expressions for user-configuration parsing.
  */
 
 #include <algorithm>
-#include <cctype>
 #include <cstdlib>
 #include <database/config.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <parser/parser_internal.hpp>
 #include <string>
+#include <utils/condition_utils.hpp>
 #include <utils/string_utils.hpp>
-#include <vector>
 
 namespace {
-
-    std::vector<std::string> tokenize_condition(const std::string& expression) {
-        std::vector<std::string> tokens;
-        std::string current;
-        auto flush = [&] {
-            if (!current.empty()) {
-                tokens.push_back(current);
-                current.clear();
-            }
-        };
-
-        for (std::size_t i = 0; i < expression.size(); ++i) {
-            const char character = expression[i];
-            if (std::isspace(static_cast<unsigned char>(character))) {
-                flush();
-            } else if (character == '(' || character == ')') {
-                flush();
-                tokens.emplace_back(1, character);
-            } else if (character == '&' || character == '|') {
-                flush();
-                if (i + 1 >= expression.size() || expression[i + 1] != character) {
-                    user_config_error("condition contains an incomplete logical operator: " +
-                                      expression);
-                }
-                tokens.emplace_back(2, character);
-                ++i;
-            } else {
-                current += character;
-            }
-        }
-        flush();
-        return tokens;
-    }
 
     std::string strip_condition_template(const std::string& value) {
         if (value.size() >= 3 && value.rfind("${", 0) == 0 && value.back() == '}') {
@@ -119,126 +85,95 @@ namespace {
         return true;
     }
 
-    struct ConditionCursor {
-        const std::vector<std::string>& tokens;
-        UserConfigParserContext& context;
-        std::size_t position = 0;
-    };
-
-    bool parse_condition_or(ConditionCursor& cursor);
-
-    bool parse_condition_primary(ConditionCursor& cursor) {
-        if (cursor.position >= cursor.tokens.size()) {
-            user_config_error("condition ended before an operand was provided");
-        }
-        const std::string token = cursor.tokens[cursor.position++];
-        if (token == "(") {
-            const bool result = parse_condition_or(cursor);
-            if (cursor.position >= cursor.tokens.size() || cursor.tokens[cursor.position] != ")") {
-                user_config_error("condition contains unmatched parentheses");
-            }
-            ++cursor.position;
-            return result;
-        }
-        if (token == "true" || token == "false") {
-            return token == "true";
-        }
-        if (token == "required") {
-            if (cursor.position >= cursor.tokens.size()) {
-                user_config_error("required condition is missing a package name");
-            }
-            return requirements_satisfied({cursor.tokens[cursor.position++]},
-                                          cursor.context.dependencies,
-                                          cursor.context.abstract_packages);
-        }
-        if (token == "environment") {
-            if (cursor.position >= cursor.tokens.size()) {
-                user_config_error("environment condition is missing a variable name");
-            }
-            const std::string name = strip_condition_template(cursor.tokens[cursor.position++]);
-            const auto parsed      = cursor.context.named_environment_values.find(name);
-            if (parsed != cursor.context.named_environment_values.end()) {
-                return !parsed->second.empty();
-            }
-            const char* value = std::getenv(name.c_str());
-            return value != nullptr && *value != '\0';
-        }
-        if (token == "version") {
-            if (cursor.position >= cursor.tokens.size()) {
-                user_config_error("version condition is missing a comparison");
-            }
-            return compare_version_expression(cursor.tokens[cursor.position++], cursor.context);
-        }
-
-        if (cursor.position >= cursor.tokens.size()) {
-            user_config_error("option condition is missing an enabled state: " + token);
-        }
-        const std::string option_name    = strip_condition_template(token);
-        const std::string expected_state = cursor.tokens[cursor.position++];
-        const auto option                = cursor.context.named_option_values.find(option_name);
-        if (option == cursor.context.named_option_values.end()) {
-            if (is_declared_abstract_selector(option_name, cursor.context)) {
+    /**
+     * @brief Evaluate a parsed condition AST against the current parser context.
+     *
+     * Walks the @ref ConditionExpr tree recursively.  Leaf nodes are resolved
+     * against @p context (option states, environment variables, dependency set,
+     * version comparisons).  Internal nodes (Or, And, Not) combine sub-results
+     * with the usual boolean logic.
+     */
+    bool evaluate_condition_expr(const ConditionExpr& expr, UserConfigParserContext& context) {
+        switch (expr.type) {
+            case ConditionExpr::Or:
+                for (const auto& child : expr.children) {
+                    if (evaluate_condition_expr(child, context)) {
+                        return true;
+                    }
+                }
                 return false;
+
+            case ConditionExpr::And:
+                for (const auto& child : expr.children) {
+                    if (!evaluate_condition_expr(child, context)) {
+                        return false;
+                    }
+                }
+                return true;
+
+            case ConditionExpr::Not: return !evaluate_condition_expr(expr.children[0], context);
+
+            case ConditionExpr::Literal: return expr.literal_value;
+
+            case ConditionExpr::Required:
+                return requirements_satisfied({expr.arg1}, context.dependencies,
+                                              context.abstract_packages);
+
+            case ConditionExpr::Environment: {
+                const std::string name = strip_condition_template(expr.arg1);
+                const auto parsed      = context.named_environment_values.find(name);
+                if (parsed != context.named_environment_values.end()) {
+                    return !parsed->second.empty();
+                }
+                const char* value = std::getenv(name.c_str());
+                return value != nullptr && *value != '\0';
             }
-            user_config_error("condition references unresolved option '" + option_name + "'");
-        }
 
-        const bool expected_enabled  = expected_state == "true" || expected_state == "enabled";
-        const bool expected_disabled = expected_state == "false" || expected_state == "disabled";
-        if (!expected_enabled && !expected_disabled) {
-            user_config_error("condition has invalid option state '" + expected_state + "'");
-        }
-        bool result = option->second.enabled == expected_enabled;
-        if (cursor.position < cursor.tokens.size() && cursor.tokens[cursor.position] != "&&" &&
-            cursor.tokens[cursor.position] != "||" && cursor.tokens[cursor.position] != ")") {
-            result = result &&
-                     get_selected_option_value(option->second) == cursor.tokens[cursor.position];
-            ++cursor.position;
-        }
-        return result;
-    }
+            case ConditionExpr::Version: return compare_version_expression(expr.arg1, context);
 
-    bool parse_condition_unary(ConditionCursor& cursor) {
-        if (cursor.position < cursor.tokens.size() && cursor.tokens[cursor.position] == "not") {
-            ++cursor.position;
-            return !parse_condition_unary(cursor);
-        }
-        return parse_condition_primary(cursor);
-    }
+            case ConditionExpr::Option: {
+                const std::string option_name    = strip_condition_template(expr.arg1);
+                const std::string expected_state = expr.arg2;
+                const auto option                = context.named_option_values.find(option_name);
+                if (option == context.named_option_values.end()) {
+                    if (is_declared_abstract_selector(option_name, context)) {
+                        return false;
+                    }
+                    user_config_error("condition references unresolved option '" + option_name +
+                                      "'");
+                }
 
-    bool parse_condition_and(ConditionCursor& cursor) {
-        bool result = parse_condition_unary(cursor);
-        while (cursor.position < cursor.tokens.size() && cursor.tokens[cursor.position] == "&&") {
-            ++cursor.position;
-            const bool right = parse_condition_unary(cursor);
-            result           = result && right;
+                const bool expected_enabled =
+                    expected_state == "true" || expected_state == "enabled";
+                const bool expected_disabled =
+                    expected_state == "false" || expected_state == "disabled";
+                if (!expected_enabled && !expected_disabled) {
+                    user_config_error("condition has invalid option state '" + expected_state +
+                                      "'");
+                }
+                bool result = option->second.enabled == expected_enabled;
+                if (!expr.arg3.empty()) {
+                    result = result && get_selected_option_value(option->second) == expr.arg3;
+                }
+                return result;
+            }
         }
-        return result;
-    }
-
-    bool parse_condition_or(ConditionCursor& cursor) {
-        bool result = parse_condition_and(cursor);
-        while (cursor.position < cursor.tokens.size() && cursor.tokens[cursor.position] == "||") {
-            ++cursor.position;
-            const bool right = parse_condition_and(cursor);
-            result           = result || right;
-        }
-        return result;
+        return false;  // unreachable
     }
 
 }  // namespace
 
 bool evaluate_parser_condition(const std::string& expression, UserConfigParserContext& context) {
-    const std::vector<std::string> tokens = tokenize_condition(expression);
-    if (tokens.empty()) {
-        user_config_error("condition must not be empty");
+    // Cache the parsed AST so that the fixed-point convergence loop does not
+    // re-tokenise and re-parse the same expression on every pass.
+    auto it = context.condition_parse_cache.find(expression);
+    if (it == context.condition_parse_cache.end()) {
+        auto on_error = [](const std::string& msg) { user_config_error(msg); };
+        it =
+            context.condition_parse_cache.emplace(expression, parse_condition(expression, on_error))
+                .first;
     }
-    ConditionCursor cursor {tokens, context};
-    const bool result = parse_condition_or(cursor);
-    if (cursor.position != tokens.size()) {
-        user_config_error("condition contains unexpected token '" + tokens[cursor.position] + "'");
-    }
-    return result;
+    return evaluate_condition_expr(it->second, context);
 }
 
 std::string apply_parser_conditions(const ConfigurableValue<std::string>& configurable,
