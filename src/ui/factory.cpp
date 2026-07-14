@@ -10,7 +10,10 @@
 #include <regex>
 #include <string>
 #include <system_error>
+#include <ui/argparse.hpp>
 #include <ui/commands.hpp>
+#include <ui/factory.hpp>
+#include <ui/install.hpp>
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
@@ -19,14 +22,47 @@
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
-namespace {
-    /** @brief Options controlling factory-build execution behaviour. */
-    struct FactoryBuildOptions {
-        bool dry_run    = false;
-        bool force      = false;
-        bool with_slurm = false;
-    };
+std::string render_factory_profile_script(const std::filesystem::path& space,
+                                          const std::filesystem::path& buildspace,
+                                          const FactoryProfile& profile) {
+    std::string result =
+        "#!/usr/bin/env bash\n"
+        "set -Eeuo pipefail\n"
+        "cd " +
+        shell_single_quote(space.string()) + "\nfor kez_factory_bin in " +
+        shell_single_quote((buildspace / "bin").string()) + " " +
+        shell_single_quote(buildspace.string()) +
+        "/*/bin; do\n"
+        "    if [[ -d \"$kez_factory_bin\" ]]; then\n"
+        "        export PATH=\"$kez_factory_bin:${PATH}\"\n"
+        "    fi\n"
+        "done\n"
+        "kez_factory_info() {\n"
+        "    if [[ -n \"${KEZ_HOME:-}\" && -x \"${KEZ_HOME}/bin/kez_print\" ]]; then\n"
+        "        \"${KEZ_HOME}/bin/kez_print\" info \"$1\"\n"
+        "    else\n"
+        "        printf '%s\\n' \"$1\"\n"
+        "    fi\n"
+        "}\n";
+    for (const std::string& command : profile.commands) {
+        result += "kez_factory_info " + shell_single_quote("Executing: " + command) + "\n";
+        result += command + "\n";
+    }
+    return result;
+}
 
+std::vector<std::string> matching_factory_summary_lines(const std::string& contents,
+                                                        const std::regex& pattern) {
+    std::vector<std::string> result;
+    for (const std::string& line : split(contents, '\n')) {
+        if (std::regex_search(line, pattern)) {
+            result.push_back(line);
+        }
+    }
+    return result;
+}
+
+namespace {
     /**
      * @brief Prints the factory subcommand usage message to stdout.
      *
@@ -108,29 +144,6 @@ namespace {
         SUCCESS("Factory removed: " + name);
     }
 
-    /** @brief Parses build-specific flags (--dry-run, --force, --with-slurm) from the argument list. */
-    FactoryBuildOptions parse_build_options(const CommandArguments& arguments) {
-        FactoryBuildOptions result;
-        for (std::size_t index = 1; index < arguments.size(); ++index) {
-            const std::string& argument = arguments[index];
-            if (argument == "-h" || argument == "--help") {
-                factory_help();
-                exit(EXIT_SUCCESS);
-            }
-            if (argument == "-d" || argument == "--dry-run") {
-                result.dry_run = true;
-            } else if (argument == "-f" || argument == "--force") {
-                result.force = true;
-            } else if (argument == "-S" || argument == "--with-slurm") {
-                result.with_slurm = true;
-            } else {
-                ERROR("Unknown factory build option: " + argument);
-                exit(EXIT_FAILURE);
-            }
-        }
-        return result;
-    }
-
     /** @brief Collects and sorts the YAML recipe files from a factory's recipes directory. */
     std::vector<std::filesystem::path> recipe_files(const std::filesystem::path& factory) {
         const std::filesystem::path recipes = factory / "recipes";
@@ -184,18 +197,9 @@ namespace {
         const unsigned int configured_jobs = load_user_config_parser_settings(prefix).parallel_jobs;
         const std::string install_jobs =
             get_env_var_noerr("KEZ_INSTALL_JOBS", std::to_string(configured_jobs));
-        std::string command = "KEZ_INSTALL_JOBS=" + shell_single_quote(install_jobs) + " bash " +
-                              shell_single_quote(script.string()) + " " +
-                              shell_single_quote(prefix.string()) + " " +
-                              shell_single_quote(plan_path.string());
-        if (options.force) {
-            command += " --force";
-        }
-        if (options.with_slurm) {
-            command =
-                "sbatch --wait --job-name=kez-factory-build --wrap=" + shell_single_quote(command);
-        }
-        run_external_command(command);
+        run_external_command(install_executor_command(script, prefix, plan_path, install_jobs,
+                                                      options.force, options.with_slurm,
+                                                      "kez-factory-build"));
 
         std::error_code error;
         std::filesystem::remove(plan_path, error);
@@ -204,9 +208,8 @@ namespace {
         }
     }
 
-    /** @brief Parses and installs every recipe in the currently active factory. */
-    void build_factory(const CommandArguments& arguments) {
-        const FactoryBuildOptions options   = parse_build_options(arguments);
+    /** @brief Installs every recipe in the currently active factory. */
+    void build_factory(const FactoryBuildOptions& options) {
         const std::filesystem::path factory = active_factory_path();
         if (!fs_directory(factory)) {
             ERROR("Factory does not exist: " + factory.filename().string());
@@ -267,27 +270,7 @@ namespace {
             exit(EXIT_FAILURE);
         }
 
-        output << "#!/usr/bin/env bash\n"
-                  "set -Eeuo pipefail\n"
-               << "cd " << shell_single_quote(space.string()) << '\n'
-               << "for kez_factory_bin in " << shell_single_quote((buildspace / "bin").string())
-               << " " << shell_single_quote(buildspace.string())
-               << "/*/bin; do\n"
-                  "    if [[ -d \"$kez_factory_bin\" ]]; then\n"
-                  "        export PATH=\"$kez_factory_bin:${PATH}\"\n"
-                  "    fi\n"
-                  "done\n"
-                  "kez_factory_info() {\n"
-                  "    if [[ -n \"${KEZ_HOME:-}\" && -x \"${KEZ_HOME}/bin/kez_print\" ]]; then\n"
-                  "        \"${KEZ_HOME}/bin/kez_print\" info \"$1\"\n"
-                  "    else\n"
-                  "        printf '%s\\n' \"$1\"\n"
-                  "    fi\n"
-                  "}\n";
-        for (const std::string& command : profile.commands) {
-            output << "kez_factory_info " << shell_single_quote("Executing: " + command) << '\n';
-            output << command << '\n';
-        }
+        output << render_factory_profile_script(space, buildspace, profile);
         output.close();
         if (!output) {
             ERROR("Failed to write tasting script: " + script.string());
@@ -357,12 +340,10 @@ namespace {
     /** @brief Searches a single output file for lines matching a regex and prints matches. */
     void summarize_file(const std::filesystem::path& path, const std::regex& pattern,
                         bool& matched) {
-        const std::vector<std::string> lines = split(read_file(path.string()), '\n');
-        for (const std::string& line : lines) {
-            if (std::regex_search(line, pattern)) {
-                INFO(line);
-                matched = true;
-            }
+        for (const std::string& line :
+             matching_factory_summary_lines(read_file(path.string()), pattern)) {
+            INFO(line);
+            matched = true;
         }
     }
 
@@ -409,63 +390,41 @@ namespace {
 
 /** @brief Dispatches factory subcommands (create, remove, list, enter, exit, which, build, run, summarize). */
 void execute_factory(const CommandArguments& arguments) {
-    if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
-        factory_help();
-        return;
+    const FactoryArgumentsParseResult parsed = parse_factory_arguments(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
     }
 
-    const std::string& action = arguments.front();
-    if (action == "create") {
-        create_factory(required_name(arguments, "factory " + action));
-    } else if (action == "remove") {
-        remove_factory(required_name(arguments, "factory " + action));
-    } else if (action == "list") {
-        if (arguments.size() != 1) {
-            ERROR("factory list does not accept additional arguments");
-            exit(EXIT_FAILURE);
+    switch (parsed.arguments.action) {
+        case FactoryAction::Help: factory_help(); return;
+        case FactoryAction::Create: create_factory(parsed.arguments.name); return;
+        case FactoryAction::Remove: remove_factory(parsed.arguments.name); return;
+        case FactoryAction::List: list_directories(factories_root(), "factories"); return;
+        case FactoryAction::Enter: {
+            const std::string& name = parsed.arguments.name;
+            if (!get_env_var_noerr("KEZ_FACTORY").empty()) {
+                ERROR("A factory is already selected: " + get_env_var_noerr("KEZ_FACTORY"));
+                exit(EXIT_FAILURE);
+            }
+            if (!fs_directory(factory_path(name))) {
+                ERROR("Factory does not exist: " + name);
+                exit(EXIT_FAILURE);
+            }
+            std::cout << "export KEZ_FACTORY=" << shell_single_quote(name) << '\n';
+            return;
         }
-        list_directories(factories_root(), "factories");
-    } else if (action == "enter") {
-        const std::string name = required_name(arguments, "factory " + action);
-        if (!get_env_var_noerr("KEZ_FACTORY").empty()) {
-            ERROR("A factory is already selected: " + get_env_var_noerr("KEZ_FACTORY"));
-            exit(EXIT_FAILURE);
+        case FactoryAction::Exit:
+            get_env_var("KEZ_FACTORY", "No factory is currently selected");
+            std::cout << "unset KEZ_FACTORY\n";
+            return;
+        case FactoryAction::Which: {
+            const std::string name = get_env_var_noerr("KEZ_FACTORY");
+            INFO(name.empty() ? "No factory is currently selected." : "Current factory: " + name);
+            return;
         }
-        if (!fs_directory(factory_path(name))) {
-            ERROR("Factory does not exist: " + name);
-            exit(EXIT_FAILURE);
-        }
-        std::cout << "export KEZ_FACTORY=" << shell_single_quote(name) << '\n';
-    } else if (action == "exit") {
-        if (arguments.size() != 1) {
-            ERROR("factory exit does not accept additional arguments");
-            exit(EXIT_FAILURE);
-        }
-        get_env_var("KEZ_FACTORY", "No factory is currently selected");
-        std::cout << "unset KEZ_FACTORY\n";
-    } else if (action == "which") {
-        if (arguments.size() != 1) {
-            ERROR("factory which does not accept additional arguments");
-            exit(EXIT_FAILURE);
-        }
-        const std::string name = get_env_var_noerr("KEZ_FACTORY");
-        INFO(name.empty() ? "No factory is currently selected." : "Current factory: " + name);
-    } else if (action == "build") {
-        build_factory(arguments);
-    } else if (action == "run") {
-        if (arguments.size() != 1) {
-            ERROR("factory run does not accept additional arguments");
-            exit(EXIT_FAILURE);
-        }
-        run_factory();
-    } else if (action == "summarize") {
-        if (arguments.size() != 1) {
-            ERROR("factory summarize does not accept additional arguments");
-            exit(EXIT_FAILURE);
-        }
-        summarize_factory();
-    } else {
-        ERROR("Unknown factory command: " + action);
-        exit(EXIT_FAILURE);
+        case FactoryAction::Build: build_factory(parsed.arguments.build_options); return;
+        case FactoryAction::Run: run_factory(); return;
+        case FactoryAction::Summarize: summarize_factory(); return;
     }
 }

@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <ui/argparse.hpp>
 #include <ui/commands.hpp>
 #include <ui/ui.hpp>
 #include <utils/bash_utils.hpp>
@@ -38,55 +39,38 @@ namespace {
 }  // namespace
 
 void run_ui(int argc, char* argv[]) {
-    if (argc <= 1) {
-        print_help();
-        return;
-    }
-
-    const std::string command = argv[1];
-    if (command == "-h" || command == "--help") {
-        print_help();
-        return;
-    }
-    if (command == "-V" || command == "--version") {
-        std::filesystem::path kez_home = get_env_var("KEZ_HOME");
-        YAML::Node manifest            = cached_yaml_load(kez_home / "manifest.yaml");
-        std::string version            = manifest["project"]["version"].as<std::string>();
-        INFO("Kez version: " + version);
-        return;
-    }
-
     CommandArguments arguments;
-    arguments.reserve(static_cast<std::size_t>(argc - 2));
-    for (int index = 2; index < argc; ++index) {
+    arguments.reserve(static_cast<std::size_t>(argc - 1));
+    for (int index = 1; index < argc; ++index) {
         arguments.emplace_back(argv[index]);
     }
 
-    if (command == "init") {
-        execute_init(arguments);
-    } else if (command == "update") {
-        execute_update(arguments);
-    } else if (command == "install") {
-        execute_install(arguments);
-    } else if (command == "utilities") {
-        execute_utilities(arguments);
-    } else if (command == "uconf") {
-        execute_uconf(arguments);
-    } else if (command == "env") {
-        execute_environment(arguments);
-    } else if (command == "compiler") {
-        execute_compiler(arguments);
-    } else if (command == "mpi") {
-        execute_mpi(arguments);
-    } else if (command == "factory") {
-        execute_factory(arguments);
-    } else if (command == "info") {
-        execute_info(arguments);
-    } else if (command == "dbcheck") {
-        execute_dbcheck(arguments);
-    } else {
-        ERROR("Unknown command: " + command);
+    const UiArgumentsParseResult parsed = parse_ui_arguments(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
         print_help();
         exit(EXIT_FAILURE);
+    }
+
+    switch (parsed.command) {
+        case UiCommand::Help: print_help(); return;
+        case UiCommand::Version: {
+            const std::filesystem::path kez_home = get_env_var("KEZ_HOME");
+            const YAML::Node manifest            = cached_yaml_load(kez_home / "manifest.yaml");
+            const std::string version            = manifest["project"]["version"].as<std::string>();
+            INFO("Kez version: " + version);
+            return;
+        }
+        case UiCommand::Init: execute_init(parsed.arguments); return;
+        case UiCommand::Update: execute_update(parsed.arguments); return;
+        case UiCommand::Install: execute_install(parsed.arguments); return;
+        case UiCommand::Utilities: execute_utilities(parsed.arguments); return;
+        case UiCommand::Uconf: execute_uconf(parsed.arguments); return;
+        case UiCommand::Environment: execute_environment(parsed.arguments); return;
+        case UiCommand::Compiler: execute_compiler(parsed.arguments); return;
+        case UiCommand::Mpi: execute_mpi(parsed.arguments); return;
+        case UiCommand::Factory: execute_factory(parsed.arguments); return;
+        case UiCommand::Info: execute_info(parsed.arguments); return;
+        case UiCommand::DbCheck: execute_dbcheck(parsed.arguments); return;
     }
 }

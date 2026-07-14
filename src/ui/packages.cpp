@@ -10,7 +10,9 @@
 #include <string>
 #include <uconf_generator/uconf_generator.hpp>
 #include <uconf_parser/user_config_parser.hpp>
+#include <ui/argparse.hpp>
 #include <ui/commands.hpp>
+#include <ui/packages.hpp>
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
@@ -19,48 +21,79 @@
 #include <vector>
 
 namespace {
-    /**
-     * @brief Converts a Toolchain enum to its human-readable string representation.
-     *
-     * Maps each Toolchain enumerator to the corresponding string used in package
-     * metadata and user-facing output. The returned string is the canonical name
-     * for the build-system toolchain that a package uses.
-     *
-     * @param toolchain  The Toolchain enumerator to convert.
-     * @return std::string  "none", "autotools", "cmake", or "make".  If the
-     *                      enumerator does not match any known case, returns
-     *                      "unknown".
 
-     * @warning If a new Toolchain variant is added to the enum and this function
-     *          is not updated, the fallthrough returns "unknown" rather than
-     *          terminating -- callers should treat that as an error condition.
-     */
-    std::string toolchain_name(Toolchain toolchain) {
-        switch (toolchain) {
-            case Toolchain::None: return "none";
-            case Toolchain::Autotools: return "autotools";
-            case Toolchain::CMake: return "cmake";
-            case Toolchain::Make: return "make";
+    void append_configuration_entries(const BuildConfiguration& configuration,
+                                      std::vector<PackageConfigEntry>& result) {
+        for (const BuildOption& option : configuration.options) {
+            if (option.user_configurable) {
+                result.push_back({option.name,
+                                  option.enabled_value.has_value()
+                                      ? option.enabled_value->default_value
+                                      : std::nullopt,
+                                  option.description.value_or("")});
+            }
         }
-        return "unknown";
+        for (const EnvironmentVariable& environment : configuration.environment) {
+            if (environment.user_configurable) {
+                result.push_back(
+                    {environment.name, std::nullopt, environment.description.value_or("")});
+            }
+        }
     }
 
+}  // namespace
+
+std::vector<PackageConfigEntry> package_config_entries(const PackageConfig& package) {
+    std::vector<PackageConfigEntry> result;
+    if (!package.build.has_value()) {
+        return result;
+    }
+    if (package.build->configurations.has_value()) {
+        append_configuration_entries(*package.build->configurations, result);
+    }
+    for (const BuildStage& stage : package.build->stages) {
+        if (stage.configurations.has_value()) {
+            append_configuration_entries(*stage.configurations, result);
+        }
+    }
+    return result;
+}
+
+std::string toolchain_name(Toolchain toolchain) {
+    switch (toolchain) {
+        case Toolchain::None: return "none";
+        case Toolchain::Autotools: return "autotools";
+        case Toolchain::CMake: return "cmake";
+        case Toolchain::Make: return "make";
+    }
+    return "unknown";
+}
+
+std::string source_type_name(SourceType source_type) {
+    switch (source_type) {
+        case SourceType::Git: return "git";
+        case SourceType::Tarball: return "tarball";
+        case SourceType::Zip: return "zip";
+        case SourceType::Script: return "script";
+    }
+    return "unknown";
+}
+
+std::string property_display_value(const Property& property) {
+    if (std::holds_alternative<std::string>(property.data)) {
+        return std::get<std::string>(property.data);
+    }
+    const ConfigurableValue<std::string>& value =
+        std::get<ConfigurableValue<std::string>>(property.data);
+    return value.default_value.value_or("<conditional>");
+}
+
+namespace {
     /**
      * @brief Prints the usage message for the `uconf` subcommand.
      */
     void print_uconf_help() { std::cout << "Usage: kez uconf <package>... [--save FILE]\n"; }
 
-    /**
-     * @brief Extracts the display value from a Property, preferring the default.
-     */
-    std::string property_value(const Property& property) {
-        if (std::holds_alternative<std::string>(property.data)) {
-            return std::get<std::string>(property.data);
-        }
-        const ConfigurableValue<std::string>& value =
-            std::get<ConfigurableValue<std::string>>(property.data);
-        return value.default_value.value_or("<conditional>");
-    }
 }  // namespace
 
 /**
@@ -68,43 +101,22 @@ namespace {
  *        given packages, optionally writing it to a file with --save.
  */
 void execute_uconf(const CommandArguments& arguments) {
-    if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
+    const UconfOptionsParseResult parsed = parse_uconf_options(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
+    }
+    if (parsed.help) {
         print_uconf_help();
         return;
     }
 
-    std::vector<std::string> packages;
-    std::string output_path;
-    bool interactive = false;
-    for (std::size_t index = 0; index < arguments.size(); ++index) {
-        const std::string& argument = arguments[index];
-        if (argument == "-s" || argument == "--save") {
-            if (++index >= arguments.size()) {
-                ERROR("Missing value for " + argument);
-                exit(EXIT_FAILURE);
-            }
-            output_path = arguments[index];
-            interactive = true;
-        } else if (argument.rfind("--save=", 0) == 0) {
-            output_path = argument.substr(7);
-            interactive = true;
-        } else if (!argument.empty() && argument.front() == '-') {
-            ERROR("Unknown uconf option: " + argument);
-            exit(EXIT_FAILURE);
-        } else {
-            packages.push_back(argument);
-        }
-    }
-    if (packages.empty()) {
-        ERROR("At least one package is required");
-        exit(EXIT_FAILURE);
-    }
-
-    const YAML::Node config = gen_user_config(packages, interactive);
-    if (output_path.empty()) {
+    const YAML::Node config = gen_user_config(parsed.options.packages, parsed.options.interactive);
+    if (parsed.options.output_path.empty()) {
         std::cout << YAML::Dump(config) << '\n';
     } else {
-        write_yaml(config, output_path, "Configurable YAML written to: " + output_path);
+        write_yaml(config, parsed.options.output_path,
+                   "Configurable YAML written to: " + parsed.options.output_path);
     }
 }
 
@@ -122,19 +134,18 @@ void execute_uconf(const CommandArguments& arguments) {
  *   word-wrapping through print_text.
  */
 void execute_info(const CommandArguments& arguments) {
-    if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
+    const InfoArgumentsParseResult parsed = parse_info_arguments(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
+    }
+    if (parsed.help) {
         std::cout << "Usage: kez info <package> [--raw]\n";
         return;
     }
-    if (arguments.size() > 2 ||
-        (arguments.size() == 2 && arguments[1] != "-r" && arguments[1] != "--raw")) {
-        ERROR("Usage: kez info <package> [--raw]");
-        exit(EXIT_FAILURE);
-    }
 
-    const std::string& name = arguments.front();
-    const bool raw          = arguments.size() == 2;
-    if (raw) {
+    const std::string& name = parsed.arguments.package;
+    if (parsed.arguments.raw) {
         const std::filesystem::path path =
             select_config_path(get_env_var("KEZ_DB"), name, "latest");
         const std::string contents = read_file(path.string());
@@ -209,7 +220,7 @@ void execute_info(const CommandArguments& arguments) {
         print_section_header("Properties");
         if (!package->properties.empty()) {
             for (const Property& prop : package->properties) {
-                print_two_columns(prop.name, property_value(prop), short_width, 0);
+                print_two_columns(prop.name, property_display_value(prop), short_width, 0);
             }
         } else {
             print_text("None");
@@ -219,17 +230,7 @@ void execute_info(const CommandArguments& arguments) {
         // --- Releases ---
         print_section_header("Releases");
         if (package->source) {
-            // Map SourceType to string.
-            auto source_type_str = [](SourceType st) -> std::string {
-                switch (st) {
-                    case SourceType::Git: return "git";
-                    case SourceType::Tarball: return "tarball";
-                    case SourceType::Zip: return "zip";
-                    case SourceType::Script: return "script";
-                }
-                return "unknown";
-            };
-            print_text("Type: " + normal_color(source_type_str(package->source->type)), max_width);
+            print_text("Type: " + normal_color(source_type_name(package->source->type)), max_width);
 
             if (package->source->type == SourceType::Git && package->source->url) {
                 print_text("Repository: " + normal_color(*package->source->url));
@@ -249,66 +250,16 @@ void execute_info(const CommandArguments& arguments) {
 
         // --- Config Options ---
         print_section_header("Config Options");
-        {
-            bool found = false;
-
-            // Collect from the top-level build configuration.
-            if (package->build && package->build->configurations) {
-                const BuildConfiguration& cfg = *package->build->configurations;
-
-                for (const BuildOption& opt : cfg.options) {
-                    if (!opt.user_configurable) {
-                        continue;
-                    }
-                    found             = true;
-                    std::string label = normal_color(opt.name);
-                    if (opt.enabled_value && opt.enabled_value->default_value) {
-                        label += " [" + *opt.enabled_value->default_value + "]";
-                    }
-                    print_two_columns(label, opt.description.value_or(""), short_width, max_width);
+        const std::vector<PackageConfigEntry> entries = package_config_entries(*package);
+        if (entries.empty()) {
+            print_text("None");
+        } else {
+            for (const PackageConfigEntry& entry : entries) {
+                std::string label = normal_color(entry.name);
+                if (entry.default_value.has_value()) {
+                    label += " [" + *entry.default_value + "]";
                 }
-
-                for (const EnvironmentVariable& env : cfg.environment) {
-                    if (!env.user_configurable) {
-                        continue;
-                    }
-                    found = true;
-                    print_two_columns(normal_color(env.name), env.description.value_or(""),
-                                      short_width, max_width);
-                }
-            }
-
-            // Collect from per-stage configurations.
-            if (package->build) {
-                for (const BuildStage& stage : package->build->stages) {
-                    if (!stage.configurations) {
-                        continue;
-                    }
-                    for (const BuildOption& opt : stage.configurations->options) {
-                        if (!opt.user_configurable) {
-                            continue;
-                        }
-                        found             = true;
-                        std::string label = normal_color(opt.name);
-                        if (opt.enabled_value && opt.enabled_value->default_value) {
-                            label += " [" + *opt.enabled_value->default_value + "]";
-                        }
-                        print_two_columns(label, opt.description.value_or(""), short_width,
-                                          max_width);
-                    }
-                    for (const EnvironmentVariable& env : stage.configurations->environment) {
-                        if (!env.user_configurable) {
-                            continue;
-                        }
-                        found = true;
-                        print_two_columns(normal_color(env.name), env.description.value_or(""),
-                                          short_width, max_width);
-                    }
-                }
-            }
-
-            if (!found) {
-                print_text("None");
+                print_two_columns(label, entry.description, short_width, max_width);
             }
         }
 
@@ -326,7 +277,7 @@ void execute_info(const CommandArguments& arguments) {
         print_section_header("Properties");
         if (!package->properties.empty()) {
             for (const Property& prop : package->properties) {
-                print_two_columns(prop.name, property_value(prop), short_width, 0);
+                print_two_columns(prop.name, property_display_value(prop), short_width, 0);
             }
         } else {
             print_text("None");
@@ -337,51 +288,17 @@ void execute_info(const CommandArguments& arguments) {
 }
 
 /**
- * @brief Runs the `dbcheck` subcommand: validates every recipe in the database
- *        directory, or only the packages named with `--only`.
+ * @brief Runs the `dbcheck` subcommand for all recipes or an explicit package selection.
  */
 void execute_dbcheck(const CommandArguments& arguments) {
-    if (arguments.empty()) {
-        // No arguments -- check the entire database.
-        const std::filesystem::path database = get_env_var("KEZ_DB");
-        if (!std::filesystem::is_directory(database)) {
-            ERROR("Database directory does not exist: " + database.string());
-            exit(EXIT_FAILURE);
-        }
-        std::vector<std::string> packages;
-        for (const auto& entry : std::filesystem::directory_iterator(database)) {
-            if (entry.is_directory()) {
-                packages.push_back(entry.path().filename().string());
-            }
-        }
-        std::sort(packages.begin(), packages.end());
-        std::size_t configurations = 0;
-        for (const std::string& package : packages) {
-            get_db_config(package);  // Also validates version-range selection and overlap.
-            for (const auto& entry : std::filesystem::directory_iterator(database / package)) {
-                if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
-                    if (entry.path().filename() != "latest.yaml") {
-                        parse_db_config(entry.path());
-                    }
-                    ++configurations;
-                }
-            }
-        }
-        SUCCESS("Validated " + std::to_string(configurations) + " configurations for " +
-                std::to_string(packages.size()) + " packages.");
-        return;
+    const DbCheckOptionsParseResult parsed = parse_dbcheck_options(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
     }
-
-    // Check for help.
-    if (arguments.size() == 1 && (arguments.front() == "-h" || arguments.front() == "--help")) {
+    if (parsed.help) {
         std::cout << "Usage: kez dbcheck [--only <package>...]\n";
         return;
-    }
-
-    // Parse --only.
-    if (arguments.front() != "--only") {
-        ERROR("Unknown dbcheck option: " + arguments.front());
-        exit(EXIT_FAILURE);
     }
 
     const std::filesystem::path database = get_env_var("KEZ_DB");
@@ -390,29 +307,25 @@ void execute_dbcheck(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
 
-    std::vector<std::string> packages;
-    for (std::size_t index = 1; index < arguments.size(); ++index) {
-        const std::string& arg = arguments[index];
-        if (!arg.empty() && arg.front() == '-') {
-            ERROR("Unknown dbcheck option: " + arg);
-            exit(EXIT_FAILURE);
+    std::vector<std::string> packages = parsed.packages;
+    if (parsed.all_packages) {
+        for (const auto& entry : std::filesystem::directory_iterator(database)) {
+            if (entry.is_directory()) {
+                packages.push_back(entry.path().filename().string());
+            }
         }
-        packages.push_back(arg);
-    }
-    if (packages.empty()) {
-        ERROR("--only requires at least one package name");
-        exit(EXIT_FAILURE);
+        std::sort(packages.begin(), packages.end());
     }
 
     std::size_t configurations = 0;
     for (const std::string& package : packages) {
-        const std::filesystem::path package_dir = database / package;
-        if (!std::filesystem::is_directory(package_dir)) {
+        const std::filesystem::path package_directory = database / package;
+        if (!std::filesystem::is_directory(package_directory)) {
             ERROR("Package not found in database: " + package);
             exit(EXIT_FAILURE);
         }
         get_db_config(package);
-        for (const auto& entry : std::filesystem::directory_iterator(package_dir)) {
+        for (const auto& entry : std::filesystem::directory_iterator(package_directory)) {
             if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
                 if (entry.path().filename() != "latest.yaml") {
                     parse_db_config(entry.path());

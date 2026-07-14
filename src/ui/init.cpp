@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <ui/argparse.hpp>
 #include <ui/commands.hpp>
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
@@ -25,24 +26,17 @@
  * --use-distro-compiler flags.
  */
 void execute_init(const CommandArguments& arguments) {
-    bool refresh             = false;
-    bool use_distro_compiler = false;
-    for (const std::string& argument : arguments) {
-        if (argument == "-h" || argument == "--help") {
-            std::cout << "Usage: kez init [--refresh] [--use-distro-compiler]\n\n"
-                         "  --refresh               Recreate the system environment\n"
-                         "  --use-distro-compiler   Link the distribution compiler instead of "
-                         "building GCC\n";
-            return;
-        }
-        if (argument == "--refresh") {
-            refresh = true;
-        } else if (argument == "--use-distro-compiler") {
-            use_distro_compiler = true;
-        } else {
-            ERROR("Unknown init option: " + argument);
-            exit(EXIT_FAILURE);
-        }
+    const InitOptionsParseResult parsed = parse_init_options(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
+    }
+    if (parsed.help) {
+        std::cout << "Usage: kez init [--refresh] [--use-distro-compiler]\n\n"
+                     "  --refresh               Recreate the system environment\n"
+                     "  --use-distro-compiler   Link the distribution compiler instead of "
+                     "building GCC\n";
+        return;
     }
 
     const std::filesystem::path script =
@@ -52,10 +46,10 @@ void execute_init(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
     std::string command = "bash " + shell_single_quote(script.string());
-    if (refresh) {
+    if (parsed.options.refresh) {
         command += " --refresh";
     }
-    if (use_distro_compiler) {
+    if (parsed.options.use_distro_compiler) {
         command += " --use-distro-compiler";
     }
     run_external_command(command);
@@ -68,19 +62,15 @@ void execute_init(const CommandArguments& arguments) {
  * refreshes the system toolchain via scripts/init.sh --refresh.
  */
 void execute_update(const CommandArguments& arguments) {
-    bool with_system = false;
-    for (const std::string& argument : arguments) {
-        if (argument == "-h" || argument == "--help") {
-            std::cout << "Usage: kez update [--with-system]\n\n"
-                         "  --with-system  Refresh the system toolchain after rebuilding Kez\n";
-            return;
-        }
-        if (argument == "--with-system") {
-            with_system = true;
-        } else {
-            ERROR("Unknown update option: " + argument);
-            exit(EXIT_FAILURE);
-        }
+    const UpdateOptionsParseResult parsed = parse_update_options(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
+    }
+    if (parsed.help) {
+        std::cout << "Usage: kez update [--with-system]\n\n"
+                     "  --with-system  Refresh the system toolchain after rebuilding Kez\n";
+        return;
     }
 
     const std::filesystem::path home = get_env_var("KEZ_HOME");
@@ -95,7 +85,7 @@ void execute_update(const CommandArguments& arguments) {
 
     run_external_command("git -C " + shell_single_quote(home.string()) + " pull --ff-only");
     run_external_command("make -C " + shell_single_quote(home.string()) + " -B -j" + jobs);
-    if (with_system) {
+    if (parsed.options.with_system) {
         run_external_command("bash " + shell_single_quote((home / "scripts" / "init.sh").string()) +
                              " --refresh");
     }

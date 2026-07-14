@@ -191,16 +191,6 @@ void validate_path_component(const std::string& value, const std::string& descri
     }
 }
 
-std::string required_name(const CommandArguments& arguments,
-                          const std::string& action_description) {
-    if (arguments.size() != 2) {
-        ERROR(action_description + " requires exactly one name");
-        exit(EXIT_FAILURE);
-    }
-    validate_path_component(arguments[1], action_description + " name");
-    return arguments[1];
-}
-
 void run_external_command(const std::string& command) {
     const int status = std::system(command.c_str());
     if (status == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {

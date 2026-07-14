@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <yaml-cpp/yaml.h>
 
+#include <algorithm>
 #include <cmdline_parser/cmdline_parser.hpp>
 #include <cstdlib>
 #include <filesystem>
@@ -28,7 +29,9 @@
 #include <system_error>
 #include <uconf_generator/uconf_generator.hpp>
 #include <uconf_parser/user_config_parser.hpp>
+#include <ui/argparse.hpp>
 #include <ui/commands.hpp>
+#include <ui/install.hpp>
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
@@ -36,52 +39,52 @@
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
+std::string install_executor_command(const std::filesystem::path& executor,
+                                     const std::filesystem::path& prefix,
+                                     const std::filesystem::path& plan_path,
+                                     const std::string& install_jobs, bool force, bool with_slurm,
+                                     const std::string& slurm_job) {
+    std::string command = "KEZ_INSTALL_JOBS=" + shell_single_quote(install_jobs) + " bash " +
+                          shell_single_quote(executor.string()) + " " +
+                          shell_single_quote(prefix.string()) + " " +
+                          shell_single_quote(plan_path.string());
+    if (force) {
+        command += " --force";
+    }
+    if (with_slurm) {
+        command =
+            "sbatch --wait --job-name=" + slurm_job + " --wrap=" + shell_single_quote(command);
+    }
+    return command;
+}
+
+RebuildPlanSelection select_rebuild_plan(const BashCommandPlan& plan, const std::string& target) {
+    RebuildPlanSelection result;
+    result.target_found = std::any_of(
+        plan.begin(), plan.end(),
+        [&target](const PackageCommands& package) { return package.package == target; });
+    if (!result.target_found) {
+        return result;
+    }
+    result.packages = compute_rebuild_set(plan, target);
+    result.plan     = filter_plan(plan, result.packages);
+    return result;
+}
+
+YAML::Node state_without_package(const YAML::Node& state, const std::string& package) {
+    YAML::Node result(YAML::NodeType::Sequence);
+    if (!state.IsSequence()) {
+        return result;
+    }
+    for (const YAML::Node& entry : state) {
+        if (entry.IsScalar() && entry.Scalar() != package) {
+            result.push_back(entry);
+        }
+    }
+    return result;
+}
+
 namespace {
-    /**
-     * @brief Aggregated command-line options for the install / utilities add
-     *        commands.
-     *
-     * Populated by parse_install_options() and consumed by the various install
-     * subroutines.  Each field corresponds to a recognised CLI flag.
-     */
-    struct InstallOptions {
-        /** @brief Treat the positional argument as a YAML file path. */
-        bool read_file = false;
-
-        /** @brief Print the install plan without executing it. */
-        bool dry_run = false;
-
-        /** @brief Reinstall packages already recorded in state.yaml. */
-        bool force = false;
-
-        /** @brief Run scripts/install.sh through sbatch (Slurm). */
-        bool with_slurm = false;
-
-        /** @brief Whether --rebuild was passed (activates the rebuild path). */
-        bool rebuild = false;
-
-        /**
-         * @brief Name of the target environment (from `--env` or
-         *        `KEZ_ACTIVE_ENV`).
-         */
-        std::string environment;
-
-        /**
-         * @brief Package to rebuild; set when `rebuild` is true (from
-         *        `--rebuild`).
-         */
-        std::string rebuild_package;
-
-        /**
-         * @brief Config-value overrides from `--config` / `-c` in
-         *        `PATH=VAL` form.
-         */
-        std::vector<std::string> overrides;
-
-        /** @brief Unparsed positional arguments (package names or a file path). */
-        std::vector<std::string> positional;
-    };
-
     /**
      * @brief Print the help text for `kez install` or `kez utilities add`.
      *
@@ -118,96 +121,6 @@ namespace {
                    "      --rebuild PACKAGE  Rebuild a package and its dependents in the env\n"
                    "                         (may be combined with --read)\n";
         }
-    }
-
-    /**
-     * @brief Retrieve the next positional argument as the value for a flag.
-     *
-     * Exits the process if there is no next argument.
-     */
-    std::string required_value(const CommandArguments& arguments, std::size_t& index,
-                               const std::string& option) {
-        if (index + 1 >= arguments.size()) {
-            ERROR("Missing value for " + option);
-            exit(EXIT_FAILURE);
-        }
-        return arguments[++index];
-    }
-
-    /**
-     * @brief Parse command-line arguments into an InstallOptions struct.
-     *
-     * Handles short and long flags, greedy consumption of key=value overrides
-     * after --config / -c, and the `--` positional-only separator.
-     */
-    InstallOptions parse_install_options(const CommandArguments& arguments, bool utility,
-                                         bool& help) {
-        InstallOptions result;
-        bool positional_only = false;
-        for (std::size_t index = 0; index < arguments.size(); ++index) {
-            const std::string& argument = arguments[index];
-            if (positional_only) {
-                result.positional.push_back(argument);
-            } else if (argument == "--") {
-                positional_only = true;
-            } else if (argument == "-h" || argument == "--help") {
-                help = true;
-            } else if (argument == "-r" || argument == "--read") {
-                result.read_file = true;
-            } else if (argument.rfind("--read=", 0) == 0) {
-                result.read_file = true;
-                result.positional.push_back(argument.substr(7));
-            } else if (argument == "-d" || argument == "--dry-run") {
-                result.dry_run = true;
-            } else if (argument == "-f" || argument == "--force") {
-                result.force = true;
-            } else if (argument == "-S" || argument == "--with-slurm") {
-                result.with_slurm = true;
-            } else if (argument == "-R" || argument == "--rebuild") {
-                if (utility) {
-                    ERROR("--rebuild is not valid for utility installation");
-                    exit(EXIT_FAILURE);
-                }
-                result.rebuild         = true;
-                result.rebuild_package = required_value(arguments, index, argument);
-            } else if (argument.rfind("--rebuild=", 0) == 0) {
-                if (utility) {
-                    ERROR("--rebuild is not valid for utility installation");
-                    exit(EXIT_FAILURE);
-                }
-                result.rebuild         = true;
-                result.rebuild_package = argument.substr(10);
-            } else if (argument == "-e" || argument == "--env") {
-                if (utility) {
-                    ERROR(argument + " is not valid for utility installation");
-                    exit(EXIT_FAILURE);
-                }
-                result.environment = required_value(arguments, index, argument);
-            } else if (argument.rfind("--env=", 0) == 0) {
-                if (utility) {
-                    ERROR("--env is not valid for utility installation");
-                    exit(EXIT_FAILURE);
-                }
-                result.environment = argument.substr(6);
-            } else if (argument == "-c" || argument == "--config") {
-                result.overrides.push_back(required_value(arguments, index, argument));
-                // Greedily consume subsequent tokens that look like key=value
-                // pairs (non-empty, contain '=', do not start with '-').
-                while (index + 1 < arguments.size() && !arguments[index + 1].empty() &&
-                       arguments[index + 1].find('=') != std::string::npos &&
-                       arguments[index + 1].front() != '-') {
-                    result.overrides.push_back(arguments[++index]);
-                }
-            } else if (argument.rfind("--config=", 0) == 0) {
-                result.overrides.push_back(argument.substr(9));
-            } else if (!argument.empty() && argument.front() == '-') {
-                ERROR("Unknown install option: " + argument);
-                exit(EXIT_FAILURE);
-            } else {
-                result.positional.push_back(argument);
-            }
-        }
-        return result;
     }
 
     /**
@@ -287,17 +200,8 @@ namespace {
 
         const std::string install_jobs =
             get_env_var_noerr("KEZ_INSTALL_JOBS", std::to_string(parser_settings.parallel_jobs));
-        std::string command = "KEZ_INSTALL_JOBS=" + shell_single_quote(install_jobs) + " bash " +
-                              shell_single_quote(script.string()) + " " +
-                              shell_single_quote(prefix.string()) + " " +
-                              shell_single_quote(plan_path.string());
-        if (force) {
-            command += " --force";
-        }
-        if (with_slurm) {
-            command = "sbatch --wait --job-name=kez-install --wrap=" + shell_single_quote(command);
-        }
-        run_external_command(command);
+        run_external_command(install_executor_command(script, prefix, plan_path, install_jobs,
+                                                      force, with_slurm, "kez-install"));
         std::filesystem::remove(plan_path, error);
         if (error) {
             WARNING("Could not remove installation plan: " + error.message());
@@ -368,27 +272,18 @@ namespace {
         const UserConfigParserSettings settings = load_user_config_parser_settings(prefix);
         const BashCommandPlan plan              = parse_user_config(user_config, settings);
 
-        // Verify the target package appears in the parsed plan.
-        bool found = false;
-        for (const PackageCommands& pkg : plan) {
-            if (pkg.package == options.rebuild_package) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+        const RebuildPlanSelection selection = select_rebuild_plan(plan, options.rebuild_package);
+        if (!selection.target_found) {
             ERROR("Package '" + options.rebuild_package + "' is not part of the install plan");
             exit(EXIT_FAILURE);
         }
 
-        const std::vector<std::string> rebuild_set =
-            compute_rebuild_set(plan, options.rebuild_package);
         std::string rebuild_list;
-        for (const std::string& package : rebuild_set) {
+        for (const std::string& package : selection.packages) {
             rebuild_list += (rebuild_list.empty() ? "" : " ") + package;
         }
         INFO("Rebuilding: " + rebuild_list);
-        const BashCommandPlan filtered = filter_plan(plan, rebuild_set);
+        const BashCommandPlan& filtered = selection.plan;
 
         if (options.dry_run) {
             print_command_plan(filtered);
@@ -409,12 +304,16 @@ namespace {
      * --rebuild is active.
      */
     void install(const CommandArguments& arguments, bool utility) {
-        bool help                    = false;
-        const InstallOptions options = parse_install_options(arguments, utility, help);
-        if (help) {
+        const InstallOptionsParseResult parsed = parse_install_options(arguments, utility);
+        if (!parsed.error.empty()) {
+            ERROR(parsed.error);
+            exit(EXIT_FAILURE);
+        }
+        if (parsed.help) {
             print_install_help(utility);
             return;
         }
+        const InstallOptions& options = parsed.options;
 
         if (options.rebuild) {
             rebuild(options, utility);
@@ -499,16 +398,8 @@ namespace {
             YAML::Node document = load_yaml_file(state_file);
 
             if (yaml_has(document, "state") && document["state"].IsSequence()) {
-                YAML::Node updated;
-                updated["state"] = YAML::Node(YAML::NodeType::Sequence);
-
-                for (const YAML::Node& entry : document["state"]) {
-                    if (!entry.IsScalar()) continue;
-                    if (entry.as<std::string>() == package) continue;
-                    updated["state"].push_back(entry);
-                }
-
-                write_yaml_atomic(updated, state_file.string());
+                document["state"] = state_without_package(document["state"], package);
+                write_yaml_atomic(document, state_file.string());
             }
         }
 
@@ -527,29 +418,17 @@ void execute_install(const CommandArguments& arguments) { install(arguments, fal
  *        or forward to install() with utility=true for the `add` subcommand.
  */
 void execute_utilities(const CommandArguments& arguments) {
-    if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
-        std::cout << "Usage: kez utilities <add|remove|empty> [options]\n";
-        return;
-    }
-    if (arguments.front() == "remove") {
-        if (arguments.size() != 2) {
-            ERROR("utilities remove requires exactly one package name");
-            exit(EXIT_FAILURE);
-        }
-        remove_utilities_package(arguments[1]);
-        return;
-    }
-    if (arguments.front() == "empty") {
-        if (arguments.size() != 1) {
-            ERROR("utilities empty does not accept additional arguments");
-            exit(EXIT_FAILURE);
-        }
-        empty_utilities();
-        return;
-    }
-    if (arguments.front() != "add") {
-        ERROR("Unknown utilities command: " + arguments.front());
+    const UtilitiesArgumentsParseResult parsed = parse_utilities_arguments(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
         exit(EXIT_FAILURE);
     }
-    install(CommandArguments(arguments.begin() + 1, arguments.end()), true);
+    switch (parsed.arguments.action) {
+        case UtilitiesAction::Help:
+            std::cout << "Usage: kez utilities <add|remove|empty> [options]\n";
+            return;
+        case UtilitiesAction::Add: install(parsed.arguments.install_arguments, true); return;
+        case UtilitiesAction::Remove: remove_utilities_package(parsed.arguments.package); return;
+        case UtilitiesAction::Empty: empty_utilities(); return;
+    }
 }

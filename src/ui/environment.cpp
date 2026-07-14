@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <system_error>
+#include <ui/argparse.hpp>
 #include <ui/commands.hpp>
 #include <ui/ui_utils.hpp>
 #include <utils/bash_utils.hpp>
@@ -84,132 +85,119 @@ namespace {
     void execute_managed_environment(const CommandArguments& arguments, const std::string& command,
                                      const std::string& manifest_path, const std::string& variable,
                                      const std::string& singular, const std::string& plural) {
-        if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
+        const ManagedEnvironmentArgumentsParseResult parsed =
+            parse_managed_environment_arguments(arguments, command);
+        if (!parsed.error.empty()) {
+            ERROR(parsed.error);
+            exit(EXIT_FAILURE);
+        }
+        if (parsed.arguments.action == ManagedEnvironmentAction::Help) {
             managed_help(command);
             return;
         }
 
-        const std::string& action        = arguments.front();
         const std::filesystem::path root = configured_work_path(manifest_path);
-        if (action == "list") {
-            if (arguments.size() != 1) {
-                ERROR(command + " list does not accept additional arguments");
-                exit(EXIT_FAILURE);
+        switch (parsed.arguments.action) {
+            case ManagedEnvironmentAction::Help: return;
+            case ManagedEnvironmentAction::List: list_directories(root, plural); return;
+            case ManagedEnvironmentAction::Which: {
+                const std::string current = get_env_var_noerr(variable);
+                INFO(current.empty() ? "No " + singular + " is currently loaded."
+                                     : "Currently loaded " + singular + ": " + current);
+                return;
             }
-            list_directories(root, plural);
-            return;
-        }
-        if (action == "which") {
-            if (arguments.size() != 1) {
-                ERROR(command + " which does not accept additional arguments");
-                exit(EXIT_FAILURE);
+            case ManagedEnvironmentAction::Load: {
+                const std::string& name = parsed.arguments.name;
+                validate_path_component(name, command + " load name");
+                const std::string current = get_env_var_noerr(variable);
+                if (!current.empty()) {
+                    ERROR("A " + singular + " is already loaded: " + current);
+                    exit(EXIT_FAILURE);
+                }
+                const std::filesystem::path prefix = root / name;
+                if (!fs_directory(prefix)) {
+                    ERROR(singular + " does not exist: " + name);
+                    exit(EXIT_FAILURE);
+                }
+                emit_environment_activation(prefix, variable, name);
+                return;
             }
-            const std::string current = get_env_var_noerr(variable);
-            INFO(current.empty() ? "No " + singular + " is currently loaded."
-                                 : "Currently loaded " + singular + ": " + current);
-            return;
-        }
-        if (action == "load") {
-            const std::string name    = required_name(arguments, command + " load");
-            const std::string current = get_env_var_noerr(variable);
-            if (!current.empty()) {
-                ERROR("A " + singular + " is already loaded: " + current);
-                exit(EXIT_FAILURE);
+            case ManagedEnvironmentAction::Unload: {
+                const std::string name =
+                    get_env_var(variable, "No " + singular + " is currently loaded");
+                validate_path_component(name, singular + " name");
+                emit_environment_deactivation(root / name, variable);
+                return;
             }
-            const std::filesystem::path prefix = root / name;
-            if (!fs_directory(prefix)) {
-                ERROR(singular + " does not exist: " + name);
-                exit(EXIT_FAILURE);
+            case ManagedEnvironmentAction::Remove: {
+                const std::string& name = parsed.arguments.name;
+                validate_path_component(name, command + " remove name");
+                const std::filesystem::path path = root / name;
+                remove_directory(path, singular);
+                remove_modulefile(path);
+                return;
             }
-            emit_environment_activation(prefix, variable, name);
-            return;
         }
-        if (action == "unload") {
-            if (arguments.size() != 1) {
-                ERROR(command + " unload does not accept additional arguments");
-                exit(EXIT_FAILURE);
-            }
-            const std::string name =
-                get_env_var(variable, "No " + singular + " is currently loaded");
-            validate_path_component(name, singular + " name");
-            emit_environment_deactivation(root / name, variable);
-            return;
-        }
-        if (action == "remove") {
-            const std::string name           = required_name(arguments, command + " remove");
-            const std::filesystem::path path = root / name;
-            remove_directory(path, singular);
-            remove_modulefile(path);
-            return;
-        }
-
-        ERROR("Unknown " + command + " command: " + action);
-        exit(EXIT_FAILURE);
     }
 }  // namespace
 
 /** @brief Dispatch environment subcommands: list, which, deactivate, create, remove, empty, activate. */
 void execute_environment(const CommandArguments& arguments) {
-    if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
+    const EnvironmentArgumentsParseResult parsed = parse_environment_arguments(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
+    }
+    if (parsed.arguments.action == EnvironmentAction::Help) {
         environment_help();
         return;
     }
 
-    const std::string& action        = arguments.front();
     const std::filesystem::path root = configured_work_path("applications");
-    if (action == "list") {
-        if (arguments.size() != 1) {
-            ERROR("env list does not accept additional arguments");
-            exit(EXIT_FAILURE);
+    const auto environment_path      = [&parsed, &root]() {
+        validate_path_component(parsed.arguments.name, "environment name");
+        return root / parsed.arguments.name;
+    };
+    switch (parsed.arguments.action) {
+        case EnvironmentAction::Help: return;
+        case EnvironmentAction::List: list_directories(root, "environments"); return;
+        case EnvironmentAction::Which: {
+            const std::string current = get_env_var_noerr("KEZ_ACTIVE_ENV");
+            INFO(current.empty() ? "No application environment is currently active."
+                                 : "Current application environment: " + current);
+            return;
         }
-        list_directories(root, "environments");
-        return;
-    }
-    if (action == "which") {
-        if (arguments.size() != 1) {
-            ERROR("env which does not accept additional arguments");
-            exit(EXIT_FAILURE);
+        case EnvironmentAction::Deactivate: {
+            const std::string name =
+                get_env_var("KEZ_ACTIVE_ENV", "No application environment is currently active");
+            validate_path_component(name, "environment name");
+            emit_environment_deactivation(root / name, "KEZ_ACTIVE_ENV");
+            return;
         }
-        const std::string current = get_env_var_noerr("KEZ_ACTIVE_ENV");
-        INFO(current.empty() ? "No application environment is currently active."
-                             : "Current application environment: " + current);
-        return;
-    }
-    if (action == "deactivate") {
-        if (arguments.size() != 1) {
-            ERROR("env deactivate does not accept additional arguments");
-            exit(EXIT_FAILURE);
+        case EnvironmentAction::Create:
+            create_managed_directory(environment_path(), "Environment");
+            return;
+        case EnvironmentAction::Remove: {
+            const std::filesystem::path path = environment_path();
+            remove_directory(path, "Environment");
+            remove_modulefile(path);
+            return;
         }
-        const std::string name =
-            get_env_var("KEZ_ACTIVE_ENV", "No application environment is currently active");
-        validate_path_component(name, "environment name");
-        emit_environment_deactivation(root / name, "KEZ_ACTIVE_ENV");
-        return;
-    }
-
-    const std::string name           = required_name(arguments, "env " + action);
-    const std::filesystem::path path = root / name;
-    if (action == "create") {
-        create_managed_directory(path, "Environment");
-    } else if (action == "remove") {
-        remove_directory(path, "Environment");
-        remove_modulefile(path);
-    } else if (action == "empty") {
-        empty_directory(path, "Environment");
-    } else if (action == "activate") {
-        const std::string current = get_env_var_noerr("KEZ_ACTIVE_ENV");
-        if (!current.empty()) {
-            ERROR("An application environment is already active: " + current);
-            exit(EXIT_FAILURE);
+        case EnvironmentAction::Empty: empty_directory(environment_path(), "Environment"); return;
+        case EnvironmentAction::Activate: {
+            const std::filesystem::path path = environment_path();
+            const std::string current        = get_env_var_noerr("KEZ_ACTIVE_ENV");
+            if (!current.empty()) {
+                ERROR("An application environment is already active: " + current);
+                exit(EXIT_FAILURE);
+            }
+            if (!fs_directory(path)) {
+                ERROR("Environment does not exist: " + parsed.arguments.name);
+                exit(EXIT_FAILURE);
+            }
+            emit_environment_activation(path, "KEZ_ACTIVE_ENV", parsed.arguments.name);
+            return;
         }
-        if (!fs_directory(path)) {
-            ERROR("Environment does not exist: " + name);
-            exit(EXIT_FAILURE);
-        }
-        emit_environment_activation(path, "KEZ_ACTIVE_ENV", name);
-    } else {
-        ERROR("Unknown env command: " + action);
-        exit(EXIT_FAILURE);
     }
 }
 

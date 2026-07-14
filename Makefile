@@ -55,7 +55,13 @@ LIB_SOURCES := \
 	$(SRC_DIR)/uconf_generator/options_filter.cpp \
 	$(SRC_DIR)/uconf_generator/stages_filter.cpp \
 	$(SRC_DIR)/uconf_generator/uconf_generator.cpp \
+	$(SRC_DIR)/ui/argparse.cpp \
 	$(SRC_DIR)/ui/bash_completion.cpp \
+	$(SRC_DIR)/ui/environment.cpp \
+	$(SRC_DIR)/ui/factory.cpp \
+	$(SRC_DIR)/ui/init.cpp \
+	$(SRC_DIR)/ui/install.cpp \
+	$(SRC_DIR)/ui/packages.cpp \
 	$(SRC_DIR)/ui/ui_utils.cpp \
 	$(SRC_DIR)/utils/bash_utils.cpp \
 	$(SRC_DIR)/utils/file_utils.cpp \
@@ -65,11 +71,6 @@ LIB_SOURCES := \
 LIB_OBJECTS := $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 CLI_SOURCES := \
 	$(SRC_DIR)/main.cpp \
-	$(SRC_DIR)/ui/environment.cpp \
-	$(SRC_DIR)/ui/factory.cpp \
-	$(SRC_DIR)/ui/init.cpp \
-	$(SRC_DIR)/ui/install.cpp \
-	$(SRC_DIR)/ui/packages.cpp \
 	$(SRC_DIR)/ui/ui.cpp
 CLI_OBJECTS := $(CLI_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 COMPLETION_SOURCE := $(SRC_DIR)/bash_completion_main.cpp
@@ -81,6 +82,8 @@ TEST_SOURCES := \
 	tests/dependency_resolver_test.cpp \
 	tests/factory_test.cpp \
 	tests/rebuild_test.cpp \
+	tests/ui_argparse_test.cpp \
+	tests/ui_commands_test.cpp \
 	tests/ui_utils_test.cpp \
 	tests/utils_test.cpp \
 	tests/user_config_parser_test.cpp \

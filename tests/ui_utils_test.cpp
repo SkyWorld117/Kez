@@ -104,14 +104,11 @@ namespace {
         EXPECT_EQ(package_type_name(static_cast<PackageType>(999)), "unknown");
     }
 
-    TEST(UiUtils, ExtractsAndValidatesNames) {
+    TEST(UiUtils, ExtractsTargetsAndValidatesPathComponents) {
         const YAML::Node config = YAML::Load("recipe: {targets: [hdf5, openmpi]}\n");
         EXPECT_EQ(user_config_targets(config), (std::vector<std::string> {"hdf5", "openmpi"}));
-        EXPECT_EQ(required_name({"create", "research"}, "env create"), "research");
         EXPECT_NO_FATAL_FAILURE(validate_path_component("gcc-13.4", "compiler name"));
 
-        EXPECT_EXIT(static_cast<void>(required_name({"create"}, "env create")),
-                    ::testing::ExitedWithCode(EXIT_FAILURE), "requires exactly one name");
         EXPECT_EXIT(validate_path_component("../escape", "environment name"),
                     ::testing::ExitedWithCode(EXIT_FAILURE), "Invalid environment name");
     }
