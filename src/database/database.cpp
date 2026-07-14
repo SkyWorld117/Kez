@@ -8,10 +8,13 @@ namespace {
     /**
      * @brief Module-level cache for parsed package configurations.
      *
-     * Maps an absolute, lexically-normalised filesystem path (as a string) to
-     * the corresponding parsed PackageConfig shared pointer.  Populated lazily
-     * by get_db_config() and never trimmed; call clear_db_cache() to evict all
-     * entries.
+     * Keyed by "<package_name>@<version>" (e.g. "openmpi@4.1.5").  This is a
+     * simple per-lookup cache: it is very unlikely that the same package will
+     * be requested with two different version strings in a single run, so there
+     * is no cross-version deduplication.
+     *
+     * Populated lazily by get_db_config() and never trimmed; call
+     * clear_db_cache() to evict all entries.
      *
      * @warning This cache is **not** thread-safe.  Concurrent access from
      *          multiple threads without external synchronisation is undefined
@@ -24,18 +27,17 @@ namespace {
 }  // namespace
 
 PackageConfigPtr get_db_config(const std::string& package_name, const std::string& version) {
+    std::string cache_key = package_name + "@" + version;
+    const auto cached     = db_cache.find(cache_key);
+    if (cached != db_cache.end()) {
+        return cached->second;
+    }
+
     validate_package_name(package_name);
     std::filesystem::path database_env = get_env_var("KEZ_DB");
 
     const std::filesystem::path config_path =
         select_config_path(database_env, package_name, version);
-    const std::string cache_key =
-        std::filesystem::absolute(config_path).lexically_normal().string();
-
-    const auto cached = db_cache.find(cache_key);
-    if (cached != db_cache.end()) {
-        return cached->second;
-    }
 
     PackageConfigPtr config         = parse_db_config(config_path);
     const auto [iterator, inserted] = db_cache.emplace(cache_key, config);

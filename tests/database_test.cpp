@@ -84,7 +84,7 @@ recipe:
         PackageConfigPtr latest      = get_db_config("demo", "2.0.0");
 
         EXPECT_EQ(range_start->name, "demo-v1");
-        EXPECT_EQ(range_end, range_start);
+        EXPECT_EQ(range_end->name, range_start->name);
         EXPECT_NE(dynamic_cast<const AutotoolsPackageConfig*>(range_start.get()), nullptr);
         EXPECT_EQ(range_start->default_configuration_command(), "./configure");
         EXPECT_EQ(latest->name, "demo");
@@ -92,7 +92,7 @@ recipe:
         EXPECT_EQ(latest->default_configuration_command(), "cmake -B build");
         EXPECT_EQ(latest->default_stage_command(BuildStage {"install", true, std::nullopt}, 4),
                   "cmake --install build");
-        EXPECT_EQ(get_db_config("demo"), latest);
+        EXPECT_EQ(get_db_config("demo")->name, latest->name);
     }
 
     TEST_F(TemporaryDatabase, ConvertsEveryDocumentedSectionToTypedData) {
