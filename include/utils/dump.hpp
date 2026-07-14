@@ -8,10 +8,10 @@
  * lists, pairs/tuples as parenthesised comma-separated fields, strings and characters
  * are quoted, and all remaining types fall back to operator<< on a std::stringstream.
  *
- * The central entry point is dump_helper(); the bulk of the logic lives in the
+ * The central entry point is dump(); the bulk of the logic lives in the
  * dump_struct<> family of specializations.
  *
- * @see dump_helper
+ * @see dump
  * @see dump_struct
  */
 
@@ -53,7 +53,7 @@ struct is_iterable<
  * @tparam T       The type to convert.
  * @tparam IsArray Boolean flag; true if T is iterable or a raw C array.
  *
- * @see dump_helper Entry point that sets IsArray automatically.
+ * @see dump Entry point that sets IsArray automatically.
  */
 template <typename T, bool IsArray> struct dump_struct {};
 
@@ -72,7 +72,7 @@ template <typename T, bool IsArray> struct dump_struct {};
  *
  * @see dump_struct
  */
-template <typename T> inline std::string dump_helper(const T& value) {
+template <typename T> inline std::string dump(const T& value) {
     return dump_struct<T, is_iterable<T>::value || std::is_array<T>::value> {}(value);
 }
 
@@ -94,7 +94,7 @@ template <typename T1, typename T2> struct dump_struct<std::pair<T1, T2>, false>
         std::string out =
             "(" + dump_struct<T1, is_iterable<T1>::value || std::is_array<T1>::value> {}(
                       std::get<0>(value));
-        out += ", " + dump_helper(std::get<1>(value)) + ")";
+        out += ", " + dump(std::get<1>(value)) + ")";
         return out;
     }
 };
@@ -120,7 +120,7 @@ template <typename... Ts> struct dump_struct<std::tuple<Ts...>, false> {
      */
     template <typename T, std::size_t... Is>
     std::string helper(const T& value, std::index_sequence<Is...>) {
-        std::string out = ((dump_helper(std::get<Is>(value)) + ", ") + ... + "");
+        std::string out = ((dump(std::get<Is>(value)) + ", ") + ... + "");
         out.pop_back();
         out.pop_back();
         return out;
@@ -161,7 +161,7 @@ template <> struct dump_struct<std::string, true> {
  * Handles the degenerate case of a single const char treated as an iterable
  * (a C string of length 1), rendering it as a double-quoted string.
  *
- * @note The IsArray=true specialisation is used when dump_helper deduces
+ * @note The IsArray=true specialisation is used when dump deduces
  *       is_iterable<const char>::value || is_array<const char>::value as true.
  *       See also the IsArray=false specialization for char-const.
  */
@@ -259,7 +259,7 @@ template <> struct dump_struct<const char*, false> {
  * @brief Generic specialization of dump_struct for iterable / array types.
  *
  * Handles any type T for which is_iterable<T>::value is true, or that is a raw
- * C array.  The elements are formatted via recursive calls to dump_helper() and
+ * C array.  The elements are formatted via recursive calls to dump() and
  * enclosed in curly braces: `{e1, e2, ..., eN}`.
  *
  * @tparam T The iterable or array type.
@@ -269,7 +269,7 @@ template <> struct dump_struct<const char*, false> {
  *       `auto& val = *i` — for proxy iterators (e.g. std::vector<bool>) this
  *       may produce unexpected results.
  *
- * @see dump_helper
+ * @see dump
  */
 template <typename T> struct dump_struct<T, true> {
     /**
@@ -281,7 +281,7 @@ template <typename T> struct dump_struct<T, true> {
         std::string out = "{";
         for (auto i = std::begin(value); i != std::end(value);) {
             auto& val = *i;
-            out += dump_helper(val);
+            out += dump(val);
             if (++i != std::end(value)) {
                 out += ", ";
             }

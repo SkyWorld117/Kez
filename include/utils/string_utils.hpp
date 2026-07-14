@@ -1,8 +1,6 @@
 #pragma once
 
 #include <string>
-#include <type_traits>
-#include <utils/dump.hpp>
 #include <vector>
 
 /**
@@ -113,27 +111,6 @@ bool is_numeric(char c);
  * @return The number of visible characters in @p str.
  */
 int get_length_without_color(const std::string& str);
-
-/**
- * @brief Serialises an arbitrary value to a std::string for debugging or
- *        diagnostic output.
- *
- * Dispatches to the appropriate dump_struct specialisation based on whether
- * @p T is an iterable (detected via is_iterable) or an array. For
- * non-iterable, non-array types the default dump_struct specialisation
- * inspects each member field individually.
- *
- * @tparam T The type of the value to dump. Must be a complete type with
- *           accessible member fields, or an iterable/array type.
- * @param value The value to serialise.
- * @return A human-readable string representation of @p value.
- *
- * @see dump_struct
- * @see is_iterable
- */
-template <typename T> std::string dump(const T& value) {
-    return dump_struct<T, is_iterable<T>::value || std::is_array<T>::value> {}(value);
-}
 
 /**
  * @brief Compares two version strings using numeric segment comparison.
