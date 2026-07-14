@@ -439,6 +439,38 @@ recipe:
         EXPECT_EQ(plan[0].commands[0], "configure CC=\"/opt/mpi/bin/mpicc\" --with-mpi");
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase, ConvergesWhenBuildAndStageReuseAnEnvironmentName) {
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: configure
+      environment:
+        - name: KEZ_DUPLICATE_SCOPE
+          default: build-value
+    stages:
+      - target: build
+        configurations:
+          command: build-stage
+          environment:
+            - name: KEZ_DUPLICATE_SCOPE
+              default: stage-value
+)");
+
+        unsetenv("KEZ_DUPLICATE_SCOPE");
+        const YAML::Node user_config = gen_user_config({"application"}, false, "system");
+        const BashCommandPlan plan   = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        EXPECT_EQ(plan[0].commands,
+                  std::vector<std::string>({"export KEZ_DUPLICATE_SCOPE=\"build-value\"",
+                                            "configure", "unset KEZ_DUPLICATE_SCOPE",
+                                            "export KEZ_DUPLICATE_SCOPE=\"stage-value\"",
+                                            "build-stage", "unset KEZ_DUPLICATE_SCOPE"}));
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase,
            ExpandsRawDependencyPathsAndLetsExplicitOptionsOverrideDefaults) {
         write_package("library", R"(

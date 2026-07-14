@@ -66,11 +66,10 @@ BashCommandPlan parse_cmdline(const std::filesystem::path& file,
  * @brief Parse a list of target package names into an executable build plan.
  *
  * Instead of reading a configuration file, this overload accepts a flat list
- * of target package names and builds a minimal plan around them.  The targets
- * are resolved through the YAML database (package recipes in `database/`),
- * their dependencies are computed, and the result is returned as a
- * BashCommandPlan.  This is the entry point used for ad-hoc `kez install <pkg>`
- * invocations where no pre-existing config file is involved.
+ * of target package names and builds a non-interactive plan around them. The
+ * targets are resolved through the YAML database (package recipes in
+ * `database/`), available optional dependencies are retained with their recipe
+ * defaults, and the result is returned as a BashCommandPlan.
  *
  * @param targets        A vector of package names (e.g. `{"gcc", "openmpi"}`)
  *                       that the user wants to install.

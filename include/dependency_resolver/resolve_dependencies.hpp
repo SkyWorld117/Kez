@@ -119,9 +119,10 @@ struct DependencyResolution {
  *                           lists. An empty implementation selection uses the
  *                           advisor default.
  *                       - **false** -- Implementations are chosen automatically
- *                           by calling the heuristics advisor (advise()).
- *                           Optional dependencies are excluded and an INFO
- *                           message is printed for each excluded dependency.
+ *                           by calling the heuristics advisor (advise()). Every
+ *                           optional dependency with an available recipe is
+ *                           included so its configuration remains editable;
+ *                           unavailable optional dependencies are skipped.
  *
  * @return A DependencyResolution containing:
  *         - **all_packages**       -- All resolved packages (including system

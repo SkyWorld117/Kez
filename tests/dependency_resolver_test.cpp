@@ -258,6 +258,9 @@ recipe:
         - name: optional-feature
           user_configurable: true
           requires: [optional-library]
+        - name: unavailable-feature
+          user_configurable: true
+          requires: [missing-library]
 )");
         write_package("required", R"(
 recipe:
@@ -280,6 +283,7 @@ recipe:
 )");
         write_package("implementation-child",
                       "recipe: {name: implementation-child, type: package}\n");
+        write_package("optional-library", "recipe: {name: optional-library, type: package}\n");
         write_package("system-library", R"(
 recipe:
   name: system-library
@@ -301,19 +305,22 @@ recipe:
 
         const std::unordered_set<std::string> expected_all = {
             "application",          "required",       "transitive", "implementation",
-            "implementation-child", "system-library", "compiler"};
+            "implementation-child", "system-library", "compiler",   "optional-library"};
         EXPECT_EQ(as_set(result.all_packages), expected_all);
         EXPECT_EQ(as_set(result.buildable_packages),
                   std::unordered_set<std::string>({"application", "required", "transitive",
                                                    "implementation", "implementation-child",
-                                                   "compiler"}));
+                                                   "compiler", "optional-library"}));
         EXPECT_EQ(result.abstract_packages.at("abstract-api"), "implementation");
         EXPECT_TRUE(appears_before(result.all_packages, "application", "required"));
         EXPECT_TRUE(appears_before(result.all_packages, "required", "transitive"));
         EXPECT_TRUE(appears_before(result.all_packages, "implementation", "implementation-child"));
-        EXPECT_EQ(
+        EXPECT_NE(
             result.all_packages.end(),
             std::find(result.all_packages.begin(), result.all_packages.end(), "optional-library"));
+        EXPECT_EQ(
+            result.all_packages.end(),
+            std::find(result.all_packages.begin(), result.all_packages.end(), "missing-library"));
         EXPECT_EQ(result.all_packages.end(),
                   std::find(result.all_packages.begin(), result.all_packages.end(),
                             "ignored-system-child"));
@@ -321,7 +328,9 @@ recipe:
                                                        result.all_packages.end(), "compiler-core"));
         EXPECT_NE(output.find("Selected implementation for 'abstract-api': implementation"),
                   std::string::npos);
-        EXPECT_NE(output.find("Exclude optional dependency: optional-library"), std::string::npos);
+        EXPECT_NE(output.find("Include optional dependency: optional-library"), std::string::npos);
+        EXPECT_NE(output.find("Skip unavailable optional dependency: missing-library"),
+                  std::string::npos);
 
         const DependencyResolution second = resolve_dependencies({"standalone"}, false);
         EXPECT_EQ(second.all_packages, std::vector<std::string>({"standalone"}));

@@ -96,8 +96,14 @@ Options:
   -e, --env NAME         Target application environment
   -f, --force            Reinstall packages already recorded in state.yaml
   -S, --with-slurm       Run scripts/install.sh through sbatch
+      --silence          Generate configuration without prompting
   -R, --rebuild PACKAGE  Rebuild a package and its dependents in the environment
 ```
+
+Package-based installation is interactive by default. Use `--silence` for
+non-interactive generation; this includes every available optional dependency
+so its options can be addressed with `--config`, while preserving recipe default
+values. Abstract packages are selected through `heuristics/advice.yaml`.
 
 The `--rebuild` flag scans the environment's state, computes the transitive closure
 of packages that depend on `PACKAGE`, and reinstalls them in dependency order. It
@@ -140,7 +146,7 @@ kez install --rebuild hdf5 -e my-simulation -d
 Generate or inspect a user configuration.
 
 ```
-Usage: kez uconf <package>... [--save FILE]
+Usage: kez uconf <package>... [--save FILE] [--silence]
 ```
 
 Generates a user-configurable YAML file for one or more packages. The generated
@@ -148,13 +154,17 @@ YAML includes all dependencies, build options, and environment variables that ar
 marked as `user_configurable: true` in the database.
 
 - Without `--save`, prints the configuration to stdout.
-- With `--save FILE`, starts an interactive workflow and writes the result to
-  the specified file. Options are grouped by the optional package they require;
+- With `--save FILE`, writes the configuration to the specified file.
+- Both output modes are interactive by default. Options are grouped by the
+  optional package they require;
   enabling at least one option automatically includes that package. Use the
   arrow keys or `j`/`k` to move, Space to toggle, and Enter to confirm.
   Abstract-package implementations are selected afterward from a mutually
   exclusive list. Confirming that list without a selection uses the default
   from `heuristics/advice.yaml`.
+- With `--silence`, every available optional dependency is included without
+  changing its configuration defaults, and abstract implementations use the
+  architecture advisor. This mode is suitable for scripts and agents.
 
 ---
 

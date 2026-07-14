@@ -77,6 +77,8 @@ void execute_update(const CommandArguments& arguments);
  *                   - `-f` / `--force`       : Reinstall packages already in
  *                                              state.yaml
  *                   - `-S` / `--with-slurm`  : Run install.sh through sbatch
+ *                   - `--silence`             : Generate configuration without
+ *                                              terminal prompts
  *                   - `-e` / `--env NAME`    : Target application environment
  *                   - `-c` / `--config PATH=VAL` : Override a config value
  *                   - `-R` / `--rebuild PKG` : Rebuild a package and its
@@ -129,13 +131,13 @@ void execute_utilities(const CommandArguments& arguments);
  *                   Supported options:
  *                   - `-s` / `--save FILE` : Write output to FILE instead of
  *                                            stdout
+ *                   - `--silence`           : Generate without terminal prompts
  *                   - `-h` / `--help`      : Print usage and return
  *
- * @note When `--save` is used the generation runs in interactive mode. It
- *       presents grouped checklists for options that require optional packages,
- *       derives the optional dependency set from enabled options, and then
- *       selects abstract-package implementations. Without `--save`, abstract
- *       packages use heuristics and optional dependencies are excluded.
+ * @note Generation is interactive by default whether output is printed or
+ *       saved. @c --silence includes every available optional dependency while
+ *       retaining recipe defaults and selects abstract implementations through
+ *       the architecture advisor.
  *
  * @see execute_install
  * @see gen_user_config

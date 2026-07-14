@@ -39,14 +39,15 @@ namespace {
 
     TEST(UiArgparse, ParsesInstallAndUtilitiesArguments) {
         const InstallOptionsParseResult install =
-            parse_install_options({"--read=config.yaml", "-d", "-f", "-S", "-e", "research", "-c",
-                                   "a=1", "b=2", "--", "--literal"},
+            parse_install_options({"--read=config.yaml", "-d", "-f", "-S", "--silence", "-e",
+                                   "research", "-c", "a=1", "b=2", "--", "--literal"},
                                   false);
         EXPECT_TRUE(install.error.empty());
         EXPECT_TRUE(install.options.read_file);
         EXPECT_TRUE(install.options.dry_run);
         EXPECT_TRUE(install.options.force);
         EXPECT_TRUE(install.options.with_slurm);
+        EXPECT_TRUE(install.options.silent);
         EXPECT_EQ(install.options.environment, "research");
         EXPECT_EQ(install.options.overrides, (std::vector<std::string> {"a=1", "b=2"}));
         EXPECT_EQ(install.options.positional,
@@ -69,9 +70,11 @@ namespace {
         const UconfOptionsParseResult uconf =
             parse_uconf_options({"hdf5", "--save", "config.yaml", "netcdf"});
         EXPECT_TRUE(uconf.error.empty());
-        EXPECT_TRUE(uconf.options.interactive);
+        EXPECT_FALSE(uconf.options.silent);
         EXPECT_EQ(uconf.options.output_path, "config.yaml");
         EXPECT_EQ(uconf.options.packages, (std::vector<std::string> {"hdf5", "netcdf"}));
+        EXPECT_TRUE(
+            parse_uconf_options({"hdf5", "--save=config.yaml", "--silence"}).options.silent);
         EXPECT_EQ(parse_uconf_options({"--save"}).error, "Missing value for --save");
 
         const InfoArgumentsParseResult info = parse_info_arguments({"hdf5", "--raw"});

@@ -192,6 +192,9 @@ namespace {
         if (!contains_any(words, {"--with-slurm", "-S"})) {
             append(result, {"--with-slurm", "-S"});
         }
+        if (!contains(words, "--silence")) {
+            result.push_back("--silence");
+        }
         if (!contains_any(words, {"--read", "-r"})) {
             append(result, {"--read", "-r"});
             append(result, database_packages());
@@ -271,6 +274,9 @@ namespace {
         append(result, database_packages());
         if (!contains_any(words, {"--save", "-s"})) {
             append(result, {"--save", "-s"});
+        }
+        if (!contains(words, "--silence")) {
+            result.push_back("--silence");
         }
         return result;
     }

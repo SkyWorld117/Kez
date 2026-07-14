@@ -48,7 +48,9 @@
  * @param interactive    If true, prompt for grouped build options and derive
  *                       their optional packages from enabled states, then
  *                       prompt for abstract-package implementations. If false,
- *                       selections use the architecture heuristics.
+ *                       include every available optional dependency without
+ *                       overriding recipe defaults and use architecture advice
+ *                       for abstract packages.
  *
  * @return A YAML::Node containing the full configuration tree. The function
  *         terminates with ERROR() rather than returning on failure.
@@ -84,8 +86,9 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
  *
  * @param package_names    Non-empty list of top-level package names to include
  *                         in the config.
- * @param interactive      If true, allow interactive prompts for ambiguous
- *                         build choices.
+ * @param interactive      If true, allow interactive prompts for build choices.
+ *                         If false, include available optional dependencies
+ *                         while retaining their configuration defaults.
  * @param default_compiler Compiler specification to use as the default
  *                         toolchain (e.g. `"gcc@13.4.0"`, `"llvm"`, or
  *                         `"system"`).  The `@` separator separates the

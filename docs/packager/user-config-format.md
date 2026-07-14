@@ -203,11 +203,12 @@ concrete implementations selected during dependency resolution
 abstract name.
 
 The selection is made either:
-- **Interactively** (when using `kez uconf`): the user is prompted to
-  choose from each abstract package's `implementations` list.
-- **Automatically** (when using `kez install <package>` without `--read`):
-  the heuristics advisor (`heuristics/advice.yaml`) selects the best
-  implementation for the target architecture.
+- **Interactively** (the default for `kez uconf` and package-based
+  `kez install`): the user is prompted to choose from each abstract package's
+  `implementations` list.
+- **Automatically** (with `--silence`): the heuristics advisor
+  (`heuristics/advice.yaml`) selects the best implementation for the target
+  architecture.
 
 Users may change the implementation here before installation. The parser
 validates that the chosen implementation exists in the database recipe's
@@ -411,10 +412,11 @@ implementation. This allows recipes to declare dependencies like `mpi` or
 The mapping from abstract name to concrete implementation is recorded in
 `recipe.abstract_packages`. The selection can originate from:
 
-1. **User interaction** during `kez uconf` — the user is prompted to choose
-   from each abstract package's `implementations` list.
-2. **Heuristics** during `kez install <pkg>` — the advisor
-   (`heuristics/advice.yaml`) selects automatically per architecture.
+1. **User interaction** during `kez uconf` or package-based `kez install` — the
+   user is prompted to choose from each abstract package's `implementations`
+   list.
+2. **Heuristics** with `--silence` — the advisor (`heuristics/advice.yaml`)
+   selects automatically per architecture.
 3. **Manual editing** — users may change values in the generated YAML before
    installation; the parser validates the change against the database.
 

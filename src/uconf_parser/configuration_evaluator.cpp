@@ -29,7 +29,7 @@ namespace {
     void compute_environment(const BuildConfiguration& configuration,
                              const UserConfigurationIndex& user_configuration,
                              const PackageConfig& package, UserConfigParserContext& context,
-                             bool use_user_values, bool apply_conditions) {
+                             bool& changed, bool use_user_values, bool apply_conditions) {
         for (const EnvironmentVariable& variable : configuration.environment) {
             const bool required = requirements_satisfied(variable.requires, context.dependencies,
                                                          context.abstract_packages);
@@ -52,12 +52,12 @@ namespace {
             if (required && apply_conditions) {
                 value = apply_parser_conditions(variable.value, value, context);
             }
-            const std::string env_key = package.name + ".env." + variable.name;
-            const auto previous_env   = context.named_environment_values.find(env_key);
-            if (previous_env == context.named_environment_values.end() ||
-                previous_env->second != value) {
-                ++context.config_version;
+            const auto previous_value = context.environment_values.find(&variable);
+            if (previous_value == context.environment_values.end() ||
+                previous_value->second != value) {
+                changed = true;
             }
+            const std::string env_key                 = package.name + ".env." + variable.name;
             context.environment_values[&variable]     = value;
             context.named_environment_values[env_key] = value;
         }
@@ -66,7 +66,7 @@ namespace {
     void compute_options(const BuildConfiguration& configuration,
                          const UserConfigurationIndex& user_configuration,
                          const PackageConfig& package, UserConfigParserContext& context,
-                         bool use_user_values, bool apply_conditions) {
+                         bool& changed, bool use_user_values, bool apply_conditions) {
         for (const BuildOption& option : configuration.options) {
             const bool required = requirements_satisfied(option.requires, context.dependencies,
                                                          context.abstract_packages);
@@ -101,13 +101,7 @@ namespace {
             if (required && option.enabled.has_value() && apply_conditions) {
                 state.enabled = apply_parser_conditions(*option.enabled, state.enabled, context);
             }
-            const std::string key = package.name + ".config." + option.name;
-
-            const auto preexisting = context.named_option_values.find(key);
-            const bool is_new      = preexisting == context.named_option_values.end();
-            const ParsedOptionState previous_state =
-                is_new ? ParsedOptionState {} : preexisting->second;
-
+            const std::string key            = package.name + ".config." + option.name;
             context.named_option_values[key] = state;
 
             if (required && option.user_configurable && use_user_values) {
@@ -131,8 +125,10 @@ namespace {
                 state.disabled_value =
                     apply_parser_conditions(*option.disabled_value, state.disabled_value, context);
             }
-            if (is_new || !option_state_equal(previous_state, state)) {
-                ++context.config_version;
+            const auto previous_value = context.option_values.find(&option);
+            if (previous_value == context.option_values.end() ||
+                !option_state_equal(previous_value->second, state)) {
+                changed = true;
             }
             context.option_values[&option]   = state;
             context.named_option_values[key] = state;
@@ -142,15 +138,23 @@ namespace {
     void compute_configuration(const BuildConfiguration& configuration,
                                const UserConfigurationIndex& user_configuration,
                                const PackageConfig& package, UserConfigParserContext& context,
-                               bool use_user_values, bool apply_conditions) {
-        compute_environment(configuration, user_configuration, package, context, use_user_values,
-                            apply_conditions);
-        compute_options(configuration, user_configuration, package, context, use_user_values,
-                        apply_conditions);
+                               bool& changed, bool use_user_values, bool apply_conditions) {
+        compute_environment(configuration, user_configuration, package, context, changed,
+                            use_user_values, apply_conditions);
+        compute_options(configuration, user_configuration, package, context, changed,
+                        use_user_values, apply_conditions);
     }
 
+    /**
+     * @brief Recompute every typed configuration entry and report final changes.
+     *
+     * Change detection uses the pointer-keyed value maps because build-level
+     * and stage-level entries may legitimately share a display name.  Their
+     * writes to the named condition map are transient within a pass, while
+     * each typed entry has stable identity and is evaluated exactly once.
+     */
     bool compute_values(UserConfigParserContext& context, bool apply_conditions) {
-        const std::size_t previous_version = context.config_version;
+        bool changed = false;
 
         for (const ParsedUserPackage& package : context.packages) {
             context.current_package = package.requested_name;
@@ -163,7 +167,7 @@ namespace {
                                          yaml_has(package.user_config, "build");
             if (build.configurations.has_value()) {
                 compute_configuration(*build.configurations, package.build_configuration_index,
-                                      *package.database_config, context, use_user_values,
+                                      *package.database_config, context, changed, use_user_values,
                                       apply_conditions);
             }
             for (std::size_t stage_index = 0; stage_index < build.stages.size(); ++stage_index) {
@@ -173,13 +177,14 @@ namespace {
                         user_config_error("internal user stage index is missing for package '" +
                                           package.database_config->name + "'");
                     }
-                    compute_configuration(
-                        *stage.configurations, package.stage_configuration_indices[stage_index],
-                        *package.database_config, context, use_user_values, apply_conditions);
+                    compute_configuration(*stage.configurations,
+                                          package.stage_configuration_indices[stage_index],
+                                          *package.database_config, context, changed,
+                                          use_user_values, apply_conditions);
                 }
             }
         }
-        return context.config_version != previous_version;
+        return changed;
     }
 
 }  // namespace

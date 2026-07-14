@@ -139,6 +139,8 @@ InstallOptionsParseResult parse_install_options(const CommandArguments& argument
             result.options.force = true;
         } else if (argument == "-S" || argument == "--with-slurm") {
             result.options.with_slurm = true;
+        } else if (argument == "--silence") {
+            result.options.silent = true;
         } else if (argument == "-R" || argument == "--rebuild") {
             if (utility) {
                 result.error = "--rebuild is not valid for utility installation";
@@ -235,10 +237,10 @@ UconfOptionsParseResult parse_uconf_options(const CommandArguments& arguments) {
                 return result;
             }
             result.options.output_path = arguments[index];
-            result.options.interactive = true;
         } else if (argument.rfind("--save=", 0) == 0) {
             result.options.output_path = argument.substr(7);
-            result.options.interactive = true;
+        } else if (argument == "--silence") {
+            result.options.silent = true;
         } else if (!argument.empty() && argument.front() == '-') {
             result.error = "Unknown uconf option: " + argument;
             return result;

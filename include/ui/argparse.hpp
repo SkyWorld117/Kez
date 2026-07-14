@@ -69,6 +69,7 @@ struct InstallOptions {
     bool force      = false;              ///< Reinstall packages already present in state.
     bool with_slurm = false;              ///< Submit the executor through Slurm.
     bool rebuild    = false;              ///< Rebuild a package and its dependents.
+    bool silent     = false;              ///< Generate configuration without terminal prompts.
     std::string environment;              ///< Target application environment.
     std::string rebuild_package;          ///< Package selected by @c --rebuild.
     std::vector<std::string> overrides;   ///< Command-line YAML overrides.
@@ -108,7 +109,7 @@ UtilitiesArgumentsParseResult parse_utilities_arguments(const CommandArguments& 
 struct UconfOptions {
     std::vector<std::string> packages;
     std::string output_path;
-    bool interactive = false;
+    bool silent = false;
 };
 
 /** @brief Non-terminating result of @c uconf option parsing. */

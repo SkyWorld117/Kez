@@ -1,16 +1,20 @@
 #include <algorithm>
 #include <cstdlib>
 #include <database/config.hpp>
+#include <database/config_selector.hpp>
 #include <database/database.hpp>
 #include <dependency_resolver/advisor.hpp>
 #include <dependency_resolver/optional_dependencies.hpp>
 #include <dependency_resolver/requirements.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <dependency_resolver/toposort.hpp>
+#include <filesystem>
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
+#include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
+#include <utils/file_utils.hpp>
 #include <utils/string_utils.hpp>
 #include <utils/terminal_ui.hpp>
 
@@ -25,6 +29,7 @@ namespace {
     struct ResolutionState {
         std::unordered_set<std::string> target_packages;
         bool interactive = false;
+        std::filesystem::path database_root;
         DependencyGraph adjacency_list;
         std::unordered_set<std::string> system_packages;
         AbstractPackageSelections abstract_packages;
@@ -71,6 +76,10 @@ namespace {
 
     void register_option(ResolutionState& state, const std::string& requirement,
                          const std::string& package, const BuildOption& option) {
+        const bool default_enabled =
+            !option.enabled.has_value() || option.enabled->default_value.value_or(false);
+        state.option_selections[package].emplace(option.name, default_enabled);
+
         std::vector<OptionReference>& references = state.option_references[requirement];
         const auto duplicate                     = std::find_if(
             references.begin(), references.end(), [&](const OptionReference& reference) {
@@ -83,6 +92,12 @@ namespace {
                 append_unique(duplicate->requirements, option_requirement);
             }
         }
+    }
+
+    bool optional_dependency_available(const ResolutionState& state,
+                                       const std::string& dependency) {
+        validate_package_name(dependency);
+        return fs_regular_file(state.database_root / dependency / "latest.yaml");
     }
 
     void register_options(ResolutionState& state, const std::string& package,
@@ -125,29 +140,39 @@ namespace {
                                                  const PackageConfig& config) {
         std::vector<std::string> dependencies                = config.dependencies;
         const std::vector<std::string> optional_dependencies = get_optional_dependencies(config);
+        std::vector<std::string> available_dependencies;
 
-        if (state.interactive) {
-            register_optional_requirements(state, config, optional_dependencies);
-        }
-        bool printed_heading = false;
+        bool printed_heading     = false;
+        const auto print_heading = [&]() {
+            if (!printed_heading) {
+                INFO("Optional dependencies for '" + config.name + "':");
+                printed_heading = true;
+            }
+        };
         for (const std::string& dependency : optional_dependencies) {
             if (std::find(dependencies.begin(), dependencies.end(), dependency) !=
                 dependencies.end()) {
                 continue;
             }
-            bool include = false;
-            if (state.interactive) {
-                include = state.optional_package_choices.at(dependency);
-            } else {
-                if (!printed_heading) {
-                    INFO("Optional dependencies for '" + config.name + "':");
-                    printed_heading = true;
-                }
-                INFO("- Exclude optional dependency: " + dependency);
+            if (!optional_dependency_available(state, dependency)) {
+                print_heading();
+                INFO("- Skip unavailable optional dependency: " + dependency);
+                continue;
             }
-            if (include) {
-                append_unique(dependencies, dependency);
+            available_dependencies.push_back(dependency);
+        }
+
+        if (state.interactive) {
+            register_optional_requirements(state, config, available_dependencies);
+        }
+        for (const std::string& dependency : available_dependencies) {
+            const bool include =
+                state.interactive ? state.optional_package_choices.at(dependency) : true;
+            if (!state.interactive) {
+                print_heading();
+                INFO("- Include optional dependency: " + dependency);
             }
+            if (include) append_unique(dependencies, dependency);
         }
         return dependencies;
     }
@@ -339,7 +364,8 @@ DependencyResolution resolve_dependencies(const std::vector<std::string>& packag
 
     ResolutionState state;
     state.target_packages.insert(package_names.begin(), package_names.end());
-    state.interactive = interactive;
+    state.interactive   = interactive;
+    state.database_root = get_env_var("KEZ_DB");
     if (interactive) {
         select_build_options(state, package_names);
         select_abstract_packages(state, package_names);

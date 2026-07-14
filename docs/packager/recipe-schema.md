@@ -395,13 +395,15 @@ conditions:
 
 ### Selection
 
-When generating a user configuration interactively (`kez uconf`), the system
-prompts the user to choose a concrete implementation for each abstract package
-from its `implementations` list.
+When generating a user configuration interactively (the default for `kez uconf`
+and package-based `kez install`), the system prompts the user to choose a
+concrete implementation for each abstract package from its `implementations`
+list.
 
-When installing via command line (`kez install <package>`), the system uses
-the advisor lookup table (`src/dependency_resolver/advisor.cpp`) for automatic
-selection based on the target architecture:
+When generating with `--silence`, both `kez uconf` and package-based
+`kez install` use the advisor lookup table
+(`src/dependency_resolver/advisor.cpp`) for automatic selection based on the
+target architecture:
 
 ```yaml
 # heuristics/advice.yaml

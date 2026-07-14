@@ -123,6 +123,11 @@ paths:
         EXPECT_TRUE(has(install, "--env"));
         EXPECT_TRUE(has(install, "--read"));
         EXPECT_TRUE(has(install, "--with-slurm"));
+        EXPECT_TRUE(has(install, "--silence"));
+
+        const std::vector<std::string> uconf = completion_suggestions(2, {"kez", "uconf", ""});
+        EXPECT_TRUE(has(uconf, "--save"));
+        EXPECT_TRUE(has(uconf, "--silence"));
     }
 
     TEST_F(TemporaryCompletionEnvironment, UsesContextForFilesystemAndManagedEnvironments) {
@@ -150,5 +155,9 @@ paths:
         EXPECT_FALSE(has(suggestions, "--force"));
         EXPECT_FALSE(has(suggestions, "-f"));
         EXPECT_TRUE(has(suggestions, "--config"));
+
+        const std::vector<std::string> silent =
+            completion_suggestions(4, {"kez", "install", "alpha", "--silence", ""});
+        EXPECT_FALSE(has(silent, "--silence"));
     }
 }  // namespace

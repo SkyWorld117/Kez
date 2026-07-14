@@ -525,6 +525,65 @@ recipe:
         EXPECT_EQ(output.find("Include optional package 'optional-library'?"), std::string::npos);
     }
 
+    TEST_F(TemporaryGeneratorDatabase,
+           SilentGenerationIncludesAvailableOptionsWithoutChangingDefaults) {
+        write_file(path_ / "heuristics" / "advice.yaml", R"(
+advice:
+  mpi:
+    x86_64: implementation
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      options:
+        - name: disabled-feature
+          user_configurable: true
+          enabled:
+            default: false
+          requires: [optional-library]
+        - name: enabled-abstract-feature
+          user_configurable: true
+          enabled:
+            default: true
+          requires: [mpi]
+        - name: unavailable-feature
+          user_configurable: true
+          enabled:
+            default: false
+          requires: [missing-library]
+)");
+        write_package("optional-library", "recipe: {name: optional-library, type: package}\n");
+        write_package("mpi", R"(
+recipe:
+  name: mpi
+  type: abstract
+  implementations: [implementation]
+)");
+        write_package("implementation", "recipe: {name: implementation, type: package}\n");
+
+        testing::internal::CaptureStdout();
+        const YAML::Node result  = gen_user_config({"application"}, false, "system");
+        const std::string output = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(
+            as_set(result["recipe"]["dependencies"]),
+            std::unordered_set<std::string>({"application", "optional-library", "implementation"}));
+        EXPECT_EQ(result["recipe"]["abstract_packages"]["mpi"].as<std::string>(), "implementation");
+
+        const YAML::Node options =
+            result["kez"]["application"]["build"]["configurations"]["options"];
+        EXPECT_FALSE(find_option(options, "disabled-feature")["enabled"].as<bool>());
+        EXPECT_TRUE(find_option(options, "enabled-abstract-feature")["enabled"].as<bool>());
+        EXPECT_FALSE(has_option(options, "unavailable-feature"));
+        EXPECT_NE(output.find("Include optional dependency: optional-library"), std::string::npos);
+        EXPECT_NE(output.find("Include optional dependency: mpi"), std::string::npos);
+        EXPECT_NE(output.find("Skip unavailable optional dependency: missing-library"),
+                  std::string::npos);
+    }
+
     TEST_F(TemporaryGeneratorDatabase, UsesLatestInstalledMpiAndVendorVersions) {
         write_package("implementation", R"(
 recipe:

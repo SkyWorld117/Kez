@@ -106,7 +106,7 @@ namespace {
                    "  -c, --config PATH=VAL  Override a generated configuration value\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                    "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
-                   "  -R,  --rebuild PACKAGE  Rebuild a package and its dependents in the env\n";
+                   "      --silence          Generate configuration without prompting\n";
         } else {
             std::cout
                 << "Usage: kez install [options] <package>...\n"
@@ -118,7 +118,8 @@ namespace {
                    "  -e, --env NAME         Target application environment\n"
                    "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                    "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
-                   "      --rebuild PACKAGE  Rebuild a package and its dependents in the env\n"
+                   "      --silence          Generate configuration without prompting\n"
+                   "  -R, --rebuild PACKAGE  Rebuild a package and its dependents in the env\n"
                    "                         (may be combined with --read)\n";
         }
     }
@@ -146,7 +147,7 @@ namespace {
             }
             return load_yaml_file(path);
         }
-        return gen_user_config(options.positional, false);
+        return gen_user_config(options.positional, !options.silent);
     }
 
     /**
@@ -266,7 +267,7 @@ namespace {
                       prefix.string());
                 exit(EXIT_FAILURE);
             }
-            user_config = gen_user_config(installed, false);
+            user_config = gen_user_config(installed, !options.silent);
         }
 
         const UserConfigParserSettings settings = load_user_config_parser_settings(prefix);

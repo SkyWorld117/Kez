@@ -92,7 +92,9 @@ namespace {
     /**
      * @brief Prints the usage message for the `uconf` subcommand.
      */
-    void print_uconf_help() { std::cout << "Usage: kez uconf <package>... [--save FILE]\n"; }
+    void print_uconf_help() {
+        std::cout << "Usage: kez uconf <package>... [--save FILE] [--silence]\n";
+    }
 
 }  // namespace
 
@@ -111,7 +113,7 @@ void execute_uconf(const CommandArguments& arguments) {
         return;
     }
 
-    const YAML::Node config = gen_user_config(parsed.options.packages, parsed.options.interactive);
+    const YAML::Node config = gen_user_config(parsed.options.packages, !parsed.options.silent);
     if (parsed.options.output_path.empty()) {
         std::cout << YAML::Dump(config) << '\n';
     } else {
