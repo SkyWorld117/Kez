@@ -173,6 +173,44 @@ recipe:
                       {"environment-optional", "shared", "option-optional", "stage-optional"}));
     }
 
+    TEST_F(TemporaryResolverDatabase, ExtractsOptionalDependenciesWithoutDatabaseLookup) {
+        GenericPackageConfig config;
+        config.name = "not-present-in-database";
+
+        EnvironmentVariable environment;
+        environment.name = "PATHS";
+        environment.
+            requires
+        = {"environment-optional", "shared"};
+
+        BuildOption option;
+        option.name = "feature";
+        option.
+            requires
+        = {"shared", "option-optional"};
+
+        BuildConfiguration common;
+        common.environment.push_back(environment);
+        common.options.push_back(option);
+
+        BuildOption stage_option;
+        stage_option.name = "stage-feature";
+        stage_option.
+            requires
+        = {"stage-optional"};
+        BuildConfiguration stage_configuration;
+        stage_configuration.options.push_back(stage_option);
+
+        Build build;
+        build.configurations = common;
+        build.stages.push_back(BuildStage {"build", true, stage_configuration});
+        config.build = build;
+
+        EXPECT_EQ(get_optional_dependencies(config),
+                  (std::vector<std::string> {"environment-optional", "shared", "option-optional",
+                                             "stage-optional"}));
+    }
+
     TEST(DependencyTopologicalSort, OrdersDependenciesFirstAndDetectsCycles) {
         const DependencyGraph linear = {
             {"application", {"library"}}, {"library", {"runtime"}}, {"runtime", {}}};

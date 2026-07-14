@@ -3,6 +3,21 @@
 #include <string>
 #include <vector>
 
+class PackageConfig;
+
+/**
+ * @brief Collect all optional dependencies from an existing package configuration.
+ *
+ * Extracts the unique package names listed in the `requires` fields of
+ * build-level and stage-level environment variables and build options. This
+ * overload performs no database lookup and should be preferred whenever the
+ * caller already has the parsed PackageConfig.
+ *
+ * @param config  Parsed package configuration to inspect.
+ * @return Unique optional dependency names in first-seen order.
+ */
+std::vector<std::string> get_optional_dependencies(const PackageConfig& config);
+
 /**
  * @brief Collect all optional (conditional) dependencies for a given package.
  *
@@ -27,9 +42,8 @@
  *                      under the project's database/ directory).
  *
  * @return A vector of zero or more unique package names that are optional
- *         dependencies of the specified package.  An empty vector is returned
- *         if the package does not exist in the database or if its recipe
- *         defines no optional dependencies.
+ *         dependencies of the specified package. An empty vector is returned
+ *         if its recipe defines no optional dependencies.
  *
  * @see get_db_config()            Source of the package configuration data.
  * @see EnvironmentVariable        Struct whose `requires` field contributes
@@ -40,5 +54,6 @@
  *                                 that carry `requires` fields.
  * @see BuildStage                 May contain a `BuildConfiguration` with
  *                                 additional `requires` entries.
+ * @see get_optional_dependencies(const PackageConfig&)  Lookup-free overload.
  */
 std::vector<std::string> get_optional_dependencies(const std::string& package_name);

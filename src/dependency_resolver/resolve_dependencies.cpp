@@ -97,8 +97,9 @@ namespace {
         }
     }
 
-    void register_optional_requirements(ResolutionState& state, const PackageConfig& config) {
-        for (const std::string& dependency : get_optional_dependencies(config.name)) {
+    void register_optional_requirements(ResolutionState& state, const PackageConfig& config,
+                                        const std::vector<std::string>& optional_dependencies) {
+        for (const std::string& dependency : optional_dependencies) {
             if (std::find(config.dependencies.begin(), config.dependencies.end(), dependency) !=
                 config.dependencies.end()) {
                 continue;
@@ -122,12 +123,11 @@ namespace {
 
     std::vector<std::string> select_dependencies(ResolutionState& state,
                                                  const PackageConfig& config) {
-        std::vector<std::string> dependencies = get_db_config(config.name)->dependencies;
-        const std::vector<std::string> optional_dependencies =
-            get_optional_dependencies(config.name);
+        std::vector<std::string> dependencies                = config.dependencies;
+        const std::vector<std::string> optional_dependencies = get_optional_dependencies(config);
 
         if (state.interactive) {
-            register_optional_requirements(state, config);
+            register_optional_requirements(state, config, optional_dependencies);
         }
         bool printed_heading = false;
         for (const std::string& dependency : optional_dependencies) {

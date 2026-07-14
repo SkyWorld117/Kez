@@ -44,21 +44,24 @@ namespace {
     }
 }  // namespace
 
-std::vector<std::string> get_optional_dependencies(const std::string& package_name) {
-    const PackageConfigPtr config = get_db_config(package_name);
+std::vector<std::string> get_optional_dependencies(const PackageConfig& config) {
     std::vector<std::string> dependencies;
     std::unordered_set<std::string> seen;
 
-    if (!config->build.has_value()) {
+    if (!config.build.has_value()) {
         return dependencies;
     }
-    if (config->build->configurations.has_value()) {
-        append_requirements(*config->build->configurations, dependencies, seen);
+    if (config.build->configurations.has_value()) {
+        append_requirements(*config.build->configurations, dependencies, seen);
     }
-    for (const BuildStage& stage : config->build->stages) {
+    for (const BuildStage& stage : config.build->stages) {
         if (stage.configurations.has_value()) {
             append_requirements(*stage.configurations, dependencies, seen);
         }
     }
     return dependencies;
+}
+
+std::vector<std::string> get_optional_dependencies(const std::string& package_name) {
+    return get_optional_dependencies(*get_db_config(package_name));
 }
