@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 #include <string>
 #include <utils/colored_io.hpp>
 #include <utils/string_utils.hpp>
@@ -134,50 +135,71 @@ int get_length_without_color(const std::string& str) {
 }
 
 int compare_versions(const std::string& left, const std::string& right) {
-    std::vector<std::string> left_parts  = split(left, '.');
-    std::vector<std::string> right_parts = split(right, '.');
+    // Allocation-free version comparator.
+    //
+    // Walks both version strings as dot-separated segments without creating
+    // intermediate vectors or substrings.  Each segment is further split into
+    // numeric (digit) and alphabetic (lowercase-letter) sub-parts on the fly.
+    //
+    // Numeric sub-parts are compared as integers via std::from_chars (no
+    // exceptions).  Alphabetic / mixed sub-parts are compared character by
+    // character.  If all sub-parts in a segment are equal, the segment with
+    // fewer sub-parts is considered smaller.  If all segments are equal, the
+    // version with fewer segments is considered smaller.
+    const char* l     = left.data();
+    const char* l_end = left.data() + left.size();
+    const char* r     = right.data();
+    const char* r_end = right.data() + right.size();
 
-    // Delimiters for the second split: every lowercase letter acts as a split
-    // point, so that e.g. "10a" becomes ["10", "a"].
-    static const std::vector<char> secondary_delimiters = {
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+    while (l < l_end && r < r_end) {
+        // ── Compare one dot-separated segment ──────────────────────────
+        const char* const l_seg = l;
+        const char* const r_seg = r;
 
-    for (size_t i = 0; i < std::min(left_parts.size(), right_parts.size()); i++) {
-        if (left_parts[i] != right_parts[i]) {
-            // Split the differing segment further on alphabetic boundaries.
-            std::vector<std::string> left_subparts =
-                split_keep_delimiters(left_parts[i], secondary_delimiters);
-            std::vector<std::string> right_subparts =
-                split_keep_delimiters(right_parts[i], secondary_delimiters);
+        // Advance to the next dot or end-of-string to find segment boundaries.
+        while (l < l_end && *l != '.') ++l;
+        while (r < r_end && *r != '.') ++r;
 
-            for (size_t j = 0; j < std::min(left_subparts.size(), right_subparts.size()); j++) {
-                if (left_subparts[j] != right_subparts[j]) {
-                    if (is_numeric(left_subparts[j]) && is_numeric(right_subparts[j])) {
-                        long long left_num  = std::stoll(left_subparts[j]);
-                        long long right_num = std::stoll(right_subparts[j]);
-                        if (left_num != right_num) {
-                            return left_num < right_num ? -1 : 1;
-                        }
-                    } else {
-                        // At least one subpart is non-numeric; compare
-                        // lexicographically.
-                        return left_subparts[j] < right_subparts[j] ? -1 : 1;
-                    }
+        // Compare sub-parts within the segment.
+        const char* ls = l_seg;
+        const char* rs = r_seg;
+        while (ls < l && rs < r) {
+            if (std::isdigit(static_cast<unsigned char>(*ls)) &&
+                std::isdigit(static_cast<unsigned char>(*rs))) {
+                // Both start with a number → compare numerically.
+                long long lv, rv;
+                const auto lres = std::from_chars(ls, l, lv);
+                const auto rres = std::from_chars(rs, r, rv);
+                // from_chars always succeeds for digit-only input.
+                if (lv != rv) {
+                    return lv < rv ? -1 : 1;
                 }
+                ls = lres.ptr;
+                rs = rres.ptr;
+            } else {
+                // At least one side is non-numeric → compare character by character.
+                if (*ls != *rs) {
+                    return *ls < *rs ? -1 : 1;
+                }
+                ++ls;
+                ++rs;
             }
-            // All compared subparts are equal; the shorter subpart sequence
-            // is considered smaller.
-            return left_subparts.size() < right_subparts.size() ? -1 : 1;
         }
+
+        // One side ran out of sub-parts within this segment.
+        if (ls < l || rs < r) {
+            return ls < l ? 1 : -1;
+        }
+
+        // Both sub-parts exhausted; advance past the dot (if any) and continue.
+        if (l < l_end) ++l;  // skip '.'
+        if (r < r_end) ++r;  // skip '.'
     }
 
-    // All common top-level segments are equal; the version with fewer
-    // segments is smaller.
-    if (left_parts.size() != right_parts.size()) {
-        return left_parts.size() < right_parts.size() ? -1 : 1;
+    // All common segments are equal.  The version with more segments is larger.
+    if (l < l_end || r < r_end) {
+        return l < l_end ? 1 : -1;
     }
-
     return 0;
 }
 
