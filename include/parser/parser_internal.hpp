@@ -172,7 +172,7 @@ struct UserConfigParserContext {
     std::unordered_map<std::string, ParsedOptionState> named_option_values;
 
     /// Monotonically increasing version counter bumped on every option or
-    /// environment-value change.  Used by precompute_values() to detect
+    /// environment-value change.  Used by precompute_parser_values() to detect
     /// convergence in O(1) instead of comparing the full maps.
     std::size_t config_version = 0;
 
@@ -197,6 +197,28 @@ struct UserConfigParserContext {
  * @warning This function never returns (marked @c [[noreturn]]).
  */
 [[noreturn]] void user_config_error(const std::string& message);
+
+/**
+ * @brief Return database metadata for a package referenced during parsing.
+ *
+ * Resolves aliases, consults the parsed-package and extra-configuration
+ * caches, and loads the package from the database only when necessary.
+ *
+ * @param context       Mutable parser context containing package caches.
+ * @param package_name  Package name or canonical database alias.
+ * @return Shared immutable package configuration.
+ */
+PackageConfigPtr parser_package_config(UserConfigParserContext& context,
+                                       const std::string& package_name);
+
+/**
+ * @brief Evaluate one user-configuration condition expression.
+ *
+ * @param expression  Condition text using the parser condition grammar.
+ * @param context     Current option, environment, package, and version state.
+ * @return true when the expression evaluates successfully to true.
+ */
+bool evaluate_parser_condition(const std::string& expression, UserConfigParserContext& context);
 
 /**
  * @brief Evaluate conditional overrides for a configurable string value and
@@ -234,6 +256,16 @@ std::string apply_parser_conditions(const ConfigurableValue<std::string>& config
  */
 bool apply_parser_conditions(const ConfigurableValue<bool>& configurable, bool base_value,
                              UserConfigParserContext& context);
+
+/**
+ * @brief Resolve option and environment values to a fixed point.
+ *
+ * Performs an unconditional initialization pass followed by conditional
+ * passes until no indexed value changes.
+ *
+ * @param context Parser context to update in place.
+ */
+void precompute_parser_values(UserConfigParserContext& context);
 
 /**
  * @brief Resolve template placeholders and variable references in a scalar
@@ -292,3 +324,28 @@ std::string parser_package_prefix(const std::string& package_name,
  */
 void append_source_commands(const ParsedUserPackage& package, UserConfigParserContext& context,
                             std::vector<std::string>& commands);
+
+/**
+ * @brief Render all shell commands for one parsed package.
+ *
+ * @param package Parsed package and transformed build description.
+ * @param context Parser state used for templates and resolved values.
+ * @return Ordered shell commands for the package.
+ */
+std::vector<std::string> generate_package_commands(const ParsedUserPackage& package,
+                                                   UserConfigParserContext& context);
+
+/**
+ * @brief Generate executable-plan dependency edges for one package.
+ *
+ * Traverses direct package dependencies and configuration requirements,
+ * collapsing non-buildable facade packages onto buildable descendants.
+ *
+ * @param package             Package whose edges are generated.
+ * @param context             Parsed package graph and abstract selections.
+ * @param buildable_packages  Packages that emit executable commands.
+ * @return Ordered, duplicate-free buildable dependency names.
+ */
+std::vector<std::string> generate_package_dependencies(
+    const ParsedUserPackage& package, const UserConfigParserContext& context,
+    const std::unordered_set<std::string>& buildable_packages);

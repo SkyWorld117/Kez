@@ -1,9 +1,12 @@
+/**
+ * @file user_config_parser.cpp
+ * @brief User-config validation, indexing, settings loading, and parse orchestration.
+ */
+
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
 #include <cstdlib>
-#include <database/config.hpp>
-#include <dependency_resolver/requirements.hpp>
 #include <filesystem>
 #include <limits>
 #include <optional>
@@ -14,31 +17,18 @@
 #include <unordered_set>
 #include <user_config_generator/config_transformer.hpp>
 #include <utility>
-#include <utils/bash_utils.hpp>
-#include <utils/string_utils.hpp>
 #include <utils/yaml_utils.hpp>
 #include <vector>
 
 namespace {
 
     /**
-     * @brief Resolve a named path from the manifest file relative to the work
-     *        directory.
+     * @brief Resolve a named manifest path relative to the work directory.
      *
-     * Looks up @p name under `manifest["paths"]` and joins the result with
-     * @p work_directory to produce an absolute path.  Terminates the program
-     * if the manifest lacks the required `paths.<name>` entry.
-     *
-     * @param manifest        Parsed YAML node of the manifest file
-     *                        (e.g. `manifest.yaml`).
-     * @param work_directory  Base working directory whose child paths are
-     *                        resolved against.
-     * @param name            Key inside `manifest["paths"]` to look up
-     *                        (e.g. `"system"`, `"compilers"`).
-     * @return The resolved absolute filesystem path.
-     *
-     * @warning Terminates via user_config_error() if `manifest["paths"]` or
-     *          `manifest["paths"][name]` is missing.
+     * @param manifest        Parsed project manifest.
+     * @param work_directory  Base Kez work directory.
+     * @param name            Key below @c manifest.paths.
+     * @return Resolved filesystem path.
      */
     std::filesystem::path configured_path(const YAML::Node& manifest,
                                           const std::filesystem::path& work_directory,
@@ -150,468 +140,6 @@ namespace {
         }
     }
 
-    std::string option_name(const std::string& name, Toolchain toolchain) {
-        if (toolchain == Toolchain::Autotools) {
-            if (name.rfind("--", 0) == 0 || name.rfind('-', 0) == 0 || is_shell_assignment(name)) {
-                return name;
-            }
-            return "--" + name;
-        }
-        if (toolchain == Toolchain::CMake) {
-            return name.rfind('-', 0) == 0 ? name : "-D" + name;
-        }
-        return name;
-    }
-
-    std::string render_option(const BuildOption& option, const ParsedOptionState& state,
-                              Toolchain toolchain, UserConfigParserContext& context) {
-        const std::string format = state.enabled ? option.enabled_format.value_or(option.name)
-                                                 : option.disabled_format.value_or("");
-        if (format.empty()) {
-            return {};
-        }
-
-        std::string result      = option_name(format, toolchain);
-        const std::string value = resolve_parser_scalar(
-            state.enabled ? state.enabled_value : state.disabled_value, context);
-        if (!value.empty()) {
-            result += "=" + shell_double_quote(value);
-        }
-        return result;
-    }
-
-    std::string render_configuration_options(const BuildConfiguration& configuration,
-                                             Toolchain toolchain,
-                                             UserConfigParserContext& context) {
-        std::vector<std::string> options;
-        for (const BuildOption& option : configuration.options) {
-            const auto parsed = context.option_values.find(&option);
-            if (parsed == context.option_values.end()) {
-                user_config_error("internal option state is missing for '" + option.name + "'");
-            }
-            const std::string rendered = render_option(option, parsed->second, toolchain, context);
-            if (!rendered.empty()) {
-                options.push_back(rendered);
-            }
-        }
-        return join(options);
-    }
-
-    std::string configurable_user_string(
-        const YAML::Node& user_value, const std::string& key,
-        const std::optional<ConfigurableValue<std::string>>& value) {
-        if (user_value.IsDefined() && yaml_has(user_value, key)) {
-            return user_value[key].IsNull()
-                       ? ""
-                       : yaml_scalar(user_value[key], "option field '" + key + "'");
-        }
-        return value.has_value() ? value->default_value.value_or("") : "";
-    }
-
-    bool option_state_equal(const ParsedOptionState& left, const ParsedOptionState& right) {
-        return left.enabled == right.enabled && left.enabled_value == right.enabled_value &&
-               left.disabled_value == right.disabled_value;
-    }
-
-    void compute_environment(const BuildConfiguration& configuration,
-                             const UserConfigurationIndex& user_configuration,
-                             const PackageConfig& package, UserConfigParserContext& context,
-                             bool use_user_values, bool apply_conditions) {
-        for (const EnvironmentVariable& variable : configuration.environment) {
-            const bool required = requirements_satisfied(variable.requires, context.dependencies,
-                                                         context.abstract_packages);
-            std::string value;
-            if (required && variable.user_configurable && use_user_values) {
-                const auto user_value = user_configuration.environment.find(variable.name);
-                if (user_value == user_configuration.environment.end()) {
-                    user_config_error("package '" + package.name +
-                                      "' is missing configurable "
-                                      "environment variable '" +
-                                      variable.name + "'");
-                }
-                value =
-                    yaml_has(user_value->second, "value") && !user_value->second["value"].IsNull()
-                        ? yaml_scalar(user_value->second["value"], "environment variable value")
-                        : "";
-            } else if (required) {
-                value = variable.value.default_value.value_or("");
-            }
-            if (required && apply_conditions) {
-                value = apply_parser_conditions(variable.value, value, context);
-            }
-            const std::string env_key = package.name + ".env." + variable.name;
-            const auto previous_env   = context.named_environment_values.find(env_key);
-            if (previous_env == context.named_environment_values.end() ||
-                previous_env->second != value) {
-                ++context.config_version;
-            }
-            context.environment_values[&variable]     = value;
-            context.named_environment_values[env_key] = value;
-        }
-    }
-
-    void compute_options(const BuildConfiguration& configuration,
-                         const UserConfigurationIndex& user_configuration,
-                         const PackageConfig& package, UserConfigParserContext& context,
-                         bool use_user_values, bool apply_conditions) {
-        for (const BuildOption& option : configuration.options) {
-            const bool required = requirements_satisfied(option.requires, context.dependencies,
-                                                         context.abstract_packages);
-            YAML::Node user_value;
-            if (required && option.user_configurable && use_user_values) {
-                const auto indexed_value = user_configuration.options.find(option.name);
-                if (indexed_value == user_configuration.options.end()) {
-                    user_config_error("package '" + package.name +
-                                      "' is missing configurable option '" + option.name + "'");
-                }
-                user_value = indexed_value->second;
-            }
-
-            ParsedOptionState state;
-            if (!required) {
-                state.enabled = false;
-            } else if (option.user_configurable && use_user_values) {
-                if (yaml_has(user_value, "enabled")) {
-                    state.enabled = yaml_boolean(user_value["enabled"], "option enabled value");
-                } else if (option.enabled.has_value() && !option.enabled->conditions.empty()) {
-                    state.enabled = option.enabled->default_value.value_or(false);
-                } else {
-                    user_config_error("package '" + package.name + "' option '" + option.name +
-                                      "' is missing its enabled value");
-                }
-            } else {
-                state.enabled = option.enabled.has_value()
-                                    ? option.enabled->default_value.value_or(true)
-                                    : true;
-            }
-
-            if (required && option.enabled.has_value() && apply_conditions) {
-                state.enabled = apply_parser_conditions(*option.enabled, state.enabled, context);
-            }
-            const std::string key = package.name + ".config." + option.name;
-
-            // Save a copy of the previous pass's state before line 274 modifies the map,
-            // so the convergence check below compares against the correct baseline.
-            const auto preexisting = context.named_option_values.find(key);
-            const bool is_new      = preexisting == context.named_option_values.end();
-            const ParsedOptionState previous_state =
-                is_new ? ParsedOptionState {} : preexisting->second;
-
-            context.named_option_values[key] = state;
-
-            if (required && option.user_configurable && use_user_values) {
-                state.enabled_value =
-                    configurable_user_string(user_value, "enabled_value", option.enabled_value);
-                state.disabled_value =
-                    configurable_user_string(user_value, "disabled_value", option.disabled_value);
-            } else if (required) {
-                state.enabled_value  = option.enabled_value.has_value()
-                                           ? option.enabled_value->default_value.value_or("")
-                                           : "";
-                state.disabled_value = option.disabled_value.has_value()
-                                           ? option.disabled_value->default_value.value_or("")
-                                           : "";
-            }
-            if (required && option.enabled_value.has_value() && apply_conditions) {
-                state.enabled_value =
-                    apply_parser_conditions(*option.enabled_value, state.enabled_value, context);
-            }
-            if (required && option.disabled_value.has_value() && apply_conditions) {
-                state.disabled_value =
-                    apply_parser_conditions(*option.disabled_value, state.disabled_value, context);
-            }
-            if (is_new || !option_state_equal(previous_state, state)) {
-                ++context.config_version;
-            }
-            context.option_values[&option]   = state;
-            context.named_option_values[key] = state;
-        }
-    }
-
-    void compute_configuration(const BuildConfiguration& configuration,
-                               const UserConfigurationIndex& user_configuration,
-                               const PackageConfig& package, UserConfigParserContext& context,
-                               bool use_user_values, bool apply_conditions) {
-        compute_environment(configuration, user_configuration, package, context, use_user_values,
-                            apply_conditions);
-        compute_options(configuration, user_configuration, package, context, use_user_values,
-                        apply_conditions);
-    }
-
-    bool compute_values(UserConfigParserContext& context, bool apply_conditions) {
-        const std::size_t previous_version = context.config_version;
-
-        for (const ParsedUserPackage& package : context.packages) {
-            context.current_package = package.requested_name;
-            if (!package.transformed_build.has_value()) {
-                continue;
-            }
-            const Build& build         = *package.transformed_build;
-            const bool use_user_values = (package.database_config->type != PackageType::Compiler &&
-                                          package.database_config->type != PackageType::Mpi) ||
-                                         yaml_has(package.user_config, "build");
-            if (build.configurations.has_value()) {
-                compute_configuration(*build.configurations, package.build_configuration_index,
-                                      *package.database_config, context, use_user_values,
-                                      apply_conditions);
-            }
-            for (std::size_t stage_index = 0; stage_index < build.stages.size(); ++stage_index) {
-                const BuildStage& stage = build.stages[stage_index];
-                if (stage.configurations.has_value()) {
-                    if (stage_index >= package.stage_configuration_indices.size()) {
-                        user_config_error("internal user stage index is missing for package '" +
-                                          package.database_config->name + "'");
-                    }
-                    compute_configuration(
-                        *stage.configurations, package.stage_configuration_indices[stage_index],
-                        *package.database_config, context, use_user_values, apply_conditions);
-                }
-            }
-        }
-        return context.config_version != previous_version;
-    }
-
-    void precompute_values(UserConfigParserContext& context) {
-        compute_values(context, false);
-
-        const std::size_t max_passes =
-            context.named_option_values.size() + context.named_environment_values.size() + 1;
-        for (std::size_t pass = 0; pass < max_passes; ++pass) {
-            if (!compute_values(context, true)) {
-                return;
-            }
-        }
-        user_config_error("conditional configuration values did not converge");
-    }
-
-    void append_configuration_commands(const BuildConfiguration& configuration, Toolchain toolchain,
-                                       const std::string& command, UserConfigParserContext& context,
-                                       std::vector<std::string>& commands) {
-        std::string resolved_command = resolve_parser_scalar(command, context);
-        const std::string options = render_configuration_options(configuration, toolchain, context);
-        if (!options.empty()) {
-            resolved_command += (resolved_command.empty() ? "" : " ") + options;
-        }
-        if (resolved_command.empty()) {
-            return;
-        }
-
-        std::vector<std::pair<std::string, std::optional<std::string>>> previous_values;
-        for (const EnvironmentVariable& variable : configuration.environment) {
-            const auto parsed = context.environment_values.find(&variable);
-            if (parsed == context.environment_values.end() || parsed->second.empty()) {
-                continue;
-            }
-            const char* previous = std::getenv(variable.name.c_str());
-            previous_values.emplace_back(variable.name, previous == nullptr
-                                                            ? std::nullopt
-                                                            : std::optional<std::string>(previous));
-            commands.push_back("export " + variable.name + "=" +
-                               shell_double_quote(resolve_parser_scalar(parsed->second, context)));
-        }
-        commands.push_back(resolved_command);
-        for (const auto& [name, previous] : previous_values) {
-            if (!previous.has_value()) {
-                commands.push_back("unset " + name);
-            } else {
-                commands.push_back("export " + name + "=" + shell_single_quote(*previous));
-            }
-        }
-    }
-
-    void append_patch_commands(const ParsedUserPackage& package, UserConfigParserContext& context,
-                               std::vector<std::string>& commands) {
-        if (!yaml_has(package.user_config, "patches")) {
-            return;
-        }
-        const YAML::Node patches = package.user_config["patches"];
-        if (!patches.IsSequence()) {
-            user_config_error("package patches must be a sequence");
-        }
-        for (const YAML::Node& patch : patches) {
-            if (!patch.IsMap() || !yaml_has(patch, "name") || !yaml_has(patch, "enabled")) {
-                user_config_error("patch entries must contain name and enabled fields");
-            }
-            if (!yaml_boolean(patch["enabled"], "patch enabled value")) {
-                continue;
-            }
-            const std::string name = yaml_scalar(patch["name"], "patch name");
-            if (std::filesystem::path(name).filename() != name) {
-                user_config_error("invalid patch name '" + name + "'");
-            }
-            const std::filesystem::path path =
-                context.settings.kez_home / "patches" / package.requested_name / name;
-            if (!std::filesystem::is_regular_file(path)) {
-                user_config_error("patch file does not exist: " + path.string());
-            }
-            commands.push_back("git apply " + shell_single_quote(path.string()));
-        }
-    }
-
-    std::vector<std::string> generate_package_commands(const ParsedUserPackage& package,
-                                                       UserConfigParserContext& context) {
-        std::vector<std::string> commands;
-        context.current_package = package.requested_name;
-        if (!package.transformed_build.has_value()) {
-            return commands;
-        }
-        if ((package.database_config->type == PackageType::Compiler ||
-             package.database_config->type == PackageType::Mpi) &&
-            !yaml_has(package.user_config, "build")) {
-            return commands;
-        }
-        if (package.database_config->type == PackageType::Vendor) {
-            const std::filesystem::path prefix =
-                parser_package_prefix(package.requested_name, context);
-            if (std::filesystem::exists(prefix)) {
-                return commands;
-            }
-            commands.push_back("mkdir -p " + shell_single_quote(prefix.string()));
-        }
-
-        append_source_commands(package, context, commands);
-        append_patch_commands(package, context, commands);
-
-        const Build& build = *package.transformed_build;
-        if (build.preprocessing.has_value()) {
-            commands.push_back(resolve_parser_scalar(*build.preprocessing, context));
-        }
-        if (build.configurations.has_value()) {
-            const std::optional<std::string> default_command =
-                package.database_config->default_configuration_command();
-            // For generic packages (Toolchain::None) without an explicit
-            // configuration command, skip generating configuration commands.
-            // Configuration values remain available for templating (e.g.
-            // ${pkg.config.*}, ${pkg.env.*}) because they were already
-            // populated into named_option_values and named_environment_values
-            // by precompute_values() above.
-            if (package.database_config->toolchain() != Toolchain::None ||
-                build.configurations->command.has_value()) {
-                append_configuration_commands(
-                    *build.configurations, package.database_config->toolchain(),
-                    build.configurations->command.value_or(default_command.value_or("")), context,
-                    commands);
-            }
-        }
-        for (const BuildStage& stage : build.stages) {
-            BuildStage resolved_stage = stage;
-            if (resolved_stage.target.has_value()) {
-                resolved_stage.target = resolve_parser_scalar(*resolved_stage.target, context);
-            }
-            const std::optional<std::string> default_command =
-                package.database_config->default_stage_command(resolved_stage,
-                                                               context.settings.parallel_jobs);
-            const std::string command =
-                stage.configurations.has_value() && stage.configurations->command.has_value()
-                    ? *stage.configurations->command
-                    : default_command.value_or("");
-            if (stage.configurations.has_value()) {
-                // For generic packages (Toolchain::None) without an explicit
-                // stage command, skip generating configuration commands
-                // (values are still available for templating).
-                if (package.database_config->toolchain() != Toolchain::None ||
-                    stage.configurations->command.has_value()) {
-                    append_configuration_commands(*stage.configurations, Toolchain::None, command,
-                                                  context, commands);
-                }
-            } else if (!command.empty()) {
-                commands.push_back(resolve_parser_scalar(command, context));
-            }
-        }
-        if (build.postprocessing.has_value()) {
-            commands.push_back(resolve_parser_scalar(*build.postprocessing, context));
-        }
-        return commands;
-    }
-
-    std::string plan_dependency_name(const std::string& dependency,
-                                     const UserConfigParserContext& context) {
-        const auto selected = context.abstract_packages.find(dependency);
-        const std::string resolved =
-            selected == context.abstract_packages.end() ? dependency : selected->second;
-        const auto alias = context.package_aliases.find(resolved);
-        return alias == context.package_aliases.end() ? resolved : alias->second;
-    }
-
-    void collect_buildable_dependencies(const std::string& dependency,
-                                        const UserConfigParserContext& context,
-                                        const std::unordered_set<std::string>& buildable_packages,
-                                        std::unordered_set<std::string>& visited,
-                                        std::vector<std::string>& result) {
-        const std::string resolved = plan_dependency_name(dependency, context);
-        if (!visited.insert(resolved).second) {
-            return;
-        }
-        if (buildable_packages.find(resolved) != buildable_packages.end()) {
-            append_unique(result, resolved);
-            return;
-        }
-        const auto parsed = context.package_indices.find(resolved);
-        if (parsed == context.package_indices.end()) {
-            return;
-        }
-        for (const std::string& sub_dependency :
-             context.packages[parsed->second].database_config->dependencies) {
-            collect_buildable_dependencies(sub_dependency, context, buildable_packages, visited,
-                                           result);
-        }
-    }
-
-    void append_plan_requirements(const std::vector<std::string>& requirements,
-                                  const UserConfigParserContext& context,
-                                  const std::unordered_set<std::string>& buildable_packages,
-                                  std::unordered_set<std::string>& visited,
-                                  std::vector<std::string>& result) {
-        if (!requirements_satisfied(requirements, context.dependencies,
-                                    context.abstract_packages)) {
-            return;
-        }
-        for (const std::string& requirement : requirements) {
-            collect_buildable_dependencies(requirement, context, buildable_packages, visited,
-                                           result);
-        }
-    }
-
-    void append_plan_configuration_dependencies(
-        const BuildConfiguration& configuration, const UserConfigParserContext& context,
-        const std::unordered_set<std::string>& buildable_packages,
-        std::unordered_set<std::string>& visited, std::vector<std::string>& result) {
-        for (const EnvironmentVariable& variable : configuration.environment) {
-            append_plan_requirements(variable.requires, context, buildable_packages, visited,
-                                     result);
-        }
-        for (const BuildOption& option : configuration.options) {
-            append_plan_requirements(option.requires, context, buildable_packages, visited, result);
-        }
-    }
-
-    std::vector<std::string> generate_package_dependencies(
-        const ParsedUserPackage& package, const UserConfigParserContext& context,
-        const std::unordered_set<std::string>& buildable_packages) {
-        std::vector<std::string> result;
-        std::unordered_set<std::string> visited;
-        for (const std::string& dependency : package.database_config->dependencies) {
-            collect_buildable_dependencies(dependency, context, buildable_packages, visited,
-                                           result);
-        }
-
-        if (!package.transformed_build.has_value()) {
-            return result;
-        }
-        const Build& build = *package.transformed_build;
-        if (build.configurations.has_value()) {
-            append_plan_configuration_dependencies(*build.configurations, context,
-                                                   buildable_packages, visited, result);
-        }
-        for (const BuildStage& stage : build.stages) {
-            if (stage.configurations.has_value()) {
-                append_plan_configuration_dependencies(*stage.configurations, context,
-                                                       buildable_packages, visited, result);
-            }
-        }
-        return result;
-    }
-
     std::string database_version(const YAML::Node& user_package) {
         if (!yaml_has(user_package, "version")) {
             return "latest";
@@ -660,9 +188,8 @@ namespace {
                     std::find(config->implementations.begin(), config->implementations.end(),
                               implementation) == config->implementations.end()) {
                     user_config_error("'" + implementation +
-                                      "' does not implement abstract "
-                                      "package '" +
-                                      abstract_name + "'");
+                                      "' does not implement abstract package '" + abstract_name +
+                                      "'");
                 }
                 context.abstract_packages.emplace(abstract_name, implementation);
                 for (const std::string& candidate : config->implementations) {
@@ -786,7 +313,7 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
                                   const UserConfigParserSettings& settings) {
     UserConfigParserContext context;
     load_parser_context(user_config, settings, context);
-    precompute_values(context);
+    precompute_parser_values(context);
 
     std::unordered_map<std::string, std::vector<std::string>> commands_by_package;
     for (const ParsedUserPackage& package : context.packages) {

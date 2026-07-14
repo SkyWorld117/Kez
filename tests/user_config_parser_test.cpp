@@ -638,6 +638,83 @@ recipe:
         EXPECT_EQ(plan[0].commands[0], "configure FLAGS=\"base cuda\"");
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase,
+           EvaluatesLogicalEnvironmentVersionAndRequirementConditionsAfterComponentSplit) {
+        write_package("helper", R"(
+recipe:
+  name: helper
+  type: package
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [helper]
+  build:
+    configurations:
+      command: configure
+      environment:
+        - name: KEZ_CONDITION_MARK
+          user_configurable: true
+          default: ~
+      options:
+        - name: feature
+          user_configurable: true
+          enabled:
+            default: false
+          enabled_format: ""
+        - name: FLAGS
+          enabled_value:
+            default: base
+            conditions:
+              - condition: environment ${application.env.KEZ_CONDITION_MARK}
+                action: append
+                value: environment
+              - condition: version ${application.version}>=2.0,<3.0
+                action: append
+                value: version
+              - condition: not (${application.config.feature} false || false)
+                action: append
+                value: logical
+              - condition: required helper && true
+                action: append
+                value: required
+)");
+
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  application:
+    version: 2.5
+    compiler: system
+    build:
+      configurations:
+        environment:
+          - name: KEZ_CONDITION_MARK
+            value: present
+        options:
+          - name: feature
+            enabled: true
+            enabled_value: ~
+            disabled_value: ~
+  helper:
+    compiler: system
+recipe:
+  abstract_packages: {}
+  dependencies: [application, helper]
+  targets: [application]
+)");
+
+        unsetenv("KEZ_CONDITION_MARK");
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        EXPECT_EQ(plan[0].commands,
+                  std::vector<std::string>(
+                      {"export KEZ_CONDITION_MARK=\"present\"",
+                       "configure FLAGS=\"base environment version logical required\"",
+                       "unset KEZ_CONDITION_MARK"}));
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase, RejectsInvalidConfigOptionConditionNames) {
         write_package("helper", R"(
 recipe:
