@@ -29,12 +29,15 @@ std::string render_factory_profile_script(const std::filesystem::path& space,
         "#!/usr/bin/env bash\n"
         "set -Eeuo pipefail\n"
         "cd " +
-        shell_single_quote(space.string()) + "\nfor kez_factory_bin in " +
-        shell_single_quote((buildspace / "bin").string()) + " " +
+        shell_single_quote(space.string()) +
+        "\n"
+        "for kez_pkg in " +
         shell_single_quote(buildspace.string()) +
-        "/*/bin; do\n"
-        "    if [[ -d \"$kez_factory_bin\" ]]; then\n"
-        "        export PATH=\"$kez_factory_bin:${PATH}\"\n"
+        "/*/; do\n"
+        "    [[ -d \"$kez_pkg\" ]] || continue\n"
+        "    [[ \"$(basename \"${kez_pkg%/}\")\" == .* ]] && continue\n"
+        "    if [[ -d \"$kez_pkg/bin\" ]]; then\n"
+        "        export PATH=\"$kez_pkg/bin:${PATH}\"\n"
         "    fi\n"
         "done\n"
         "kez_factory_info() {\n"
