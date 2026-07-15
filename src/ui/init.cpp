@@ -11,7 +11,6 @@
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
-#include <iostream>
 #include <string>
 #include <ui/argparse.hpp>
 #include <ui/commands.hpp>
@@ -32,10 +31,9 @@ void execute_init(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
     if (parsed.help) {
-        std::cout << "Usage: kez init [--refresh] [--use-distro-compiler]\n\n"
-                     "  --refresh               Recreate the system environment\n"
-                     "  --use-distro-compiler   Link the distribution compiler instead of "
-                     "building GCC\n";
+        INFO("Usage: kez init [--refresh] [--use-distro-compiler]\n\n"
+             "  --refresh               Recreate the system environment\n"
+             "  --use-distro-compiler   Link the distribution compiler instead of building GCC");
         return;
     }
 
@@ -68,8 +66,8 @@ void execute_update(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
     if (parsed.help) {
-        std::cout << "Usage: kez update [--with-system]\n\n"
-                     "  --with-system  Refresh the system toolchain after rebuilding Kez\n";
+        INFO("Usage: kez update [--with-system]\n\n"
+             "  --with-system  Refresh the system toolchain after rebuilding Kez");
         return;
     }
 

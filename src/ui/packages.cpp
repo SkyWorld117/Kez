@@ -92,9 +92,7 @@ namespace {
     /**
      * @brief Prints the usage message for the `uconf` subcommand.
      */
-    void print_uconf_help() {
-        std::cout << "Usage: kez uconf <package>... [--save FILE] [--silence]\n";
-    }
+    void print_uconf_help() { INFO("Usage: kez uconf <package>... [--save FILE] [--silence]"); }
 
 }  // namespace
 
@@ -142,7 +140,7 @@ void execute_info(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
     if (parsed.help) {
-        std::cout << "Usage: kez info <package> [--raw]\n";
+        INFO("Usage: kez info <package> [--raw]");
         return;
     }
 
@@ -299,7 +297,7 @@ void execute_dbcheck(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
     if (parsed.help) {
-        std::cout << "Usage: kez dbcheck [--only <package>...]\n";
+        INFO("Usage: kez dbcheck [--only <package>...]");
         return;
     }
 

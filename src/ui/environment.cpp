@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <filesystem>
-#include <iostream>
 #include <string>
 #include <system_error>
 #include <ui/argparse.hpp>
@@ -20,12 +19,12 @@ namespace {
      * This is a terminal helper; it never terminates the process.
      */
     void environment_help() {
-        std::cout << "Usage: kez env <create|remove|list|activate|deactivate|which|empty> [name]\n";
+        INFO("Usage: kez env <create|remove|list|activate|deactivate|which|empty> [name]");
     }
 
     /** @brief Print the usage message for a managed subcommand (compiler/mpi). */
     void managed_help(const std::string& command) {
-        std::cout << "Usage: kez " << command << " <load|unload|list|which|remove> [name]\n";
+        INFO("Usage: kez " + command + " <load|unload|list|which|remove> [name]");
     }
 
     /** @brief Create a managed directory, erroring if it already exists. */

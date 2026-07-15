@@ -72,22 +72,22 @@ namespace {
      * the caller is expected to return or exit as appropriate.
      */
     void factory_help() {
-        std::cout << "Usage: kez factory <create|remove|list|enter|exit|which|build|run|summarize> "
-                     "[options]\n\n"
-                     "Commands:\n"
-                     "  create NAME        Create a factory\n"
-                     "  remove NAME        Remove a factory\n"
-                     "  list               List factories\n"
-                     "  enter NAME         Select a factory in the current shell\n"
-                     "  exit               Clear the selected factory\n"
-                     "  which              Show the selected factory\n"
-                     "  build              Build all recipe YAML files into factory buildspace\n"
-                     "  run                Run runspace profiles\n"
-                     "  summarize          Print lines matching profile summary regexes\n\n"
-                     "Build options:\n"
-                     "  -d, --dry-run      Show installation commands without executing them\n"
-                     "  -f, --force        Reinstall packages already recorded in state.yaml\n"
-                     "  -S, --with-slurm   Run scripts/install.sh through sbatch\n";
+        INFO("Usage: kez factory <create|remove|list|enter|exit|which|build|run|summarize> "
+             "[options]\n\n"
+             "Commands:\n"
+             "  create NAME        Create a factory\n"
+             "  remove NAME        Remove a factory\n"
+             "  list               List factories\n"
+             "  enter NAME         Select a factory in the current shell\n"
+             "  exit               Clear the selected factory\n"
+             "  which              Show the selected factory\n"
+             "  build              Build all recipe YAML files into factory buildspace\n"
+             "  run                Run runspace profiles\n"
+             "  summarize          Print lines matching profile summary regexes\n\n"
+             "Build options:\n"
+             "  -d, --dry-run      Show installation commands without executing them\n"
+             "  -f, --force        Reinstall packages already recorded in state.yaml\n"
+             "  -S, --with-slurm   Run scripts/install.sh through sbatch\n");
     }
 
     /** @brief Returns the root directory under which all factories are stored. */

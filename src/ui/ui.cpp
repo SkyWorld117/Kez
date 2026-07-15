@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include <string>
 #include <ui/argparse.hpp>
 #include <ui/commands.hpp>
@@ -20,21 +19,21 @@ namespace {
      *       whether to return or exit after calling it.
      */
     void print_help() {
-        std::cout << "Kez - an HPC-focused package manager\n\n"
-                     "Usage: kez <command> [options]\n\n"
-                     "Commands:\n"
-                     "  init        Initialize or refresh the Kez toolchain\n"
-                     "  update      Update the source tree and rebuild Kez\n"
-                     "  install     Install packages into an environment\n"
-                     "  uconf       Generate or inspect a user configuration\n"
-                     "  utilities   Manage the shared utilities environment\n"
-                     "  env         Manage application environments\n"
-                     "  compiler    Manage installed compiler environments\n"
-                     "  mpi         Manage installed MPI environments\n"
-                     "  factory     Manage batch build and profiling factories\n"
-                     "  info        Show package metadata\n"
-                     "  dbcheck     Parse and validate the package database\n\n"
-                     "Run 'kez <command> --help' for command-specific help.\n";
+        INFO("Kez - an HPC-focused package manager\n\n"
+             "Usage: kez <command> [options]\n\n"
+             "Commands:\n"
+             "  init        Initialize or refresh the Kez toolchain\n"
+             "  update      Update the source tree and rebuild Kez\n"
+             "  install     Install packages into an environment\n"
+             "  uconf       Generate or inspect a user configuration\n"
+             "  utilities   Manage the shared utilities environment\n"
+             "  env         Manage application environments\n"
+             "  compiler    Manage installed compiler environments\n"
+             "  mpi         Manage installed MPI environments\n"
+             "  factory     Manage batch build and profiling factories\n"
+             "  info        Show package metadata\n"
+             "  dbcheck     Parse and validate the package database\n\n"
+             "Run 'kez <command> --help' for command-specific help.");
     }
 }  // namespace
 

@@ -23,7 +23,6 @@
 #include <cmdline_parser/cmdline_parser.hpp>
 #include <cstdlib>
 #include <filesystem>
-#include <iostream>
 #include <rebuild/rebuild.hpp>
 #include <string>
 #include <system_error>
@@ -96,29 +95,27 @@ namespace {
      */
     void print_install_help(bool utility) {
         if (utility) {
-            std::cout
-                << "Usage: kez utilities add [options] <package>...\n\n"
-                   "Options:\n"
-                   "  -r, --read             Treat the positional argument as a YAML file\n"
-                   "  -d, --dry-run          Show the commands that would be executed\n"
-                   "  -c, --config PATH=VAL  Override a generated configuration value\n"
-                   "  -f, --force            Reinstall packages already recorded in state.yaml\n"
-                   "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
-                   "      --silence          Generate configuration without prompting\n";
+            INFO("Usage: kez utilities add [options] <package>...\n\n"
+                 "Options:\n"
+                 "  -r, --read             Treat the positional argument as a YAML file\n"
+                 "  -d, --dry-run          Show the commands that would be executed\n"
+                 "  -c, --config PATH=VAL  Override a generated configuration value\n"
+                 "  -f, --force            Reinstall packages already recorded in state.yaml\n"
+                 "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
+                 "      --silence          Generate configuration without prompting");
         } else {
-            std::cout
-                << "Usage: kez install [options] <package>...\n"
-                   "       kez install --read [options] <config.yaml>\n\n"
-                   "Options:\n"
-                   "  -r, --read             Treat the positional argument as a YAML file\n"
-                   "  -d, --dry-run          Show the commands that would be executed\n"
-                   "  -c, --config PATH=VAL  Override a generated configuration value\n"
-                   "  -e, --env NAME         Target application environment\n"
-                   "  -f, --force            Reinstall packages already recorded in state.yaml\n"
-                   "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
-                   "      --silence          Generate configuration without prompting\n"
-                   "  -R, --rebuild PACKAGE  Rebuild a package and its dependents in the env\n"
-                   "                         (may be combined with --read)\n";
+            INFO("Usage: kez install [options] <package>...\n"
+                 "       kez install --read [options] <config.yaml>\n\n"
+                 "Options:\n"
+                 "  -r, --read             Treat the positional argument as a YAML file\n"
+                 "  -d, --dry-run          Show the commands that would be executed\n"
+                 "  -c, --config PATH=VAL  Override a generated configuration value\n"
+                 "  -e, --env NAME         Target application environment\n"
+                 "  -f, --force            Reinstall packages already recorded in state.yaml\n"
+                 "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
+                 "      --silence          Generate configuration without prompting\n"
+                 "  -R, --rebuild PACKAGE  Rebuild a package and its dependents in the env\n"
+                 "                         (may be combined with --read)");
         }
     }
 
@@ -421,7 +418,7 @@ void execute_utilities(const CommandArguments& arguments) {
     }
     switch (parsed.arguments.action) {
         case UtilitiesAction::Help:
-            std::cout << "Usage: kez utilities <add|remove|empty> [options]\n";
+            INFO("Usage: kez utilities <add|remove|empty> [options]");
             return;
         case UtilitiesAction::Add: install(parsed.arguments.install_arguments, true); return;
         case UtilitiesAction::Remove: remove_utilities_package(parsed.arguments.package); return;

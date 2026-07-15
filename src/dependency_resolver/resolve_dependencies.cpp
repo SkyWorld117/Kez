@@ -291,8 +291,7 @@ namespace {
                     continue;
                 }
 
-                std::cout << "Optional package " << dependency
-                          << " is required by the following options:\n";
+                INFO("Optional package " + dependency + " is required by the following options:");
                 selected = terminal_select_multiple("Do you want to enable the following options?",
                                                     labels, selected);
                 for (std::size_t index = 0; index < available.size(); ++index) {
@@ -311,8 +310,8 @@ namespace {
             while (prompted < state.abstract_order.size()) {
                 const std::string abstract_package = state.abstract_order[prompted++];
                 const PackageConfigPtr config      = get_db_config(abstract_package);
-                std::cout << "Abstract package " << abstract_package
-                          << " has the following implementations:\n";
+                INFO("Abstract package " + abstract_package +
+                     " has the following implementations:");
                 const std::optional<std::size_t> selected = terminal_select_one(
                     "Do you want to use the following implementation?", config->implementations);
                 if (selected.has_value()) {

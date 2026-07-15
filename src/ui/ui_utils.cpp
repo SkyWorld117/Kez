@@ -217,7 +217,7 @@ void list_directories(const std::filesystem::path& root, const std::string& head
     }
     INFO("Available " + heading + ":");
     for (const std::string& entry : entries) {
-        std::cout << "  - " << entry << '\n';
+        INFO("  - " + entry);
     }
 }
 
@@ -325,7 +325,7 @@ void print_command_plan(const BashCommandPlan& plan) {
     for (const PackageCommands& package : plan) {
         INFO("Instructions for " + package.package + ":");
         for (const std::string& command : package.commands) {
-            std::cout << " -  " << command << '\n';
+            INFO(" -  " + command);
         }
     }
 }
