@@ -273,10 +273,10 @@ kez:
         const std::string console = read_file(output.string());
         EXPECT_NE(console.find("Logs are available at " + (target / "logs").string()),
                   std::string::npos);
-        EXPECT_NE(console.find("[I]: base:   command 0/2 [...]"), std::string::npos);
-        EXPECT_NE(console.find("[I]: right:  command 0/3 [....]"), std::string::npos);
-        EXPECT_NE(console.find("[S]: base:   command 2/2 [###]"), std::string::npos);
-        EXPECT_NE(console.find("[S]: top:    command 3/3 [####]"), std::string::npos);
+        EXPECT_NE(console.find("[I]: base:   command 0/2 [...............]"), std::string::npos);
+        EXPECT_NE(console.find("[I]: right:  command 0/3 [...............]"), std::string::npos);
+        EXPECT_NE(console.find("[S]: base:   command 2/2 [###############]"), std::string::npos);
+        EXPECT_NE(console.find("[S]: top:    command 3/3 [###############]"), std::string::npos);
 
         std::filesystem::remove_all(directory);
     }
@@ -306,11 +306,14 @@ kez:
 
         ASSERT_EQ(std::system(executor.c_str()), 0);
         const std::string console = read_file(transcript.string());
-        EXPECT_NE(console.find("\033[34m[I]: left:   command 0/2 [-..]\033[0m"), std::string::npos);
-        EXPECT_NE(console.find("\033[34m[I]: right:  command 0/2 [\\..]\033[0m"),
+        EXPECT_NE(console.find("\033[34m[I]: left:   command 0/2 [-..............]\033[0m"),
                   std::string::npos);
-        EXPECT_NE(console.find("\033[32m[S]: left:   command 2/2 [###]\033[0m"), std::string::npos);
-        EXPECT_NE(console.find("\033[32m[S]: right:  command 2/2 [###]\033[0m"), std::string::npos);
+        EXPECT_NE(console.find("\033[34m[I]: right:  command 0/2 [\\..............]\033[0m"),
+                  std::string::npos);
+        EXPECT_NE(console.find("\033[32m[S]: left:   command 2/2 [###############]\033[0m"),
+                  std::string::npos);
+        EXPECT_NE(console.find("\033[32m[S]: right:  command 2/2 [###############]\033[0m"),
+                  std::string::npos);
 
         std::filesystem::remove_all(directory);
     }

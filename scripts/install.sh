@@ -5,6 +5,9 @@
 
 set -Eeuo pipefail
 
+SPINNER_INTERVAL_MS=40
+ANIMATION_INTERVAL=0.02
+
 # Ensure KEZ_HOME is set; default to the project root (parent of the scripts directory)
 : ${KEZ_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 source "${KEZ_HOME}/scripts/colored_io.sh"
@@ -65,6 +68,7 @@ declare -a package_exit_status=()
 declare -a package_pids=()
 declare -a failed_package_indices=()
 declare -a started_package_indices=()
+declare -a progress_ui_dirty=()
 declare -A package_indices=()
 current_package_index=-1
 next_finalize_position=0
@@ -120,6 +124,10 @@ mark_package_installed() {
 
 cleanup_package_work_dir() {
     rm -rf -- "$(package_work_dir "$1")"
+}
+
+mark_dirty() {
+    progress_ui_dirty[$1]=1
 }
 
 kez_plan_begin() {
@@ -189,6 +197,7 @@ for index in "${!plan_packages[@]}"; do
     if [[ $force == false ]] && package_is_recorded "$package"; then
         package_status[$index]=skipped
         package_command_progress[$index]=${package_command_counts[$index]}
+        mark_dirty "$index"
     fi
 done
 
@@ -201,7 +210,6 @@ if [[ -t 1 && -t 2 && ${TERM:-dumb} != dumb ]]; then
     progress_ui_interactive=true
 fi
 progress_ui_rendered=false
-progress_ui_frame=0
 progress_ui_package_width=0
 for package in "${plan_packages[@]}"; do
     if (( ${#package} > progress_ui_package_width )); then
@@ -209,6 +217,8 @@ for package in "${plan_packages[@]}"; do
     fi
 done
 progress_ui_spinners=('-' '\' '|' '/')
+progress_ui_start_time=0
+progress_bar_width=15
 
 update_package_progress() {
     local index=$1
@@ -238,13 +248,13 @@ repeat_progress_character() {
 print_package_progress() {
     local index=$1
     local active_ordinal=${2:-0}
+    local spinner_base=${3:-0}
     local package=${plan_packages[$index]}
     local status=${package_status[$index]}
     local total=${package_command_counts[$index]}
     local progress=${package_command_progress[$index]}
     local padding=$((progress_ui_package_width + 2 - ${#package}))
-    local filled=''
-    local unfilled=''
+    local filled_width=0
     local bar
     local level=info
     local suffix=''
@@ -258,34 +268,47 @@ print_package_progress() {
         progress=$total
     fi
 
-    repeat_progress_character '#' "$progress"
-    filled=$progress_repeated
+    # Normalize progress to a fixed-width bar so all packages
+    # have the same visual length regardless of command count.
+    if (( total > 0 )); then
+        filled_width=$(( progress * progress_bar_width / total ))
+    fi
+
     case $status in
         running)
-            repeat_progress_character '.' "$((total - progress))"
-            unfilled=$progress_repeated
-            bar="${filled}${progress_ui_spinners[$(((progress_ui_frame + active_ordinal) % 4))]}${unfilled}"
+            repeat_progress_character '#' "$filled_width"
+            local filled=$progress_repeated
+            local unfilled_width=$(( progress_bar_width - filled_width - 1 ))
+            repeat_progress_character '.' "$unfilled_width"
+            bar="${filled}${progress_ui_spinners[$(((spinner_base + active_ordinal) % 4))]}${progress_repeated}"
             ;;
         complete | done)
-            repeat_progress_character '#' "$((total + 1))"
+            repeat_progress_character '#' "$progress_bar_width"
             bar=$progress_repeated
             level=success
             ;;
         skipped)
-            repeat_progress_character '#' "$((total + 1))"
+            repeat_progress_character '#' "$progress_bar_width"
             bar=$progress_repeated
             level=warning
             suffix=' (already installed)'
             ;;
         failed)
-            repeat_progress_character '.' "$((total - progress))"
-            unfilled=$progress_repeated
-            bar="${filled}!${unfilled}"
+            if (( filled_width >= progress_bar_width - 1 )); then
+                repeat_progress_character '#' "$((progress_bar_width - 1))"
+                bar="${progress_repeated}!"
+            else
+                repeat_progress_character '#' "$filled_width"
+                local filled=$progress_repeated
+                local unfilled_width=$(( progress_bar_width - filled_width - 1 ))
+                repeat_progress_character '.' "$unfilled_width"
+                bar="${filled}!${progress_repeated}"
+            fi
             level=error
             suffix=' (failed)'
             ;;
         *)
-            repeat_progress_character '.' "$((total + 1))"
+            repeat_progress_character '.' "$progress_bar_width"
             bar=$progress_repeated
             progress=0
             ;;
@@ -301,19 +324,49 @@ render_progress_ui() {
     local index
     local active_ordinal=0
     local line_count=${#plan_packages[@]}
+    local spinner_base=0
 
-    if [[ $progress_ui_interactive == false && $progress_ui_rendered == true ]]; then
+    # Compute the time-based spinner frame once per render so all
+    # running packages share the same base, giving them consistent
+    # animation speed regardless of loop iteration duration.
+    if (( progress_ui_start_time > 0 )); then
+        local elapsed_ms=$(( ( $(date +%s%N) - progress_ui_start_time ) / 1000000 ))
+        spinner_base=$(( elapsed_ms / SPINNER_INTERVAL_MS ))
+    fi
+
+    # Non-interactive: full dump once, then incremental per-completion only
+    if [[ $progress_ui_interactive == false ]]; then
+        if [[ $progress_ui_rendered == false ]]; then
+            for index in "${!plan_packages[@]}"; do
+                print_package_progress "$index" "$active_ordinal" "$spinner_base"
+                if [[ ${package_status[$index]} == running ]]; then
+                    active_ordinal=$((active_ordinal + 1))
+                fi
+            done
+            progress_ui_rendered=true
+        fi
         return 0
     fi
-    if [[ $progress_ui_interactive == true && $progress_ui_rendered == true && line_count -gt 0 ]]; then
+
+    # Interactive: move cursor to the top of the package list
+    if [[ $progress_ui_rendered == true && line_count -gt 0 ]]; then
         printf '\033[%dA' "$line_count"
     fi
 
     for index in "${!plan_packages[@]}"; do
-        if [[ $progress_ui_interactive == true ]]; then
+        if [[ ${package_status[$index]} == running || \
+              ${progress_ui_dirty[$index]-} == 1 ]]; then
             printf '\r\033[2K'
+            print_package_progress "$index" "$active_ordinal" "$spinner_base"
+            progress_ui_dirty[$index]=0
+        elif [[ $progress_ui_rendered == true ]]; then
+            # Unchanged line: advance cursor, leave old content visible
+            printf '\n'
+        else
+            # First render: draw everything
+            print_package_progress "$index" "$active_ordinal" "$spinner_base"
+            progress_ui_dirty[$index]=0
         fi
-        print_package_progress "$index" "$active_ordinal"
         if [[ ${package_status[$index]} == running ]]; then
             active_ordinal=$((active_ordinal + 1))
         fi
@@ -422,6 +475,7 @@ start_package() {
     local index=$1
 
     package_status[$index]=running
+    mark_dirty "$index"
     rm -f -- "$plan_runtime_dir/$index/exit-status"
     (
         trap - EXIT
@@ -467,11 +521,13 @@ finalize_completed_packages() {
         if [[ ${package_status[$index]} == complete ]]; then
             if mark_package_installed "$package" "$index"; then
                 package_status[$index]=done
+                mark_dirty "$index"
                 cleanup_package_work_dir "$package"
             else
                 completed_status=$?
                 package_exit_status[$index]=$completed_status
                 package_status[$index]=failed
+                mark_dirty "$index"
             fi
         fi
 
@@ -527,6 +583,7 @@ collect_completed_packages() {
                 failure_status=$completed_status
             fi
         fi
+        mark_dirty "$index"
     done
 
     finalize_completed_packages
@@ -537,6 +594,8 @@ collect_completed_packages() {
         fi
     done
 }
+
+progress_ui_start_time=$(date +%s%N)
 
 while true; do
     started_package=false
@@ -550,10 +609,6 @@ while true; do
         started_package=true
     done
 
-    if [[ $started_package == true && $progress_ui_interactive == true ]]; then
-        render_progress_ui
-    fi
-
     # If nothing is running, all pending packages have unmet dependencies
     # or we're out of work — exit the scheduling loop.
     if (( running_count == 0 )); then
@@ -562,9 +617,8 @@ while true; do
 
     # Poll every package instead of blocking on one PID. This keeps all active
     # indicators moving and lets newly-unblocked work start promptly.
-    sleep 0.1
+    sleep "$ANIMATION_INTERVAL"
     collect_completed_packages
-    progress_ui_frame=$(((progress_ui_frame + 1) % 4))
     if [[ $progress_ui_interactive == true ]]; then
         render_progress_ui
     fi
