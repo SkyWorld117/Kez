@@ -356,7 +356,11 @@ render_progress_ui() {
     for index in "${!plan_packages[@]}"; do
         if [[ ${package_status[$index]} == running || \
               ${progress_ui_dirty[$index]-} == 1 ]]; then
-            printf '\r\033[2K'
+            # Carriage return + overwrite in-place. No \033[2K clear — the
+            # static prefix up to "command " never changes, so rewriting it
+            # without blanking first avoids visible flicker. Only the count
+            # and progress bar differ between frames.
+            printf '\r'
             print_package_progress "$index" "$active_ordinal" "$spinner_base"
             progress_ui_dirty[$index]=0
         elif [[ $progress_ui_rendered == true ]]; then
