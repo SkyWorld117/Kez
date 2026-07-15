@@ -342,7 +342,7 @@ void print_command_plan(const BashCommandPlan& plan) {
     for (const PackageCommands& package : plan) {
         INFO("Instructions for " + package.package + ":");
         for (const std::string& command : package.commands) {
-            INFO(" -  " + command);
+            std::cout << " -  " + command << std::endl;
         }
     }
 }
