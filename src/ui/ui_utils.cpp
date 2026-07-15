@@ -111,7 +111,8 @@ std::vector<std::string> user_config_targets(const YAML::Node& user_config) {
 }
 
 std::filesystem::path installation_prefix(const YAML::Node& user_config,
-                                          const std::string& environment_name, bool utilities) {
+                                          const std::string& environment_name, bool utilities,
+                                          const std::string& renamed_version) {
     const std::vector<std::string> targets = user_config_targets(user_config);
     PackageType common_type                = PackageType::Abstract;
     std::string selected_package;
@@ -130,6 +131,10 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
     }
 
     if (utilities) {
+        if (!renamed_version.empty()) {
+            ERROR("--rename is not valid for utility installation");
+            exit(EXIT_FAILURE);
+        }
         if (common_type != PackageType::Package) {
             ERROR("Only regular packages can be installed as utilities");
             exit(EXIT_FAILURE);
@@ -144,21 +149,33 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
         exit(EXIT_FAILURE);
     }
 
+    if (!renamed_version.empty()) {
+        if (common_type != PackageType::Compiler && common_type != PackageType::Mpi &&
+            common_type != PackageType::Vendor) {
+            ERROR("--rename is only valid for compiler, MPI, or vendor installations");
+            exit(EXIT_FAILURE);
+        }
+        validate_path_component(renamed_version, "renamed version");
+    }
+
     if (common_type == PackageType::System) {
         return configured_work_path("system");
     }
     if (common_type == PackageType::Compiler) {
+        const std::string version = package_version(user_config, selected_package);
         return configured_work_path("compilers") /
-               (selected_package + "-" + package_version(user_config, selected_package));
+               (selected_package + "-" + (renamed_version.empty() ? version : renamed_version));
     }
     if (common_type == PackageType::Mpi) {
+        const std::string version = package_version(user_config, selected_package);
         return configured_work_path("mpis") /
-               (selected_package + "-" + package_version(user_config, selected_package) + "-" +
-                package_compiler(user_config, selected_package));
+               (selected_package + "-" + (renamed_version.empty() ? version : renamed_version) +
+                "-" + package_compiler(user_config, selected_package));
     }
     if (common_type == PackageType::Vendor) {
+        const std::string version = package_version(user_config, selected_package);
         return configured_work_path("vendors") /
-               (selected_package + "-" + package_version(user_config, selected_package));
+               (selected_package + "-" + (renamed_version.empty() ? version : renamed_version));
     }
     if (common_type == PackageType::External) {
         ERROR("External packages are configured in config.yaml and cannot be installed");

@@ -158,6 +158,8 @@ kez:
 )");
         EXPECT_EQ(installation_prefix(compiler, "", false),
                   root_ / "work/env/compilers/gcc-13.4.0");
+        EXPECT_EQ(installation_prefix(compiler, "", false, "optimized"),
+                  root_ / "work/env/compilers/gcc-optimized");
 
         const YAML::Node mpi = YAML::Load(R"(
 recipe:
@@ -168,6 +170,8 @@ kez:
 )");
         EXPECT_EQ(installation_prefix(mpi, "", false),
                   root_ / "work/env/mpis/openmpi-5.0.6-gcc-13.4.0");
+        EXPECT_EQ(installation_prefix(mpi, "", false, "nohcoll"),
+                  root_ / "work/env/mpis/openmpi-nohcoll-gcc-13.4.0");
 
         const YAML::Node vendor = YAML::Load(R"(
 recipe: {targets: [cuda]}
@@ -175,6 +179,8 @@ kez:
   cuda: {version: '12.8'}
 )");
         EXPECT_EQ(installation_prefix(vendor, "", false), root_ / "work/env/vendors/cuda-12.8");
+        EXPECT_EQ(installation_prefix(vendor, "", false, "toolkit"),
+                  root_ / "work/env/vendors/cuda-toolkit");
 
         const YAML::Node system = YAML::Load("recipe: {targets: [system-lib]}\nkez: {}\n");
         EXPECT_EQ(installation_prefix(system, "", false), root_ / "work/env/system");
@@ -195,6 +201,17 @@ kez:
         const YAML::Node application = YAML::Load("recipe: {targets: [application]}\nkez: {}\n");
         EXPECT_EXIT(static_cast<void>(installation_prefix(application, "../escape", false)),
                     ::testing::ExitedWithCode(EXIT_FAILURE), "Invalid environment name");
+        EXPECT_EXIT(static_cast<void>(installation_prefix(application, "env", false, "alias")),
+                    ::testing::ExitedWithCode(EXIT_FAILURE),
+                    "--rename is only valid for compiler, MPI, or vendor installations");
+
+        const YAML::Node compiler = YAML::Load(R"(
+recipe: {targets: [gcc]}
+kez:
+  gcc: {version: '13.4.0'}
+)");
+        EXPECT_EXIT(static_cast<void>(installation_prefix(compiler, "", false, "../escape")),
+                    ::testing::ExitedWithCode(EXIT_FAILURE), "Invalid renamed version");
     }
 
     TEST_F(TemporaryUiEnvironment, ListsOnlyDirectoriesInSortedOrder) {

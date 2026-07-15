@@ -38,10 +38,10 @@ namespace {
     }
 
     TEST(UiArgparse, ParsesInstallAndUtilitiesArguments) {
-        const InstallOptionsParseResult install =
-            parse_install_options({"--read=config.yaml", "-d", "-f", "-S", "--silence", "-e",
-                                   "research", "-c", "a=1", "b=2", "--", "--literal"},
-                                  false);
+        const InstallOptionsParseResult install = parse_install_options(
+            {"--read=config.yaml", "-d", "-f", "-S", "--silence", "-e", "research", "--rename",
+             "nohcoll", "-c", "a=1", "b=2", "--", "--literal"},
+            false);
         EXPECT_TRUE(install.error.empty());
         EXPECT_TRUE(install.options.read_file);
         EXPECT_TRUE(install.options.dry_run);
@@ -49,12 +49,19 @@ namespace {
         EXPECT_TRUE(install.options.with_slurm);
         EXPECT_TRUE(install.options.silent);
         EXPECT_EQ(install.options.environment, "research");
+        EXPECT_EQ(install.options.renamed_version, "nohcoll");
         EXPECT_EQ(install.options.overrides, (std::vector<std::string> {"a=1", "b=2"}));
         EXPECT_EQ(install.options.positional,
                   (std::vector<std::string> {"config.yaml", "--literal"}));
         EXPECT_EQ(parse_install_options({"--env", "name"}, true).error,
                   "--env is not valid for utility installation");
         EXPECT_EQ(parse_install_options({"--rebuild"}, false).error, "Missing value for --rebuild");
+        EXPECT_EQ(parse_install_options({"--rename"}, false).error, "Missing value for --rename");
+        EXPECT_EQ(parse_install_options({"--rename="}, false).error, "Missing value for --rename");
+        EXPECT_EQ(parse_install_options({"--rename=debug"}, false).options.renamed_version,
+                  "debug");
+        EXPECT_EQ(parse_install_options({"--rename", "debug"}, true).error,
+                  "--rename is not valid for utility installation");
 
         const UtilitiesArgumentsParseResult add =
             parse_utilities_arguments({"add", "hdf5", "--force"});

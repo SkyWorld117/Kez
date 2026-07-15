@@ -40,6 +40,15 @@ struct UserConfigParserSettings {
     std::filesystem::path install_prefix;
 
     /**
+     * @brief Resolve a managed top-level target from @ref install_prefix.
+     *
+     * Enabled by ``kez install --rename`` so compiler, MPI, and vendor prefix
+     * templates use the renamed root while their package versions remain
+     * unchanged.
+     */
+    bool use_install_prefix_for_managed_target = false;
+
+    /**
      * @brief Root of the Kez project tree (points to the directory
      *        containing main.sh, the Makefile, etc.).
      */

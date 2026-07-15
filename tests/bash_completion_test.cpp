@@ -124,6 +124,7 @@ paths:
         EXPECT_TRUE(has(install, "--read"));
         EXPECT_TRUE(has(install, "--with-slurm"));
         EXPECT_TRUE(has(install, "--silence"));
+        EXPECT_TRUE(has(install, "--rename"));
 
         const std::vector<std::string> uconf = completion_suggestions(2, {"kez", "uconf", ""});
         EXPECT_TRUE(has(uconf, "--save"));
@@ -159,5 +160,9 @@ paths:
         const std::vector<std::string> silent =
             completion_suggestions(4, {"kez", "install", "alpha", "--silence", ""});
         EXPECT_FALSE(has(silent, "--silence"));
+
+        const std::vector<std::string> renamed =
+            completion_suggestions(4, {"kez", "install", "alpha", "--rename", ""});
+        EXPECT_FALSE(has(renamed, "--rename"));
     }
 }  // namespace

@@ -114,6 +114,7 @@ namespace {
                  "  -f, --force            Reinstall packages already recorded in state.yaml\n"
                  "  -S, --with-slurm       Run scripts/install.sh through sbatch\n"
                  "      --silence          Generate configuration without prompting\n"
+                 "      --rename NAME      Rename the version in a compiler/MPI/vendor prefix\n"
                  "  -R, --rebuild PACKAGE  Rebuild a package and its dependents in the env\n"
                  "                         (may be combined with --read)");
         }
@@ -232,6 +233,10 @@ namespace {
             ERROR("--rebuild requires a package name");
             exit(EXIT_FAILURE);
         }
+        if (!options.renamed_version.empty() && !options.read_file) {
+            ERROR("--rename requires --read when used with --rebuild");
+            exit(EXIT_FAILURE);
+        }
 
         YAML::Node user_config;
         std::filesystem::path prefix;
@@ -240,7 +245,8 @@ namespace {
             // Mode 2: use the user-provided config
             user_config = load_install_config(options);
             apply_cmdline_config(user_config, options.overrides);
-            prefix = installation_prefix(user_config, options.environment, utility);
+            prefix = installation_prefix(user_config, options.environment, utility,
+                                         options.renamed_version);
         } else {
             // Mode 1: regenerate from installed packages
             if (!options.positional.empty()) {
@@ -262,8 +268,9 @@ namespace {
             user_config = gen_user_config(installed, !options.silent);
         }
 
-        const UserConfigParserSettings settings = load_user_config_parser_settings(prefix);
-        const BashCommandPlan plan              = parse_user_config(user_config, settings);
+        UserConfigParserSettings settings              = load_user_config_parser_settings(prefix);
+        settings.use_install_prefix_for_managed_target = !options.renamed_version.empty();
+        const BashCommandPlan plan                     = parse_user_config(user_config, settings);
 
         const RebuildPlanSelection selection = select_rebuild_plan(plan, options.rebuild_package);
         if (!selection.target_found) {
@@ -316,9 +323,10 @@ namespace {
         YAML::Node user_config = load_install_config(options);
         apply_cmdline_config(user_config, options.overrides);
         const std::filesystem::path prefix =
-            installation_prefix(user_config, options.environment, utility);
+            installation_prefix(user_config, options.environment, utility, options.renamed_version);
 
-        const UserConfigParserSettings parser_settings = load_user_config_parser_settings(prefix);
+        UserConfigParserSettings parser_settings = load_user_config_parser_settings(prefix);
+        parser_settings.use_install_prefix_for_managed_target = !options.renamed_version.empty();
         const BashCommandPlan plan = parse_user_config(user_config, parser_settings);
         if (options.dry_run) {
             print_command_plan(plan);

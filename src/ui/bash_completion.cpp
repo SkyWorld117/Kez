@@ -173,6 +173,9 @@ namespace {
         if (previous == "--config" || previous == "-c") {
             return {};
         }
+        if (previous == "--rename") {
+            return {};
+        }
         if (previous == "--rebuild" || previous == "-R") {
             std::vector<std::string> result = help_options();
             append(result, database_packages());
@@ -207,6 +210,9 @@ namespace {
         }
         if (!utility && !contains_any(words, {"--env", "-e"})) {
             append(result, {"--env", "-e"});
+        }
+        if (!utility && !contains(words, "--rename")) {
+            result.push_back("--rename");
         }
         return result;
     }

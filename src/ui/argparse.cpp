@@ -141,6 +141,29 @@ InstallOptionsParseResult parse_install_options(const CommandArguments& argument
             result.options.with_slurm = true;
         } else if (argument == "--silence") {
             result.options.silent = true;
+        } else if (argument == "--rename") {
+            if (utility) {
+                result.error = "--rename is not valid for utility installation";
+                return result;
+            }
+            if (!consume_required_value(arguments, index, argument, result.options.renamed_version,
+                                        result.error)) {
+                return result;
+            }
+            if (result.options.renamed_version.empty()) {
+                result.error = "Missing value for --rename";
+                return result;
+            }
+        } else if (argument.rfind("--rename=", 0) == 0) {
+            if (utility) {
+                result.error = "--rename is not valid for utility installation";
+                return result;
+            }
+            result.options.renamed_version = argument.substr(9);
+            if (result.options.renamed_version.empty()) {
+                result.error = "Missing value for --rename";
+                return result;
+            }
         } else if (argument == "-R" || argument == "--rebuild") {
             if (utility) {
                 result.error = "--rebuild is not valid for utility installation";

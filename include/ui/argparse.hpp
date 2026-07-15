@@ -71,6 +71,7 @@ struct InstallOptions {
     bool rebuild    = false;              ///< Rebuild a package and its dependents.
     bool silent     = false;              ///< Generate configuration without terminal prompts.
     std::string environment;              ///< Target application environment.
+    std::string renamed_version;          ///< Version label used only in the install prefix.
     std::string rebuild_package;          ///< Package selected by @c --rebuild.
     std::vector<std::string> overrides;   ///< Command-line YAML overrides.
     std::vector<std::string> positional;  ///< Package names or YAML path.

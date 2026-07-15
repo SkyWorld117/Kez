@@ -97,6 +97,7 @@ Options:
   -f, --force            Reinstall packages already recorded in state.yaml
   -S, --with-slurm       Run scripts/install.sh through sbatch
       --silence          Generate configuration without prompting
+      --rename NAME      Rename the version in a compiler/MPI/vendor prefix
   -R, --rebuild PACKAGE  Rebuild a package and its dependents in the environment
 ```
 
@@ -116,6 +117,11 @@ guide for the corresponding `config.yaml` settings.
 The `--rebuild` flag scans the environment's state, computes the transitive closure
 of packages that depend on `PACKAGE`, and reinstalls them in dependency order. It
 automatically implies `--force` for the rebuild set.
+
+For compiler, MPI, and vendor targets, `--rename` replaces only the version
+component of the installation prefix. The source version and every version
+template retain the value from the user configuration. This allows multiple
+build configurations of the same release to coexist under distinct names.
 
 **Examples:**
 
@@ -139,6 +145,9 @@ kez install -c zlib.prefix=/custom/path zlib
 
 # Force reinstallation
 kez install -f gcc
+
+# Install a configured OpenMPI build as mpis/openmpi-nohcoll-system
+kez install --read archive/sbrinz/openmpi.yaml --rename nohcoll
 
 # Rebuild zlib and everything that depends on it
 kez install --rebuild zlib

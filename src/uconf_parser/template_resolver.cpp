@@ -80,6 +80,25 @@ namespace {
         return context.packages[parsed->second].user_config;
     }
 
+    /** @brief Return whether a concrete package is a top-level installation target. */
+    bool is_install_target(const std::string& requested_name, UserConfigParserContext& context) {
+        const YAML::Node recipe = context.user_config["recipe"];
+        if (!yaml_has(recipe, "targets") || !recipe["targets"].IsSequence()) {
+            return false;
+        }
+        for (const YAML::Node& target_node : recipe["targets"]) {
+            std::string target  = yaml_scalar(target_node, "target package");
+            const auto abstract = context.abstract_packages.find(target);
+            if (abstract != context.abstract_packages.end()) {
+                target = abstract->second;
+            }
+            if (canonical_package_name(context, target) == requested_name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** @brief Removes the "${" and "}" delimiters from a template string if present. */
     std::string strip_template(const std::string& value) {
         if (value.size() >= 3 && value.rfind("${", 0) == 0 && value.back() == '}') {
@@ -410,6 +429,10 @@ std::string parser_package_prefix(const std::string& package_name,
         return external->second.prefix;
     }
     if (config->type == PackageType::Vendor) {
+        if (context.settings.use_install_prefix_for_managed_target &&
+            is_install_target(requested_name, context)) {
+            return context.settings.install_prefix.string();
+        }
         const Property* prefix = find_property(*config, "prefix");
         if (prefix != nullptr) {
             return resolve_declared_property(config->name + ".prefix", *config, "prefix", context);
@@ -419,6 +442,10 @@ std::string parser_package_prefix(const std::string& package_name,
             .string();
     }
     if (config->type == PackageType::Compiler) {
+        if (context.settings.use_install_prefix_for_managed_target &&
+            is_install_target(requested_name, context)) {
+            return (context.settings.install_prefix / requested_name).string();
+        }
         const std::string version = parser_package_version(requested_name, context);
         return version == "system" ? context.settings.system_prefix.string()
                                    : (context.settings.compilers_prefix /
@@ -426,6 +453,10 @@ std::string parser_package_prefix(const std::string& package_name,
                                          .string();
     }
     if (config->type == PackageType::Mpi) {
+        if (context.settings.use_install_prefix_for_managed_target &&
+            is_install_target(requested_name, context)) {
+            return (context.settings.install_prefix / requested_name).string();
+        }
         const std::string version = parser_package_version(requested_name, context);
         if (version == "system") {
             return context.settings.system_prefix.string();

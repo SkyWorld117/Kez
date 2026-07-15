@@ -45,6 +45,9 @@ std::filesystem::path configured_work_path(const std::string& name);
  *                          when targets are of type @c Package).
  * @param utilities         If true, return the utility environment prefix
  *                          instead of a package-type-specific prefix.
+ * @param renamed_version   Optional replacement for the version path component
+ *                          of compiler, MPI, or vendor targets. This does not
+ *                          modify the package version in @p user_config.
  * @return The absolute installation prefix path.
  *
  * @warning Terminates the program if the target packages have mixed types,
@@ -52,7 +55,8 @@ std::filesystem::path configured_work_path(const std::string& name);
  *          or if no environment name is supplied for @c Package targets.
  */
 std::filesystem::path installation_prefix(const YAML::Node& user_config,
-                                          const std::string& environment_name, bool utilities);
+                                          const std::string& environment_name, bool utilities,
+                                          const std::string& renamed_version = "");
 
 /**
  * @brief Validate that a string is safe to use as a filesystem path component.

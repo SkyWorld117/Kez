@@ -64,7 +64,8 @@ void execute_update(const CommandArguments& arguments);
  * runs `scripts/install.sh` to carry out the installation.  Supports reading
  * a pre-existing YAML configuration file (`--read`), dry-run mode
  * (`--dry-run`), config-value overrides (`--config`), and Slurm submission
- * (`--with-slurm`).
+ * (`--with-slurm`). For compiler, MPI, and vendor targets, `--rename` replaces
+ * only the version component of the installation prefix.
  *
  * The `--rebuild` option recomputes the transitive closure of a target
  * package's dependents and reinstalls only that subset within an already-
@@ -85,6 +86,8 @@ void execute_update(const CommandArguments& arguments);
  *                   - `-c` / `--config PATH=VAL` : Override a config value
  *                   - `-R` / `--rebuild PKG` : Rebuild a package and its
  *                                              dependents
+ *                   - `--rename NAME`         : Rename the managed-prefix
+ *                                              version component
  *                   - `-h` / `--help`        : Print usage and return
  *
  * @note At least one package name (or `--read` with a file path) is required.

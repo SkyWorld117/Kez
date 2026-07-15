@@ -611,6 +611,44 @@ recipe:
         EXPECT_EQ(plan[0].commands, std::vector<std::string>({"echo /opt/env/demo"}));
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase,
+           UsesRenamedInstallRootForManagedTargetButKeepsPackageVersion) {
+        write_package("openmpi", R"(
+recipe:
+  name: openmpi
+  type: mpi
+  source:
+    type: tarball
+    releases:
+      - version: 5.0.10
+        url: https://example.invalid/openmpi.tar.gz
+  build:
+    configurations:
+      command: echo ${openmpi.prefix} ${openmpi.version}
+)");
+        const YAML::Node user_config                          = YAML::Load(R"(
+kez:
+  openmpi:
+    version: 5.0.10
+    compiler: system
+    build: {}
+recipe:
+  abstract_packages: {}
+  dependencies: [openmpi]
+  targets: [openmpi]
+)");
+        UserConfigParserSettings parser_settings              = settings();
+        parser_settings.install_prefix                        = "/opt/mpis/openmpi-nohcoll-system";
+        parser_settings.use_install_prefix_for_managed_target = true;
+
+        const BashCommandPlan plan = parse_user_config(user_config, parser_settings);
+
+        ASSERT_EQ(plan.size(), 1U);
+        EXPECT_NE(std::find(plan[0].commands.begin(), plan[0].commands.end(),
+                            "echo /opt/mpis/openmpi-nohcoll-system/openmpi 5.0.10"),
+                  plan[0].commands.end());
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase, ResolvesForwardConditionReferencesToOptionStates) {
         write_package("helper", R"(
 recipe:
