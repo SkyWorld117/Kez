@@ -9,7 +9,8 @@
  *                               script install plan.
  *   - install.sh (executor):   Executes the generated plan, supporting
  *                               skip/force semantics, parallel dependency-
- *                               aware execution, and per-package logging.
+ *                               aware execution, per-package logging, and the
+ *                               interactive command-progress display.
  *
  * Every test creates an isolated temporary directory (keyed on PID to avoid
  * collisions) and cleans up after itself.  Because the executor tests invoke
@@ -227,6 +228,7 @@ kez:
             ("kez-install-parallel-test-" + std::to_string(getpid()));
         const std::filesystem::path target = directory / "target env";
         const std::filesystem::path plan   = directory / "plan.sh";
+        const std::filesystem::path output = directory / "executor output";
         std::filesystem::remove_all(directory);
 
         const std::filesystem::path base_done  = directory / "base.done";
@@ -255,7 +257,8 @@ kez:
         const std::string executor =
             "KEZ_NJOBS=2 env -u KEZ_HOME -u KEZ_WORKDIR bash " +
             shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") + " " +
-            shell_single_quote(target.string()) + " " + shell_single_quote(plan.string());
+            shell_single_quote(target.string()) + " " + shell_single_quote(plan.string()) + " > " +
+            shell_single_quote(output.string()) + " 2>&1";
 
         ASSERT_EQ(std::system(executor.c_str()), 0);
         EXPECT_TRUE(std::filesystem::exists(top_done));
@@ -267,6 +270,47 @@ kez:
                   std::string::npos);
         EXPECT_NE(read_file((target / "logs" / "right.log").string()).find("right output"),
                   std::string::npos);
+        const std::string console = read_file(output.string());
+        EXPECT_NE(console.find("Logs are available at " + (target / "logs").string()),
+                  std::string::npos);
+        EXPECT_NE(console.find("[I]: base:   command 0/2 [...]"), std::string::npos);
+        EXPECT_NE(console.find("[I]: right:  command 0/3 [....]"), std::string::npos);
+        EXPECT_NE(console.find("[S]: base:   command 2/2 [###]"), std::string::npos);
+        EXPECT_NE(console.find("[S]: top:    command 3/3 [####]"), std::string::npos);
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(CommandLineParser, BashExecutorAnimatesInteractivePackageProgress) {
+        if (std::system("command -v script >/dev/null 2>&1") != 0) {
+            GTEST_SKIP() << "util-linux script is unavailable";
+        }
+
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-install-progress-test-" + std::to_string(getpid()));
+        const std::filesystem::path target     = directory / "target";
+        const std::filesystem::path plan       = directory / "plan.sh";
+        const std::filesystem::path transcript = directory / "typescript";
+        std::filesystem::remove_all(directory);
+
+        write_install_plan(
+            {{"left", {"sleep 0.3", "true"}, {}}, {"right", {"sleep 0.3", "true"}, {}}}, plan);
+        const std::string install_command =
+            "bash " + shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") +
+            " " + shell_single_quote(target.string()) + " " + shell_single_quote(plan.string());
+        const std::string executor = "TERM=xterm KEZ_NJOBS=2 env -u KEZ_HOME -u KEZ_WORKDIR "
+                                     "script --quiet --return --command " +
+                                     shell_single_quote(install_command) + " " +
+                                     shell_single_quote(transcript.string()) + " >/dev/null 2>&1";
+
+        ASSERT_EQ(std::system(executor.c_str()), 0);
+        const std::string console = read_file(transcript.string());
+        EXPECT_NE(console.find("\033[34m[I]: left:   command 0/2 [-..]\033[0m"), std::string::npos);
+        EXPECT_NE(console.find("\033[34m[I]: right:  command 0/2 [\\..]\033[0m"),
+                  std::string::npos);
+        EXPECT_NE(console.find("\033[32m[S]: left:   command 2/2 [###]\033[0m"), std::string::npos);
+        EXPECT_NE(console.find("\033[32m[S]: right:  command 2/2 [###]\033[0m"), std::string::npos);
 
         std::filesystem::remove_all(directory);
     }
@@ -297,6 +341,50 @@ kez:
         EXPECT_NE(log.find("hidden output"), std::string::npos);
         EXPECT_NE(log.find("boom"), std::string::npos);
         EXPECT_NE(log.find("failed with exit status"), std::string::npos);
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(ShellColoredIo, FormatsRedirectedMessagesWithoutAnsiCodes) {
+        const std::filesystem::path directory = std::filesystem::temp_directory_path() /
+                                                ("kez-colored-io-test-" + std::to_string(getpid()));
+        const std::filesystem::path output    = directory / "output";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(directory);
+
+        const std::string commands =
+            "source " + shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/colored_io.sh") +
+            "; info 'information'; warning 'warning'; error 'error'; success 'success'";
+        const std::string executor = "TERM=xterm bash -c " + shell_single_quote(commands) + " > " +
+                                     shell_single_quote(output.string()) + " 2>&1";
+
+        ASSERT_EQ(std::system(executor.c_str()), 0);
+        EXPECT_EQ(read_file(output.string()),
+                  "[I]: information\n[W]: warning\n[E]: error\n[S]: success\n");
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(ShellColoredIo, InitUsesShellErrorsAndKeepsBinaryCompletionCheck) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-init-colored-io-test-" + std::to_string(getpid()));
+        const std::filesystem::path output = directory / "output";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(directory);
+
+        const std::filesystem::path init_path =
+            std::filesystem::path(KEZ_SOURCE_DIR) / "scripts" / "init.sh";
+        const std::string executor = "TERM=xterm bash " + shell_single_quote(init_path.string()) +
+                                     " --invalid > " + shell_single_quote(output.string()) +
+                                     " 2>&1";
+        EXPECT_NE(std::system(executor.c_str()), 0);
+        EXPECT_EQ(read_file(output.string()), "[E]: Unknown init option: --invalid\n");
+
+        const std::string init_script = read_file(init_path.string());
+        EXPECT_NE(init_script.find("\"${KEZ_HOME}/bin/kez_print\" success \"Kez environment "
+                                   "initialization complete.\""),
+                  std::string::npos);
 
         std::filesystem::remove_all(directory);
     }

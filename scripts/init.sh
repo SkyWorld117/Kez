@@ -4,16 +4,18 @@
 # functions are executed by install.sh so independent nodes in the bootstrap
 # dependency graph can run concurrently.
 
+source "$(dirname "${BASH_SOURCE[0]}")/colored_io.sh"
+
 build_gmp() {
     local version folder_and_version folder
     version=$(yq -r '.system-stack.gmp' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "gmp" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "gmp is already installed, skipping..."
+        warning "gmp is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing gmp..."
+    info "Installing gmp..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -32,11 +34,11 @@ build_mpfr() {
     version=$(yq -r '.system-stack.mpfr' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "mpfr" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "mpfr is already installed, skipping..."
+        warning "mpfr is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing mpfr..."
+    info "Installing mpfr..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -57,11 +59,11 @@ build_mpc() {
     version=$(yq -r '.system-stack.mpc' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "mpc" "${version}" "tar.gz")
     if [[ -z $folder_and_version ]]; then
-        echo "mpc is already installed, skipping..."
+        warning "mpc is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing mpc..."
+    info "Installing mpc..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -82,11 +84,11 @@ build_isl() {
     version=$(yq -r '.system-stack.isl' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_isl "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "isl is already installed, skipping..."
+        warning "isl is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing isl..."
+    info "Installing isl..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -107,11 +109,11 @@ build_zlib() {
     version=$(yq -r '.system-stack.zlib' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_github "madler/zlib" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "zlib is already installed, skipping..."
+        warning "zlib is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing zlib..."
+    info "Installing zlib..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -126,11 +128,11 @@ build_xz() {
     version=$(yq -r '.system-stack.xz' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_github "tukaani-project/xz" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "xz is already installed, skipping..."
+        warning "xz is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing xz..."
+    info "Installing xz..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -148,11 +150,11 @@ build_lz4() {
     version=$(yq -r '.system-stack.lz4' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_github "lz4/lz4" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "lz4 is already installed, skipping..."
+        warning "lz4 is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing lz4..."
+    info "Installing lz4..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -166,11 +168,11 @@ build_zstd() {
     version=$(yq -r '.system-stack.zstd' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_github "facebook/zstd" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "zstd is already installed, skipping..."
+        warning "zstd is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing zstd..."
+    info "Installing zstd..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -185,7 +187,7 @@ build_zstd() {
 build_binutils() {
     local version folder_and_version folder
     if [[ ${KEZ_INIT_USE_DISTRO_COMPILER} == 1 ]]; then
-        echo "Using the system's default compiler, skipping binutils installation..."
+        warning "Using the system's default compiler, skipping binutils installation..."
         mkdir -p "${KEZ_SYSTEM}/bin"
         ln -sf /usr/bin/ld "${KEZ_SYSTEM}/bin/ld"
         ln -sf /usr/bin/ar "${KEZ_SYSTEM}/bin/ar"
@@ -199,11 +201,11 @@ build_binutils() {
     version=$(yq -r '.system-stack.binutils' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "binutils" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "binutils is already installed, skipping..."
+        warning "binutils is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing binutils..."
+    info "Installing binutils..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -230,7 +232,7 @@ build_binutils() {
 build_gcc() {
     local version folder_and_version folder
     if [[ ${KEZ_INIT_USE_DISTRO_COMPILER} == 1 ]]; then
-        echo "Using the system's default compiler, skipping gcc installation..."
+        warning "Using the system's default compiler, skipping gcc installation..."
         mkdir -p "${KEZ_SYSTEM}/bin"
         ln -sf /usr/bin/gcc "${KEZ_SYSTEM}/bin/gcc"
         ln -sf /usr/bin/g++ "${KEZ_SYSTEM}/bin/g++"
@@ -242,11 +244,11 @@ build_gcc() {
     version=$(yq -r '.system-stack.gcc' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gcc "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "gcc is already installed, skipping..."
+        warning "gcc is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing gcc..."
+    info "Installing gcc..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -276,11 +278,11 @@ build_elfutils() {
     version=$(yq -r '.system-stack.elfutils' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_elfutils "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "elfutils is already installed, skipping..."
+        warning "elfutils is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing elfutils..."
+    info "Installing elfutils..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -299,11 +301,11 @@ build_m4() {
     version=$(yq -r '.system-stack.m4' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "m4" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "m4 is already installed, skipping..."
+        warning "m4 is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing m4..."
+    info "Installing m4..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -323,11 +325,11 @@ build_autoconf() {
     version=$(yq -r '.system-stack.autoconf' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "autoconf" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "autoconf is already installed, skipping..."
+        warning "autoconf is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing autoconf..."
+    info "Installing autoconf..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -345,11 +347,11 @@ build_automake() {
     version=$(yq -r '.system-stack.automake' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "automake" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "automake is already installed, skipping..."
+        warning "automake is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing automake..."
+    info "Installing automake..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -366,11 +368,11 @@ build_libtool() {
     version=$(yq -r '.system-stack.libtool' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "libtool" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "libtool is already installed, skipping..."
+        warning "libtool is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing libtool..."
+    info "Installing libtool..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -389,11 +391,11 @@ build_make() {
     version=$(yq -r '.system-stack.make' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_gnu "make" "${version}" "tar.gz")
     if [[ -z $folder_and_version ]]; then
-        echo "make is already installed, skipping..."
+        warning "make is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing make..."
+    info "Installing make..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -408,7 +410,7 @@ build_make() {
 
 build_cmake() {
     local version cmake_tag cmake_tag_arch
-    echo "Installing cmake..."
+    info "Installing cmake..."
     version=$(yq -r '.system-stack.cmake' "${KEZ_HOME}/manifest.yaml")
     if [[ $version == latest ]]; then
         cmake_tag=$(curl -s "https://api.github.com/repos/Kitware/CMake/releases/latest" |
@@ -421,7 +423,7 @@ build_cmake() {
     elif [[ ${KEZ_ARCH} == arm64 ]]; then
         cmake_tag_arch="${cmake_tag#v}-linux-aarch64"
     else
-        echo >&2 "Unsupported architecture: ${KEZ_ARCH}"
+        error "Unsupported architecture: ${KEZ_ARCH}"
         return 1
     fi
     wget --quiet --show-progress \
@@ -437,11 +439,11 @@ build_rust() {
     version=$(yq -r '.system-stack.rust' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_rust "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "rust/cargo is already installed, skipping..."
+        warning "rust/cargo is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing rust/cargo..."
+    info "Installing rust/cargo..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -454,11 +456,11 @@ build_perl() {
     version=$(yq -r '.system-stack.perl' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_perl "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "perl is already installed, skipping..."
+        warning "perl is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing perl..."
+    info "Installing perl..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -479,11 +481,11 @@ build_git() {
     version=$(yq -r '.system-stack.git' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_git "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "git is already installed, skipping..."
+        warning "git is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing git..."
+    info "Installing git..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -501,11 +503,11 @@ build_yaml_cpp() {
     version=$(yq -r '.dependencies.yaml-cpp' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_github "jbeder/yaml-cpp" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "yaml-cpp is already installed, skipping..."
+        warning "yaml-cpp is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing yaml-cpp..."
+    info "Installing yaml-cpp..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -529,11 +531,11 @@ build_googletest() {
     version=$(yq -r '.dependencies.googletest' "${KEZ_HOME}/manifest.yaml")
     folder_and_version=$(fetch_github "google/googletest" "${version}")
     if [[ -z $folder_and_version ]]; then
-        echo "googletest is already installed, skipping..."
+        warning "googletest is already installed, skipping..."
         return 0
     fi
 
-    echo "Installing googletest..."
+    info "Installing googletest..."
     folder="${folder_and_version%%::*}"
     version="${folder_and_version##*::}"
     cd "${KEZ_SYSTEM_TMP}/${folder}"
@@ -547,7 +549,7 @@ build_googletest() {
 
 build_patchelf() {
     local version patchelf_tag patchelf_tag_arch
-    echo "Installing patchelf..."
+    info "Installing patchelf..."
     version=$(yq -r '.dependencies.patchelf' "${KEZ_HOME}/manifest.yaml")
     if [[ $version == latest ]]; then
         patchelf_tag=$(curl -s \
@@ -561,7 +563,7 @@ build_patchelf() {
     elif [[ ${KEZ_ARCH} == arm64 ]]; then
         patchelf_tag_arch="${patchelf_tag}-aarch64"
     else
-        echo >&2 "Unsupported architecture: ${KEZ_ARCH}"
+        error "Unsupported architecture: ${KEZ_ARCH}"
         return 1
     fi
     wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/patchelf.tar.gz" \
@@ -642,7 +644,7 @@ configure_package_environment() {
     case $package in
         elfutils | m4 | autoconf | automake | libtool | make | perl | git | yaml-cpp | googletest)
             if [[ ! -x ${KEZ_SYSTEM}/bin/gcc || ! -x ${KEZ_SYSTEM}/bin/g++ ]]; then
-                echo >&2 "Package ${package} requires the Kez GCC toolchain"
+                error "Package ${package} requires the Kez GCC toolchain"
                 return 1
             fi
             export CC="${KEZ_SYSTEM}/bin/gcc"
@@ -681,7 +683,7 @@ build_package() {
         googletest) build_googletest ;;
         patchelf) build_patchelf ;;
         *)
-            echo >&2 "Unknown system package: ${package}"
+            error "Unknown system package: ${package}"
             return 2
             ;;
     esac
@@ -703,7 +705,7 @@ run_package_mode() {
         shift
     fi
     if (( $# != 0 )); then
-        echo >&2 "Unknown package build option: $1"
+        error "Unknown package build option: $1"
         return 2
     fi
     export KEZ_INIT_USE_DISTRO_COMPILER
@@ -726,7 +728,7 @@ main() {
             --refresh) refresh=1 ;;
             --use-distro-compiler) use_distro_compiler=1 ;;
             *)
-                echo >&2 "Unknown init option: ${argument}"
+                error "Unknown init option: ${argument}"
                 return 2
                 ;;
         esac
@@ -734,7 +736,7 @@ main() {
 
     : "${KEZ_NPROC:?KEZ_NPROC is not set}"
     if [[ ! $KEZ_NPROC =~ ^[1-9][0-9]*$ ]]; then
-        echo >&2 "KEZ_NPROC must be a positive integer"
+        error "KEZ_NPROC must be a positive integer"
         return 2
     fi
 
@@ -763,7 +765,7 @@ main() {
         bash "${KEZ_HOME}/scripts/install.sh" "${KEZ_SYSTEM}" "${plan_file}"
 
     export PATH="${KEZ_SYSTEM}/bin:${PATH}"
-    make -C "${KEZ_HOME}" -B -j"${KEZ_NPROC}"
+    make -C "${KEZ_HOME}" -j"${KEZ_NPROC}"
     "${KEZ_HOME}/bin/kez_print" success "Kez environment initialization complete."
 }
 
@@ -771,7 +773,7 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
     set -Eeuo pipefail
     if [[ ${1:-} == --build-package ]]; then
         if (( $# < 2 )); then
-            echo >&2 "Usage: init.sh --build-package <package> [--use-distro-compiler]"
+            error "Usage: init.sh --build-package <package> [--use-distro-compiler]"
             exit 2
         fi
         package=$2

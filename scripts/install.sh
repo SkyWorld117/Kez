@@ -7,32 +7,10 @@ set -Eeuo pipefail
 
 # Ensure KEZ_HOME is set; default to the project root (parent of the scripts directory)
 : ${KEZ_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
-
-kez_print_fn() {
-    local level=$1
-    shift
-    if [[ $level == error ]]; then
-        printf '[E]: %s\n' "$*" >&2
-    elif [[ $level == warning ]]; then
-        printf '[W]: %s\n' "$*" >&2
-    elif [[ $level == info ]]; then
-        printf '[I]: %s\n' "$*"
-    elif [[ $level == success ]]; then
-        printf '[S]: %s\n' "$*"
-    else
-        printf '%s\n' "$*"
-    fi
-}
-
-# KEZ_PRINT=${KEZ_HOME}/bin/kez_print
-if [[ -f ${KEZ_HOME}/bin/kez_print ]]; then
-    KEZ_PRINT=${KEZ_HOME}/bin/kez_print
-else
-    KEZ_PRINT=kez_print_fn
-fi
+source "${KEZ_HOME}/scripts/colored_io.sh"
 
 if [[ $# -lt 2 || $# -gt 3 ]]; then
-    "${KEZ_PRINT}" error "Usage: install.sh <environment> <plan> [--force]"
+    error "Usage: install.sh <environment> <plan> [--force]"
     exit 2
 fi
 
@@ -42,17 +20,17 @@ force=false
 if [[ ${3:-} == "--force" ]]; then
     force=true
 elif [[ -n ${3:-} ]]; then
-    "${KEZ_PRINT}" error "Unknown option: $3"
+    error "Unknown option: $3"
     exit 2
 fi
 
 if [[ ! -f $plan_file ]] || [[ $(head -n 1 -- "$plan_file") != "# kez-install-plan-v1" ]]; then
-    "${KEZ_PRINT}" error "Invalid Kez installation plan: $plan_file"
+    error "Invalid Kez installation plan: $plan_file"
     exit 2
 fi
 
 if [[ ! ${KEZ_NJOBS:-} =~ ^[1-9][0-9]*$ ]]; then
-    "${KEZ_PRINT}" error "KEZ_NJOBS must be a positive integer"
+    error "KEZ_NJOBS must be a positive integer"
     exit 2
 fi
 
@@ -60,7 +38,7 @@ fi
 # system environment built by init.sh stores a package-to-version map instead.
 state_format=${KEZ_INSTALL_STATE_FORMAT:-sequence}
 if [[ $state_format != sequence && $state_format != map ]]; then
-    "${KEZ_PRINT}" error "KEZ_INSTALL_STATE_FORMAT must be 'sequence' or 'map'"
+    error "KEZ_INSTALL_STATE_FORMAT must be 'sequence' or 'map'"
     exit 2
 fi
 
@@ -82,9 +60,14 @@ trap cleanup_runtime EXIT
 declare -a plan_packages=()
 declare -a package_status=()
 declare -a package_command_counts=()
+declare -a package_command_progress=()
+declare -a package_exit_status=()
 declare -a package_pids=()
+declare -a failed_package_indices=()
+declare -a started_package_indices=()
 declare -A package_indices=()
 current_package_index=-1
+next_finalize_position=0
 running_count=0
 
 sanitize_name() {
@@ -124,7 +107,7 @@ mark_package_installed() {
         local version_file="$plan_runtime_dir/$index/version"
         local version
         if [[ ! -s $version_file ]]; then
-            "${KEZ_PRINT}" error "Package $package did not report its installed version"
+            error "Package $package did not report its installed version"
             return 2
         fi
         version=$(<"$version_file")
@@ -141,13 +124,13 @@ cleanup_package_work_dir() {
 
 kez_plan_begin() {
     if (( current_package_index >= 0 )); then
-        "${KEZ_PRINT}" error "Invalid installation plan: nested package"
+        error "Invalid installation plan: nested package"
         return 2
     fi
 
     local package=$1
     if [[ -n ${package_indices[$package]+set} ]]; then
-        "${KEZ_PRINT}" error "Invalid installation plan: duplicate package '$package'"
+        error "Invalid installation plan: duplicate package '$package'"
         return 2
     fi
 
@@ -156,15 +139,18 @@ kez_plan_begin() {
     package_indices["$package"]=$index
     package_status[$index]=pending
     package_command_counts[$index]=0
+    package_command_progress[$index]=0
+    package_exit_status[$index]=
     package_pids[$index]=
     mkdir -p -- "$plan_runtime_dir/$index"
     : > "$plan_runtime_dir/$index/dependencies"
+    printf '0\n' > "$plan_runtime_dir/$index/progress"
     current_package_index=$index
 }
 
 kez_plan_depends() {
     if (( current_package_index < 0 )); then
-        "${KEZ_PRINT}" error "Invalid installation plan: dependency outside a package"
+        error "Invalid installation plan: dependency outside a package"
         return 2
     fi
     printf '%s\n' "$1" >> "$plan_runtime_dir/$current_package_index/dependencies"
@@ -172,7 +158,7 @@ kez_plan_depends() {
 
 kez_plan_command() {
     if (( current_package_index < 0 )); then
-        "${KEZ_PRINT}" error "Invalid installation plan: command outside a package"
+        error "Invalid installation plan: command outside a package"
         return 2
     fi
 
@@ -183,7 +169,7 @@ kez_plan_command() {
 
 kez_plan_end() {
     if (( current_package_index < 0 )); then
-        "${KEZ_PRINT}" error "Invalid installation plan: package end without package"
+        error "Invalid installation plan: package end without package"
         return 2
     fi
     current_package_index=-1
@@ -194,17 +180,149 @@ kez_plan_end() {
 source "$plan_file"
 
 if (( current_package_index >= 0 )); then
-    "${KEZ_PRINT}" error "Invalid installation plan: package was not closed"
+    error "Invalid installation plan: package was not closed"
     exit 2
 fi
 
 for index in "${!plan_packages[@]}"; do
     package=${plan_packages[$index]}
     if [[ $force == false ]] && package_is_recorded "$package"; then
-        "${KEZ_PRINT}" warning "Package $package is already installed; skipping."
         package_status[$index]=skipped
+        package_command_progress[$index]=${package_command_counts[$index]}
     fi
 done
+
+# Interactive installations keep one terminal row per package and redraw the
+# rows in place. Redirected output receives the same initial overview followed
+# only by terminal state changes, so logs remain readable and free of cursor
+# control sequences.
+progress_ui_interactive=false
+if [[ -t 1 && -t 2 && ${TERM:-dumb} != dumb ]]; then
+    progress_ui_interactive=true
+fi
+progress_ui_rendered=false
+progress_ui_frame=0
+progress_ui_package_width=0
+for package in "${plan_packages[@]}"; do
+    if (( ${#package} > progress_ui_package_width )); then
+        progress_ui_package_width=${#package}
+    fi
+done
+progress_ui_spinners=('-' '\' '|' '/')
+
+update_package_progress() {
+    local index=$1
+    local progress_file="$plan_runtime_dir/$index/progress"
+    local progress
+    local total=${package_command_counts[$index]}
+
+    if [[ -s $progress_file ]] && IFS= read -r progress < "$progress_file" && \
+        [[ $progress =~ ^[0-9]+$ ]]; then
+        if (( progress > total )); then
+            progress=$total
+        fi
+        package_command_progress[$index]=$progress
+    fi
+}
+
+repeat_progress_character() {
+    local character=$1
+    local count=$2
+    progress_repeated=''
+    if (( count > 0 )); then
+        printf -v progress_repeated '%*s' "$count" ''
+        progress_repeated=${progress_repeated// /$character}
+    fi
+}
+
+print_package_progress() {
+    local index=$1
+    local active_ordinal=${2:-0}
+    local package=${plan_packages[$index]}
+    local status=${package_status[$index]}
+    local total=${package_command_counts[$index]}
+    local progress=${package_command_progress[$index]}
+    local padding=$((progress_ui_package_width + 2 - ${#package}))
+    local filled=''
+    local unfilled=''
+    local bar
+    local level=info
+    local suffix=''
+    local count_text
+    local message
+
+    if [[ $status == running ]]; then
+        update_package_progress "$index"
+        progress=${package_command_progress[$index]}
+    elif [[ $status == complete || $status == done || $status == skipped ]]; then
+        progress=$total
+    fi
+
+    repeat_progress_character '#' "$progress"
+    filled=$progress_repeated
+    case $status in
+        running)
+            repeat_progress_character '.' "$((total - progress))"
+            unfilled=$progress_repeated
+            bar="${filled}${progress_ui_spinners[$(((progress_ui_frame + active_ordinal) % 4))]}${unfilled}"
+            ;;
+        complete | done)
+            repeat_progress_character '#' "$((total + 1))"
+            bar=$progress_repeated
+            level=success
+            ;;
+        skipped)
+            repeat_progress_character '#' "$((total + 1))"
+            bar=$progress_repeated
+            level=warning
+            suffix=' (already installed)'
+            ;;
+        failed)
+            repeat_progress_character '.' "$((total - progress))"
+            unfilled=$progress_repeated
+            bar="${filled}!${unfilled}"
+            level=error
+            suffix=' (failed)'
+            ;;
+        *)
+            repeat_progress_character '.' "$((total + 1))"
+            bar=$progress_repeated
+            progress=0
+            ;;
+    esac
+
+    printf -v count_text '%*d/%d' "${#total}" "$progress" "$total"
+    printf -v message '%s:%*scommand %s [%s]%s' "$package" "$padding" '' "$count_text" "$bar" \
+        "$suffix"
+    colored_print "$level" "$message"
+}
+
+render_progress_ui() {
+    local index
+    local active_ordinal=0
+    local line_count=${#plan_packages[@]}
+
+    if [[ $progress_ui_interactive == false && $progress_ui_rendered == true ]]; then
+        return 0
+    fi
+    if [[ $progress_ui_interactive == true && $progress_ui_rendered == true && line_count -gt 0 ]]; then
+        printf '\033[%dA' "$line_count"
+    fi
+
+    for index in "${!plan_packages[@]}"; do
+        if [[ $progress_ui_interactive == true ]]; then
+            printf '\r\033[2K'
+        fi
+        print_package_progress "$index" "$active_ordinal"
+        if [[ ${package_status[$index]} == running ]]; then
+            active_ordinal=$((active_ordinal + 1))
+        fi
+    done
+    progress_ui_rendered=true
+}
+
+info "Logs are available at $target_env/logs"
+render_progress_ui
 
 execute_package_command() {
     local command=$1
@@ -262,6 +380,7 @@ run_package_body() {
         if (( status != 0 )); then
             return "$status"
         fi
+        printf '%s\n' "$((command_index + 1))" > "$plan_runtime_dir/$index/progress"
     done
     printf 'Finished: %s\n' "$(date -Is)" >> "$log_file"
     return 0
@@ -301,18 +420,19 @@ find_next_ready_package() {
 
 start_package() {
     local index=$1
-    local package=${plan_packages[$index]}
-    local log_file
-    log_file=$(package_log_file "$package")
 
-    "${KEZ_PRINT}" info "Processing package: $package (log: $log_file)"
     package_status[$index]=running
+    rm -f -- "$plan_runtime_dir/$index/exit-status"
     (
         trap - EXIT
         set +e
         run_package_body "$index"
+        status=$?
+        printf '%s\n' "$status" > "$plan_runtime_dir/$index/exit-status"
+        exit "$status"
     ) &
     package_pids[$index]=$!
+    started_package_indices+=("$index")
     (( running_count += 1 ))
 }
 
@@ -327,15 +447,112 @@ has_pending_packages() {
 }
 
 failure_status=0
+
+finalize_completed_packages() {
+    local index
+    local package
+    local completed_status
+
+    # State updates remain deterministic even when sibling builds finish in
+    # different orders. A completed process no longer consumes a job slot or
+    # shows a spinner while it waits for earlier-dispatched work to finish.
+    while (( next_finalize_position < ${#started_package_indices[@]} )); do
+        index=${started_package_indices[$next_finalize_position]}
+        if [[ ${package_status[$index]} == running ]]; then
+            break
+        fi
+
+        package=${plan_packages[$index]}
+        completed_status=${package_exit_status[$index]}
+        if [[ ${package_status[$index]} == complete ]]; then
+            if mark_package_installed "$package" "$index"; then
+                package_status[$index]=done
+                cleanup_package_work_dir "$package"
+            else
+                completed_status=$?
+                package_exit_status[$index]=$completed_status
+                package_status[$index]=failed
+            fi
+        fi
+
+        if [[ ${package_status[$index]} == failed ]]; then
+            failed_package_indices+=("$index")
+            if (( failure_status == 0 )); then
+                failure_status=$completed_status
+            fi
+        fi
+        next_finalize_position=$((next_finalize_position + 1))
+    done
+}
+
+collect_completed_packages() {
+    local index
+    local pid
+    local completed_status
+    local running_pids
+    local -a completed_indices=()
+
+    # The exit-status file is the fast path. Checking Bash's job table as
+    # well prevents a command that calls `exit` or receives a signal from
+    # leaving the scheduler waiting forever before it can write that file.
+    running_pids=$'\n'"$(jobs -pr)"$'\n'
+
+    for index in "${!plan_packages[@]}"; do
+        if [[ ${package_status[$index]} != running ]]; then
+            continue
+        fi
+
+        pid=${package_pids[$index]}
+        if [[ ! -s $plan_runtime_dir/$index/exit-status && \
+            $running_pids == *$'\n'"$pid"$'\n'* ]]; then
+            continue
+        fi
+        if wait "$pid" 2>/dev/null; then
+            completed_status=0
+        else
+            completed_status=$?
+        fi
+        package_pids[$index]=
+        running_count=$((running_count - 1))
+        update_package_progress "$index"
+        package_exit_status[$index]=$completed_status
+        completed_indices+=("$index")
+
+        if (( completed_status == 0 )); then
+            package_status[$index]=complete
+            package_command_progress[$index]=${package_command_counts[$index]}
+        else
+            package_status[$index]=failed
+            if (( failure_status == 0 )); then
+                failure_status=$completed_status
+            fi
+        fi
+    done
+
+    finalize_completed_packages
+
+    for index in "${completed_indices[@]}"; do
+        if [[ $progress_ui_interactive == false ]]; then
+            print_package_progress "$index"
+        fi
+    done
+}
+
 while true; do
-    # Start as many ready packages as the job limit and failure status allow
+    started_package=false
+    # Start as many ready packages as the job limit and failure status allow.
     while (( failure_status == 0 && running_count < KEZ_NJOBS )); do
         find_next_ready_package
         if (( next_ready_index < 0 )); then
             break
         fi
         start_package "$next_ready_index"
+        started_package=true
     done
+
+    if [[ $started_package == true && $progress_ui_interactive == true ]]; then
+        render_progress_ui
+    fi
 
     # If nothing is running, all pending packages have unmet dependencies
     # or we're out of work — exit the scheduling loop.
@@ -343,48 +560,20 @@ while true; do
         break
     fi
 
-    # Wait for the earliest-started running package (lowest plan index
-    # with a non-empty PID).  This guarantees deterministic processing
-    # order: packages are completed in the same order they were started.
-    completed_index=-1
-    completed_status=0
-    for (( index = 0; index < ${#plan_packages[@]}; index++ )); do
-        pid=${package_pids[$index]:-}
-        if [[ -z $pid ]]; then
-            # Already processed; skip to the next.
-            continue
-        fi
-        wait "$pid" 2>/dev/null && completed_status=0 || completed_status=$?
-        package_pids[$index]=
-        completed_index=$index
-        break
-    done
-
-    if (( completed_index < 0 )); then
-        # No tracked child exited — this shouldn't happen, but protect
-        # against an infinite loop.
-        "${KEZ_PRINT}" error "Installation error: lost track of a running package"
-        exit 2
+    # Poll every package instead of blocking on one PID. This keeps all active
+    # indicators moving and lets newly-unblocked work start promptly.
+    sleep 0.1
+    collect_completed_packages
+    progress_ui_frame=$(((progress_ui_frame + 1) % 4))
+    if [[ $progress_ui_interactive == true ]]; then
+        render_progress_ui
     fi
+done
 
-    package=${plan_packages[$completed_index]}
+for index in "${failed_package_indices[@]}"; do
+    package=${plan_packages[$index]}
     log_file=$(package_log_file "$package")
-    running_count=$(( running_count - 1 ))
-
-    if (( completed_status == 0 )); then
-        package_status[$completed_index]=done
-        mark_package_installed "$package" "$completed_index"
-        cleanup_package_work_dir "$package"
-        "${KEZ_PRINT}" success "Completed package: $package"
-    else
-        package_status[$completed_index]=failed
-        # Do not clean up the work directory on failure, so the user can
-        # inspect it for debugging.
-        "${KEZ_PRINT}" error "Package $package failed. Read log file: $log_file"
-        if (( failure_status == 0 )); then
-            failure_status=$completed_status
-        fi
-    fi
+    error "Package $package failed. Read log file: $log_file"
 done
 
 if (( failure_status != 0 )); then
@@ -392,7 +581,7 @@ if (( failure_status != 0 )); then
 fi
 
 if has_pending_packages; then
-    "${KEZ_PRINT}" error "Invalid installation plan: dependency cycle or missing dependency prevented progress"
+    error "Invalid installation plan: dependency cycle or missing dependency prevented progress"
     exit 2
 fi
 
@@ -408,6 +597,6 @@ if [[ $state_format == sequence ]] && command -v yq >/dev/null 2>&1 && \
     modulefile="$modulefiles_dir/$(basename -- "$target_env")"
     if [[ ! -f $modulefile ]]; then
         "${KEZ_HOME}/scripts/gen_modulefile.sh" "$target_env" > "$modulefile"
-        "${KEZ_PRINT}" success "Created module file: $modulefile"
+        success "Created module file: $modulefile"
     fi
 fi
