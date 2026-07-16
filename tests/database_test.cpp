@@ -284,7 +284,7 @@ recipe:
         }
 
         PackageConfigPtr scotch6 = get_db_config("scotch", "6.1.3");
-        EXPECT_EQ(scotch6->name, "scotch6");
+        EXPECT_EQ(scotch6->name, "scotch");
         EXPECT_NE(dynamic_cast<const MakePackageConfig*>(scotch6.get()), nullptr);
         clear_db_cache();
     }

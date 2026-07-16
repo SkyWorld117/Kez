@@ -47,9 +47,9 @@ recipe:
 
 ### Choose the toolchain
 
-- **`autotools`**: For packages using `./configure && make` (50 packages)
-- **`cmake`**: For packages using CMake (29 packages)
-- **`make`**: For packages using plain `make` without `./configure` (11 packages)
+- **`autotools`**: For packages using `./configure && make`
+- **`cmake`**: For packages using CMake
+- **`make`**: For packages using plain `make` without `./configure`
 - **Omit**: For packages with no standard build system — use `preprocessing`/`postprocessing`
   instead (vendor scripts, prebuilt binaries, abstract packages)
 

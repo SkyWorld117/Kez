@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @file dump.hpp
  * @brief Template metaprogramming infrastructure for generic value-to-string dumping.

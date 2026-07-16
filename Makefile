@@ -86,7 +86,7 @@ TEST_SOURCES := \
 	tests/ui_commands_test.cpp \
 	tests/ui_utils_test.cpp \
 	tests/utils_test.cpp \
-	tests/user_config_parser_test.cpp \
+	tests/uconf_parser_test.cpp \
 	tests/uconf_generator_test.cpp
 TEST_OBJECTS := $(TEST_SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LIBRARY := $(LIB_DIR)/libkez.a
@@ -97,7 +97,7 @@ PRINT_BINARY := $(BIN_DIR)/kez_print
 
 .DEFAULT_GOAL := all
 
-.PHONY: all test clean
+.PHONY: all test clean distclean format
 
 all: $(LIBRARY) $(CLI_BINARY) $(COMPLETION_BINARY) $(PRINT_BINARY)
 
@@ -118,7 +118,7 @@ $(COMPLETION_BINARY): $(COMPLETION_OBJECT) $(LIBRARY) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(BIN_DIR)/kez_print: $(SRC_DIR)/utils/colored_io.cpp | $(BIN_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MF $(BIN_DIR)/kez_print.d $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
@@ -132,7 +132,15 @@ $(LIB_DIR) $(BIN_DIR):
 	mkdir -p $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(LIBRARY) $(TEST_BINARY) $(CLI_BINARY) $(COMPLETION_BINARY) $(PRINT_BINARY)
+	rm -rf $(OBJ_DIR) $(LIB_DIR) $(LIBRARY) $(TEST_BINARY) $(CLI_BINARY) $(COMPLETION_BINARY) $(PRINT_BINARY)
+	rm -rf $(BIN_DIR)
+
+distclean: clean
+	@echo "All build artifacts removed."
+
+format:
+	@pre-commit run --all-files 2>/dev/null || \
+		clang-format -i --style=file $(shell find include src tests -name '*.hpp' -o -name '*.cpp')
 
 -include $(LIB_OBJECTS:.o=.d) $(CLI_OBJECTS:.o=.d) $(COMPLETION_OBJECT:.o=.d) \
-	$(TEST_OBJECTS:.o=.d)
+	$(TEST_OBJECTS:.o=.d) $(BIN_DIR)/kez_print.d

@@ -45,7 +45,7 @@ kez () {
 
     local intercept=0
 
-    if [[ ( "${1:-}" == "env" || "${1:-}" == "cellar" ) && ( "${2:-}" == "activate" || "${2:-}" == "deactivate" ) ]]; then
+    if [[ "${1:-}" == "env" && ( "${2:-}" == "activate" || "${2:-}" == "deactivate" ) ]]; then
         intercept=1
     elif [[ "${1:-}" == "compiler" && ( "${2:-}" == "load" || "${2:-}" == "unload" ) ]]; then
         intercept=1

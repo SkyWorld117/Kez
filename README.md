@@ -23,7 +23,6 @@ Kez achieves the points above by using a C++ backend, a database of YAML files t
 ## Known Issues
 
 - No actual AMD GPU support (ROCm etc.) as I do not have access to such hardware for testing. 
-- Dependencies currently have no version constraints, but we may just leave it to the user to ensure compatibility. 
 - No Python package support yet, but it is planned for the future.
 
 ## Development Setup

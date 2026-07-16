@@ -73,6 +73,12 @@ kez dbcheck --only zlib hdf5 openmpi
 
 ---
 
+### `kez --help` / `kez -h`
+
+Print the help message listing all commands and options.
+
+---
+
 ### `kez --version` / `kez -V`
 
 Print the Kez version.
@@ -207,7 +213,7 @@ dependencies, and available versions.
 Manage application environments.
 
 ```
-Usage: kez env <create|remove|list|enter|exit|which|empty> [name]
+Usage: kez env <create|remove|list|activate|deactivate|which|empty> [name]
 ```
 
 Environments are isolated installation prefixes for user applications.
@@ -220,8 +226,8 @@ A package of type `package` must be installed into an environment.
 | `create NAME` | Create a new application environment |
 | `remove NAME` | Remove an application environment and its module file |
 | `list` | List all application environments |
-| `enter NAME` | Activate an environment (adds its `bin/` to `PATH`) |
-| `exit` | Deactivate the current environment |
+| `activate NAME` | Activate an environment (adds its `bin/` to `PATH`) |
+| `deactivate` | Deactivate the current environment |
 | `which` | Show the currently active environment |
 | `empty NAME` | Remove all packages from an environment |
 

@@ -12,7 +12,7 @@ find "$TARGET_DIR" -type f | while read -r file; do
     # 1. Get DIRECT dependencies (DT_NEEDED)
     # This extracts only the names inside the brackets []
     direct_deps=$(readelf -d "$file" 2>/dev/null | grep "NEEDED" | awk -F'[][]' '{print $2}')
-    
+
     if [ -z "$direct_deps" ]; then continue; fi
 
     # 2. Get the list of libraries ldd can't find

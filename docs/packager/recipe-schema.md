@@ -50,12 +50,12 @@ Determines where the package is installed:
 
 | Type | Installation path | Notes |
 |---|---|---|
-| `package` | `env/applications/<env_name>` | Regular applications (90 packages) |
-| `system` | `env/system` | Core toolchain libraries (8 packages) |
-| `compiler` | `env/compilers/<name>-<version>` | Compiler installations (2 packages) |
-| `mpi` | `env/mpis/<name>-<version>-<compiler>` | MPI implementations (2 packages) |
-| `vendor` | `env/vendors/<name>-<version>` | Vendor SDKs (8 packages) |
-| `external` | (configured in `config.yaml`) | System-provided packages (4 packages) |
+| `package` | `env/applications/<env_name>` | Regular applications |
+| `system` | `env/system` | Core toolchain libraries |
+| `compiler` | `env/compilers/<name>-<version>` | Compiler installations |
+| `mpi` | `env/mpis/<name>-<version>-<compiler>` | MPI implementations |
+| `vendor` | `env/vendors/<name>-<version>` | Vendor SDKs |
+| `external` | (configured in `config.yaml`) | System-provided packages |
 | `abstract` | Not installed directly | Interface to concrete packages (see below) |
 
 ### `source`

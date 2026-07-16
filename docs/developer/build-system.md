@@ -58,17 +58,20 @@ make test
 
 ### Test Files
 
-| Test | Lines | What it covers |
-|---|---|---|
-| `user_config_parser_test.cpp` | 602 | User config YAML parsing and BashCommandPlan generation |
-| `uconf_generator_test.cpp` | 451 | User config YAML generation from resolved dependencies |
-| `dependency_resolver_test.cpp` | 306 | Dependency DAG construction and topological sort |
-| `database_test.cpp` | 234 | Database caching and config parsing |
-| `cmdline_parser_test.cpp` | 182 | Command-line override parsing |
-| `bash_completion_test.cpp` | 126 | Bash completion logic |
-| `rebuild_test.cpp` | ~80 | Rebuild set computation and plan filtering |
-| `factory_test.cpp` | 63 | Factory config parsing |
-| `utils_test.cpp` | 19 | Utility functions |
+| Test | What it covers |
+|---|---|
+| `user_config_parser_test.cpp` | User config YAML parsing and BashCommandPlan generation |
+| `uconf_generator_test.cpp` | User config YAML generation from resolved dependencies |
+| `dependency_resolver_test.cpp` | Dependency DAG construction and topological sort |
+| `database_test.cpp` | Database caching and config parsing |
+| `cmdline_parser_test.cpp` | Command-line override parsing |
+| `bash_completion_test.cpp` | Bash completion logic |
+| `rebuild_test.cpp` | Rebuild set computation and plan filtering |
+| `factory_test.cpp` | Factory config parsing |
+| `utils_test.cpp` | Utility functions |
+| `ui_argparse_test.cpp` | Argument parsing for UI commands |
+| `ui_commands_test.cpp` | Install, factory, and packages command logic |
+| `ui_utils_test.cpp` | UI utility functions |
 
 ## Code Formatting
 

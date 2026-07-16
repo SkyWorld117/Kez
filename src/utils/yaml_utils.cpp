@@ -22,6 +22,11 @@ namespace {
      * Used by cached_yaml_load() to avoid re-parsing the same file.
      * The cache is process-local and grows monotonically; entries are
      * never evicted.
+     *
+     * @warning YAML::Node is reference-counted and mutable. Callers that
+     *          modify the returned node will affect all subsequent callers
+     *          referencing the same cached path. This cache is not
+     *          thread-safe.
      */
     std::unordered_map<std::string, YAML::Node> yaml_cache;
 }  // namespace

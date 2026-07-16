@@ -12,6 +12,13 @@ obj/
 *.o
 *.a
 
+# Ignore library directory
+lib/
+
+# Ignore doxygen output directories
+html/
+latex/
+
 # Ignore slurm logs
 *.out
 *.err
