@@ -1,6 +1,6 @@
 ---
 recipe:
-    name: scotch6
+    name: scotch
     description: Scotch is a software package for graph and mesh partitioning, graph clustering, and sparse matrix ordering.
     type: package
     toolchain: make
@@ -33,7 +33,7 @@ recipe:
                       - name: prefix
                         description: Installation prefix
                         enabled_value:
-                            default: ${scotch6.prefix}
+                            default: ${scotch.prefix}
 
                       - name: CCS
                         description: C compiler command (Sequential)
@@ -56,18 +56,18 @@ recipe:
                         enabled:
                             default: false
                         enabled_value:
-                            default: -O3 -fPIC ${scotch6.ldflags} -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED 
-                                -DSCOTCH_RENAME -DSCOTCH_PTHREAD -Drestrict=__restrict -DIDXSIZE64
+                            default: -O3 -fPIC ${scotch.ldflags} -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME
+                                -DSCOTCH_PTHREAD -Drestrict=__restrict -DIDXSIZE64
             - target: install
               configurations:
                   options:
                       - name: prefix
                         description: Installation prefix
                         enabled_value:
-                            default: ${scotch6.prefix}
+                            default: ${scotch.prefix}
 
     properties:
-        lib: ${scotch6.prefix}/lib
+        lib: ${scotch.prefix}/lib
         libs:
             default: -lscotch -lscotcherr
-        include: ${scotch6.prefix}/include
+        include: ${scotch.prefix}/include

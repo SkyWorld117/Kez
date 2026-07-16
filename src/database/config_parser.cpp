@@ -1,3 +1,4 @@
+#include <cctype>
 #include <database/build_parser.hpp>
 #include <database/condition_parser.hpp>
 #include <database/config_parser.hpp>
@@ -111,6 +112,109 @@ namespace {
         return result;
     }
 
+    std::vector<Dependency> parse_dependencies(const YAML::Node& node, const std::string& path,
+                                               const DatabaseParserContext& context) {
+        expect_sequence(node, path, context);
+        std::vector<Dependency> result;
+        for (std::size_t i = 0; i < node.size(); ++i) {
+            const std::string dep_path = path + "[" + std::to_string(i) + "]";
+            const YAML::Node entry     = node[i];
+            if (!entry.IsScalar()) {
+                fail_config(entry, dep_path,
+                            "must be a scalar; use '<name>' or '<name>@<constraints>'", context);
+            }
+
+            const std::string raw = parse_scalar(entry, dep_path, context);
+            const std::size_t at  = raw.find('@');
+
+            Dependency dep;
+            if (at == std::string::npos) {
+                // Simple form: just a package name (e.g. "scotch").
+                dep.name = raw;
+            } else {
+                // "<name>@<constraints>" — e.g. "scotch@<7.0.0,>=6.0.0".
+                dep.name = raw.substr(0, at);
+
+                // Parse the comma-separated constraint list after the '@'.
+                const std::string version_str = raw.substr(at + 1);
+                std::size_t pos               = 0;
+                const std::size_t len         = version_str.size();
+                while (pos < len) {
+                    // Skip leading whitespace.
+                    while (pos < len &&
+                           std::isspace(static_cast<unsigned char>(version_str[pos]))) {
+                        ++pos;
+                    }
+                    if (pos >= len) break;
+
+                    // Find the next comma.
+                    const std::size_t comma    = version_str.find(',', pos);
+                    const std::size_t con_end  = comma == std::string::npos ? len : comma;
+                    std::string constraint_str = version_str.substr(pos, con_end - pos);
+
+                    // Trim trailing whitespace.
+                    while (!constraint_str.empty() &&
+                           std::isspace(static_cast<unsigned char>(constraint_str.back()))) {
+                        constraint_str.pop_back();
+                    }
+
+                    if (constraint_str.empty()) {
+                        fail_config(entry, dep_path,
+                                    "contains an empty constraint after '@' near position " +
+                                        std::to_string(pos),
+                                    context);
+                    }
+
+                    DependencyConstraint dc;
+                    // Determine the operator (one of ">=", ">", "<=", "<", "==").
+                    // Match the longest operator prefix first so that ">=" is not
+                    // mistaken for ">" followed by "=".
+                    std::size_t op_len = 0;
+                    if (constraint_str.size() >= 2 &&
+                        (constraint_str[0] == '>' || constraint_str[0] == '<' ||
+                         constraint_str[0] == '=') &&
+                        constraint_str[1] == '=') {
+                        op_len = 2;
+                    } else if (constraint_str.size() >= 1 &&
+                               (constraint_str[0] == '>' || constraint_str[0] == '<')) {
+                        op_len = 1;
+                    }
+                    if (op_len == 0) {
+                        fail_config(entry, dep_path,
+                                    "version constraint '" + constraint_str +
+                                        "' is missing an operator (>=, >, <=, <, ==)",
+                                    context);
+                    }
+                    const std::string op = constraint_str.substr(0, op_len);
+                    if (op != ">=" && op != ">" && op != "<=" && op != "<" && op != "==") {
+                        fail_config(entry, dep_path,
+                                    "invalid version constraint operator '" + op + "'", context);
+                    }
+                    dc.op = op;
+
+                    // The rest (after the operator and any whitespace) is the version value.
+                    std::size_t v_start = op_len;
+                    while (v_start < constraint_str.size() &&
+                           std::isspace(static_cast<unsigned char>(constraint_str[v_start]))) {
+                        ++v_start;
+                    }
+                    dc.version = constraint_str.substr(v_start);
+                    if (dc.version.empty()) {
+                        fail_config(entry, dep_path,
+                                    "operator '" + op + "' is missing a version value", context);
+                    }
+                    dep.constraints.push_back(std::move(dc));
+
+                    if (comma == std::string::npos) break;
+                    pos = comma + 1;
+                }
+            }
+
+            result.push_back(std::move(dep));
+        }
+        return result;
+    }
+
     std::vector<Property> parse_properties(const YAML::Node& node, const std::string& path,
                                            const DatabaseParserContext& context) {
         if (node.IsNull()) {
@@ -169,7 +273,7 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
     }
     if (yaml_has(recipe, "dependencies")) {
         config->dependencies =
-            parse_scalar_sequence(recipe["dependencies"], "recipe.dependencies", context);
+            parse_dependencies(recipe["dependencies"], "recipe.dependencies", context);
     }
     if (yaml_has(recipe, "overrides")) {
         config->overrides = parse_overrides(recipe["overrides"], "recipe.overrides", context);

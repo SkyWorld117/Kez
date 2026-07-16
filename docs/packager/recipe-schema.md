@@ -83,14 +83,36 @@ For `script` type, `url` is optional — the script logic goes in `preprocessing
 
 ### `dependencies`
 
-A simple YAML list of package names. Version constraints are not yet supported.
+A YAML list of package dependencies. Each entry is a scalar string.
+To add version constraints, append an `@` followed by a comma-separated
+list of constraint expressions after the package name.
+
+The `@` character is reserved for this purpose and **must not** appear
+in package names.
 
 ```yaml
 dependencies:
-  - zlib
-  - hdf5
-  - boost
+  - zlib                          # No constraint — latest version is used
+  - hdf5                          # No constraint
+  - scotch@<7.0.0                 # Must be strictly below 7.0.0
+  - boost@>=1.80,<1.86            # Multiple constraints are ANDed together
 ```
+
+Supported constraint operators:
+
+| Operator | Meaning |
+|----------|---------|
+| `>=`     | Greater than or equal |
+| `>`      | Strictly greater |
+| `<=`     | Less than or equal |
+| `<`      | Strictly less |
+| `==`     | Exactly equal |
+
+When constraints are present, Kez automatically discovers the available
+versions of the dependency (from version-range files and source releases
+in its recipe), filters them against the constraints, and selects the
+latest matching version as the default. Users can still override the
+version in their `config.yaml` via the `kez` map.
 
 ### `toolchain`
 

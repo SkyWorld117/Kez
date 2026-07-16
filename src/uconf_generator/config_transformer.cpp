@@ -67,9 +67,9 @@ namespace {
         const std::unordered_set<std::string>& dependencies,
         const AbstractPackageSelections& abstract_packages) {
         std::vector<std::string> result;
-        for (const std::string& dependency : package.dependencies) {
-            if (selected(dependency, dependencies, abstract_packages)) {
-                append_unique(result, dependency);
+        for (const Dependency& dependency : package.dependencies) {
+            if (selected(dependency.name, dependencies, abstract_packages)) {
+                append_unique(result, dependency.name);
             }
         }
 

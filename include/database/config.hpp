@@ -302,6 +302,50 @@ struct Override {
 };
 
 /**
+ * @brief A version constraint on a dependency, e.g. ``">= 3.0"`` or ``"< 7.0.0"``.
+ *
+ * Multiple @c DependencyConstraint entries for the same dependency are ANDed
+ * together at resolution time (e.g. ``">= 6.0"`` + ``"< 7.0"`` means
+ * ``">= 6.0 AND < 7.0"``).
+ */
+struct DependencyConstraint {
+    /**
+     * @brief Comparison operator.
+     *
+     * One of ``">="``, ``">"``, ``"<="``, ``"<"``, ``"=="``.
+     */
+    std::string op;
+    /** @brief Version string to compare against (e.g. ``"7.0.0"``). */
+    std::string version;
+
+    bool operator==(const DependencyConstraint& other) const {
+        return op == other.op && version == other.version;
+    }
+};
+
+/**
+ * @brief A dependency entry in a package recipe.
+ *
+ * Each dependency carries a package name and an optional list of version
+ * constraints.  When @ref constraints is empty the dependency is taken at
+ * its latest available version (the same behaviour as a bare package name).
+ */
+struct Dependency {
+    /** @brief Package name (e.g. ``"scotch"``). */
+    std::string name;
+    /**
+     * @brief Version constraints.  Empty means no constraint (latest
+     *        version is selected).  When multiple constraints are present
+     *        they are ANDed together.
+     */
+    std::vector<DependencyConstraint> constraints;
+
+    bool operator==(const Dependency& other) const {
+        return name == other.name && constraints == other.constraints;
+    }
+};
+
+/**
  * @brief Holds the resolved data for a named package property.
  *
  * Property data can be either a plain @c std::string or a
@@ -395,8 +439,9 @@ class PackageConfig {
     PackageType type = PackageType::Package;
     /** @brief Source code location and versioning information. */
     std::optional<Source> source;
-    /** @brief List of package names this package directly depends on. */
-    std::vector<std::string> dependencies;
+    /** @brief List of packages this package directly depends on, each
+     *         optionally carrying version constraints. */
+    std::vector<Dependency> dependencies;
     /** @brief Property overrides applied to dependencies at resolution
      *         time. */
     std::vector<Override> overrides;

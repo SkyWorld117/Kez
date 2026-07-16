@@ -39,6 +39,10 @@ namespace {
         std::vector<std::string> optional_package_order;
         std::unordered_map<std::string, std::vector<OptionReference>> option_references;
         InteractiveOptionSelections option_selections;
+        /** @brief Maps package name → resolved version string, populated during
+         *         graph construction.  Contains only packages that had explicit
+         *         version constraints in their parent's dependency list. */
+        std::unordered_map<std::string, std::string> package_versions;
     };
 
     std::string resolve_abstract(const ResolutionState& state, const std::string& package_name) {
@@ -115,8 +119,11 @@ namespace {
     void register_optional_requirements(ResolutionState& state, const PackageConfig& config,
                                         const std::vector<std::string>& optional_dependencies) {
         for (const std::string& dependency : optional_dependencies) {
-            if (std::find(config.dependencies.begin(), config.dependencies.end(), dependency) !=
-                config.dependencies.end()) {
+            const auto is_dependency = [&](const Dependency& dep) {
+                return dep.name == dependency;
+            };
+            if (std::find_if(config.dependencies.begin(), config.dependencies.end(),
+                             is_dependency) != config.dependencies.end()) {
                 continue;
             }
             if (state.optional_package_choices.emplace(dependency, false).second) {
@@ -138,7 +145,11 @@ namespace {
 
     std::vector<std::string> select_dependencies(ResolutionState& state,
                                                  const PackageConfig& config) {
-        std::vector<std::string> dependencies                = config.dependencies;
+        std::vector<std::string> dependencies;
+        dependencies.reserve(config.dependencies.size());
+        for (const Dependency& dep : config.dependencies) {
+            dependencies.push_back(dep.name);
+        }
         const std::vector<std::string> optional_dependencies = get_optional_dependencies(config);
         std::vector<std::string> available_dependencies;
 
@@ -177,12 +188,26 @@ namespace {
         return dependencies;
     }
 
-    void build_adjacency_list(ResolutionState& state, const std::string& package_name) {
+    std::string resolve_version_for_dependency(const PackageConfig& config,
+                                               const std::string& dep_name) {
+        for (const Dependency& dep : config.dependencies) {
+            if (dep.name == dep_name && !dep.constraints.empty()) {
+                return resolve_dependency_version(dep_name, dep.constraints);
+            }
+        }
+        return "latest";
+    }
+
+    void build_adjacency_list(ResolutionState& state, const std::string& package_name,
+                              const std::string& version = "latest") {
         if (state.adjacency_list.find(package_name) != state.adjacency_list.end()) {
+            // If we already visited under "latest" but now need a specific version,
+            // still skip — the first visit handles all transitive deps correctly
+            // since version constraints only affect the immediate parent's view.
             return;
         }
 
-        PackageConfigPtr config      = get_db_config(package_name);
+        PackageConfigPtr config      = get_db_config(package_name, version);
         std::string concrete_package = package_name;
         if (config->type == PackageType::Abstract) {
             concrete_package = select_implementation(state, package_name, *config);
@@ -191,6 +216,11 @@ namespace {
             }
             config = get_db_config(concrete_package);
         }
+
+        // Record the version used for this package so callers (e.g.
+        // gen_user_config) can generate config entries pointing at the
+        // correct version instead of always using "latest".
+        state.package_versions[concrete_package] = version;
 
         if (config->type == PackageType::System) {
             state.adjacency_list[concrete_package] = {};
@@ -206,7 +236,8 @@ namespace {
         std::vector<std::string> dependencies  = select_dependencies(state, *config);
         state.adjacency_list[concrete_package] = dependencies;
         for (const std::string& dependency : dependencies) {
-            build_adjacency_list(state, dependency);
+            const std::string dep_version = resolve_version_for_dependency(*config, dependency);
+            build_adjacency_list(state, dependency, dep_version);
         }
     }
 
@@ -390,5 +421,6 @@ DependencyResolution resolve_dependencies(const std::vector<std::string>& packag
         *option_selections = std::move(state.option_selections);
     }
     return DependencyResolution {std::move(all_packages), std::move(filtered_packages),
-                                 std::move(state.abstract_packages)};
+                                 std::move(state.abstract_packages),
+                                 std::move(state.package_versions)};
 }

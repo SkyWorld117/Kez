@@ -67,6 +67,15 @@ struct DependencyResolution {
      *        concrete implementation that was chosen for it.
      */
     AbstractPackageSelections abstract_packages;
+
+    /**
+     * @brief Maps package name to the version that was resolved, for any
+     *        package whose parent recipe specified version constraints.
+     *
+     * Packages without constraints are not present in this map; callers
+     * should fall back to "latest" for those.
+     */
+    std::unordered_map<std::string, std::string> package_versions;
 };
 
 /**

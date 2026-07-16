@@ -20,7 +20,7 @@ recipe:
         - fftw3-api
         - kahip
         - metis
-        - scotch
+        - scotch@<7.0.0
         - gmp
         - mpfr
 

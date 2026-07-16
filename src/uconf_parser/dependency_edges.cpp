@@ -38,10 +38,10 @@ namespace {
         if (parsed == context.package_indices.end()) {
             return;
         }
-        for (const std::string& sub_dependency :
+        for (const Dependency& sub_dependency :
              context.packages[parsed->second].database_config->dependencies) {
-            collect_buildable_dependencies(sub_dependency, context, buildable_packages, visited,
-                                           result);
+            collect_buildable_dependencies(sub_dependency.name, context, buildable_packages,
+                                           visited, result);
         }
     }
 
@@ -80,8 +80,9 @@ std::vector<std::string> generate_package_dependencies(
     const std::unordered_set<std::string>& buildable_packages) {
     std::vector<std::string> result;
     std::unordered_set<std::string> visited;
-    for (const std::string& dependency : package.database_config->dependencies) {
-        collect_buildable_dependencies(dependency, context, buildable_packages, visited, result);
+    for (const Dependency& dependency : package.database_config->dependencies) {
+        collect_buildable_dependencies(dependency.name, context, buildable_packages, visited,
+                                       result);
     }
 
     if (!package.transformed_build.has_value()) {

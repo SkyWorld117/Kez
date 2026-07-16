@@ -266,7 +266,12 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
     const std::unordered_set<std::string> all_dependency_set(all_dependencies.begin(),
                                                              all_dependencies.end());
     for (const std::string& dependency : dependencies) {
-        const PackageConfigPtr package = get_db_config(dependency);
+        // Use the version that was resolved during dependency resolution.
+        // If no version was explicitly resolved, "latest" is the default.
+        const auto version_it = resolution.package_versions.find(dependency);
+        const std::string ver =
+            version_it == resolution.package_versions.end() ? "latest" : version_it->second;
+        const PackageConfigPtr package = get_db_config(dependency, ver);
         append_package_config(output, *package, all_dependencies, all_dependency_set,
                               target_packages, abstract_packages, option_selections,
                               default_compiler);

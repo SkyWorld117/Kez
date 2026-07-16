@@ -24,7 +24,7 @@
  *   :--------- | :----------
  *   @c source  | @c parse_source()        (source_parser.hpp)
  *   @c build   | @c parse_build()         (build_parser.hpp)
- *   @c dependencies       | parse_scalar_sequence()  (parser_utils.hpp)
+ *   @c dependencies       | parse_dependencies()  (internal helper)
  *   @c overrides         | parse_overrides() (internal helper)
  *   @c properties        | parse_properties()(internal helper)
  *   @c implementations   | parse_scalar_sequence()  (parser_utils.hpp)

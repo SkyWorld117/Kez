@@ -110,3 +110,25 @@ PackageConfigPtr parse_db_config(const std::filesystem::path& config_path);
  * @see get_db_config()  Populates the cache that this function clears.
  */
 void clear_db_cache();
+
+/**
+ * @brief Resolve the best available version for a dependency given version
+ *        constraints.
+ *
+ * Discovers available versions by scanning the package's database directory
+ * for version-range files (e.g. ``6.1.3-6.1.3.yaml``) and reading the
+ * @c source.releases list in ``latest.yaml``.  All candidate versions are
+ * filtered against the supplied @p constraints and the latest (highest)
+ * matching version is returned.
+ *
+ * If @p constraints is empty the function returns @c "latest" (no constraint).
+ *
+ * @param package_name  Name of the dependency package.
+ * @param constraints   Version constraints to satisfy (ANDed together).
+ *                      May be empty, meaning "any version is acceptable".
+ * @return A version string suitable for passing to get_db_config(), or
+ *         @c "latest" when no constraints are given.  Terminates the program
+ *         if a constraint is present but no matching version can be found.
+ */
+std::string resolve_dependency_version(const std::string& package_name,
+                                       const std::vector<DependencyConstraint>& constraints);

@@ -290,3 +290,98 @@ recipe:
     }
 
 }  // namespace
+
+TEST_F(TemporaryDatabase, ResolvesVersionConstraintsFromRangeFiles) {
+    write("libfoo", "latest.yaml", R"(
+recipe:
+  name: libfoo
+  type: package
+  source:
+    type: git
+    url: https://example.invalid/libfoo.git
+    releases:
+      - version: 2.0.0
+        tag: v2.0.0
+)");
+    write("libfoo", "1.0.0-1.0.0.yaml", R"(
+recipe:
+  name: libfoo-legacy
+  type: package
+)");
+    write("libfoo", "1.5.0-1.5.0.yaml", R"(
+recipe:
+  name: libfoo-middle
+  type: package
+)");
+
+    // No constraints -> "latest"
+    EXPECT_EQ(resolve_dependency_version("libfoo", {}), "latest");
+
+    // Constraint < 2.0.0 should pick 1.5.0
+    std::vector<DependencyConstraint> lt_2 = {{"<", "2.0.0"}};
+    EXPECT_EQ(resolve_dependency_version("libfoo", lt_2), "1.5.0");
+
+    // Constraint <= 1.0.0 should pick 1.0.0
+    std::vector<DependencyConstraint> le_1 = {{"<=", "1.0.0"}};
+    EXPECT_EQ(resolve_dependency_version("libfoo", le_1), "1.0.0");
+
+    // Range 1.0.0 <= x < 2.0.0 should pick 1.5.0
+    std::vector<DependencyConstraint> range = {{">=", "1.0.0"}, {"<", "2.0.0"}};
+    EXPECT_EQ(resolve_dependency_version("libfoo", range), "1.5.0");
+
+    // == 2.0.0 should pick 2.0.0 (from releases)
+    std::vector<DependencyConstraint> eq_2 = {{"==", "2.0.0"}};
+    EXPECT_EQ(resolve_dependency_version("libfoo", eq_2), "2.0.0");
+}
+
+TEST_F(TemporaryDatabase, FailsOnUnsatisfiableVersionConstraint) {
+    write("libbar", "latest.yaml", R"(
+recipe:
+  name: libbar
+  type: package
+  source:
+    type: git
+    url: https://example.invalid/libbar.git
+    releases:
+      - version: 1.0.0
+        tag: v1.0.0
+)");
+
+    std::vector<DependencyConstraint> impossible = {{">=", "2.0.0"}};
+    EXPECT_EXIT(resolve_dependency_version("libbar", impossible),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                "No available version of 'libbar' satisfies");
+}
+
+TEST_F(TemporaryDatabase, ParsesDependenciesWithVersionConstraints) {
+    write("consumer", "latest.yaml", R"(
+recipe:
+  name: consumer
+  type: package
+  dependencies:
+    - alib@>=1.0
+    - blib
+    - clib@>=2.0,<3.0
+)");
+
+    PackageConfigPtr config = get_db_config("consumer");
+    ASSERT_EQ(config->dependencies.size(), 3U);
+
+    // First dep: "alib" with constraint ">=1.0"
+    EXPECT_EQ(config->dependencies[0].name, "alib");
+    ASSERT_EQ(config->dependencies[0].constraints.size(), 1U);
+    EXPECT_EQ(config->dependencies[0].constraints[0].op, ">=");
+    EXPECT_EQ(config->dependencies[0].constraints[0].version, "1.0");
+
+    // Second dep: "blib" with no constraints
+    EXPECT_EQ(config->dependencies[1].name, "blib");
+    EXPECT_TRUE(config->dependencies[1].constraints.empty());
+
+    // Third dep: "clib" with combined constraints
+    EXPECT_EQ(config->dependencies[2].name, "clib");
+    ASSERT_EQ(config->dependencies[2].constraints.size(), 2U);
+    EXPECT_EQ(config->dependencies[2].constraints[0].op, ">=");
+    EXPECT_EQ(config->dependencies[2].constraints[0].version, "2.0");
+    EXPECT_EQ(config->dependencies[2].constraints[1].op, "<");
+    EXPECT_EQ(config->dependencies[2].constraints[1].version, "3.0");
+}

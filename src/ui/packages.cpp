@@ -266,8 +266,17 @@ void execute_info(const CommandArguments& arguments) {
         // --- Dependencies ---
         print_section_header("Dependencies");
         if (!package->dependencies.empty()) {
-            for (const std::string& dep : package->dependencies) {
-                print_two_columns(dep, "{Short description}", short_width, max_width);
+            for (const Dependency& dep : package->dependencies) {
+                std::string label = dep.name;
+                if (!dep.constraints.empty()) {
+                    label += " (";
+                    for (std::size_t i = 0; i < dep.constraints.size(); ++i) {
+                        if (i > 0) label += ", ";
+                        label += dep.constraints[i].op + " " + dep.constraints[i].version;
+                    }
+                    label += ")";
+                }
+                print_two_columns(label, "{Short description}", short_width, max_width);
             }
         } else {
             print_text("None");
