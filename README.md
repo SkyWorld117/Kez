@@ -1,7 +1,8 @@
-<div style="display: flex; align-items: center; gap: 20px;">
-  <img src="docs/kez-logo.svg" alt="Kez logo" width="120"/>
-  <h1 style="margin: 0;">Kez</h1>
-</div>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/kez-logo-text-dark.svg" width="250">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/kez-logo-text.svg" width="250">
+  <img src="docs/assets/kez-logo-text.svg" alt="Kez" width="250">
+</picture>
 
 Kez is an HPC-focused package manager for GNU/Linux on 64-bit x86 and ARM systems.
 
