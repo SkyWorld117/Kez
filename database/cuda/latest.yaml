@@ -8,7 +8,7 @@ recipe:
         type: script
         releases:
             - version: 13.3
-              url: https://developer.download.nvidia.com/compute/cuda/13.3.0/local_installers/cuda_13.3.0_610.43.02_linux${kez.arch.cuda}.run
+              url: https://developer.download.nvidia.com/compute/cuda/13.3.1/local_installers/cuda_13.3.1_610.43.02_linux${kez.arch.cuda}.run
             - version: 13.2
               url: https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux${kez.arch.cuda}.run
             - version: 12.9
