@@ -5,35 +5,8 @@ recipe:
     type: system
     toolchain: autotools
 
-    source:
-        type: tarball
-        releases:
-            - version: 4.2.2
-              url: https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.2.tar.gz
-
     dependencies:
         - gmp
-
-    build:
-        configurations:
-            options:
-                - name: enable-shared
-                  description: Build shared libraries
-
-                - name: enable-static
-                  description: Build static libraries
-
-                - name: enable-float128
-                  description: Enable support for 128-bit floating-point numbers
-
-                - name: with-gmp
-                  description: Specify GMP installation prefix
-                  enabled_value:
-                      default: ${gmp.prefix}
-
-        stages:
-            - target:
-            - target: install
 
     properties:
         lib: ${mpfr.prefix}/lib

@@ -5,20 +5,6 @@ recipe:
     type: system
     toolchain: autotools
 
-    source:
-        type: tarball
-        releases:
-            - version: 5.8.1
-              url: https://github.com/tukaani-project/xz/releases/download/v5.8.1/xz-5.8.1.tar.gz
-
-    build:
-        preprocessing: ${source}/autogen.sh --no-po4a
-
-        configurations: {}
-        stages:
-            - target:
-            - target: install
-
     properties:
         lib: ${xz.prefix}/lib
         libs:

@@ -5,37 +5,8 @@ recipe:
     type: system
     toolchain: autotools
 
-    source:
-        type: tarball
-        releases:
-            - version: 0.27
-              url: https://libisl.sourceforge.io/isl-0.27.tar.gz
-
     dependencies:
         - gmp
-
-    build:
-        configurations:
-            options:
-                - name: enable-shared
-                  description: Build shared libraries
-
-                - name: enable-static
-                  description: Build static libraries
-
-                - name: with-gmp-prefix
-                  description: Specify GMP installation prefix
-                  enabled_value:
-                      default: ${gmp.prefix}
-
-                - name: with-int
-                  description: Package for multi-precision integers
-                  enabled_value:
-                      default: gmp
-
-        stages:
-            - target:
-            - target: install
 
     properties:
         lib: ${isl.prefix}/lib
