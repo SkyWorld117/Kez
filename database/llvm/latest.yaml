@@ -7,10 +7,10 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 21.1.0-x86_64
-              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
-            - version: 21.1.0-arm64
-              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz
+            - version: 22.1.8
+              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-${kez.arch.llvm}.tar.xz
+            - version: 21.1.0
+              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-${kez.arch.llvm}.tar.xz
 
     build:
         postprocessing: cp -r ${source}/* ${llvm.prefix}

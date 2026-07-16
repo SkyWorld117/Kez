@@ -7,6 +7,8 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 26.5.0
+              url: https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-${kez.arch.nodejs}.tar.xz
             - version: 24.15.0
               url: https://nodejs.org/dist/v24.15.0/node-v24.15.0-linux-${kez.arch.nodejs}.tar.xz
 
