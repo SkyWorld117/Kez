@@ -276,11 +276,19 @@ print_package_progress() {
 
     case $status in
         running)
-            repeat_progress_character '#' "$filled_width"
-            local filled=$progress_repeated
-            local unfilled_width=$(( progress_bar_width - filled_width - 1 ))
-            repeat_progress_character '.' "$unfilled_width"
-            bar="${filled}${progress_ui_spinners[$(((spinner_base + active_ordinal) % 4))]}${progress_repeated}"
+            if (( filled_width >= progress_bar_width )); then
+                # All commands done but process not yet collected.
+                # No room for the spinner — show a full bar instead
+                # of appending the spinner past the bar boundary.
+                repeat_progress_character '#' "$progress_bar_width"
+                bar=$progress_repeated
+            else
+                repeat_progress_character '#' "$filled_width"
+                local filled=$progress_repeated
+                local unfilled_width=$(( progress_bar_width - filled_width - 1 ))
+                repeat_progress_character '.' "$unfilled_width"
+                bar="${filled}${progress_ui_spinners[$(((spinner_base + active_ordinal) % 4))]}${progress_repeated}"
+            fi
             ;;
         complete | done)
             repeat_progress_character '#' "$progress_bar_width"
