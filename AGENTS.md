@@ -53,4 +53,12 @@ Follow the following workflow for packaging a new software:
 5. Verify the recipe by running `kez dbcheck --only <package>` to check its validity.
 6. Verify the recipe by running `kez uconf <package> --silence` to generate a default user configurable file.
 7. Verify the recipe by running `kez install <package> --silence --dry-run` to inspect the bash commands that will be executed during installation. Use `--config` to override the default option states in the user configurable YAML file.
-8. Prompt the user if they want to install the package. If yes, install the package with all its dependencies. If error occurs during installation, go back to step 4 and fix the recipe. If no or the installation goes through successfully, the packaging process is complete. The user can review the recipe and push the changes to the repository.
+8. Prompt the user if they want to install the package. If yes, install the package with all its dependencies. If error occurs during installation, go back to step 4 and fix the recipe. If no or the installation goes through successfully, the packaging process is complete. The user can review the recipe and push the changes to the repository. DO NOT OVERRIDE KEZ_WORKDIR at any point during the packaging process. Use `--env test` to test the recipe in a temporary environment if needed.
+
+### Database Update Protocol
+
+When updating the database, follow these steps:
+1. Search the web to find the latest version of the package and its release notes.
+2. If the package has a new version, check if the existing recipe is still valid for the new version. If not, move the existing recipe to a new file with the version range it is valid for (e.g., `1.0.0-1.2.0.yaml`) and create a new `latest.yaml` for the new version. Then, perform the packaging workflow for the new version.
+3. If the existing recipe is still valid for the new version, update the `latest.yaml` file with the new version source URL.
+4. Remove redundant versions of the package from the database if they are no longer needed. We only keep the unique major and middle version numbers of the package. For example, if we have `1.0.0` in the database and we find `1.0.2`, we can remove `1.0.0` and keep `1.0.2`. If we find `1.1.0`, we can keep both `1.0.2` and `1.1.0`. If we find `2.0.0`, we should keep all three versions. The goal is to keep the database clean and only have the unique major and middle version numbers of the package. The exception to this rule is if the package changes its build recipe or interface drastically between minor versions (e.g. `1.0.0` and `1.0.1`), in which case we should keep both versions in the database.
