@@ -52,7 +52,7 @@ recipe:
                   command: make -j${KEZ_NPROC} install
 
     properties:
-        lib: ${openssl.prefix}/lib
+        lib: ${openssl.prefix}/lib64
         libs:
             default: -lssl -lcrypto
         include: ${openssl.prefix}/include
