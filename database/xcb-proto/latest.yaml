@@ -8,7 +8,7 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 0.5.1
+            - version: 1.17.0
               url: https://www.x.org/releases/individual/proto/xcb-proto-1.17.0.tar.xz
 
     build:
