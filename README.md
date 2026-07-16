@@ -1,4 +1,7 @@
-# Kez
+<div style="display: flex; align-items: center; gap: 20px;">
+  <img src="docs/kez-logo.svg" alt="Kez logo" width="120"/>
+  <h1 style="margin: 0;">Kez</h1>
+</div>
 
 Kez is an HPC-focused package manager for GNU/Linux on 64-bit x86 and ARM systems.
 
