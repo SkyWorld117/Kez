@@ -1,6 +1,6 @@
 # Kez
 
-Kez is an HPC-focused package manager for GNU/Linux systems.
+Kez is an HPC-focused package manager for GNU/Linux on 64-bit x86 and ARM systems.
 
 Everything is at its very early stage, use with caution.
 
@@ -8,21 +8,25 @@ You can find more information in the [documentation](docs/README.md).
 
 ## Why Kez?
 
-Traditional package managers often struggle with the complexities of HPC environments, where multiple versions of libraries and tools need to coexist. Cluster administrators often leave the users to manage these complexities themselves, creating the demand of a user-site package manager that can handle such complexities.
+Traditional package managers often struggle with the complexities of HPC environments, where multiple versions of libraries and tools must coexist. Cluster administrators often leave users to manage these complexities themselves, creating the need for a user-site package manager designed for this task.
 
-Although there are existing solutions such as Spack and EasyBuild, they miss one or more key features below:
+Kez is built specifically for HPC, with the following key features:
 
-- User-friendly configuration
-- High maintainability for package developers
-- High performance
-- Precise shell (bash) environment management
-- Transparent building and installation process
-
-Kez achieves the points above by using a C++ backend, a database of YAML files that are easy to modify and extend, and a novel environment structure to achieve both efficiency and isolation.
+- **Fast Backend**: Kez is written in C++ for performance, resolving large dependency trees in milliseconds.
+- **Virtual Package Interfaces**: Declare abstract dependencies like MPI, BLAS, LAPACK, and FFTW in your recipes. Kez automatically selects the best available implementation per architecture based on built-in benchmarking, and you can override the choice at any time.
+- **Isolated Environments with Shared Dependencies**: Every environment is self-contained to prevent library conflicts, while compilers, MPI stacks, and vendor SDKs are shared across packages — saving disk space and ensuring compatibility.
+- **Environment Module Support**: Kez generates Tcl modulefiles compatible with Lmod, making it easy to switch between software stacks on shared clusters.
+- **No Configuration Required**: Install software with a single command — Kez provides sensible defaults out of the box. Advanced users can generate and edit configuration files to fine-tune the build process when needed.
+- **Transparent Builds**: Use `--dry-run` to inspect every command before it executes, and review a full build plan for any installation.
+- **Simple YAML Recipes**: Package recipes are straightforward YAML — no Python DSL to learn. This makes creating and maintaining packages accessible to cluster administrators and researchers alike.
+- **Dual-Level Build Parallelism**: Control per-package and inter-package concurrency independently to maximize hardware utilization when building large dependency graphs.
+- **Developer-Friendly Mode**: Build and test software directly from a local source directory using pre-defined recipes — ideal for iterating on new versions before packaging.
+- **Factory System for Batch Builds**: Create isolated build workspaces, run build profiles, and summarize results with regex matching — designed for testing packages across compiler and MPI variants at scale.
 
 ## Known Issues
 
-- No actual AMD GPU support (ROCm etc.) as I do not have access to such hardware for testing. 
+- Stale ARM support (aarch64): The code path is ARM-aware, but the database might be outdated due to lack of testing on ARM hardware.
+- No actual AMD GPU support (ROCm etc.): The database has almost no packages that support AMD GPUs due to lack of testing on AMD GPU hardware.
 - No Python package support yet, but it is planned for the future.
 
 ## Development Setup
