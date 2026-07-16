@@ -4,17 +4,19 @@ set -Euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+source "${SCRIPT_DIR}/scripts/colored_io.sh"
+
 if [ -z "${KEZ_WORKDIR:-}" ]; then
 
-    echo "[E]: KEZ_WORKDIR is not set. Please set it to the desired work directory for Kez (e.g., export KEZ_WORKDIR=~/.kez)."
+    error "KEZ_WORKDIR is not set. Please set it to the desired work directory for Kez (e.g., export KEZ_WORKDIR=~/.kez)."
 
 elif [ ! -f "${KEZ_WORKDIR}/config.yaml" ]; then
 
     mkdir -p "${KEZ_WORKDIR}"
     cp "${SCRIPT_DIR}/configs/config.yaml" "${KEZ_WORKDIR}/config.yaml"
-    echo "[I]: \`config.yaml\` was not found in ${KEZ_WORKDIR}. A default config file has been copied from the script directory. Please review and customize it as needed."
-    echo "[I]: After setting up the configuration, please re-run this script to initialize the environment variables and load the necessary functions."
-    echo "[I]: You can find more example configurations in the ${SCRIPT_DIR}/configs directory."
+    info "\`config.yaml\` was not found in ${KEZ_WORKDIR}. A default config file has been copied from the script directory. Please review and customize it as needed."
+    info "After setting up the configuration, please re-run this script to initialize the environment variables and load the necessary functions."
+    info "You can find more example configurations in the ${SCRIPT_DIR}/configs directory."
 
 else
     export KEZ_HOME="${SCRIPT_DIR}"
@@ -29,12 +31,12 @@ else
     elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
         export KEZ_ARCH="arm64"
     else
-        echo "Unsupported architecture: $(uname -m)"
+        error "Unsupported architecture: $(uname -m)"
         return 1
     fi
 
     if ! command -v yq &> /dev/null; then
-        echo "[I]: yq is not installed. It will be installed in ${KEZ_WORKDIR}/bin."
+        info "yq is not installed. It will be installed in ${KEZ_WORKDIR}/bin."
         mkdir -p "${KEZ_WORKDIR}/bin"
 
         YQ_VERSION=$(grep -E '^[[:space:]]*yq:' "${KEZ_HOME}/manifest.yaml" | sed -E 's/^[[:space:]]*yq:[[:space:]]*//')
@@ -97,5 +99,6 @@ else
 fi
 
 unset SCRIPT_DIR
+unset -f colored_print info warning error success
 
 set +euo pipefail

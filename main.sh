@@ -21,8 +21,10 @@ kez () {
     ################################################
 
     if [ ! -f "${KEZ_HOME}/bin/kez" ]; then
+        source "${KEZ_HOME}/scripts/colored_io.sh"
+
         if [ "${1:-}" == "init" ]; then
-            echo "[W]: Kez is not initialized. Running initialization process..."
+            warning "Kez is not initialized. Running initialization process..."
 
             local cmd="bash ${KEZ_HOME}/scripts/init.sh"
 
@@ -36,10 +38,12 @@ kez () {
 
             eval "${cmd}"
 
+            unset -f colored_print info warning error success
             return $?
         fi
 
-        echo >&2 "[E]: Kez is not initialized. Please run 'kez init' to initialize Kez before using other commands."
+        error "Kez is not initialized. Please run 'kez init' to initialize Kez before using other commands."
+        unset -f colored_print info warning error success
         return 1
     fi
 
