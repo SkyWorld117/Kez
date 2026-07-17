@@ -24,6 +24,7 @@ Access any property declared by another package:
 | `${foo.incflags}` | Compiler `-I` flags derived from `include` |
 | `${foo.prefix}` | Installation prefix of package `foo` |
 | `${foo.version}` | Version of package `foo` |
+| `${foo.version.major}` | Major version number (part before the first `.`), or the whole version if no dot is present |
 | `${foo.libs}` | Link libraries of package `foo` |
 
 ### Predefined Variables
@@ -35,6 +36,7 @@ Access any property declared by another package:
 | `${kez.arch.<variant>}` | Architecture mapped through heuristics (`heuristics/architecture.yaml`) |
 | `${package.prefix}` | Prefix where the current package is installed |
 | `${package.version}` | Version of the package being built |
+| `${package.version.major}` | Major version number (part before the first `.`), or the whole version if no dot is present |
 | `${source}` | Source directory of the current package |
 
 ### Configuration Values

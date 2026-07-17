@@ -64,7 +64,7 @@ Describes how Kez fetches the source code or prebuilt binaries.
 
 | Source type | Description |
 |---|---|
-| `tarball` | `.tar.gz`, `.tar.xz`, `.tgz` archives |
+| `tarball` | `.tar.gz`, `.tar.xz`, `.tar.bz2`, `.tar.zst`, `.tgz`, `.tbz2`, `.tbz`, `.tar` archives |
 | `git` | Git repository (uses `tag` field) |
 | `script` | Self-contained installer script |
 | `zip` | `.zip` archives |
