@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/kez-logo-text-dark.svg" width="250">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/kez-logo-text.svg" width="250">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/kez-logo-text-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/kez-logo-text.svg">
   <img src="docs/assets/kez-logo-text.svg" alt="Kez" width="250">
 </picture>
 
