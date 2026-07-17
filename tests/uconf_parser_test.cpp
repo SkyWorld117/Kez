@@ -952,4 +952,70 @@ recipe:
             << "cuda is independent of nvhpc and must not be rebuilt";
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase, ResolvesVersionMajorFromSourceRelease) {
+        write_package("mypkg", R"(
+recipe:
+  name: mypkg
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 2.0.0
+        url: https://example.invalid/mypkg.tar.gz
+  build:
+    configurations:
+      command: echo ${mypkg.version.major}
+)");
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  mypkg:
+    version: 2.0.0
+    compiler: system
+    build: {}
+recipe:
+  abstract_packages: {}
+  dependencies: [mypkg]
+  targets: [mypkg]
+)");
+
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        EXPECT_NE(std::find(plan[0].commands.begin(), plan[0].commands.end(), "echo 2"),
+                  plan[0].commands.end());
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, ResolvesVersionMajorWithSingleComponentVersion) {
+        write_package("mypkg", R"(
+recipe:
+  name: mypkg
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: latest
+        url: https://example.invalid/mypkg.tar.gz
+  build:
+    configurations:
+      command: echo ${mypkg.version.major}
+)");
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  mypkg:
+    version: latest
+    compiler: system
+    build: {}
+recipe:
+  abstract_packages: {}
+  dependencies: [mypkg]
+  targets: [mypkg]
+)");
+
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        EXPECT_NE(std::find(plan[0].commands.begin(), plan[0].commands.end(), "echo latest"),
+                  plan[0].commands.end());
+    }
+
 }  // namespace

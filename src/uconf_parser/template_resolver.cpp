@@ -334,8 +334,17 @@ namespace {
         if (property_name == "prefix") {
             return parser_package_prefix(package_name, context);
         }
-        if (property_name == "version") {
-            return parser_package_version(package_name, context);
+        if (property_name.rfind("version", 0) == 0) {
+            std::string version = parser_package_version(package_name, context);
+            if (property_name == "version") {
+                return version;
+            }
+            if (property_name == "version.major") {
+                const std::size_t dot = version.find('.');
+                return dot == std::string::npos ? version : version.substr(0, dot);
+            }
+            user_config_error("unknown version sub-property '" + property_name + "' for package '" +
+                              package_name + "'");
         }
 
         const PackageConfigPtr config = parser_package_config(context, package_name);
