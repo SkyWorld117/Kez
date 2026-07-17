@@ -32,13 +32,13 @@ namespace {
      * @brief Extract the archive extension from a tarball URL.
      *
      * Scans the URL against a list of known archive extensions (``.tar.zst``,
-     * ``.tar.bz2``, ``.tar.gz``, ``.tar.xz``, ``.tgz``, ``.tar``) and returns
-     * the first match.  Terminates with ``user_config_error`` if no supported
-     * extension is found.
+     * ``.tar.bz2``, ``.tar.gz``, ``.tar.xz``, ``.tgz``, ``.tbz2``, ``.tbz``,
+     * ``.tar``) and returns the first match.  Terminates with
+     * ``user_config_error`` if no supported extension is found.
      */
     std::string tarball_extension(const std::string& url) {
-        static const std::vector<std::string> extensions = {".tar.zst", ".tar.bz2", ".tar.gz",
-                                                            ".tar.xz",  ".tgz",     ".tar"};
+        static const std::vector<std::string> extensions = {
+            ".tar.zst", ".tar.bz2", ".tar.gz", ".tar.xz", ".tgz", ".tbz2", ".tbz", ".tar"};
         for (const std::string& extension : extensions) {
             if (url.find(extension) != std::string::npos) {
                 return extension;
