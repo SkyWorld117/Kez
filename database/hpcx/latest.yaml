@@ -1,0 +1,23 @@
+---
+recipe:
+    name: hpcx
+    description: NVIDIA® HPC-X is a comprehensive software package that includes Message Passing Interface (MPI), Symmetrical Hierarchical Memory 
+        (SHMEM) and Partitioned Global Address Space (PGAS) communications libraries, and various acceleration packages.
+    type: vendor
+
+    source:
+        type: tarball
+        releases:
+            - version: 2.50.rhel.10
+              url: https://content.mellanox.com/hpc/hpc-x/v2.50_cuda13/hpcx-v2.50-gcc-doca_ofed-redhat10-cuda${cuda.version.major}-${kez.arch}.tbz
+            - version: 2.50.rhel.9
+              url: https://content.mellanox.com/hpc/hpc-x/v2.50_cuda13/hpcx-v2.50-gcc-doca_ofed-redhat9-cuda${cuda.version.major}-${kez.arch}.tbz
+
+    dependencies:
+        - cuda
+
+    build:
+        postprocessing: |-
+            cp -r ${source}/* ${hpcx.prefix}/
+
+    properties:

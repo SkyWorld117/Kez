@@ -65,8 +65,8 @@ recipe:
                   enabled:
                       default: false
                   enabled_value:
-                      default: ${hcoll.prefix}
-                  requires: [hcoll]
+                      default: ${hpcx-hcoll.prefix}
+                  requires: [hpcx-hcoll]
 
         stages:
             - target:

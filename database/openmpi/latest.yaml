@@ -151,8 +151,8 @@ recipe:
                   enabled:
                       default: false
                   enabled_value:
-                      default: ${hcoll.prefix}
-                  requires: [hcoll]
+                      default: ${hpcx-hcoll.prefix}
+                  requires: [hpcx-hcoll]
 
                 - name: with-libnuma
                   description: Build with libnuma support

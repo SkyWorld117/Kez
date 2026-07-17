@@ -9,9 +9,6 @@ settings:
         rdma-core:
             prefix: /usr
             version: 61.0
-        hcoll:
-            prefix:
-            version:
         gdrcopy:
             prefix: /usr
             version: 2.5.2

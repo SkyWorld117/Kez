@@ -61,9 +61,6 @@ settings:
     rdma-core:
       prefix:
       version:
-    hcoll:
-      prefix:
-      version:
     gdrcopy:
       prefix:
       version:

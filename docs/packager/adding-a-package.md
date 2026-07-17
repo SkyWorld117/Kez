@@ -42,7 +42,7 @@ recipe:
 - **`mpi`**: MPI implementations (openmpi, mpich)
 - **`vendor`**: Vendor SDKs (cuda, intel-oneapi, nvhpc)
 - **`package`**: User-facing applications (everything else)
-- **`external`**: System-provided libraries (rdma-core, hcoll, slurm) — no source/build,
+- **`external`**: System-provided libraries (rdma-core, slurm) — no source/build,
   only properties pointing to system paths configured in `config.yaml`
 
 ### Choose the toolchain

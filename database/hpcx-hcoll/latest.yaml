@@ -1,0 +1,14 @@
+---
+recipe:
+    name: hpcx-hcoll
+    description: HPC-X HCOLL
+    type: vendor
+
+    dependencies:
+        - hpcx
+
+    properties:
+        parent: hpcx
+        prefix: ${hpcx.prefix}/hcoll
+        lib: ${hpcx-hcoll.prefix}/lib
+        include: ${hpcx-hcoll.prefix}/include

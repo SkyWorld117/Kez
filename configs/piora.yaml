@@ -9,9 +9,6 @@ settings:
         rdma-core:
             prefix: /usr
             version: 51.0
-        hcoll:
-            prefix: /opt/mellanox/hcoll
-            version: 4.8.3227
         gdrcopy:
             prefix:
             version:
