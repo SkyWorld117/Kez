@@ -3,33 +3,29 @@
     <!-- Mask to cut the center hole out of the gear -->
     <mask id="gearHole">
       <rect width="400" height="400" fill="white"/>
-      <circle cx="200" cy="200" r="108" fill="black"/>
+      <circle cx="200" cy="200" r="103" fill="black"/>
     </mask>
 
     <!-- Single gear tooth -->
-    <path id="tooth" d="M-13,-158 L13,-158 L15,-133 L-15,-133 Z"/>
+    <path id="tooth" d="M-28,-160 L28,-160 L40,-129 A135,135 0 0,1 -40,-129 Z"/>
   </defs>
 
   <!-- ===== GEAR ===== -->
   <g fill="#555658" mask="url(#gearHole)">
     <use href="#tooth" transform="translate(200,200) rotate(0)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(30)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(60)"/>
+    <use href="#tooth" transform="translate(200,200) rotate(45)"/>
     <use href="#tooth" transform="translate(200,200) rotate(90)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(120)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(150)"/>
+    <use href="#tooth" transform="translate(200,200) rotate(135)"/>
     <use href="#tooth" transform="translate(200,200) rotate(180)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(210)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(240)"/>
+    <use href="#tooth" transform="translate(200,200) rotate(225)"/>
     <use href="#tooth" transform="translate(200,200) rotate(270)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(300)"/>
-    <use href="#tooth" transform="translate(200,200) rotate(330)"/>
+    <use href="#tooth" transform="translate(200,200) rotate(315)"/>
     <circle cx="200" cy="200" r="135"/>
   </g>
 
   <!-- Gear detailing -->
-  <circle cx="200" cy="200" r="126" fill="none" stroke="#3a3a3c" stroke-width="1.5"/>
-  <circle cx="200" cy="200" r="115" fill="none" stroke="#3a3a3c" stroke-width="1"/>
+  <circle cx="200" cy="200" r="128" fill="none" stroke="#3a3a3c" stroke-width="1.5"/>
+  <circle cx="200" cy="200" r="113" fill="none" stroke="#3a3a3c" stroke-width="1"/>
 
   <!-- ===== CHEESE WEDGE (from supplied cheese.svg) ===== -->
   <g transform="translate(200, 200) scale(0.50) translate(-199.5, -140.5)">
