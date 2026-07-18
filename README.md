@@ -70,3 +70,7 @@ Yes, we are open to AI contributions! However, you need to follow the guidelines
 - A natural human must be responsible for the final code submission.
 - The AI-generated code should be reviewed and tested by a human before submission. If the corresponding human cannot answer questions about the code, it will be rejected.
 - The AI-generated code should be short and simple, because we review each pull request manually and we cannot spend too much time on reviewing complex code.
+
+## Disclaimer
+
+As a package manager, Kez downloads and builds software from third-party sources. When you install software via Kez, you are responsible for complying with that software's license, and for any issues that may arise from using it. The Kez team is not responsible for any damage or loss caused by the use of Kez or the software it manages. Use at your own risk.
