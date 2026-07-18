@@ -498,6 +498,71 @@ build_git() {
     record_package_version "${version}"
 }
 
+build_python() {
+    local version folder_and_version folder
+    version=$(yq -r '.system-stack.python' "${KEZ_HOME}/manifest.yaml")
+    folder_and_version=$(fetch_python "${version}")
+    if [[ -z $folder_and_version ]]; then
+        warning "python is already installed, skipping..."
+        return 0
+    fi
+
+    info "Installing python..."
+    folder="${folder_and_version%%::*}"
+    version="${folder_and_version##*::}"
+    cd "${KEZ_SYSTEM_TMP}/${folder}"
+    ./configure \
+        --prefix="${KEZ_SYSTEM}" \
+        --enable-shared \
+        --enable-optimizations \
+        CFLAGS="-O3" \
+        LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
+    make -j"${KEZ_NPROC}"
+    make install -j"${KEZ_NPROC}"
+
+    # python-is-python3
+    ln -sf "${KEZ_SYSTEM}/bin/python3" "${KEZ_SYSTEM}/bin/python"
+    ln -sf "${KEZ_SYSTEM}/bin/pip3" "${KEZ_SYSTEM}/bin/pip"
+    record_package_version "${version}"
+}
+
+build_ninja() {
+    local version ninja_tag ninja_tag_arch
+    info "Installing ninja..."
+    version=$(yq -r '.system-stack.ninja' "${KEZ_HOME}/manifest.yaml")
+    if [[ $version == latest ]]; then
+        ninja_tag=$(curl -s "https://api.github.com/repos/ninja-build/ninja/releases/latest" 2>/dev/null |
+            jq -r '.tag_name' 2>/dev/null)
+    else
+        ninja_tag="v${version}"
+    fi
+    if [[ ${KEZ_ARCH} == x86_64 ]]; then
+        ninja_tag_arch="ninja-linux.zip"
+    elif [[ ${KEZ_ARCH} == arm64 ]]; then
+        ninja_tag_arch="ninja-linux-aarch64.zip"
+    else
+        error "Unsupported architecture: ${KEZ_ARCH}"
+        return 1
+    fi
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/ninja.zip" \
+        "https://github.com/ninja-build/ninja/releases/download/${ninja_tag}/${ninja_tag_arch}"
+    unzip -q "${KEZ_SYSTEM_TMP}/ninja.zip" -d "${KEZ_SYSTEM}/bin"
+    record_package_version "${ninja_tag#v}"
+}
+
+build_meson() {
+    local version
+    info "Installing meson..."
+    version=$(yq -r '.system-stack.meson' "${KEZ_HOME}/manifest.yaml")
+    if [[ $version == latest ]]; then
+        pip3 install --target="${KEZ_SYSTEM_TMP}" --upgrade meson
+    else
+        pip3 install --target="${KEZ_SYSTEM_TMP}" --upgrade "meson==${version}"
+    fi
+    cp "${KEZ_SYSTEM_TMP}/bin/meson" "${KEZ_SYSTEM}/bin/meson"
+    record_package_version "${version}"
+}
+
 build_yaml_cpp() {
     local version folder_and_version folder
     version=$(yq -r '.dependencies.yaml-cpp' "${KEZ_HOME}/manifest.yaml")
@@ -614,6 +679,7 @@ write_init_plan() {
     init_plan_package "${plan_file}" cmake "${use_distro_compiler}"
     init_plan_package "${plan_file}" rust "${use_distro_compiler}"
     init_plan_package "${plan_file}" patchelf "${use_distro_compiler}"
+    init_plan_package "${plan_file}" ninja "${use_distro_compiler}"
 
     init_plan_package "${plan_file}" elfutils "${use_distro_compiler}" gcc
     init_plan_package "${plan_file}" m4 "${use_distro_compiler}" gcc
@@ -623,6 +689,8 @@ write_init_plan() {
     init_plan_package "${plan_file}" make "${use_distro_compiler}" gcc
     init_plan_package "${plan_file}" perl "${use_distro_compiler}" gcc
     init_plan_package "${plan_file}" git "${use_distro_compiler}" gcc
+    init_plan_package "${plan_file}" python "${use_distro_compiler}" gcc
+    init_plan_package "${plan_file}" meson "${use_distro_compiler}" python ninja
     init_plan_package "${plan_file}" yaml-cpp "${use_distro_compiler}" gcc cmake
     init_plan_package "${plan_file}" googletest "${use_distro_compiler}" gcc cmake
 }
@@ -682,6 +750,9 @@ build_package() {
         yaml-cpp) build_yaml_cpp ;;
         googletest) build_googletest ;;
         patchelf) build_patchelf ;;
+        ninja) build_ninja ;;
+        python) build_python ;;
+        meson) build_meson ;;
         *)
             error "Unknown system package: ${package}"
             return 2

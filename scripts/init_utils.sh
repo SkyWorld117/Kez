@@ -241,3 +241,38 @@ fetch_gcc() {
     local version="${basename#gcc-}"
     echo "${basename}::${version}"
 }
+
+fetch_python() {
+    local version="${1}"
+    local ext="tgz"
+
+    if is_installed "python"; then
+        return 0
+    fi
+
+    local basename
+    if [[ -n "${version}" ]] && [[ "${version}" != "latest" ]]; then
+        basename="Python-${version}"
+    else
+        version=$(curl -sSL "https://www.python.org/downloads/source/" | \
+            grep -oE "Python [0-9]+\.[0-9]+\.[0-9]+ " | \
+            sort -Vu | \
+            tail -n1)
+        # Remove the "Python " prefix and trailing space
+        version="${version#Python }"
+        version="${version% }"
+        basename="Python-${version}"
+    fi
+
+    wget --quiet --show-progress --output-document="${KEZ_SYSTEM_TMP}/${basename}.${ext}" "https://www.python.org/ftp/python/${version}/${basename}.${ext}"
+
+    # Check if the file was downloaded successfully
+    if [ ! -f "${KEZ_SYSTEM_TMP}/${basename}.${ext}" ]; then
+        echo >&2 "Failed to download ${basename}.${ext} from python.org"
+        return 1
+    fi
+
+    tar -xf "${KEZ_SYSTEM_TMP}/${basename}.${ext}"
+
+    echo "${basename}::${version}"
+}

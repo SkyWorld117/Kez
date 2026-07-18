@@ -39,6 +39,9 @@ system-stack:
     cmake: latest
     perl: latest
     git: latest
+    python: latest
+    ninja: latest
+    meson: latest
 
 # Relative paths to the work directory
 paths:
