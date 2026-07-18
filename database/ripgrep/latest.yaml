@@ -7,8 +7,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 15.1.0
-              url: https://github.com/BurntSushi/ripgrep/releases/download/15.1.0/ripgrep-15.1.0-${kez.arch.ripgrep}.tar.gz
+            - version: 15.2.0
+              url: https://github.com/BurntSushi/ripgrep/releases/download/15.2.0/ripgrep-15.2.0-${kez.arch.ripgrep}.tar.gz
 
     build:
         postprocessing: |-

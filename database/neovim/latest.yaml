@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 0.12.2
-              url: https://github.com/neovim/neovim/archive/refs/tags/v0.12.2.tar.gz
+            - version: 0.12.4
+              url: https://github.com/neovim/neovim/archive/refs/tags/v0.12.4.tar.gz
 
     dependencies:
         - fd
