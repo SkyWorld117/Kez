@@ -7,6 +7,10 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 1.91.0
+              url: https://archives.boost.io/release/1.91.0/source/boost_1_91_0.tar.gz
+            - version: 1.90.0
+              url: https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.gz
             - version: 1.89.0
               url: https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
 
