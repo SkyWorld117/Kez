@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 1.8.12
-              url: https://www.x.org/archive/individual/lib/libX11-1.8.12.tar.gz
+            - version: 1.8.13
+              url: https://www.x.org/archive/individual/lib/libX11-1.8.13.tar.gz
 
     dependencies:
         - xorgproto
