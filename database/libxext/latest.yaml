@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 1.3.6
-              url: https://www.x.org/releases/individual/lib/libXext-1.3.6.tar.xz
+            - version: 1.3.7
+              url: https://www.x.org/releases/individual/lib/libXext-1.3.7.tar.xz
 
     dependencies:
         - libx11

@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 1.5.4
-              url: https://www.x.org/releases/individual/lib/libXrandr-1.5.4.tar.xz
+            - version: 1.5.5
+              url: https://www.x.org/releases/individual/lib/libXrandr-1.5.5.tar.xz
 
     dependencies:
         - xorgproto
