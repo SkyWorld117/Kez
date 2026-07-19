@@ -19,5 +19,7 @@ recipe:
     build:
         postprocessing: |-
             cp -r ${source}/* ${hpcx.prefix}/
+            bash $KEZ_HOME/tools/patch_rpath.sh ${hpcx.prefix}/hcoll/lib/libhcoll.so ${hpcx.prefix}/hcoll/lib
+            sed -i "s|libdir=' '|libdir='${hpcx.prefix}/hcoll/lib'|" ${hpcx.prefix}/hcoll/lib/libhcoll.la
 
     properties:
