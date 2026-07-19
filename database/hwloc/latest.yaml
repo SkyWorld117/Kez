@@ -8,13 +8,14 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 2.14.0
+              url: https://download.open-mpi.org/release/hwloc/v2.14/hwloc-2.14.0.tar.gz
             - version: 2.12.1
               url: https://download.open-mpi.org/release/hwloc/v2.12/hwloc-2.12.1.tar.gz
 
     dependencies:
         - zlib
         - lz4
-        - libpciaccess
         - libxml2
 
     build:
@@ -55,6 +56,15 @@ recipe:
                           - condition: ${hwloc.config.use_cuda} true
                             value: ${cuda.version}
 
+                - name: use_pciaccess
+                  description: Use libpciaccess for PCI device discovery
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_format: enable-pci
+                  disabled_format: disable-pci
+                  requires: [libpciaccess]
+
                 - name: use_rocm
                   description: Use ROCm support
                   user_configurable: true
@@ -63,6 +73,7 @@ recipe:
                   enabled_format: enable-rsmi
                   disabled_format: disable-rsmi
                   requires: [rocm]
+
                 - name: with-rocm
                   description: Specify ROCm installation path
                   enabled:
