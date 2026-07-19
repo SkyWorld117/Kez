@@ -8,6 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 1.21.0
+              url: https://github.com/openucx/ucx/releases/download/v1.21.0/ucx-1.21.0.tar.gz
             - version: 1.20.0
               url: https://github.com/openucx/ucx/releases/download/v1.20.0/ucx-1.20.0.tar.gz
             - version: 1.18.1
