@@ -566,7 +566,7 @@ build_meson() {
     else
         pip3 install --target="${KEZ_SYSTEM_TMP}" --upgrade "meson==${version}"
     fi
-    cp "${KEZ_SYSTEM_TMP}/bin/meson" "${KEZ_SYSTEM}/bin/meson"
+    cp -r "${KEZ_SYSTEM_TMP}/"* "${KEZ_SYSTEM}/"
     record_package_version "${version}"
 }
 
