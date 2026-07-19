@@ -3,13 +3,13 @@ recipe:
     name: libpciaccess
     description: Generic PCI access library.
     type: package
-    toolchain: autotools
+    toolchain: meson
 
     source:
         type: tarball
         releases:
-            - version: 0.17
-              url: https://www.x.org/archive/individual/lib/libpciaccess-0.17.tar.xz
+            - version: 0.19
+              url: https://www.x.org/archive/individual/lib/libpciaccess-0.19.tar.xz
 
     dependencies:
         - zlib
@@ -17,11 +17,25 @@ recipe:
     build:
         configurations:
             options:
-                - name: with-zlib
-                  description: Use zlib for compression
+                - name: zlib
+                  description: Enable zlib support for compressed pci.ids
                   enabled_value:
-                      default: ${zlib.prefix}
+                      default: enabled
+                  disabled_format: zlib
+                  disabled_value:
+                      default: disabled
 
+                - name: install-scanpci
+                  description: Install scanpci program and man page
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: linux-rom-fallback
+                  description: Enable falling back to /dev/mem for ROMs
+                  user_configurable: true
+                  enabled:
+                      default: false
         stages:
             - target:
             - target: install
