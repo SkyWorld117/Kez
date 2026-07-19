@@ -227,6 +227,8 @@ build_binutils() {
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
     record_package_version "${version}"
+
+    hash -r
 }
 
 build_gcc() {
@@ -271,6 +273,8 @@ build_gcc() {
     unset LD_RUN_PATH
     "${KEZ_HOME}/tools/patch_gcc_linking.sh" "${KEZ_SYSTEM}"
     record_package_version "${version}"
+
+    hash -r
 }
 
 build_elfutils() {
@@ -524,6 +528,9 @@ build_python() {
     ln -sf "${KEZ_SYSTEM}/bin/python3" "${KEZ_SYSTEM}/bin/python"
     ln -sf "${KEZ_SYSTEM}/bin/pip3" "${KEZ_SYSTEM}/bin/pip"
     record_package_version "${version}"
+
+    hash -r
+    python -m pip install --upgrade pip
 }
 
 build_ninja() {
@@ -838,6 +845,8 @@ main() {
     export PATH="${KEZ_SYSTEM}/bin:${PATH}"
     make -C "${KEZ_HOME}" -j"${KEZ_NPROC}"
     "${KEZ_HOME}/bin/kez_print" success "Kez environment initialization complete."
+
+    hash -r
 }
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
