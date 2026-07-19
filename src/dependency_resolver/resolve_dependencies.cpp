@@ -9,7 +9,6 @@
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <dependency_resolver/toposort.hpp>
 #include <filesystem>
-#include <iostream>
 #include <unordered_map>
 #include <unordered_set>
 #include <utils/bash_utils.hpp>
