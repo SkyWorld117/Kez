@@ -405,6 +405,29 @@ recipe:
         EXPECT_EQ(find_option(autotools_options, "LDFLAGS")["enabled_value"].as<std::string>(),
                   "${library.ldflags}");
         EXPECT_FALSE(has_option(autotools_options, "LIBS"));
+
+        write_package("meson-application", R"(
+recipe:
+  name: meson-application
+  type: package
+  toolchain: meson
+  dependencies: [library]
+  build:
+    configurations: {}
+)");
+
+        const YAML::Node meson = gen_user_config({"meson-application"}, false, "system");
+        const YAML::Node meson_options =
+            meson["kez"]["meson-application"]["build"]["configurations"]["options"];
+        EXPECT_EQ(find_option(meson_options, "prefix")["enabled_value"].as<std::string>(),
+                  "${meson-application.prefix}");
+        EXPECT_EQ(find_option(meson_options, "c_args")["enabled_value"].as<std::string>(),
+                  "-O3 ${library.incflags}");
+        EXPECT_EQ(find_option(meson_options, "c_link_args")["enabled_value"].as<std::string>(),
+                  "${library.ldflags} ${library.libs}");
+        EXPECT_EQ(find_option(meson_options, "pkg_config_path")["enabled_value"].as<std::string>(),
+                  "${library.prefix}");
+        EXPECT_FALSE(has_option(meson_options, "LIBS"));
     }
 
     TEST_F(TemporaryGeneratorDatabase, RecordsAbstractSelectionAndConfiguresItsConcreteTarget) {

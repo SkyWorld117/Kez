@@ -82,6 +82,9 @@ namespace {
         if (value == "make") {
             return std::make_unique<MakePackageConfig>();
         }
+        if (value == "meson") {
+            return std::make_unique<MesonPackageConfig>();
+        }
         fail_config(node, "recipe.toolchain", "has unsupported toolchain '" + value + "'", context);
     }
 

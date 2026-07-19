@@ -42,7 +42,8 @@ namespace {
     std::string option_key(std::string name, Toolchain toolchain) {
         if (toolchain == Toolchain::Autotools && name.rfind("--", 0) == 0) {
             name.erase(0, 2);
-        } else if (toolchain == Toolchain::CMake && name.rfind("-D", 0) == 0) {
+        } else if ((toolchain == Toolchain::CMake || toolchain == Toolchain::Meson) &&
+                   name.rfind("-D", 0) == 0) {
             name.erase(0, 2);
         }
         if (toolchain == Toolchain::Autotools && !is_shell_assignment(name) &&
@@ -200,7 +201,8 @@ namespace uconf_generator {
         const std::unordered_set<std::string>& dependencies,
         const AbstractPackageSelections& abstract_packages, const std::string& compiler) {
         BuildConfiguration result = configuration;
-        if (toolchain != Toolchain::Autotools && toolchain != Toolchain::CMake) {
+        if (toolchain != Toolchain::Autotools && toolchain != Toolchain::CMake &&
+            toolchain != Toolchain::Meson) {
             return result;
         }
 
@@ -233,7 +235,7 @@ namespace uconf_generator {
             append_default(result, explicit_options, toolchain, "CXXFLAGS", compiler_flags);
             append_default(result, explicit_options, toolchain, "FCFLAGS", compiler_flags);
             append_default(result, explicit_options, toolchain, "LDFLAGS", linker_flags);
-        } else {
+        } else if (toolchain == Toolchain::CMake) {
             append_default(result, explicit_options, toolchain, "CMAKE_INSTALL_PREFIX",
                            template_value(package.name, "prefix"));
             append_default(result, explicit_options, toolchain, "CMAKE_BUILD_TYPE", "Release");
@@ -261,6 +263,19 @@ namespace uconf_generator {
                            join(paths.library_paths, ";"));
             append_default(result, explicit_options, toolchain, "CMAKE_PREFIX_PATH",
                            join(paths.prefix_paths, ";"));
+        } else if (toolchain == Toolchain::Meson) {
+            append_default(result, explicit_options, toolchain, "prefix",
+                           template_value(package.name, "prefix"));
+            append_default(result, explicit_options, toolchain, "buildtype", "release");
+            append_default(result, explicit_options, toolchain, "c_args", compiler_flags);
+            append_default(result, explicit_options, toolchain, "cpp_args", compiler_flags);
+            append_default(result, explicit_options, toolchain, "fortran_args", compiler_flags);
+            append_default(result, explicit_options, toolchain, "c_link_args", all_linker_flags);
+            append_default(result, explicit_options, toolchain, "cpp_link_args", all_linker_flags);
+            append_default(result, explicit_options, toolchain, "fortran_link_args",
+                           all_linker_flags);
+            append_default(result, explicit_options, toolchain, "pkg_config_path",
+                           join(paths.prefix_paths, ":"));
         }
 
         return result;

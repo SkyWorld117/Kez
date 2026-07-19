@@ -73,6 +73,28 @@ std::optional<std::string> CMakePackageConfig::default_stage_command(
     return command;
 }
 
+Toolchain MesonPackageConfig::toolchain() const noexcept { return Toolchain::Meson; }
+
+std::optional<std::string> MesonPackageConfig::default_configuration_command() const {
+    return "meson setup build";
+}
+
+std::optional<std::string> MesonPackageConfig::default_stage_command(
+    const BuildStage& stage, unsigned int parallel_jobs) const {
+    if (stage.target == "install") {
+        return "meson install -C build";
+    }
+
+    std::string command = "meson compile -C build";
+    if (stage.multithreaded && parallel_jobs != 0) {
+        command += " -j" + std::to_string(parallel_jobs);
+    }
+    if (stage.target.has_value() && !stage.target->empty()) {
+        command += " " + *stage.target;
+    }
+    return command;
+}
+
 Toolchain MakePackageConfig::toolchain() const noexcept { return Toolchain::Make; }
 
 std::optional<std::string> MakePackageConfig::default_stage_command(

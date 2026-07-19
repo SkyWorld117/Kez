@@ -23,7 +23,7 @@ namespace {
             }
             return "--" + name;
         }
-        if (toolchain == Toolchain::CMake) {
+        if (toolchain == Toolchain::CMake || toolchain == Toolchain::Meson) {
             return name.rfind('-', 0) == 0 ? name : "-D" + name;
         }
         return name;

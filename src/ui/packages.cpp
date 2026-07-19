@@ -65,6 +65,7 @@ std::string toolchain_name(Toolchain toolchain) {
         case Toolchain::Autotools: return "autotools";
         case Toolchain::CMake: return "cmake";
         case Toolchain::Make: return "make";
+        case Toolchain::Meson: return "meson";
     }
     return "unknown";
 }

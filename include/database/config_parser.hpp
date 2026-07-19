@@ -31,7 +31,7 @@
  *   @c description       | parsed as optional string
  *   @c author            | parsed as optional string
  *   @c toolchain         | Selects the concrete PackageConfig subclass:
- *                         | `autotools` / `cmake` / `make` / absent -> Generic
+ *                         | `autotools` / `cmake` / `meson` / `make` / absent -> Generic
  *
  * The function also validates every template expression present in the
  * document (see @c validate_templates()) and enforces that packages of type
@@ -46,8 +46,8 @@
  *
  * @return A shared pointer to a const @c PackageConfig instance. The
  *         concrete dynamic type (GenericPackageConfig, AutotoolsPackageConfig,
- *         CMakePackageConfig, or MakePackageConfig) is determined by the
- *         @c toolchain field in the recipe.
+ *         CMakePackageConfig, MesonPackageConfig, or MakePackageConfig) is
+ *         determined by the @c toolchain field in the recipe.
  *
  * @warning The function terminates the program with @c exit(EXIT_FAILURE)
  *          via the @c ERROR() / @c fail_config() helpers on any malformed

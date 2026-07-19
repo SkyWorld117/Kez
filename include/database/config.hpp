@@ -38,6 +38,7 @@ enum class Toolchain {
     None,       ///< No specific toolchain; use @ref GenericPackageConfig.
     Autotools,  ///< GNU Autotools (autoconf / automake / libtool).
     CMake,      ///< CMake-based build system.
+    Meson,      ///< Meson build system.
     Make,       ///< Plain Makefiles.
 };
 
@@ -390,6 +391,7 @@ struct Property {
  * @see GenericPackageConfig
  * @see AutotoolsPackageConfig
  * @see CMakePackageConfig
+ * @see MesonPackageConfig
  * @see MakePackageConfig
  */
 class PackageConfig {
@@ -502,6 +504,26 @@ class AutotoolsPackageConfig final : public PackageConfig {
  * - Install stage: ``cmake --install build``
  */
 class CMakePackageConfig final : public PackageConfig {
+   public:
+    Toolchain toolchain() const noexcept override;
+    std::optional<std::string> default_configuration_command() const override;
+    std::optional<std::string> default_stage_command(const BuildStage& stage,
+                                                     unsigned int parallel_jobs) const override;
+};
+
+/**
+ * @brief Concrete package configuration for Meson-based packages
+ *        (``toolchain: meson``).
+ *
+ * Provides sensible defaults:
+ * - Configuration command: ``meson setup build``
+ *   (additional Meson flags such as ``-Dprefix``
+ *   are appended as separate options by
+ *   @ref uconf_generator::transformed_configuration).
+ * - Build stage: ``meson compile -C build --parallel {N}``
+ * - Install stage: ``meson install -C build``
+ */
+class MesonPackageConfig final : public PackageConfig {
    public:
     Toolchain toolchain() const noexcept override;
     std::optional<std::string> default_configuration_command() const override;

@@ -253,6 +253,14 @@ recipe:
         EXPECT_EQ(cmake.default_stage_command(BuildStage {"install", false, std::nullopt}, 8),
                   "cmake --install build");
 
+        MesonPackageConfig meson;
+        EXPECT_EQ(meson.toolchain(), Toolchain::Meson);
+        EXPECT_EQ(meson.default_configuration_command(), "meson setup build");
+        EXPECT_EQ(meson.default_stage_command(parallel, 8), "meson compile -C build -j8 all");
+        EXPECT_EQ(meson.default_stage_command(serial, 8), "meson compile -C build check");
+        EXPECT_EQ(meson.default_stage_command(BuildStage {"install", false, std::nullopt}, 8),
+                  "meson install -C build");
+
         EXPECT_EQ(make.toolchain(), Toolchain::Make);
         EXPECT_EQ(make.default_configuration_command(), std::nullopt);
         EXPECT_EQ(make.default_stage_command(untargeted, 0), "make");
