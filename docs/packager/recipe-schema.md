@@ -120,6 +120,7 @@ version in their `config.yaml` via the `kez` map.
 |---|---|
 | `autotools` | Generates `./configure` commands with `--`-prefixed options |
 | `cmake` | Generates `cmake ..` commands with `-D`-prefixed options |
+| `meson` | Generates `meson setup build` commands with `-D`-prefixed options |
 | `make` | Plain `make`; options are injected as environment variables |
 | _(none)_ | No standard build-system wrappers; use `preprocessing`/`postprocessing` |
 
@@ -280,6 +281,7 @@ options:
 |---|---|---|
 | Autotools | `--` | `enable-mpi` → `--enable-mpi` |
 | CMake | `-D` | `BUILD_SHARED_LIBS` → `-DBUILD_SHARED_LIBS` |
+| Meson | `-D` | `c_args` → `-Dc_args=...` |
 | Make / _(none)_ | (none) | `CFLAGS` stays `CFLAGS=...` |
 
 Existing leading prefixes in option names are accepted for custom commands and

@@ -26,7 +26,7 @@ recipe:
     name: <package_name>
     description: <brief_description>
     type: <system|compiler|mpi|vendor|package|external|abstract>
-    toolchain: <autotools|cmake|make>
+    toolchain: <autotools|cmake|meson|make>
 
     source:
         type: <tarball|git|zip|script>
