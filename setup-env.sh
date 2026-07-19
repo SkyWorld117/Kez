@@ -77,6 +77,9 @@ else
         fi
     done
 
+    # Add the system environment to PYTHONPATH for Python integration
+    export PYTHONPATH="${SYSTEM_PATH}:${PYTHONPATH:-}"
+
     unset SYSTEM_PATH UTILITIES_PATH
 
     # Load main script
