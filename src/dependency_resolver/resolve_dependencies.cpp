@@ -240,12 +240,18 @@ namespace {
         }
     }
 
-    void build_graph(ResolutionState& state, const std::vector<std::string>& package_names) {
+    void build_graph(ResolutionState& state, const std::vector<std::string>& package_names,
+                     const std::unordered_map<std::string, std::string>& version_overrides = {}) {
         state.adjacency_list.clear();
         state.system_packages.clear();
         state.encountered_abstract_packages.clear();
         for (const std::string& package_name : package_names) {
-            build_adjacency_list(state, package_name);
+            const auto override = version_overrides.find(package_name);
+            if (override != version_overrides.end()) {
+                build_adjacency_list(state, package_name, override->second);
+            } else {
+                build_adjacency_list(state, package_name);
+            }
         }
     }
 
@@ -286,11 +292,12 @@ namespace {
         }
     }
 
-    void select_build_options(ResolutionState& state,
-                              const std::vector<std::string>& package_names) {
+    void select_build_options(
+        ResolutionState& state, const std::vector<std::string>& package_names,
+        const std::unordered_map<std::string, std::string>& version_overrides = {}) {
         std::unordered_set<std::string> prompted;
         while (true) {
-            build_graph(state, package_names);
+            build_graph(state, package_names, version_overrides);
             std::vector<std::string> unprompted;
             for (const std::string& dependency : state.optional_package_order) {
                 if (prompted.find(dependency) == prompted.end()) {
@@ -333,8 +340,9 @@ namespace {
         }
     }
 
-    void select_abstract_packages(ResolutionState& state,
-                                  const std::vector<std::string>& package_names) {
+    void select_abstract_packages(
+        ResolutionState& state, const std::vector<std::string>& package_names,
+        const std::unordered_map<std::string, std::string>& version_overrides = {}) {
         std::size_t prompted = 0;
         while (true) {
             while (prompted < state.abstract_order.size()) {
@@ -355,7 +363,7 @@ namespace {
                      "': " + state.abstract_packages[abstract_package]);
             }
 
-            build_graph(state, package_names);
+            build_graph(state, package_names, version_overrides);
             if (prompted == state.abstract_order.size()) {
                 return;
             }
@@ -384,6 +392,13 @@ DependencyResolution resolve_dependencies(const std::vector<std::string>& packag
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
                                           bool interactive,
                                           InteractiveOptionSelections* option_selections) {
+    return resolve_dependencies(package_names, interactive, option_selections, {});
+}
+
+DependencyResolution resolve_dependencies(
+    const std::vector<std::string>& package_names, bool interactive,
+    InteractiveOptionSelections* option_selections,
+    const std::unordered_map<std::string, std::string>& version_overrides) {
     if (option_selections != nullptr) {
         option_selections->clear();
     }
@@ -396,10 +411,10 @@ DependencyResolution resolve_dependencies(const std::vector<std::string>& packag
     state.interactive   = interactive;
     state.database_root = get_env_var("KEZ_DB");
     if (interactive) {
-        select_build_options(state, package_names);
-        select_abstract_packages(state, package_names);
+        select_build_options(state, package_names, version_overrides);
+        select_abstract_packages(state, package_names, version_overrides);
     } else {
-        build_graph(state, package_names);
+        build_graph(state, package_names, version_overrides);
     }
 
     for (auto selection = state.abstract_packages.begin();

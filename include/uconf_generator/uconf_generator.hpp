@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -110,3 +111,46 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
  */
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
                            const std::string& default_compiler);
+
+/**
+ * @brief Generate a user configuration, resolving root packages at specific
+ *        versions.
+ *
+ * Convenience overload that uses the configured default compiler internally.
+ *
+ * @param package_names     Root packages to resolve.
+ * @param interactive       Whether to prompt interactively.
+ * @param version_overrides Maps package name → version for root packages.
+ */
+YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
+                           const std::unordered_map<std::string, std::string>& version_overrides);
+
+/**
+ * @brief Generate a user configuration file, applying version overrides for
+ *        root packages during dependency resolution.
+ *
+ * This overload is intended for command-driven installs where the user has
+ * specified per-package version overrides via ``--config <pkg>.version=<ver>``.
+ * The overrides are fed into the dependency resolver so that the correct
+ * recipe file (e.g. ``1.4-1.4.yaml``) and its dependency constraints are
+ * used from the start, rather than applying the version override after
+ * resolution.
+ *
+ * @param package_names       One or more package names to build configuration
+ *                            for.
+ * @param interactive         Whether to prompt for optional-dependency and
+ *                            abstract-package selections.
+ * @param default_compiler    Fallback compiler when no override is set.
+ * @param version_overrides   Maps package name → exact version string for
+ *                            root packages.  When a package has an entry here
+ *                            it is resolved at that version instead of
+ *                            ``"latest"``.
+ *
+ * @return A YAML::Node with the same structure as the other overloads.
+ *
+ * @see gen_user_config(const std::vector<std::string>&, bool)
+ * @see gen_user_config(const std::vector<std::string>&, bool, const std::string&)
+ */
+YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
+                           const std::string& default_compiler,
+                           const std::unordered_map<std::string, std::string>& version_overrides);

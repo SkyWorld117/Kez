@@ -153,13 +153,18 @@ namespace {
                                const std::unordered_set<std::string>& target_packages,
                                const AbstractPackageSelections& abstract_packages,
                                const InteractiveOptionSelections& option_selections,
-                               const std::string& default_compiler) {
+                               const std::string& default_compiler,
+                               const std::string& resolved_version = "") {
         YAML::Node package_output(YAML::NodeType::Map);
         if (package.description.has_value()) {
             package_output["description"] = *package.description;
         }
         if (package.source.has_value() && !package.source->releases.empty()) {
-            std::string version = package.source->releases.front().version;
+            // Use the dependency-resolved version when a specific version
+            // was constrained; otherwise fall back to the first release.
+            std::string version = (resolved_version.empty() || resolved_version == "latest")
+                                      ? package.source->releases.front().version
+                                      : resolved_version;
             if (package.type == PackageType::Mpi) {
                 std::string existing =
                     get_latest_existing_version(package.name, "mpis", PackageType::Mpi);
@@ -221,14 +226,26 @@ namespace {
 }  // namespace
 
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive) {
-    return gen_user_config(package_names, interactive, configured_default_compiler());
+    return gen_user_config(package_names, interactive, configured_default_compiler(), {});
+}
+
+YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
+                           const std::unordered_map<std::string, std::string>& version_overrides) {
+    return gen_user_config(package_names, interactive, configured_default_compiler(),
+                           version_overrides);
 }
 
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
                            const std::string& default_compiler) {
+    return gen_user_config(package_names, interactive, default_compiler, {});
+}
+
+YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
+                           const std::string& default_compiler,
+                           const std::unordered_map<std::string, std::string>& version_overrides) {
     InteractiveOptionSelections option_selections;
     DependencyResolution resolution =
-        resolve_dependencies(package_names, interactive, &option_selections);
+        resolve_dependencies(package_names, interactive, &option_selections, version_overrides);
     const std::vector<std::string>& all_dependencies   = resolution.all_packages;
     const std::vector<std::string>& dependencies       = resolution.buildable_packages;
     const AbstractPackageSelections& abstract_packages = resolution.abstract_packages;
@@ -274,7 +291,7 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
         const PackageConfigPtr package = get_db_config(dependency, ver);
         append_package_config(output, *package, all_dependencies, all_dependency_set,
                               target_packages, abstract_packages, option_selections,
-                              default_compiler);
+                              default_compiler, ver);
     }
     return output;
 }

@@ -32,6 +32,7 @@
 #include <ui/commands.hpp>
 #include <ui/install.hpp>
 #include <ui/ui_utils.hpp>
+#include <unordered_map>
 #include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 #include <utils/file_utils.hpp>
@@ -126,7 +127,29 @@ namespace {
      * If --read was supplied, loads the named file; otherwise generates a
      * config from the positional package-name arguments.
      */
-    YAML::Node load_install_config(const InstallOptions& options) {
+    /**
+     * @brief Extract version overrides from command-line --config options.
+     *
+     * Looks for options matching the pattern ``<package>.version=<value>``
+     * and returns a map of package name → version string (e.g.
+     * ``"conquest" → "1.4"``).
+     */
+    std::unordered_map<std::string, std::string> extract_version_overrides(
+        const std::vector<std::string>& overrides) {
+        std::unordered_map<std::string, std::string> result;
+        static const std::string suffix = ".version=";
+        for (const std::string& option : overrides) {
+            const std::size_t pos = option.find(suffix);
+            if (pos != std::string::npos && pos > 0) {
+                result.emplace(option.substr(0, pos), option.substr(pos + suffix.size()));
+            }
+        }
+        return result;
+    }
+
+    YAML::Node load_install_config(
+        const InstallOptions& options,
+        const std::unordered_map<std::string, std::string>& version_overrides) {
         if (options.positional.empty()) {
             ERROR("No package or configuration file was provided");
             exit(EXIT_FAILURE);
@@ -143,7 +166,11 @@ namespace {
             }
             return load_yaml_file(path);
         }
-        return gen_user_config(options.positional, !options.silent);
+        return gen_user_config(options.positional, !options.silent, version_overrides);
+    }
+
+    YAML::Node load_install_config(const InstallOptions& options) {
+        return load_install_config(options, {});
     }
 
     /**
@@ -320,7 +347,10 @@ namespace {
             return;
         }
 
-        YAML::Node user_config = load_install_config(options);
+        const auto version_overrides = extract_version_overrides(options.overrides);
+        YAML::Node user_config       = version_overrides.empty()
+                                           ? load_install_config(options)
+                                           : load_install_config(options, version_overrides);
         apply_cmdline_config(user_config, options.overrides);
         const std::filesystem::path prefix =
             installation_prefix(user_config, options.environment, utility, options.renamed_version);

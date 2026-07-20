@@ -188,3 +188,26 @@ DependencyResolution resolve_dependencies(const std::vector<std::string>& packag
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,
                                           bool interactive,
                                           InteractiveOptionSelections* option_selections);
+
+/**
+ * @brief Resolve dependencies with version overrides for root packages.
+ *
+ * Behaves identically to the three-argument overload, except that root
+ * packages listed in @p version_overrides are resolved at the given version
+ * instead of "latest".  This allows command-line overrides like
+ * ``conquest.version=1.4`` to influence dependency resolution from the start,
+ * so that the correct recipe (e.g. ``1.4-1.4.yaml``) and its dependency
+ * constraints are used when resolving transitive dependencies.
+ *
+ * @param package_names       Top-level package names to resolve.
+ * @param interactive         Whether to run the terminal selection workflow.
+ * @param option_selections   Output map for package/option enabled states. May
+ *                            be @c nullptr when the caller does not need them.
+ * @param version_overrides   Maps package name → version string for root
+ *                            packages whose version should differ from
+ *                            "latest".
+ */
+DependencyResolution resolve_dependencies(
+    const std::vector<std::string>& package_names, bool interactive,
+    InteractiveOptionSelections* option_selections,
+    const std::unordered_map<std::string, std::string>& version_overrides);
