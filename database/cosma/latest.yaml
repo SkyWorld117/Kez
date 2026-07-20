@@ -9,6 +9,10 @@ recipe:
         type: git
         url: https://github.com/eth-cscs/COSMA
         releases:
+            - version: 2.8.4
+              tag: v2.8.4
+            - version: 2.7.1
+              tag: v2.7.1
             - version: 2.6.6
               tag: v2.6.6
 
