@@ -7,6 +7,8 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 7.1.2
+              url: https://gitlab.com/libxc/libxc/-/archive/7.1.2/libxc-7.1.2.tar.gz
             - version: 7.0.0
               url: https://gitlab.com/libxc/libxc/-/archive/7.0.0/libxc-7.0.0.tar.gz
             - version: 6.2.2
@@ -16,11 +18,13 @@ recipe:
         preprocessing: autoreconf -i
         configurations:
             options:
-                - name: use_cuda
-                  user_configurable: true
+                # The CUDA support is very broken, disabling it for now.
+                # File an issue if you want proper CUDA support.
+                # Right now it can only be built with the CMake build system, which is discouraged by the developers.
+                # A fix will require a patch to the autotools build system.
+                - name: enable-cuda
                   enabled:
                       default: false
-                  enabled_format: enable-cuda
                   disabled_format: disable-cuda
                   requires: [cuda]
 
@@ -31,5 +35,12 @@ recipe:
     properties:
         lib: ${libxc.prefix}/lib
         libs:
-            default: -lxcf90 -lxc
+            default: -lxc
+            conditions:
+                - condition: version ${libxc.version}<7.0.0
+                  action: prepend
+                  value: -lxcf90
+                - condition: version ${libxc.version}>=7.0.0
+                  action: prepend
+                  value: -lxcf03
         include: ${libxc.prefix}/include
