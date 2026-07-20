@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 2026.02.001
-              url: https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/2026.02.001/elpa-2026.02.001.tar.gz
+            - version: 2026.02.002
+              url: https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/2026.02.002/elpa-2026.02.002.tar.gz
 
     dependencies:
         - mpi
@@ -27,56 +27,139 @@ recipe:
 
             options:
                 # ============ Core parallelization ============
-                - name: mpi
+                - name: with-mpi
                   description: Enable MPI parallelization
                   user_configurable: true
-                  enabled_format: with-mpi=yes
-                  disabled_format: with-mpi=no
+                  disabled_format: without-mpi=no
 
-                - name: openmp
+                - name: enable-openmp
                   description: Enable OpenMP for shared-memory parallelism
                   user_configurable: true
-                  enabled_format: enable-openmp
                   disabled_format: disable-openmp
 
                 # ============ CPU kernel selection ============
-                - name: disable-generic-kernels
-                  description: Do NOT build generic kernels
+                - name: enable-generic-kernels
+                  description: Build generic kernels
                   user_configurable: true
-                  enabled_format: disable-generic-kernels
-                  disabled_format: enable-generic-kernels
+                  enabled:
+                      default: false
+                  disabled_format: disable-generic-kernels
 
-                - name: disable-sse-kernels
-                  description: Do NOT build SSE kernels
+                # ============ Virtual Options for CPU kernel selection ============
+                - name: x86-256bit
+                  description: Virtual option to enable all 256-bit kernels (SSE, AVX, AVX2)
                   user_configurable: true
-                  enabled_format: disable-sse-kernels
-                  disabled_format: enable-sse-kernels
+                  enabled:
+                      default: false
+                  enabled_format: ''
+                  disabled_format: ''
 
-                - name: disable-sse-assembly-kernels
-                  description: Do NOT build SSE assembly kernels
+                - name: x86-512bit
+                  description: Virtual option to enable all 512-bit kernels (SSE, AVX, AVX2, AVX512)
                   user_configurable: true
-                  enabled_format: disable-sse-assembly-kernels
-                  disabled_format: enable-sse-assembly-kernels
+                  enabled:
+                      default: false
+                  enabled_format: ''
+                  disabled_format: ''
 
-                - name: disable-avx-kernels
-                  description: Do NOT build AVX kernels (Intel Sandy Bridge+)
+                - name: arm-256bit
+                  description: Virtual option to enable all 256-bit kernels (NEON)
                   user_configurable: true
-                  enabled_format: disable-avx-kernels
-                  disabled_format: enable-avx-kernels
+                  enabled:
+                      default: false
+                  enabled_format: ''
+                  disabled_format: ''
 
-                - name: disable-avx2-kernels
-                  description: Do NOT build AVX2 kernels (Intel Haswell+, AMD EPYC snver2+)
+                - name: arm-512bit
+                  description: Virtual option to enable all 512-bit kernels (SVE)
                   user_configurable: true
-                  enabled_format: disable-avx2-kernels
-                  disabled_format: enable-avx2-kernels
+                  enabled:
+                      default: false
+                  enabled_format: ''
+                  disabled_format: ''
 
-                - name: disable-avx512-kernels
-                  description: Do NOT build AVX-512 kernels (Intel Knights Landing+, AMD EPYC 7773X/72F3)
-                  user_configurable: true
-                  enabled_format: disable-avx512-kernels
-                  disabled_format: enable-avx512-kernels
+                # ============ CPU kernel selection ============
 
-                # more (neon, etc.) can be added in the future
+                - name: enable-avx-kernels
+                  description: Build AVX kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.x86-256bit} true || ${elpa.config.x86-512bit} true
+                            value: true
+                  disabled_format: disable-avx-kernels
+
+                - name: enable-avx2-kernels
+                  description: Build AVX2 kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.x86-256bit} true || ${elpa.config.x86-512bit} true
+                            value: true
+                  disabled_format: disable-avx2-kernels
+
+                - name: enable-avx512-kernels
+                  description: Build AVX-512 kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.x86-512bit} true
+                            value: true
+                  disabled_format: disable-avx512-kernels
+
+                - name: enable-sse-kernels
+                  description: Build SSE kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.x86-256bit} true || ${elpa.config.x86-512bit} true
+                            value: true
+                  disabled_format: disable-sse-kernels
+
+                - name: enable-sse-assembly-kernels
+                  description: Build SSE assembly kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.x86-256bit} true || ${elpa.config.x86-512bit} true
+                            value: true
+                  disabled_format: disable-sse-assembly-kernels
+
+                - name: enable-neon-arch64-kernels
+                  description: Build ARM NEON kernels (ARMv8.2-A)
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.arm-256bit} true || ${elpa.config.arm-512bit} true
+                            value: true
+                  disabled_format: disable-neon-arch64-kernels
+
+                - name: enable-sve128-kernels
+                  description: Build ARM SVE128 kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.arm-256bit} true || ${elpa.config.arm-512bit} true
+                            value: true
+                  disabled_format: disable-sve128-kernels
+
+                - name: enable-sve256-kernels
+                  description: Build ARM SVE256 kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.arm-256bit} true || ${elpa.config.arm-512bit} true
+                            value: true
+                  disabled_format: disable-sve256-kernels
+
+                - name: enable-sve512-kernels
+                  description: Build ARM SVE512 kernels
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${elpa.config.arm-512bit} true
+                            value: true
+                  disabled_format: disable-sve512-kernels
 
                 # ============ Nvidia GPU support ============
                 - name: enable-nvidia-gpu-kernels
@@ -84,7 +167,6 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  enabled_format: enable-nvidia-gpu-kernels
                   disabled_format: disable-nvidia-gpu-kernels
                   requires: [cuda]
 
@@ -99,15 +181,6 @@ recipe:
                       default: ${cuda.prefix}
                   requires: [cuda]
 
-                - name: enable-cuda-aware-mpi
-                  description: Enable CUDA-aware MPI (experimental)
-                  user_configurable: true
-                  enabled:
-                      default: false
-                  enabled_format: enable-cuda-aware-mpi
-                  disabled_format: disable-cuda-aware-mpi
-                  requires: [cuda]
-
                 - name: enable-gpu-streams
                   description: Enable CUDA streams for GPU kernels
                   enabled:
@@ -119,27 +192,6 @@ recipe:
                   enabled_format: enable-gpu-streams=nvidia
                   requires: [cuda]
 
-                - name: enable-gpu-ccl
-                  description: Enable collective communication library (NCCL from NVHPC)
-                  user_configurable: true
-                  enabled:
-                      default: false
-                  enabled_format: enable-gpu-ccl=nccl
-                  disabled_format: enable-gpu-ccl=no
-                  requires: [cuda, nvhpc]
-
-                - name: with-nccl-path
-                  description: Path to NCCL installation directory
-                  user_configurable: true
-                  enabled:
-                      conditions:
-                          - condition: ${elpa.config.enable-gpu-ccl} true
-                            value: true
-                          - condition: ${elpa.config.enable-gpu-ccl} false
-                            value: false
-                  enabled_value:
-                      default: ${nvhpc.nccl_prefix}
-                  requires: [nvhpc]
                 - name: with-NVIDIA-GPU-compute-capability
                   description: NVIDIA GPU compute capabilities to build for (comma-separated, e.g. sm_60,sm_80)
                   user_configurable: true
@@ -183,6 +235,36 @@ recipe:
                   enabled_format: enable-nvidia-cub
                   requires: [cuda]
 
+                - name: enable-cuda-aware-mpi
+                  description: Enable CUDA-aware MPI (experimental)
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  disabled_format: disable-cuda-aware-mpi
+                  requires: [cuda]
+
+                - name: enable-gpu-ccl
+                  description: Enable collective communication library (NCCL from NVHPC)
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: nccl
+                  disabled_format: disable-gpu-ccl
+                  requires: [cuda, nvhpc-nccl]
+
+                - name: with-nccl-path
+                  description: Path to NCCL installation directory
+                  enabled:
+                      conditions:
+                          - condition: ${elpa.config.enable-gpu-ccl} true
+                            value: true
+                          - condition: ${elpa.config.enable-gpu-ccl} false
+                            value: false
+                  enabled_value:
+                      default: ${nvhpc-nccl.prefix}
+                  requires: [nvhpc-nccl]
+
                 # ============ AMD GPU support ============
 
                 # - name: enable-amd-gpu
@@ -194,14 +276,18 @@ recipe:
                 #   disabled_format: disable-amd-gpu
 
                 # ============ Performance tuning ============
-                - name: disable-single-precision
-                  description: Build for double precision only
+                - name: enable-single-precision
+                  description: Build also for single precision
                   user_configurable: true
-                  enabled_format: disable-single-precision
+                  enabled:
+                      default: false
+                  disabled_format: disable-single-precision
 
-                - name: disable-autotuning
-                  description: Disable runtime autotuning
+                - name: enable-autotuning
+                  description: Enable runtime autotuning
                   user_configurable: true
+                  enabled:
+                      default: false
                   enabled_format: disable-autotuning
 
                 # - name: with-papi
@@ -220,23 +306,23 @@ recipe:
                 #   enabled_format: with-likwid=yes
                 #   disabled_format: with-likwid=no
 
-                - name: disable-timings
-                  description: Disable internal timing measurements
+                - name: enable-timings
+                  description: Enable internal timing measurements
                   user_configurable: true
-                  enabled_format: disable-timings
+                  enabled:
+                      default: false
+                  disabled_format: disable-timings
 
                 # ============ Fortran & compilation features ============
                 - name: disable-Fortran2008-features
                   description: Do NOT use Fortran 2008 features (for older compilers)
                   enabled:
                       default: false
-                  enabled_format: disable-Fortran2008-features
 
                 - name: enable-ifx-compiler
                   description: Apply compatibility patches for older Intel oneAPI ifx compiler versions
                   enabled:
                       default: false
-                  enabled_format: enable-ifx-compiler
 
                 # =========== Linker ====================================
                 - name: LDFLAGS
@@ -245,7 +331,7 @@ recipe:
                       conditions:
                           - condition: ${elpa.config.enable-gpu-ccl} true
                             action: append
-                            value: ${nvhpc.nccl_ldflags} ${nvhpc.nccl_libs}
+                            value: ${nvhpc-nccl.ldflags} ${nvhpc-nccl.libs}
                           - condition: ${elpa.config.enable-nvidia-gpu-kernels} true
                             action: append
                             value: ${cuda.ldflags}
@@ -272,11 +358,11 @@ recipe:
         libs:
             default: -lelpa
             conditions:
-                - condition: ${elpa.config.openmp} true
+                - condition: ${elpa.config.enable-openmp} true
                   value: -lelpa_openmp
         include: ${elpa.prefix}/include
         modules_dir:
             default: ${elpa.prefix}/include/elpa-${elpa.version}/modules
             conditions:
-                - condition: ${elpa.config.openmp} true
+                - condition: ${elpa.config.enable-openmp} true
                   value: ${elpa.prefix}/include/elpa_openmp-${elpa.version}/modules
