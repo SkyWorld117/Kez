@@ -387,7 +387,7 @@ recipe:
             find_option(cmake_options, "CMAKE_INSTALL_PREFIX")["enabled_value"].as<std::string>(),
             "${cmake-application.prefix}");
         EXPECT_EQ(find_option(cmake_options, "CMAKE_C_FLAGS")["enabled_value"].as<std::string>(),
-                  "-O3 ${library.incflags}");
+                  "-O3 -march=native -mtune=native ${library.incflags}");
         EXPECT_EQ(
             find_option(cmake_options, "CMAKE_EXE_LINKER_FLAGS")["enabled_value"].as<std::string>(),
             "${library.ldflags} ${library.libs}");
@@ -401,7 +401,7 @@ recipe:
         EXPECT_EQ(find_option(autotools_options, "prefix")["enabled_value"].as<std::string>(),
                   "${autotools-application.prefix}");
         EXPECT_EQ(find_option(autotools_options, "CFLAGS")["enabled_value"].as<std::string>(),
-                  "-O3 ${library.incflags}");
+                  "-O3 -march=native -mtune=native ${library.incflags}");
         EXPECT_EQ(find_option(autotools_options, "LDFLAGS")["enabled_value"].as<std::string>(),
                   "${library.ldflags}");
         EXPECT_FALSE(has_option(autotools_options, "LIBS"));
@@ -422,7 +422,7 @@ recipe:
         EXPECT_EQ(find_option(meson_options, "prefix")["enabled_value"].as<std::string>(),
                   "${meson-application.prefix}");
         EXPECT_EQ(find_option(meson_options, "c_args")["enabled_value"].as<std::string>(),
-                  "-O3 ${library.incflags}");
+                  "-O3 -march=native -mtune=native ${library.incflags}");
         EXPECT_EQ(find_option(meson_options, "c_link_args")["enabled_value"].as<std::string>(),
                   "${library.ldflags} ${library.libs}");
         EXPECT_EQ(find_option(meson_options, "pkg_config_path")["enabled_value"].as<std::string>(),

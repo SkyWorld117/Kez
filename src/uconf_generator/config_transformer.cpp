@@ -218,7 +218,14 @@ namespace uconf_generator {
         const std::string libraries     = join(paths.libraries);
         const std::string all_linker_flags =
             linker_flags + (linker_flags.empty() || libraries.empty() ? "" : " ") + libraries;
-        const std::string compiler_flags = include_flags.empty() ? "-O3" : "-O3 " + include_flags;
+        const std::string cpu_optimization_flags  = "-O3 -march=native -mtune=native";
+        const std::string cuda_optimization_flags = "-O3 -Xptxas -O3";
+        const std::string cpu_compiler_flags  = include_flags.empty()
+                                                    ? cpu_optimization_flags
+                                                    : cpu_optimization_flags + " " + include_flags;
+        const std::string cuda_compiler_flags = include_flags.empty()
+                                                    ? cuda_optimization_flags
+                                                    : cuda_optimization_flags + " " + include_flags;
 
         if (toolchain == Toolchain::Autotools) {
             append_default(result, explicit_options, toolchain, "prefix",
@@ -231,9 +238,9 @@ namespace uconf_generator {
                 result, explicit_options, toolchain, "FC",
                 compiler_property("fort", dependency_names, abstract_packages, compiler));
             append_default(result, explicit_options, toolchain, "CPPFLAGS", include_flags);
-            append_default(result, explicit_options, toolchain, "CFLAGS", compiler_flags);
-            append_default(result, explicit_options, toolchain, "CXXFLAGS", compiler_flags);
-            append_default(result, explicit_options, toolchain, "FCFLAGS", compiler_flags);
+            append_default(result, explicit_options, toolchain, "CFLAGS", cpu_compiler_flags);
+            append_default(result, explicit_options, toolchain, "CXXFLAGS", cpu_compiler_flags);
+            append_default(result, explicit_options, toolchain, "FCFLAGS", cpu_compiler_flags);
             append_default(result, explicit_options, toolchain, "LDFLAGS", linker_flags);
         } else if (toolchain == Toolchain::CMake) {
             append_default(result, explicit_options, toolchain, "CMAKE_INSTALL_PREFIX",
@@ -246,11 +253,14 @@ namespace uconf_generator {
             append_default(
                 result, explicit_options, toolchain, "CMAKE_Fortran_COMPILER",
                 compiler_property("fort", dependency_names, abstract_packages, compiler));
-            append_default(result, explicit_options, toolchain, "CMAKE_C_FLAGS", compiler_flags);
-            append_default(result, explicit_options, toolchain, "CMAKE_CXX_FLAGS", compiler_flags);
+            append_default(result, explicit_options, toolchain, "CMAKE_C_FLAGS",
+                           cpu_compiler_flags);
+            append_default(result, explicit_options, toolchain, "CMAKE_CXX_FLAGS",
+                           cpu_compiler_flags);
             append_default(result, explicit_options, toolchain, "CMAKE_Fortran_FLAGS",
-                           compiler_flags);
-            append_default(result, explicit_options, toolchain, "CMAKE_CUDA_FLAGS", compiler_flags);
+                           cpu_compiler_flags);
+            append_default(result, explicit_options, toolchain, "CMAKE_CUDA_FLAGS",
+                           cuda_compiler_flags);
             append_default(result, explicit_options, toolchain, "CMAKE_EXE_LINKER_FLAGS",
                            all_linker_flags);
             append_default(result, explicit_options, toolchain, "CMAKE_SHARED_LINKER_FLAGS",
@@ -267,9 +277,9 @@ namespace uconf_generator {
             append_default(result, explicit_options, toolchain, "prefix",
                            template_value(package.name, "prefix"));
             append_default(result, explicit_options, toolchain, "buildtype", "release");
-            append_default(result, explicit_options, toolchain, "c_args", compiler_flags);
-            append_default(result, explicit_options, toolchain, "cpp_args", compiler_flags);
-            append_default(result, explicit_options, toolchain, "fortran_args", compiler_flags);
+            append_default(result, explicit_options, toolchain, "c_args", cpu_compiler_flags);
+            append_default(result, explicit_options, toolchain, "cpp_args", cpu_compiler_flags);
+            append_default(result, explicit_options, toolchain, "fortran_args", cpu_compiler_flags);
             append_default(result, explicit_options, toolchain, "c_link_args", all_linker_flags);
             append_default(result, explicit_options, toolchain, "cpp_link_args", all_linker_flags);
             append_default(result, explicit_options, toolchain, "fortran_link_args",
