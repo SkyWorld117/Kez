@@ -8,8 +8,10 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 1.5
-              url: https://github.com/OrderN/CONQUEST-release/archive/refs/tags/v1.5.tar.gz
+            - version: 1.4
+              url: https://github.com/OrderN/CONQUEST-release/archive/refs/tags/v1.4.tar.gz
+            - version: 1.3
+              url: https://github.com/OrderN/CONQUEST-release/archive/refs/tags/v1.3.tar.gz
 
     dependencies:
         - blas
@@ -17,7 +19,7 @@ recipe:
         - fftw3-api
         - scalapack
         - mpi
-        - libxc
+        - libxc@<7.0.0
 
     build:
         preprocessing: cd ${source}/src && cp system/system.young.make system/system.make
@@ -36,24 +38,11 @@ recipe:
                         enabled_value:
                             default: ${mpi.fort}
 
-                      - name: use_elpa
-                        description: Enable ELPA library for diagonalisation (alternative to ScaLAPACK)
-                        user_configurable: true
-                        enabled:
-                            default: false
-                        enabled_format: ''
-                        disabled_format: ''
-                        requires: [elpa]
-
                       - name: LINKFLAGS
                         description: Linker flags for Fortran
                         enabled_value:
                             default: ${compiler.omp_flags} ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${scalapack.ldflags} ${fftw3-api.ldflags} 
                                 ${libxc.ldflags}
-                            conditions:
-                                - condition: ${conquest.config.use_elpa} true
-                                  action: append
-                                  value: ${elpa.ldflags}
 
                       - name: COMPFLAGS
                         description: Fortran compiler flags
@@ -61,19 +50,11 @@ recipe:
                         enabled_value:
                             default: -O3 -fallow-argument-mismatch ${compiler.omp_flags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} 
                                 ${fftw3-api.incflags} ${libxc.incflags}
-                            conditions:
-                                - condition: ${conquest.config.use_elpa} true
-                                  action: append
-                                  value: ${elpa.incflags}
 
                       - name: LIBS
                         description: Libraries to link against
                         enabled_value:
                             default: ${blas.libs} ${lapack.libs} ${scalapack.libs} ${fftw3-api.libs} ${libxc.libs}
-                            conditions:
-                                - condition: ${conquest.config.use_elpa} true
-                                  action: append
-                                  value: ${elpa.libs}
 
                       - name: XC_LIBRARY
                         description: XC library to link against

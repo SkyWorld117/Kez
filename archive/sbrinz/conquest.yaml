@@ -2,13 +2,20 @@
 kez:
     conquest:
         description: CONQUEST linear scaling DFT code
-        version: 1.4
+        version: 1.5
         compiler: system
         build:
             stages:
                 - target:
                   configurations:
                       options:
+                          - name: use_elpa
+                            description: Enable ELPA library for diagonalisation (alternative to ScaLAPACK)
+                            enabled: true
+                            enabled_value:
+                            disabled_value:
+                            requires:
+                                - elpa
                           - name: COMPFLAGS
                             description: Fortran compiler flags
                             enabled: true
@@ -18,8 +25,127 @@ kez:
                             description: Matrix multiplication kernel
                             enabled: true
                             enabled_value: default
+    elpa:
+        description: ELPA - Eigenvalue soLvers for Petaflop Applications (HPC optimized)
+        version: 2026.02.002
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: with-mpi
+                      description: Enable MPI parallelization
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-openmp
+                      description: Enable OpenMP for shared-memory parallelism
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-generic-kernels
+                      description: Build generic kernels
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: x86-256bit
+                      description: Virtual option to enable all 256-bit kernels (SSE, AVX, AVX2)
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: x86-512bit
+                      description: Virtual option to enable all 512-bit kernels (SSE, AVX, AVX2, AVX512)
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: arm-256bit
+                      description: Virtual option to enable all 256-bit kernels (NEON)
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: arm-512bit
+                      description: Virtual option to enable all 512-bit kernels (SVE)
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-nvidia-gpu-kernels
+                      description: Build Nvidia GPU kernels (requires CUDA). Set compute capability with --with-NVIDIA-GPU-compute-capability
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: with-NVIDIA-GPU-compute-capability
+                      description: NVIDIA GPU compute capabilities to build for (comma-separated, e.g. sm_60,sm_80)
+                      enabled_value: sm_90
+                    - name: enable-nvidia-sm80-gpu-kernels
+                      description: Build Nvidia GPU kernels for compute capability 8.0+ (A100, H100, etc.)
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: enable-cuda-aware-mpi
+                      description: Enable CUDA-aware MPI (experimental)
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: enable-gpu-ccl
+                      description: Enable collective communication library (NCCL from NVHPC)
+                      enabled: true
+                      enabled_value: nccl
+                      disabled_value:
+                      requires:
+                          - cuda
+                          - nvhpc-nccl
+                    - name: enable-single-precision
+                      description: Build also for single precision
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-autotuning
+                      description: Enable runtime autotuning
+                      enabled: false
+                      enabled_value:
+                    - name: enable-timings
+                      description: Enable internal timing measurements
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${elpa.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} ${cuda.incflags} ${nvhpc-nccl.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} 
+                          ${cuda.incflags} ${nvhpc-nccl.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} 
+                          ${cuda.incflags} ${nvhpc-nccl.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${scalapack.incflags} 
+                          ${cuda.incflags} ${nvhpc-nccl.incflags}
+    nvhpc-nccl:
+        description: NVIDIA Communications Collective Library (NCCL) for NVIDIA HPC SDK
+    nvhpc:
+        version: 26.5
     libxc:
-        version: 6.2.2
+        version: 7.1.2
         compiler: system
         build:
             configurations:
@@ -36,18 +162,24 @@ kez:
                     - name: FC
                       enabled: true
                       enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${cuda.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${cuda.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${cuda.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${cuda.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${libxc.ldflags}
+                      enabled_value: ${compiler.ldflags} ${cuda.ldflags} ${libxc.ldflags}
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
     openmpi:
         description: Open Source Implementation of the Message Passing Interface
         version: 5.0.10
@@ -88,7 +220,11 @@ recipe:
         scalapack: intel-oneapi-mkl
     dependencies:
         - conquest
+        - elpa
+        - nvhpc-nccl
+        - nvhpc
         - libxc
+        - cuda
         - openmpi
         - intel-oneapi-mkl
         - intel-oneapi
