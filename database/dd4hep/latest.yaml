@@ -8,10 +8,11 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 01-33
-              url: https://github.com/AIDASoft/DD4hep/archive/refs/tags/v01-33.tar.gz
+            - version: 01-37
+              url: https://github.com/AIDASoft/DD4hep/archive/refs/tags/v01-37.tar.gz
 
     dependencies:
+        - boost
         - geant4
         - lcio
         - sio
@@ -51,6 +52,11 @@ recipe:
                   description: Enable Xerces-C support
                   enabled_value:
                       default: ON
+
+                - name: Boost_DIR
+                  description: Path to Boost installation
+                  enabled_value:
+                      default: ${boost.prefix}/lib/cmake/Boost-${boost.version}
 
                 - name: Geant4_DIR
                   description: Path to Geant4 installation

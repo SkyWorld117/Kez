@@ -8,6 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
+            - version: 11.4.2
+              url: https://gitlab.cern.ch/geant4/geant4/-/archive/v11.4.2/geant4-v11.4.2.tar.gz
             - version: 11.3.2
               url: https://gitlab.cern.ch/geant4/geant4/-/archive/v11.3.2/geant4-v11.3.2.tar.gz
 

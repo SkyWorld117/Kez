@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 02-23
-              url: https://github.com/iLCSoft/LCIO/archive/refs/tags/v02-23.tar.gz
+            - version: 02-23-02
+              url: https://github.com/iLCSoft/LCIO/archive/refs/tags/v02-23-02.tar.gz
 
     dependencies:
         - root
