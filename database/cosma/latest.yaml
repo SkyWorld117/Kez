@@ -35,13 +35,13 @@ recipe:
                       default: ON
 
                 - name: COSMA_BLAS
-                  description: BLAS backend [ MKL | OpenBLAS | BLIS | ATLAS | CUSTOM | OFF ]
+                  description: BLAS backend [ MKL | OPENBLAS | CRAY_LIBSCI | CUSTOM | CUDA | ROCM ]
                   user_configurable: true
                   enabled_value:
                       default: MKL
 
                 - name: COSMA_SCALAPACK
-                  description: ScaLAPACK backend for PXGEMM wrappers [ MKL | CUSTOM | OFF ]
+                  description: ScaLAPACK backend for PXGEMM wrappers [ MKL | CRAY_LIBSCI | CUSTOM ]
                   user_configurable: true
                   enabled_value:
                       default: MKL
@@ -63,13 +63,40 @@ recipe:
                   user_configurable: true
                   enabled:
                       default: false
-                  requires: [cuda, nvhpc]
+                  enabled_value:
+                      default: ON
+                  requires: [cuda, nvhpc-nccl]
+
+                - name: COSMA_NCCL_INCLUDE_DIRS
+                  description: Path to NCCL include directory
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${cosma.config.COSMA_WITH_NCCL} true
+                            value: true
+                  enabled_value:
+                      default: ${nvhpc-nccl.include}
+                  requires: [nvhpc-nccl]
+
+                - name: COSMA_NCCL_LIBRARIES
+                  description: Path to NCCL library
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${cosma.config.COSMA_WITH_NCCL} true
+                            value: true
+                  enabled_value:
+                      default: ${nvhpc-nccl.lib}
+                  requires: [nvhpc-nccl]
 
                 - name: COSMA_WITH_GPU_AWARE_MPI
                   description: Enable GPU-aware MPI
                   user_configurable: true
                   enabled:
                       default: false
+                  enabled_value:
+                      default: ON
+                  requires: [cuda]
 
                 - name: COSMA_WITH_TESTS
                   enabled_value:
