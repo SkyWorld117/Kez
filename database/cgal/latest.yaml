@@ -7,8 +7,10 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 6.1.1
-              url: https://github.com/CGAL/cgal/releases/download/v6.1.1/CGAL-6.1.1.tar.xz
+            - version: 6.2
+              url: https://github.com/CGAL/cgal/releases/download/v6.2/CGAL-6.2.tar.xz
+            - version: 6.1.2
+              url: https://github.com/CGAL/cgal/releases/download/v6.1.2/CGAL-6.1.2.tar.xz
 
     build:
     # Starting with CGAL 5.0, CGAL is a header-only library
