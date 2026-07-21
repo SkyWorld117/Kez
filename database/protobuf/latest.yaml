@@ -40,7 +40,5 @@ recipe:
             - target: install
 
     properties:
-        lib: ${protobuf.prefix}/lib
-        libs:
-            default: -lprotobuf
+        lib: ${protobuf.prefix}/lib64
         include: ${protobuf.prefix}/include

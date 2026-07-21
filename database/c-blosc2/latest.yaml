@@ -9,8 +9,14 @@ recipe:
         type: git
         url: https://github.com/Blosc/c-blosc2.git
         releases:
-            - version: 3.0.1
-              tag: v3.0.1
+            - version: 3.2.3
+              tag: v3.2.3
+            - version: 3.1.5
+              tag: v3.1.5
+            - version: 3.0.3
+              tag: v3.0.3
+            - version: 2.10.1
+              tag: v2.10.1
 
     build:
         configurations: {}
@@ -19,7 +25,7 @@ recipe:
             - target: install
 
     properties:
-        lib: ${c-blosc2.prefix}/lib
+        lib: ${c-blosc2.prefix}/lib64
         libs:
             default: -lblosc2
         include: ${c-blosc2.prefix}/include

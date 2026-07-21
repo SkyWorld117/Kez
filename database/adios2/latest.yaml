@@ -22,6 +22,7 @@ recipe:
         - mgard
         - libpng
         - c-blosc2
+        - protobuf
 
     build:
         configurations:
@@ -135,6 +136,11 @@ recipe:
                   description: Path to Blosc2 installation
                   enabled_value:
                       default: ${c-blosc2.prefix}
+
+                - name: PROTOBUF_ROOT
+                  description: Path to Protobuf installation
+                  enabled_value:
+                      default: ${protobuf.prefix}
         stages:
             - target:
             - target: install
