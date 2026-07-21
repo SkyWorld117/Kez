@@ -13,9 +13,9 @@ Usage: kez <command> [options]
 Initialize or refresh the Kez toolchain.
 
 ```
-Usage: kez init [--refresh] [--use-distro-compiler]
+Usage: kez init [--force] [--use-distro-compiler]
 
-  --refresh               Recreate the system environment
+  --force                 Recreate the system environment
   --use-distro-compiler   Link the distribution compiler instead of building GCC
 ```
 
@@ -23,7 +23,7 @@ The `init` command bootstraps the Kez system environment by building a complete 
 (GCC, binutils, cmake, make, git, etc.) as specified in `manifest.yaml`. This is a
 long-running process that should be run on a login or compute node.
 
-- `--refresh`: Rebuilds the system environment from scratch.
+- `--force`: Rebuilds the system environment from scratch.
 - `--use-distro-compiler`: Skips building GCC and links against the distribution's compiler
   instead, significantly reducing init time.
 
@@ -40,7 +40,7 @@ Usage: kez update [--with-system]
 ```
 
 Pulls the latest changes from the Git repository and rebuilds the `kez` binary.
-Use `--with-system` to also refresh the system environment (same as `kez init --refresh`).
+Use `--with-system` to also refresh the system environment (same as `kez init --force`).
 
 ---
 

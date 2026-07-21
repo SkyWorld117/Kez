@@ -18,11 +18,11 @@ using CommandArguments = std::vector<std::string>;
  *
  * Locates and runs `scripts/init.sh` under @c KEZ_HOME, which bootstraps a
  * distro-independent system stack.  The system environment is created on first
- * run and can be recreated with `--refresh`.
+ * run and can be recreated with `--force`.
  *
  * @param arguments  Command-line tokens after the `init` subcommand.
  *                   Supported options:
- *                   - `--refresh`              : Recreate the system environment
+ *                   - `--force`                : Recreate the system environment
  *                   - `--use-distro-compiler`  : Link the distribution compiler
  *                                                instead of building GCC
  *                   - `-h` / `--help`          : Print usage and return
@@ -39,7 +39,7 @@ void execute_init(const CommandArguments& arguments);
  *
  * Performs a `git pull --ff-only` inside @c KEZ_HOME, then rebuilds the
  * project with `make -B`.  When `--with-system` is passed, the system
- * toolchain is refreshed afterwards via `scripts/init.sh --refresh`.
+ * toolchain is refreshed afterwards via `scripts/init.sh --force`.
  *
  * @param arguments  Command-line tokens after the `update` subcommand.
  *                   Supported options:

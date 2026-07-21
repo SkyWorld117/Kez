@@ -8,7 +8,7 @@ _kez_complete() {
         mapfile -t COMPREPLY < <(compgen -W "init" -- "${COMP_WORDS[COMP_CWORD]}")
     elif [[ ${COMP_WORDS[1]} == "init" ]]; then
         mapfile -t COMPREPLY < <(
-            compgen -W "--refresh --use-distro-compiler" -- "${COMP_WORDS[COMP_CWORD]}"
+            compgen -W "--force --use-distro-compiler" -- "${COMP_WORDS[COMP_CWORD]}"
         )
     fi
 }

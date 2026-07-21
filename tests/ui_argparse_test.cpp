@@ -25,9 +25,9 @@ namespace {
 
     TEST(UiArgparse, ParsesInitAndUpdateOptions) {
         const InitOptionsParseResult init =
-            parse_init_options({"--refresh", "--use-distro-compiler"});
+            parse_init_options({"--force", "--use-distro-compiler"});
         EXPECT_TRUE(init.error.empty());
-        EXPECT_TRUE(init.options.refresh);
+        EXPECT_TRUE(init.options.force);
         EXPECT_TRUE(init.options.use_distro_compiler);
         EXPECT_TRUE(parse_init_options({"--help", "--bad"}).help);
         EXPECT_EQ(parse_init_options({"--bad"}).error, "Unknown init option: --bad");

@@ -33,7 +33,7 @@ UiArgumentsParseResult parse_ui_arguments(const CommandArguments& arguments);
 
 /** @brief Options accepted by @c kez @c init. */
 struct InitOptions {
-    bool refresh             = false;
+    bool force               = false;
     bool use_distro_compiler = false;
 };
 

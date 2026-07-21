@@ -113,8 +113,8 @@ namespace {
 
     std::vector<std::string> init_suggestions(const std::vector<std::string>& words) {
         std::vector<std::string> result = help_options();
-        if (!contains(words, "--refresh")) {
-            result.push_back("--refresh");
+        if (!contains(words, "--force")) {
+            result.push_back("--force");
         }
         if (!contains(words, "--use-distro-compiler")) {
             result.push_back("--use-distro-compiler");

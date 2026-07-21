@@ -797,13 +797,13 @@ run_package_mode() {
 }
 
 main() {
-    local refresh=0
+    local force=0
     local use_distro_compiler=0
     local argument plan_file
 
     for argument in "$@"; do
         case $argument in
-            --refresh) refresh=1 ;;
+            --force) force=1 ;;
             --use-distro-compiler) use_distro_compiler=1 ;;
             *)
                 error "Unknown init option: ${argument}"
@@ -825,7 +825,7 @@ main() {
     local system_tmp="${KEZ_SYSTEM}/.tmp"
     mkdir -p "${KEZ_SYSTEM}" "${KEZ_UTILITIES}" "${system_tmp}"
 
-    if (( refresh == 1 )); then
+    if (( force == 1 )); then
         rm -rf "${KEZ_SYSTEM:?}/"*
         rm -rf "${system_tmp:?}/"*
         mkdir -p "${KEZ_SYSTEM}" "${KEZ_SYSTEM}/bin" "${system_tmp}"

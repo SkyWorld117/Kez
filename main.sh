@@ -28,8 +28,8 @@ kez () {
 
             local cmd="bash ${KEZ_HOME}/scripts/init.sh"
 
-            if [ "${2:-}" == "--refresh" ] || [ "${3:-}" == "--refresh" ]; then
-                cmd="${cmd} --refresh"
+            if [ "${2:-}" == "--force" ] || [ "${3:-}" == "--force" ]; then
+                cmd="${cmd} --force"
             fi
 
             if [ "${2:-}" == "--use-distro-compiler" ] || [ "${3:-}" == "--use-distro-compiler" ]; then

@@ -88,8 +88,8 @@ InitOptionsParseResult parse_init_options(const CommandArguments& arguments) {
             result.help = true;
             return result;
         }
-        if (argument == "--refresh") {
-            result.options.refresh = true;
+        if (argument == "--force") {
+            result.options.force = true;
         } else if (argument == "--use-distro-compiler") {
             result.options.use_distro_compiler = true;
         } else {

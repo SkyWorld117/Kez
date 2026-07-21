@@ -21,7 +21,7 @@
 /**
  * @brief Executes the `kez init` command.
  *
- * Delegates to scripts/init.sh, optionally passing --refresh and/or
+ * Delegates to scripts/init.sh, optionally passing --force and/or
  * --use-distro-compiler flags.
  */
 void execute_init(const CommandArguments& arguments) {
@@ -31,8 +31,8 @@ void execute_init(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
     if (parsed.help) {
-        INFO("Usage: kez init [--refresh] [--use-distro-compiler]\n\n"
-             "  --refresh               Recreate the system environment\n"
+        INFO("Usage: kez init [--force] [--use-distro-compiler]\n\n"
+             "  --force                 Recreate the system environment\n"
              "  --use-distro-compiler   Link the distribution compiler instead of building GCC");
         return;
     }
@@ -44,8 +44,8 @@ void execute_init(const CommandArguments& arguments) {
         exit(EXIT_FAILURE);
     }
     std::string command = "bash " + shell_single_quote(script.string());
-    if (parsed.options.refresh) {
-        command += " --refresh";
+    if (parsed.options.force) {
+        command += " --force";
     }
     if (parsed.options.use_distro_compiler) {
         command += " --use-distro-compiler";
@@ -57,7 +57,7 @@ void execute_init(const CommandArguments& arguments) {
  * @brief Executes the `kez update` command.
  *
  * Pulls the latest source via git, rebuilds the project, and optionally
- * refreshes the system toolchain via scripts/init.sh --refresh.
+ * refreshes the system toolchain via scripts/init.sh --force.
  */
 void execute_update(const CommandArguments& arguments) {
     const UpdateOptionsParseResult parsed = parse_update_options(arguments);
@@ -85,7 +85,7 @@ void execute_update(const CommandArguments& arguments) {
     run_external_command("make -C " + shell_single_quote(home.string()) + " -B -j" + jobs);
     if (parsed.options.with_system) {
         run_external_command("bash " + shell_single_quote((home / "scripts" / "init.sh").string()) +
-                             " --refresh");
+                             " --force");
     }
     SUCCESS("Kez updated. Reload the shell to use the rebuilt executable.");
 }
