@@ -266,7 +266,7 @@ if [[ $python_environment_required == true ]]; then
         kez_plan_depends python
     fi
     # Native Kez dependencies of a Python distribution must be available
-    # before pip starts. Other Python distributions are part of this same
+    # before uv starts. Other Python distributions are part of this same
     # transaction and therefore must not become prerequisites of the barrier.
     for distribution_index in "${!plan_packages[@]}"; do
         [[ ${package_is_python_distribution[$distribution_index]} == true ]] || continue

@@ -79,8 +79,8 @@ Kez uses `clang-format` (Google style with customizations) and `pre-commit` hook
 to enforce consistent formatting.
 
 ```bash
-# Install pre-commit
-pip install pre-commit
+# Install pre-commit as an isolated tool
+uv tool install pre-commit
 
 # Install the git hooks
 pre-commit install

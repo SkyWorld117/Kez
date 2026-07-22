@@ -244,9 +244,11 @@ kez env deactivate
 When the resolved package graph contains Python, Kez installs CPython as a
 normal package and creates one `.venv` for the application environment.
 Packages using `toolchain: python` are ordinary dependencies whose resolved
-versions are installed together and recorded in `.kez-python/`. Activating the
-Kez environment sets `VIRTUAL_ENV` and places `.venv/bin` first on `PATH`;
-deactivation restores an outer virtual environment if one was active previously.
+versions are compiled and synchronized together by uv, with the lock and package
+declarations recorded in `.kez-python/`. Activating the Kez environment sets
+`VIRTUAL_ENV` and places `.venv/bin` first on `PATH`; deactivation restores an
+outer virtual environment if one was active previously. The shared venv is
+Kez-managed and does not contain pip by default.
 
 ---
 

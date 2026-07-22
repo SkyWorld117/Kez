@@ -2,8 +2,8 @@
 
 # Reconcile one shared Python virtual environment with the exact requirements
 # represented by Python-toolchain package nodes. Requirements are always
-# installed together into a fresh venv, so pip resolves one deterministic
-# transaction and never races with another package worker.
+# compiled and synchronized together into a fresh venv, so uv performs one
+# deterministic transaction and never races with another package worker.
 
 set -Eeuo pipefail
 
@@ -181,6 +181,23 @@ python_signature() {
         'import sys; print(sys.version.split()[0] + " " + (sys.implementation.cache_tag or ""))'
 }
 
+uv_executable() {
+    if [[ -n ${KEZ_UV:-} ]]; then
+        if [[ ! -x $KEZ_UV ]]; then
+            error "Configured uv executable is not available: $KEZ_UV"
+            return 1
+        fi
+        printf '%s\n' "$KEZ_UV"
+        return
+    fi
+
+    if ! command -v uv >/dev/null 2>&1; then
+        error "uv is missing from the Kez system environment"
+        return 1
+    fi
+    command -v uv
+}
+
 replace_state() {
     if [[ -d $target_env/.kez-python ]]; then
         state_backup="$target_env/.tmp/.kez-python-backup.$$"
@@ -202,9 +219,18 @@ remove_python_environment() {
 
 rebuild_virtual_environment() {
     local base_python=$1
-    local pip_cache="$target_env/.tmp/pip-cache"
-    local requirement
-    local -a requirements=()
+    local uv=$2
+    local uv_cache="$target_env/.tmp/uv-cache"
+
+    mkdir -p -- "$uv_cache"
+    if [[ -s $stage_dir/requirements.txt ]]; then
+        env -u CONDA_PREFIX -u PYTHONHOME -u PYTHONPATH -u VIRTUAL_ENV PYTHONNOUSERSITE=1 \
+            UV_CACHE_DIR="$uv_cache" "$uv" pip compile --no-config --no-python-downloads \
+            --no-header --python "$base_python" --output-file "$stage_dir/resolved.txt" \
+            "$stage_dir/requirements.txt"
+    else
+        : > "$stage_dir/resolved.txt"
+    fi
 
     if [[ -d $target_env/.venv ]]; then
         venv_backup="$target_env/.tmp/.venv-backup.$$"
@@ -212,22 +238,14 @@ rebuild_virtual_environment() {
         mv -- "$target_env/.venv" "$venv_backup"
     fi
 
-    env -u PYTHONHOME -u PYTHONPATH PYTHONNOUSERSITE=1 \
-        "$base_python" -m venv "$target_env/.venv"
-    while IFS= read -r requirement || [[ -n $requirement ]]; do
-        [[ -n $requirement ]] || continue
-        requirements+=("$requirement")
-    done < "$stage_dir/requirements.txt"
-    if (( ${#requirements[@]} != 0 )); then
-        mkdir -p -- "$pip_cache"
-        env -u PYTHONHOME -u PYTHONPATH PYTHONNOUSERSITE=1 PIP_CACHE_DIR="$pip_cache" \
-            "$target_env/.venv/bin/python" -m pip install --disable-pip-version-check \
-            "${requirements[@]}"
+    env -u CONDA_PREFIX -u PYTHONHOME -u PYTHONPATH -u VIRTUAL_ENV PYTHONNOUSERSITE=1 \
+        UV_CACHE_DIR="$uv_cache" "$uv" venv --no-config --no-python-downloads \
+        --python "$base_python" "$target_env/.venv"
+    if [[ -s $stage_dir/resolved.txt ]]; then
+        env -u CONDA_PREFIX -u PYTHONHOME -u PYTHONPATH -u VIRTUAL_ENV PYTHONNOUSERSITE=1 \
+            UV_CACHE_DIR="$uv_cache" "$uv" pip sync --no-config --no-python-downloads \
+            --python "$target_env/.venv/bin/python" "$stage_dir/resolved.txt"
     fi
-    env -u PYTHONHOME -u PYTHONPATH PYTHONNOUSERSITE=1 \
-        "$target_env/.venv/bin/python" -m pip freeze --all |
-        LC_ALL=C sort > "$stage_dir/resolved.txt"
-
 }
 
 synchronize() {
@@ -242,7 +260,8 @@ synchronize() {
         exit 1
     fi
 
-    local real_python signature rebuild=true
+    local uv real_python signature rebuild=true
+    uv=$(uv_executable) || exit 1
     real_python=$(readlink -f -- "$base_python")
     signature="$real_python $(python_signature "$base_python")"
     printf '%s\n' "$signature" > "$stage_dir/base.txt"
@@ -255,7 +274,7 @@ synchronize() {
     fi
 
     if [[ $rebuild == true ]]; then
-        rebuild_virtual_environment "$base_python"
+        rebuild_virtual_environment "$base_python" "$uv"
         success "Synchronized Python virtual environment: $target_env/.venv"
     elif [[ -f $target_env/.kez-python/resolved.txt ]]; then
         cp -- "$target_env/.kez-python/resolved.txt" "$stage_dir/resolved.txt"
