@@ -37,8 +37,8 @@ Kez is built specifically for HPC, with the following key features:
 To contribute code to Kez, you'll need to set up pre-commit hooks for code formatting:
 
 ```bash
-# Install pre-commit
-pip install pre-commit
+# Install pre-commit as an isolated tool
+uv tool install pre-commit
 
 # Install the git hooks
 pre-commit install

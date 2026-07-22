@@ -43,6 +43,132 @@ namespace {
         return plan.substr(start, end + std::string("kez_plan_end\n").size() - start);
     }
 
+    void make_executable(const std::filesystem::path& path) {
+        std::filesystem::permissions(path,
+                                     std::filesystem::perms::owner_read |
+                                         std::filesystem::perms::owner_write |
+                                         std::filesystem::perms::owner_exec,
+                                     std::filesystem::perm_options::replace);
+    }
+
+    void write_fake_python(const std::filesystem::path& path) {
+        std::ofstream output(path);
+        ASSERT_TRUE(output.good());
+        output << R"(#!/usr/bin/env bash
+set -eu
+if [[ ${1:-} == -c ]]; then
+    printf '3.12.0 cpython-312\n'
+else
+    exit 2
+fi
+)";
+        output.close();
+        make_executable(path);
+    }
+
+    void write_fake_uv(const std::filesystem::path& path) {
+        std::ofstream output(path);
+        ASSERT_TRUE(output.good());
+        output << R"(#!/usr/bin/env bash
+set -eu
+
+command=${1:-}
+shift || true
+case $command in
+    venv)
+        base_python=
+        virtual_environment=
+        while (( $# != 0 )); do
+            case $1 in
+                --python)
+                    base_python=$2
+                    shift 2
+                    ;;
+                --no-config | --no-python-downloads) shift ;;
+                *)
+                    virtual_environment=$1
+                    shift
+                    ;;
+            esac
+        done
+        mkdir -p "$virtual_environment/bin"
+        mkdir -p "$virtual_environment/lib/python3.12/site-packages"
+        cp "$base_python" "$virtual_environment/bin/python"
+        chmod +x "$virtual_environment/bin/python"
+        ;;
+    pip)
+        operation=${1:-}
+        shift || true
+        case $operation in
+            compile)
+                base_python=
+                output_file=
+                input_file=
+                while (( $# != 0 )); do
+                    case $1 in
+                        --python)
+                            base_python=$2
+                            shift 2
+                            ;;
+                        --output-file)
+                            output_file=$2
+                            shift 2
+                            ;;
+                        --no-config | --no-python-downloads | --no-header) shift ;;
+                        *)
+                            input_file=$1
+                            shift
+                            ;;
+                    esac
+                done
+                fake_env=$(cd "$(dirname "$base_python")/../.." && pwd)
+                [[ ! -e $fake_env/fail-uv-compile ]] || exit 1
+                cp "$input_file" "$output_file"
+                : > "$fake_env/uv-compile-ran"
+                ;;
+            sync)
+                python=
+                lock_file=
+                while (( $# != 0 )); do
+                    case $1 in
+                        --python)
+                            python=$2
+                            shift 2
+                            ;;
+                        --no-config | --no-python-downloads) shift ;;
+                        *)
+                            lock_file=$1
+                            shift
+                            ;;
+                    esac
+                done
+                fake_env=$(cd "$(dirname "$python")/../.." && pwd)
+                if [[ -e $fake_env/require-native-ready ]]; then
+                    test -f "$fake_env/native.ready"
+                fi
+                [[ ! -e $fake_env/fail-uv-sync ]] || exit 1
+                cp "$lock_file" "$fake_env/uv-sync.txt"
+                ;;
+            *) exit 2 ;;
+        esac
+        ;;
+    *) exit 2 ;;
+esac
+)";
+        output.close();
+        make_executable(path);
+    }
+
+    std::string python_environment_sync_command(const std::filesystem::path& target,
+                                                const std::filesystem::path& runtime,
+                                                const std::filesystem::path& uv) {
+        return "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) +
+               " KEZ_UV=" + shell_single_quote(uv.string()) + " bash " +
+               shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/python_env.sh") +
+               " sync-plan " + shell_single_quote(target.string()) + " " +
+               shell_single_quote(runtime.string());
+    }
+
     /**
  * @test AppliesMapIndexAndNamedSequenceOverrides
  *
@@ -209,43 +335,15 @@ kez:
         const std::filesystem::path target      = directory / "target";
         const std::filesystem::path runtime     = target / ".tmp/plan";
         const std::filesystem::path base_python = target / "python/bin/python3";
+        const std::filesystem::path uv          = directory / "uv";
         std::filesystem::remove_all(directory);
         std::filesystem::create_directories(base_python.parent_path());
         std::filesystem::create_directories(runtime / "0");
         std::filesystem::create_directories(runtime / "1");
         std::filesystem::create_directories(runtime / "2");
 
-        {
-            std::ofstream output(base_python);
-            ASSERT_TRUE(output.good());
-            output << R"(#!/usr/bin/env bash
-set -eu
-if [[ ${1:-} == -c ]]; then
-    printf '3.12.0 cpython-312\n'
-elif [[ ${1:-} == -m && ${2:-} == venv ]]; then
-    mkdir -p "$3/bin"
-    mkdir -p "$3/lib/python3.12/site-packages"
-    cp "$0" "$3/bin/python"
-    chmod +x "$3/bin/python"
-elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == install ]]; then
-    fake_env=$(cd "$(dirname "$0")/../.." && pwd)
-    if [[ -e $fake_env/require-native-ready ]]; then
-        test -f "$fake_env/native.ready"
-    fi
-    shift 4
-    printf '%s\n' "$@" > "$fake_env/pip-install.txt"
-elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == freeze ]]; then
-    printf 'pip==25.0\n'
-else
-    exit 2
-fi
-)";
-        }
-        std::filesystem::permissions(base_python,
-                                     std::filesystem::perms::owner_read |
-                                         std::filesystem::perms::owner_write |
-                                         std::filesystem::perms::owner_exec,
-                                     std::filesystem::perm_options::replace);
+        write_fake_python(base_python);
+        write_fake_uv(uv);
 
         {
             std::ofstream(runtime / "0/package-name") << "python\n";
@@ -259,26 +357,90 @@ fi
             std::ofstream(runtime / "2/python-requirements") << "other==4.5.6\n";
         }
 
-        const std::string helper =
-            "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) + " bash " +
-            shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/python_env.sh") +
-            " sync-plan " + shell_single_quote(target.string()) + " " +
-            shell_single_quote(runtime.string());
+        const std::string helper = python_environment_sync_command(target, runtime, uv);
         ASSERT_EQ(std::system(helper.c_str()), 0);
         EXPECT_TRUE(std::filesystem::is_regular_file(target / ".venv/bin/python"));
         EXPECT_EQ(read_file((target / ".kez-python/requirements.txt").string()),
                   "demo==1.2.3\nother==4.5.6\n");
-        EXPECT_EQ(read_file((target / "pip-install.txt").string()), "demo==1.2.3\nother==4.5.6\n");
+        EXPECT_EQ(read_file((target / ".kez-python/resolved.txt").string()),
+                  "demo==1.2.3\nother==4.5.6\n");
+        EXPECT_EQ(read_file((target / "uv-sync.txt").string()), "demo==1.2.3\nother==4.5.6\n");
         EXPECT_TRUE(
             std::filesystem::is_regular_file(target / ".kez-python/packages/demo.requirements"));
 
         const std::string remove =
-            "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) + " bash " +
+            "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) +
+            " KEZ_UV=" + shell_single_quote(uv.string()) + " bash " +
             shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/python_env.sh") +
             " remove-package " + shell_single_quote(target.string()) + " demo";
         ASSERT_EQ(std::system(remove.c_str()), 0);
         EXPECT_TRUE(std::filesystem::is_directory(target / ".venv"));
         EXPECT_EQ(read_file((target / ".kez-python/requirements.txt").string()), "other==4.5.6\n");
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(CommandLineParser, PythonEnvironmentHelperCreatesEmptyUvEnvironment) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-empty-python-environment-test-" + std::to_string(getpid()));
+        const std::filesystem::path target      = directory / "target";
+        const std::filesystem::path runtime     = target / ".tmp/plan";
+        const std::filesystem::path base_python = target / "python/bin/python3";
+        const std::filesystem::path uv          = directory / "uv";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(base_python.parent_path());
+        std::filesystem::create_directories(runtime / "0");
+        write_fake_python(base_python);
+        write_fake_uv(uv);
+
+        std::ofstream(runtime / "0/package-name") << "python\n";
+        std::ofstream(runtime / "0/python-requirements");
+        std::ofstream(runtime / "0/provides-python-environment");
+
+        const std::string helper = python_environment_sync_command(target, runtime, uv);
+        ASSERT_EQ(std::system(helper.c_str()), 0);
+        EXPECT_TRUE(std::filesystem::is_regular_file(target / ".venv/bin/python"));
+        EXPECT_EQ(read_file((target / ".kez-python/requirements.txt").string()), "");
+        EXPECT_EQ(read_file((target / ".kez-python/resolved.txt").string()), "");
+        EXPECT_FALSE(std::filesystem::exists(target / "uv-compile-ran"));
+        EXPECT_FALSE(std::filesystem::exists(target / "uv-sync.txt"));
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(CommandLineParser, PythonEnvironmentHelperRestoresVenvAfterUvSyncFailure) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-python-rollback-test-" + std::to_string(getpid()));
+        const std::filesystem::path target      = directory / "target";
+        const std::filesystem::path runtime     = target / ".tmp/plan";
+        const std::filesystem::path base_python = target / "python/bin/python3";
+        const std::filesystem::path uv          = directory / "uv";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(base_python.parent_path());
+        std::filesystem::create_directories(runtime / "0");
+        std::filesystem::create_directories(runtime / "1");
+        write_fake_python(base_python);
+        write_fake_uv(uv);
+
+        std::ofstream(runtime / "0/package-name") << "python\n";
+        std::ofstream(runtime / "0/python-requirements");
+        std::ofstream(runtime / "0/provides-python-environment");
+        std::ofstream(runtime / "1/package-name") << "demo\n";
+        std::ofstream(runtime / "1/uses-python-environment");
+        std::ofstream(runtime / "1/python-requirements") << "demo==1.2.3\n";
+
+        const std::string helper = python_environment_sync_command(target, runtime, uv);
+        ASSERT_EQ(std::system(helper.c_str()), 0);
+        std::ofstream(target / ".venv/original-marker");
+        std::ofstream(runtime / "1/python-requirements") << "demo==2.0.0\n";
+        std::ofstream(target / "fail-uv-sync");
+
+        EXPECT_NE(std::system(helper.c_str()), 0);
+        EXPECT_TRUE(std::filesystem::is_regular_file(target / ".venv/original-marker"));
+        EXPECT_EQ(read_file((target / ".kez-python/requirements.txt").string()), "demo==1.2.3\n");
+        EXPECT_EQ(read_file((target / ".kez-python/resolved.txt").string()), "demo==1.2.3\n");
 
         std::filesystem::remove_all(directory);
     }
@@ -291,39 +453,11 @@ fi
         const std::filesystem::path plan        = directory / "plan.sh";
         const std::filesystem::path observation = directory / "virtual-environment";
         const std::filesystem::path base_python = target / "python/bin/python3";
+        const std::filesystem::path uv          = directory / "uv";
         std::filesystem::remove_all(directory);
         std::filesystem::create_directories(base_python.parent_path());
-        {
-            std::ofstream output(base_python);
-            ASSERT_TRUE(output.good());
-            output << R"(#!/usr/bin/env bash
-set -eu
-if [[ ${1:-} == -c ]]; then
-    printf '3.12.0 cpython-312\n'
-elif [[ ${1:-} == -m && ${2:-} == venv ]]; then
-    mkdir -p "$3/bin"
-    mkdir -p "$3/lib/python3.12/site-packages"
-    cp "$0" "$3/bin/python"
-    chmod +x "$3/bin/python"
-elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == install ]]; then
-    fake_env=$(cd "$(dirname "$0")/../.." && pwd)
-    if [[ -e $fake_env/require-native-ready ]]; then
-        test -f "$fake_env/native.ready"
-    fi
-    shift 4
-    printf '%s\n' "$@" > "$fake_env/pip-install.txt"
-elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == freeze ]]; then
-    printf 'pip==25.0\n'
-else
-    exit 2
-fi
-)";
-        }
-        std::filesystem::permissions(base_python,
-                                     std::filesystem::perms::owner_read |
-                                         std::filesystem::perms::owner_write |
-                                         std::filesystem::perms::owner_exec,
-                                     std::filesystem::perm_options::replace);
+        write_fake_python(base_python);
+        write_fake_uv(uv);
 
         std::ofstream(target / "require-native-ready");
         PackageCommands native {
@@ -347,7 +481,7 @@ fi
 
         const std::string executor =
             "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) +
-            " KEZ_NJOBS=2 env -u KEZ_WORKDIR bash " +
+            " KEZ_UV=" + shell_single_quote(uv.string()) + " KEZ_NJOBS=2 env -u KEZ_WORKDIR bash " +
             shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") + " " +
             shell_single_quote(target.string()) + " " + shell_single_quote(plan.string());
         ASSERT_EQ(std::system(executor.c_str()), 0);
@@ -355,7 +489,7 @@ fi
         EXPECT_EQ(read_file((target / "state.yaml").string()),
                   "state:\n  - native\n  - python\n  - demo\n  - application\n");
         EXPECT_TRUE(std::filesystem::is_regular_file(target / ".venv/bin/python"));
-        EXPECT_EQ(read_file((target / "pip-install.txt").string()), "demo==1.2.3\n");
+        EXPECT_EQ(read_file((target / "uv-sync.txt").string()), "demo==1.2.3\n");
         EXPECT_EQ(read_file((target / ".venv/lib/python3.12/site-packages/"
                                       "kez-application.pth")
                                 .string()),
@@ -429,6 +563,17 @@ fi
             ASSERT_FALSE(block.empty()) << package;
             EXPECT_EQ(block.find("kez_plan_depends gcc\n"), std::string::npos) << package;
         }
+
+        const std::string uv = install_plan_package_block(contents, "uv");
+        ASSERT_FALSE(uv.empty());
+        EXPECT_NE(uv.find("--build-package\\ uv"), std::string::npos);
+        EXPECT_NE(uv.find("kez_plan_depends python\n"), std::string::npos);
+        EXPECT_EQ(uv.find("kez_plan_depends gcc\n"), std::string::npos);
+
+        const std::string meson = install_plan_package_block(contents, "meson");
+        EXPECT_NE(meson.find("kez_plan_depends python\n"), std::string::npos);
+        EXPECT_NE(meson.find("kez_plan_depends uv\n"), std::string::npos);
+        EXPECT_NE(meson.find("kez_plan_depends ninja\n"), std::string::npos);
 
         std::filesystem::remove_all(directory);
     }

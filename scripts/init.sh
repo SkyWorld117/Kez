@@ -530,7 +530,29 @@ build_python() {
     record_package_version "${version}"
 
     hash -r
-    python -m pip install --upgrade pip
+}
+
+build_uv() {
+    local version requirement
+    version=$(yq -r '.system-stack.uv' "${KEZ_HOME}/manifest.yaml")
+    if is_installed "uv"; then
+        warning "uv is already installed, skipping..."
+        return 0
+    fi
+
+    info "Installing uv..."
+    if [[ $version == latest ]]; then
+        requirement=uv
+    else
+        requirement="uv==${version}"
+    fi
+    "${KEZ_SYSTEM}/bin/python3" -m pip install --disable-pip-version-check --upgrade \
+        "${requirement}"
+    if [[ $version == latest ]]; then
+        version=$("${KEZ_SYSTEM}/bin/uv" --version)
+        version=${version#uv }
+    fi
+    record_package_version "${version}"
 }
 
 build_ninja() {
@@ -558,15 +580,18 @@ build_ninja() {
 }
 
 build_meson() {
-    local version
+    local version requirement
     info "Installing meson..."
     version=$(yq -r '.system-stack.meson' "${KEZ_HOME}/manifest.yaml")
     if [[ $version == latest ]]; then
-        pip3 install --target="${KEZ_SYSTEM_TMP}" --upgrade meson
+        requirement=meson
     else
-        pip3 install --target="${KEZ_SYSTEM_TMP}" --upgrade "meson==${version}"
+        requirement="meson==${version}"
     fi
-    # cp -r "${KEZ_SYSTEM_TMP}/"* "${KEZ_SYSTEM}/"
+    mkdir -p "${KEZ_SYSTEM}/.tmp/uv-cache"
+    UV_CACHE_DIR="${KEZ_SYSTEM}/.tmp/uv-cache" "${KEZ_SYSTEM}/bin/uv" pip install \
+        --no-config --no-python-downloads --python "${KEZ_SYSTEM}/bin/python3" \
+        --target "${KEZ_SYSTEM_TMP}" "${requirement}"
     cp "${KEZ_SYSTEM_TMP}/bin/meson" "${KEZ_SYSTEM}/bin/"
     cp -r "${KEZ_SYSTEM_TMP}/"meson* "${KEZ_SYSTEM}/lib/"/python*/site-packages/
     record_package_version "${version}"
@@ -688,6 +713,7 @@ write_init_plan() {
     init_plan_package "${plan_file}" cmake "${use_distro_compiler}"
     init_plan_package "${plan_file}" rust "${use_distro_compiler}"
     init_plan_package "${plan_file}" patchelf "${use_distro_compiler}"
+    init_plan_package "${plan_file}" uv "${use_distro_compiler}" python
     init_plan_package "${plan_file}" ninja "${use_distro_compiler}"
 
     init_plan_package "${plan_file}" elfutils "${use_distro_compiler}" gcc
@@ -699,7 +725,7 @@ write_init_plan() {
     init_plan_package "${plan_file}" perl "${use_distro_compiler}" gcc
     init_plan_package "${plan_file}" git "${use_distro_compiler}" gcc
     init_plan_package "${plan_file}" python "${use_distro_compiler}" gcc
-    init_plan_package "${plan_file}" meson "${use_distro_compiler}" python ninja
+    init_plan_package "${plan_file}" meson "${use_distro_compiler}" python uv ninja
     init_plan_package "${plan_file}" yaml-cpp "${use_distro_compiler}" gcc cmake
     init_plan_package "${plan_file}" googletest "${use_distro_compiler}" gcc cmake
 }
@@ -759,6 +785,7 @@ build_package() {
         yaml-cpp) build_yaml_cpp ;;
         googletest) build_googletest ;;
         patchelf) build_patchelf ;;
+        uv) build_uv ;;
         ninja) build_ninja ;;
         python) build_python ;;
         meson) build_meson ;;
