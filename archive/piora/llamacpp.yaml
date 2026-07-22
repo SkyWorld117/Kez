@@ -1,0 +1,73 @@
+---
+kez:
+    llamacpp:
+        description: llama.cpp - LLM inference on consumer and HPC hardware
+        version: master
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: CMAKE_CUDA_ARCHITECTURES
+                      enabled: true
+                      enabled_value: 80
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${llamacpp.prefix}
+                    - name: CMAKE_BUILD_TYPE
+                      enabled: true
+                      enabled_value: Release
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CMAKE_CXX_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${cuda.incflags} ${nvhpc-nccl.incflags}
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${cuda.incflags} ${nvhpc-nccl.incflags}
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${cuda.incflags} ${nvhpc-nccl.incflags}
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3 ${cuda.incflags} ${nvhpc-nccl.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${cuda.ldflags} ${nvhpc-nccl.ldflags} ${cuda.libs} ${nvhpc-nccl.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${cuda.ldflags} ${nvhpc-nccl.ldflags} ${cuda.libs} ${nvhpc-nccl.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${cuda.ldflags} ${nvhpc-nccl.ldflags} ${cuda.libs} ${nvhpc-nccl.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${cuda.lib};${nvhpc-nccl.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${cuda.lib};${nvhpc-nccl.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${cuda.prefix};${nvhpc-nccl.prefix}
+    nvhpc-nccl:
+        description: NVIDIA Communications Collective Library (NCCL) for NVIDIA HPC SDK
+    nvhpc:
+        version: 26.5
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
+recipe:
+    abstract_packages: {}
+    dependencies:
+        - llamacpp
+        - nvhpc-nccl
+        - nvhpc
+        - cuda
+    targets:
+        - llamacpp
