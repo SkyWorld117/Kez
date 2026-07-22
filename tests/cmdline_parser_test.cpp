@@ -346,15 +346,15 @@ kez:
         write_fake_uv(uv);
 
         {
-            std::ofstream(runtime / "0/package-name") << "python\n";
-            std::ofstream(runtime / "0/python-requirements");
-            std::ofstream(runtime / "0/provides-python-environment");
-            std::ofstream(runtime / "1/package-name") << "demo\n";
-            std::ofstream(runtime / "1/uses-python-environment");
-            std::ofstream(runtime / "1/python-requirements") << "demo==1.2.3\n";
-            std::ofstream(runtime / "2/package-name") << "other\n";
-            std::ofstream(runtime / "2/uses-python-environment");
-            std::ofstream(runtime / "2/python-requirements") << "other==4.5.6\n";
+            write_file(runtime / "0/package-name", "python\n");
+            write_file(runtime / "0/python-requirements", "");
+            write_file(runtime / "0/provides-python-environment", "");
+            write_file(runtime / "1/package-name", "demo\n");
+            write_file(runtime / "1/uses-python-environment", "");
+            write_file(runtime / "1/python-requirements", "demo==1.2.3\n");
+            write_file(runtime / "2/package-name", "other\n");
+            write_file(runtime / "2/uses-python-environment", "");
+            write_file(runtime / "2/python-requirements", "other==4.5.6\n");
         }
 
         const std::string helper = python_environment_sync_command(target, runtime, uv);
@@ -394,9 +394,9 @@ kez:
         write_fake_python(base_python);
         write_fake_uv(uv);
 
-        std::ofstream(runtime / "0/package-name") << "python\n";
-        std::ofstream(runtime / "0/python-requirements");
-        std::ofstream(runtime / "0/provides-python-environment");
+        write_file(runtime / "0/package-name", "python\n");
+        write_file(runtime / "0/python-requirements", "");
+        write_file(runtime / "0/provides-python-environment", "");
 
         const std::string helper = python_environment_sync_command(target, runtime, uv);
         ASSERT_EQ(std::system(helper.c_str()), 0);
@@ -424,18 +424,21 @@ kez:
         write_fake_python(base_python);
         write_fake_uv(uv);
 
-        std::ofstream(runtime / "0/package-name") << "python\n";
-        std::ofstream(runtime / "0/python-requirements");
-        std::ofstream(runtime / "0/provides-python-environment");
-        std::ofstream(runtime / "1/package-name") << "demo\n";
-        std::ofstream(runtime / "1/uses-python-environment");
-        std::ofstream(runtime / "1/python-requirements") << "demo==1.2.3\n";
+        write_file(runtime / "0/package-name", "python\n");
+        write_file(runtime / "0/python-requirements", "");
+        write_file(runtime / "0/provides-python-environment", "");
+        write_file(runtime / "1/package-name", "demo\n");
+        write_file(runtime / "1/uses-python-environment", "");
+        write_file(runtime / "1/python-requirements", "demo==1.2.3\n");
 
         const std::string helper = python_environment_sync_command(target, runtime, uv);
         ASSERT_EQ(std::system(helper.c_str()), 0);
-        std::ofstream(target / ".venv/original-marker");
-        std::ofstream(runtime / "1/python-requirements") << "demo==2.0.0\n";
-        std::ofstream(target / "fail-uv-sync");
+        // std::ofstream(target / ".venv/original-marker");
+        // std::ofstream(runtime / "1/python-requirements") << "demo==2.0.0\n";
+        // std::ofstream(target / "fail-uv-sync");
+        write_file(target / ".venv/original-marker", "");
+        write_file(runtime / "1/python-requirements", "demo==2.0.0\n");
+        write_file(target / "fail-uv-sync", "");
 
         EXPECT_NE(std::system(helper.c_str()), 0);
         EXPECT_TRUE(std::filesystem::is_regular_file(target / ".venv/original-marker"));
@@ -459,7 +462,7 @@ kez:
         write_fake_python(base_python);
         write_fake_uv(uv);
 
-        std::ofstream(target / "require-native-ready");
+        write_file(target / "require-native-ready", "");
         PackageCommands native {
             "native",
             {"sleep 0.1; touch " + shell_single_quote((target / "native.ready").string())},
