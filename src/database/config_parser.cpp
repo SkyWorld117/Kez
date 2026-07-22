@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cctype>
 #include <database/build_parser.hpp>
 #include <database/condition_parser.hpp>
@@ -84,6 +85,9 @@ namespace {
         }
         if (value == "meson") {
             return std::make_unique<MesonPackageConfig>();
+        }
+        if (value == "python") {
+            return std::make_unique<PythonPackageConfig>();
         }
         fail_config(node, "recipe.toolchain", "has unsupported toolchain '" + value + "'", context);
     }
@@ -248,6 +252,7 @@ namespace {
         }
         return result;
     }
+
 }  // namespace
 
 PackageConfigPtr parse_config_document(const YAML::Node& document,
@@ -294,6 +299,34 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
 
     if (config->type == PackageType::Abstract && config->implementations.empty()) {
         fail_config(recipe, "recipe", "abstract packages require at least one implementation",
+                    context);
+    }
+
+    if (config->toolchain() == Toolchain::Python) {
+        if (config->type != PackageType::Package) {
+            fail_config(recipe["type"], "recipe.type",
+                        "must be 'package' when toolchain is 'python'", context);
+        }
+        if (config->name == "python") {
+            fail_config(recipe["name"], "recipe.name",
+                        "the Python interpreter cannot use the python toolchain", context);
+        }
+        if (!config->source.has_value() || config->source->type != SourceType::PyPI) {
+            fail_config(recipe, "recipe.source",
+                        "must use source type 'pypi' when toolchain is 'python'", context);
+        }
+        if (config->build.has_value()) {
+            fail_config(recipe["build"], "recipe.build",
+                        "is not supported for the python toolchain", context);
+        }
+        const bool has_python_dependency =
+            std::any_of(config->dependencies.begin(), config->dependencies.end(),
+                        [](const Dependency& dependency) { return dependency.name == "python"; });
+        if (!has_python_dependency) {
+            config->dependencies.push_back({"python", {}});
+        }
+    } else if (config->source.has_value() && config->source->type == SourceType::PyPI) {
+        fail_config(recipe["source"], "recipe.source", "type 'pypi' requires toolchain 'python'",
                     context);
     }
 

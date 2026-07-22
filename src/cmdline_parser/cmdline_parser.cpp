@@ -68,6 +68,15 @@ void write_install_plan(const BashCommandPlan& plan, const std::filesystem::path
     output << "# kez-install-plan-v1\n";
     for (const PackageCommands& package : plan) {
         output << "kez_plan_begin " << shell_single_quote(package.package) << '\n';
+        if (package.package == "python") {
+            output << "kez_plan_python_provider\n";
+        }
+        if (!package.python_distribution.empty()) {
+            output << "kez_plan_python_distribution "
+                   << shell_single_quote(package.python_distribution) << '\n';
+        } else if (package.requires_python_environment) {
+            output << "kez_plan_requires_python\n";
+        }
         for (const std::string& dependency : package.dependencies) {
             output << "kez_plan_depends " << shell_single_quote(dependency) << '\n';
         }

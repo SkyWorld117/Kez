@@ -103,7 +103,9 @@ namespace {
         EXPECT_EQ(entries[2].name, "threads");
 
         EXPECT_EQ(toolchain_name(Toolchain::CMake), "cmake");
+        EXPECT_EQ(toolchain_name(Toolchain::Python), "python");
         EXPECT_EQ(source_type_name(SourceType::Tarball), "tarball");
+        EXPECT_EQ(source_type_name(SourceType::PyPI), "pypi");
         EXPECT_EQ(property_display_value(Property {"prefix", std::string("/opt/demo")}),
                   "/opt/demo");
         EXPECT_EQ(property_display_value(

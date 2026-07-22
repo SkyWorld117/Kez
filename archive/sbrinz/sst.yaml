@@ -49,19 +49,19 @@ kez:
                       enabled_value: ${mpi.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
+                      enabled_value: ${sst-core.incflags} ${mpi.incflags} ${goblinhmcsim.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${sst-core.incflags} ${mpi.incflags} ${goblinhmcsim.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${sst-core.incflags} ${mpi.incflags} ${goblinhmcsim.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${sst-core.incflags} ${mpi.incflags} ${python.incflags} ${goblinhmcsim.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${sst-core.incflags} ${mpi.incflags} ${goblinhmcsim.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${sst-core.ldflags} ${mpi.ldflags} ${python.ldflags} ${dramsim3.ldflags} ${intelpin.ldflags} 
+                      enabled_value: ${compiler.ldflags} ${sst-core.ldflags} ${mpi.ldflags} ${dramsim3.ldflags} ${intelpin.ldflags} 
                           ${goblinhmcsim.ldflags} ${sst-elements.ldflags}
     sst-core:
         description: Structural Simulation Toolkit Core
@@ -94,13 +94,13 @@ kez:
                       enabled_value: ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${python.incflags} ${hdf5.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${python.ldflags} ${hdf5.ldflags} ${sst-core.ldflags}
@@ -128,31 +128,37 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${python.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${python.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${python.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -Xptxas -O3 ${python.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags}
+                      enabled_value: ${compiler.ldflags} ${python.ldflags} ${python.libs}
                     - name: CMAKE_SHARED_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags}
+                      enabled_value: ${compiler.ldflags} ${python.ldflags} ${python.libs}
                     - name: CMAKE_MODULE_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags}
+                      enabled_value: ${compiler.ldflags} ${python.ldflags} ${python.libs}
                     - name: CMAKE_BUILD_RPATH
                       enabled: true
-                      enabled_value: ${compiler.lib}
+                      enabled_value: ${compiler.lib};${python.lib}
                     - name: CMAKE_INSTALL_RPATH
                       enabled: true
-                      enabled_value: ${compiler.lib}
+                      enabled_value: ${compiler.lib};${python.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${python.prefix}
+    numpy:
+        description: Fundamental package for scientific computing with Python
+        version: 2.4.4
     python:
         description: Python Programming Language
         version: 3.14.6
@@ -174,13 +180,13 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${python.ldflags}
@@ -189,52 +195,82 @@ kez:
         version: 3.31
     hdf5:
         description: High-performance data management and storage suite
-        version: 1.10.11
+        version: 2.1.1
         compiler: system
         build:
             configurations:
                 options:
-                    - name: enable-cxx
-                      description: Compile the C++ interface
-                      enabled: false
-                      enabled_value:
-                    - name: enable-fortran
-                      description: Compile the Fortran interface
-                      enabled: false
-                      enabled_value:
-                    - name: enable-parallel
-                      description: Search for MPI-IO and MPI support
+                    - name: BUILD_SHARED_LIBS
+                      description: Build shared libraries
                       enabled: true
-                      enabled_value:
+                      enabled_value: ON
+                    - name: HDF5_BUILD_CPP_LIB
+                      description: Build C++ library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_FORTRAN_LIB
+                      description: Build Fortran library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_HL_LIB
+                      description: Build High Level library
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_BUILD_TOOLS
+                      description: Build tools
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_ENABLE_PARALLEL
+                      description: Enable parallel support
+                      enabled: true
+                      enabled_value: ON
                       requires:
                           - mpi
-                    - name: prefix
+                    - name: CMAKE_INSTALL_PREFIX
                       enabled: true
                       enabled_value: ${hdf5.prefix}
-                    - name: CC
+                    - name: CMAKE_BUILD_TYPE
+                      enabled: true
+                      enabled_value: Release
+                    - name: CMAKE_C_COMPILER
                       enabled: true
                       enabled_value: ${mpi.c}
-                    - name: CXX
+                    - name: CMAKE_CXX_COMPILER
                       enabled: true
                       enabled_value: ${mpi.cxx}
-                    - name: FC
+                    - name: CMAKE_Fortran_COMPILER
                       enabled: true
                       enabled_value: ${mpi.fort}
-                    - name: CPPFLAGS
+                    - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: ${mpi.incflags}
-                    - name: CFLAGS
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.incflags}
-                    - name: CXXFLAGS
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.incflags}
-                    - name: FCFLAGS
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${mpi.incflags}
-                    - name: LDFLAGS
+                      enabled_value: -O3 -Xptxas -O3 ${mpi.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags}
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${mpi.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${mpi.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${mpi.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${hdf5.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${hdf5.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${mpi.prefix}
     openmpi:
         description: Open Source Implementation of the Message Passing Interface
         version: 5.0.10
@@ -267,16 +303,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -Xptxas -O3
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${dramsim3.ldflags}
@@ -299,6 +335,7 @@ recipe:
         - sst-elements
         - sst-core
         - ramulator2
+        - numpy
         - python
         - intelpin
         - hdf5

@@ -14,10 +14,9 @@ recipe:
     dependencies:
         - sst-core
         - mpi
-        - python
+        - numpy
 
     build:
-        preprocessing: ${python.prefix}/bin/pip3 install numpy
         postprocessing: |-
             mkdir -p ${sst-elements.prefix}/src
             cp -r ${source}/src/* ${sst-elements.prefix}/src/

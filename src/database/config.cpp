@@ -101,3 +101,5 @@ std::optional<std::string> MakePackageConfig::default_stage_command(
     const BuildStage& stage, unsigned int parallel_jobs) const {
     return make_stage_command(stage, parallel_jobs);
 }
+
+Toolchain PythonPackageConfig::toolchain() const noexcept { return Toolchain::Python; }

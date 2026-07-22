@@ -66,6 +66,7 @@ std::string toolchain_name(Toolchain toolchain) {
         case Toolchain::CMake: return "cmake";
         case Toolchain::Make: return "make";
         case Toolchain::Meson: return "meson";
+        case Toolchain::Python: return "python";
     }
     return "unknown";
 }
@@ -76,6 +77,7 @@ std::string source_type_name(SourceType source_type) {
         case SourceType::Tarball: return "tarball";
         case SourceType::Zip: return "zip";
         case SourceType::Script: return "script";
+        case SourceType::PyPI: return "pypi";
     }
     return "unknown";
 }

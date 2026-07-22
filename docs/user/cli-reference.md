@@ -226,7 +226,7 @@ A package of type `package` must be installed into an environment.
 | `create NAME` | Create a new application environment |
 | `remove NAME` | Remove an application environment and its module file |
 | `list` | List all application environments |
-| `activate NAME` | Activate an environment (adds its `bin/` to `PATH`) |
+| `activate NAME` | Activate an environment, including its Python venv when present |
 | `deactivate` | Deactivate the current environment |
 | `which` | Show the currently active environment |
 | `empty NAME` | Remove all packages from an environment |
@@ -240,6 +240,13 @@ kez install fftw3
 kez install openmpi
 kez env deactivate
 ```
+
+When the resolved package graph contains Python, Kez installs CPython as a
+normal package and creates one `.venv` for the application environment.
+Packages using `toolchain: python` are ordinary dependencies whose resolved
+versions are installed together and recorded in `.kez-python/`. Activating the
+Kez environment sets `VIRTUAL_ENV` and places `.venv/bin` first on `PATH`;
+deactivation restores an outer virtual environment if one was active previously.
 
 ---
 

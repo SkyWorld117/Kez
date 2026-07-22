@@ -61,6 +61,7 @@ recipe:
                   description: Enable building of Python bindings for examples
                   enabled_value:
                       default: ON
+                  requires: [python]
 
                 - name: ACTS_BUILD_PLUGIN_DD4HEP
                   description: Enable DD4hep plugin

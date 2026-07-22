@@ -165,6 +165,46 @@ recipe:
             std::holds_alternative<ConfigurableValue<std::string>>(config->properties[1].data));
         ASSERT_EQ(config->overrides.size(), 1U);
         EXPECT_EQ(config->overrides.front().action, ValueAction::Append);
+        ASSERT_EQ(config->dependencies.size(), 1U);
+    }
+
+    TEST_F(TemporaryDatabase, ParsesPythonToolchainAndAddsInterpreterDependency) {
+        write("demo", "latest.yaml", R"(
+recipe:
+  name: demo
+  type: package
+  toolchain: python
+  source:
+    type: pypi
+    releases:
+      - version: 1.2.3
+)");
+
+        PackageConfigPtr config = get_db_config("demo");
+        ASSERT_NE(dynamic_cast<const PythonPackageConfig*>(config.get()), nullptr);
+        EXPECT_EQ(config->toolchain(), Toolchain::Python);
+        ASSERT_TRUE(config->source.has_value());
+        EXPECT_EQ(config->source->type, SourceType::PyPI);
+        ASSERT_EQ(config->source->releases.size(), 1U);
+        EXPECT_EQ(config->source->releases.front().version, "1.2.3");
+        ASSERT_EQ(config->dependencies.size(), 1U);
+        EXPECT_EQ(config->dependencies.front().name, "python");
+    }
+
+    TEST_F(TemporaryDatabase, RejectsPypiSourceWithoutPythonToolchain) {
+        write("invalid", "latest.yaml", R"(
+recipe:
+  name: invalid
+  type: package
+  source:
+    type: pypi
+    releases:
+      - version: 1.0.0
+)");
+
+        EXPECT_EXIT(static_cast<void>(get_db_config("invalid")),
+                    ::testing::ExitedWithCode(EXIT_FAILURE),
+                    "type 'pypi' requires toolchain 'python'");
     }
 
     TEST_F(TemporaryDatabase, IgnoresUnexpectedKeysAtAnySchemaLevelAndEmitsWarning) {
@@ -231,6 +271,7 @@ recipe:
         AutotoolsPackageConfig autotools;
         CMakePackageConfig cmake;
         MakePackageConfig make;
+        PythonPackageConfig python;
 
         const BuildStage parallel {"all", true, std::nullopt};
         const BuildStage serial {"check", false, std::nullopt};
@@ -264,6 +305,10 @@ recipe:
         EXPECT_EQ(make.toolchain(), Toolchain::Make);
         EXPECT_EQ(make.default_configuration_command(), std::nullopt);
         EXPECT_EQ(make.default_stage_command(untargeted, 0), "make");
+
+        EXPECT_EQ(python.toolchain(), Toolchain::Python);
+        EXPECT_EQ(python.default_configuration_command(), std::nullopt);
+        EXPECT_EQ(python.default_stage_command(parallel, 8), std::nullopt);
 
         generic.properties = {{"include", std::string("/include")},
                               {"lib", std::string("/lib")},

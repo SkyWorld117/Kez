@@ -251,12 +251,18 @@ namespace {
         std::vector<std::string> path_dirs;
         std::vector<std::string> man_dirs;
         std::vector<std::string> pkgcfg_dirs;
+        std::string virtual_environment;
     };
 
     EnvironmentPaths collect_environment_paths(const std::filesystem::path& prefix) {
         EnvironmentPaths result;
         if (!std::filesystem::is_directory(prefix)) {
             return result;
+        }
+        const std::filesystem::path virtual_environment = prefix / ".venv";
+        if (std::filesystem::is_directory(virtual_environment / "bin")) {
+            result.virtual_environment = virtual_environment.string();
+            result.path_dirs.push_back((virtual_environment / "bin").string());
         }
         for (const auto& entry : std::filesystem::directory_iterator(prefix)) {
             if (!entry.is_directory()) continue;
@@ -290,6 +296,16 @@ void emit_environment_activation(const std::filesystem::path& prefix, const std:
                                  const std::string& value) {
     const EnvironmentPaths paths = collect_environment_paths(prefix);
 
+    if (!paths.virtual_environment.empty()) {
+        const std::string previous = variable + "_PREVIOUS_VIRTUAL_ENV";
+        const std::string was_set  = previous + "_SET";
+        std::cout << "if [[ ${VIRTUAL_ENV+x} ]]; then export " << previous
+                  << "=\"${VIRTUAL_ENV}\"; export " << was_set << "=1; else unset " << previous
+                  << "; export " << was_set
+                  << "=0; fi; export VIRTUAL_ENV=" << shell_single_quote(paths.virtual_environment)
+                  << "; ";
+    }
+
     if (!paths.path_dirs.empty()) {
         std::cout << "export PATH=" << shell_single_quote(join(paths.path_dirs, ":"))
                   << ":\"${PATH}\"; ";
@@ -307,7 +323,13 @@ void emit_environment_activation(const std::filesystem::path& prefix, const std:
 
 void emit_environment_deactivation(const std::filesystem::path& prefix,
                                    const std::string& variable) {
-    const EnvironmentPaths paths = collect_environment_paths(prefix);
+    EnvironmentPaths paths                         = collect_environment_paths(prefix);
+    const std::string expected_virtual_environment = (prefix / ".venv").string();
+    const std::string expected_virtual_bin         = (prefix / ".venv" / "bin").string();
+    if (std::find(paths.path_dirs.begin(), paths.path_dirs.end(), expected_virtual_bin) ==
+        paths.path_dirs.end()) {
+        paths.path_dirs.push_back(expected_virtual_bin);
+    }
 
     // Emit a reusable helper that filters entries matching any of the
     // given patterns out of a colon-separated variable.
@@ -335,12 +357,28 @@ void emit_environment_deactivation(const std::filesystem::path& prefix,
     emit_remove("MANPATH", paths.man_dirs);
     emit_remove("PKG_CONFIG_PATH", paths.pkgcfg_dirs);
 
+    {
+        const std::string previous = variable + "_PREVIOUS_VIRTUAL_ENV";
+        const std::string was_set  = previous + "_SET";
+        std::cout << "if [[ ${" << was_set << ":-0} == 1 ]]; then export VIRTUAL_ENV=\"${"
+                  << previous << "}\"; elif [[ ${VIRTUAL_ENV:-} == "
+                  << shell_single_quote(expected_virtual_environment)
+                  << " ]]; then unset VIRTUAL_ENV; fi; unset " << previous << ' ' << was_set
+                  << "; ";
+    }
+
     std::cout << "unset " << variable << '\n';
 }
 
 void print_command_plan(const BashCommandPlan& plan) {
     for (const PackageCommands& package : plan) {
         INFO("Instructions for " + package.package + ":");
+        if (package.requires_python_environment) {
+            std::cout << " -  activate the target Python virtual environment" << std::endl;
+        }
+        if (!package.python_distribution.empty()) {
+            std::cout << " -  Python distribution: " + package.python_distribution << std::endl;
+        }
         for (const std::string& command : package.commands) {
             std::cout << " -  " + command << std::endl;
         }

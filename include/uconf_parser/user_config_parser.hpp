@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 /**
@@ -132,6 +133,16 @@ struct UserConfigParserSettings {
  * order respecting the inter-package dependency graph.
  */
 struct PackageCommands {
+    PackageCommands() = default;
+
+    PackageCommands(std::string package_name, std::vector<std::string> package_commands,
+                    std::vector<std::string> package_dependencies, std::string distribution = {},
+                    bool use_python_environment = false)
+        : package(std::move(package_name)), commands(std::move(package_commands)),
+          dependencies(std::move(package_dependencies)),
+          python_distribution(std::move(distribution)),
+          requires_python_environment(use_python_environment) {}
+
     /** @brief Name of the package these commands belong to. */
     std::string package;
 
@@ -151,6 +162,21 @@ struct PackageCommands {
      * @c dependencies entry in the generated user config.
      */
     std::vector<std::string> dependencies;
+
+    /**
+     * @brief Exact Python distribution requirement represented by this node.
+     *
+     * Empty for ordinary packages. Python-toolchain packages use the form
+     * @c distribution==resolved-version and are synchronized together before
+     * their dependent package commands run.
+     */
+    std::string python_distribution;
+
+    /**
+     * @brief Whether commands must run with the target environment's Python
+     *        virtual environment active.
+     */
+    bool requires_python_environment = false;
 };
 
 /**

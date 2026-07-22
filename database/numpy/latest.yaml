@@ -1,0 +1,14 @@
+---
+recipe:
+    name: numpy
+    description: Fundamental package for scientific computing with Python
+    type: package
+    toolchain: python
+
+    source:
+        type: pypi
+        releases:
+            - version: 2.4.6
+
+    dependencies:
+        - python@>=3.11

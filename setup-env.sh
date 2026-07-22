@@ -76,9 +76,10 @@ else
             export PATH="${util_dir}/bin:${PATH}"
         fi
     done
-
-    # Add the system environment to PYTHONPATH for Python integration
-    export PYTHONPATH="${SYSTEM_PATH}:${PYTHONPATH:-}"
+    if [[ -d "${UTILITIES_PATH}/.venv/bin" &&
+        ":$PATH:" != *":${UTILITIES_PATH}/.venv/bin:"* ]]; then
+        export PATH="${UTILITIES_PATH}/.venv/bin:${PATH}"
+    fi
 
     unset SYSTEM_PATH UTILITIES_PATH
 

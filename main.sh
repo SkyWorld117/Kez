@@ -66,6 +66,24 @@ kez () {
             return $ret
         fi
         eval "${shell_commands}"
+    elif [[ "${1:-}" == "install" ]]; then
+        "${KEZ_HOME}/bin/kez" "$@"
+        local ret=$?
+        if (( ret )); then
+            return $ret
+        fi
+
+        # A successful install may add package bin directories or create the
+        # environment's .venv. Refresh an active environment in this shell.
+        if [[ -n ${KEZ_ACTIVE_ENV:-} ]]; then
+            local _kez_active_env=$KEZ_ACTIVE_ENV
+            local shell_commands
+            shell_commands="$("${KEZ_HOME}/bin/kez" env deactivate)" || return $?
+            eval "${shell_commands}"
+            shell_commands="$("${KEZ_HOME}/bin/kez" env activate "${_kez_active_env}")" || return $?
+            eval "${shell_commands}"
+            unset _kez_active_env shell_commands
+        fi
     elif [[ "${1:-}" == "utilities" && "${2:-}" == "add" ]]; then
         # Run install (output goes to terminal), then update PATH so
         # newly installed utilities are immediately available.
@@ -82,6 +100,10 @@ kez () {
                 export PATH="${_kez_util_dir}/bin:${PATH}"
             fi
         done
+        if [[ -d "${_kez_util_root}/.venv/bin" &&
+            ":$PATH:" != *":${_kez_util_root}/.venv/bin:"* ]]; then
+            export PATH="${_kez_util_root}/.venv/bin:${PATH}"
+        fi
         unset _kez_util_root _kez_util_dir
     elif [[ "${1:-}" == "utilities" && "${2:-}" == "remove" ]]; then
         local _kez_pkg="${3:-}"
@@ -89,8 +111,9 @@ kez () {
             "${KEZ_HOME}/bin/kez" "$@"
             return $?
         fi
-        local _kez_rm_dir
-        _kez_rm_dir="${KEZ_WORKDIR}/$(yq -r '.paths.utilities' "${KEZ_HOME}/manifest.yaml")/${_kez_pkg}/bin"
+        local _kez_rm_dir _kez_util_root
+        _kez_util_root="${KEZ_WORKDIR}/$(yq -r '.paths.utilities' "${KEZ_HOME}/manifest.yaml")"
+        _kez_rm_dir="${_kez_util_root}/${_kez_pkg}/bin"
         "${KEZ_HOME}/bin/kez" "$@"
         local ret=$?
         if (( ret )); then
@@ -99,13 +122,15 @@ kez () {
         local _kez_nw='' _kez_ifs _kez_p
         _kez_ifs="$IFS"; IFS=:
         for _kez_p in $PATH; do
-            if [[ $_kez_p != "$_kez_rm_dir" ]]; then
+            if [[ $_kez_p != "$_kez_rm_dir" &&
+                ( $_kez_p != "${_kez_util_root}/.venv/bin" ||
+                  -d "${_kez_util_root}/.venv/bin" ) ]]; then
                 _kez_nw="${_kez_nw:+$_kez_nw:}$_kez_p"
             fi
         done
         IFS="$_kez_ifs"
         export PATH="$_kez_nw"
-        unset _kez_nw _kez_ifs _kez_p _kez_rm_dir _kez_pkg
+        unset _kez_nw _kez_ifs _kez_p _kez_rm_dir _kez_util_root _kez_pkg
     else
         "${KEZ_HOME}/bin/kez" "$@"
     fi

@@ -27,6 +27,17 @@ Access any property declared by another package:
 | `${foo.version.major}` | Major version number (part before the first `.`), or the whole version if no dot is present |
 | `${foo.libs}` | Link libraries of package `foo` |
 
+Python provides two additional built-in paths:
+
+| Template | Resolves to |
+|---|---|
+| `${python.venv}` | Shared virtual-environment prefix for the target Kez environment |
+| `${python.executable}` | `${python.venv}/bin/python` |
+
+`${python.prefix}` continues to mean the real CPython installation and should
+be used for development headers and `libpython`. Use `${python.executable}` for
+running Python or configuring a build-system interpreter.
+
 ### Predefined Variables
 
 | Template | Description |

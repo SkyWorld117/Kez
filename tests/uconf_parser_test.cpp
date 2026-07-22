@@ -292,6 +292,62 @@ recipe:
         EXPECT_EQ(local_plan[1].commands[0], "cp -a '" + local_source.string() + "' source");
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase, ResolvesPythonEnvironmentTemplatesAndPlanMetadata) {
+        write_package("python", R"(
+recipe:
+  name: python
+  type: package
+  build:
+    configurations:
+      command: build-python ${python.prefix}
+)");
+        write_package("demo", R"(
+recipe:
+  name: demo
+  type: package
+  toolchain: python
+  source:
+    type: pypi
+    releases:
+      - version: 1.2.3
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [demo]
+  build:
+    configurations:
+      command: use-python ${python.executable} ${python.venv}
+)");
+
+        const YAML::Node user_config = gen_user_config({"application"}, false, "system");
+        const BashCommandPlan plan   = parse_user_config(user_config, settings());
+
+        const auto application = std::find_if(
+            plan.begin(), plan.end(),
+            [](const PackageCommands& package) { return package.package == "application"; });
+        ASSERT_NE(application, plan.end());
+        EXPECT_TRUE(application->requires_python_environment);
+        EXPECT_TRUE(application->python_distribution.empty());
+        EXPECT_NE(
+            std::find(application->dependencies.begin(), application->dependencies.end(), "demo"),
+            application->dependencies.end());
+        EXPECT_NE(std::find(application->commands.begin(), application->commands.end(),
+                            "use-python /opt/env/.venv/bin/python /opt/env/.venv"),
+                  application->commands.end());
+
+        const auto demo =
+            std::find_if(plan.begin(), plan.end(),
+                         [](const PackageCommands& package) { return package.package == "demo"; });
+        ASSERT_NE(demo, plan.end());
+        EXPECT_EQ(demo->python_distribution, "demo==1.2.3");
+        EXPECT_TRUE(demo->requires_python_environment);
+        EXPECT_NE(std::find(demo->dependencies.begin(), demo->dependencies.end(), "python"),
+                  demo->dependencies.end());
+        EXPECT_EQ(demo->commands, std::vector<std::string>({"mkdir -p '/opt/env/demo'"}));
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase,
            ResolvesIndexedValuesForTopLevelAndOutOfOrderStageConfigurations) {
         write_package("application", R"(

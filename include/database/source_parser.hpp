@@ -16,7 +16,7 @@
  *
  * Key       | Required? | Description
  * --------- | --------- | -----------
- * ``type``  | Yes       | One of ``"git"``, ``"tarball"``, ``"zip"``, or ``"script"``.
+ * ``type``  | Yes       | One of ``"git"`, ``"tarball"``, ``"zip"``, ``"script"``, or ``"pypi"``.
  * ``url``   | Conditional | Required when ``type`` is ``"git"``; otherwise optional.
  * ``releases`` | Yes    | A non-empty sequence of release entries.
  *
@@ -25,18 +25,19 @@
  * Key         | Required? | Description
  * ----------- | --------- | -----------
  * ``version`` | Yes       | The release version string. Must be non-empty and unique within the source.
- * ``url``     | Conditional | Required when ``type`` is ``"tarball"`` or ``"zip"``; forbidden (ignored) for ``"script"``.
- * ``tag``     | Conditional | Required when ``type`` is ``"git"``; ignored otherwise.
+ * ``url``     | Conditional | Required for ``"tarball"``/``"zip"``; forbidden for ``"pypi"``.
+ * ``tag``     | Conditional | Required for ``"git"``; forbidden for ``"pypi"``.
  *
  * Validation performed (all failures are fatal via @ref fail_config):
  * - The ``source`` node is a map.
  * - No unexpected keys are present (only ``type``, ``url``, ``releases``).
- * - ``type`` matches one of the four known values.
+ * - ``type`` matches a known value.
  * - ``url`` is present for git sources.
  * - ``releases`` is a non-empty sequence.
  * - Every release has a non-empty, unique ``version``.
  * - For git sources, every release has a ``tag``.
  * - For tarball/zip sources, every release has a ``url``.
+ * - For PyPI sources, releases contain only a ``version``.
  *
  * @param node    The YAML node representing the ``source`` block of a package
  *                recipe (e.g. ``database/<pkg>/latest.yaml``'s ``source``

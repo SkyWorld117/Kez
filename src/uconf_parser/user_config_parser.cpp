@@ -155,6 +155,34 @@ namespace {
                    : "system";
     }
 
+    std::string python_distribution_requirement(const ParsedUserPackage& package) {
+        if (package.database_config->toolchain() != Toolchain::Python) {
+            return {};
+        }
+        if (!yaml_has(package.user_config, "version")) {
+            user_config_error("Python distribution '" + package.requested_name +
+                              "' is missing its version");
+        }
+        const std::string version =
+            yaml_scalar(package.user_config["version"], "Python distribution version");
+        if (version.empty() || version.find('@') != std::string::npos ||
+            version.find('\n') != std::string::npos || version.find('\r') != std::string::npos) {
+            user_config_error("Python distribution '" + package.requested_name +
+                              "' has an invalid version '" + version + "'");
+        }
+        return package.database_config->name + "==" + version;
+    }
+
+    bool plan_dependency_uses_python(const std::string& dependency,
+                                     const UserConfigParserContext& context) {
+        if (dependency == "python") {
+            return true;
+        }
+        const auto parsed = context.package_indices.find(dependency);
+        return parsed != context.package_indices.end() &&
+               context.packages[parsed->second].database_config->toolchain() == Toolchain::Python;
+    }
+
     void load_parser_context(const YAML::Node& user_config,
                              const UserConfigParserSettings& settings,
                              UserConfigParserContext& context) {
@@ -342,9 +370,19 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
             if (parsed == context.package_indices.end()) {
                 user_config_error("internal package state is missing for '" + package + "'");
             }
-            result.push_back({package, commands->second,
-                              generate_package_dependencies(context.packages[parsed->second],
-                                                            context, buildable_packages)});
+            const ParsedUserPackage& parsed_package = context.packages[parsed->second];
+            std::vector<std::string> package_dependencies =
+                generate_package_dependencies(parsed_package, context, buildable_packages);
+            const bool requires_python_environment =
+                package != "python" &&
+                (parsed_package.database_config->toolchain() == Toolchain::Python ||
+                 std::any_of(package_dependencies.begin(), package_dependencies.end(),
+                             [&](const std::string& dependency) {
+                                 return plan_dependency_uses_python(dependency, context);
+                             }));
+            result.push_back({package, commands->second, std::move(package_dependencies),
+                              python_distribution_requirement(parsed_package),
+                              requires_python_environment});
         }
     }
     return result;

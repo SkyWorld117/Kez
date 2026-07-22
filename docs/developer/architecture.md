@@ -18,6 +18,17 @@ Database YAML      Dependencies     User Config        User Config      Shell Pl
 4. **Parse**: Read the user YAML and produce a dependency-ordered `BashCommandPlan`.
 5. **Execute**: Run the generated bash commands via `scripts/install.sh`.
 
+When any plan entry requires Python, the executor inserts one internal
+`.kez-python-environment` node. It depends on the plan's `python` package and
+uses `scripts/python_env.sh` to turn every `Toolchain::Python` plan node into an
+exact distribution requirement. Requirements from the current plan are merged
+with Python package nodes saved by earlier incremental installs. The complete
+set is installed in one fresh-venv transaction before those nodes and their
+native dependents are released. This prevents concurrent pip writers and keeps
+removed distributions from lingering. Pip downloads are cached in
+`<environment>/.tmp/pip-cache`. Native package `site-packages` directories are
+registered through managed `.pth` files after each package finishes.
+
 Steps 1–4 are handled by the C++ backend. Step 5 is handled by the bash frontend.
 
 ## Component Map
@@ -42,7 +53,7 @@ for all metadata about packages.
 | `config_selector.cpp` | Selects the best-matching configuration variant |
 | `database.cpp` | Top-level database caching layer |
 | `parser_utils.cpp` | Shared parsing helpers |
-| `source_parser.cpp` | Parses `source` definitions (git, tarball, script) |
+| `source_parser.cpp` | Parses `source` definitions (git, tarball, script, PyPI) |
 
 ### `src/dependency_resolver/`
 
@@ -133,7 +144,7 @@ Entry point for the `kez_completion` binary that provides bash completion.
 include/          # C++ headers, mirroring src/ structure
 src/              # C++ source files
 tests/            # Googletest-based unit tests
-scripts/          # Bash scripts (init.sh, install.sh, gen_modulefile.sh)
+scripts/          # Bash scripts (init.sh, install.sh, python_env.sh, gen_modulefile.sh)
 main.sh           # Bash wrapper — intercepts env/compiler/mpi/factory commands
 setup-env.sh      # Environment setup — sources main.sh, configures PATH
 completion.bash   # Bash completion registration
@@ -160,6 +171,11 @@ $KEZ_WORKDIR
 Paths are configured in `manifest.yaml` under the `paths` key and resolved relative to
 `$KEZ_WORKDIR`. The `config.yaml` at the root controls build settings and external
 package locations.
+
+An application environment that uses Python additionally contains `.venv/`
+and `.kez-python/`. The former is the runtime virtual environment; the latter
+stores the base-interpreter signature, per-package declarations, the combined
+requirements, and `pip freeze --all` output.
 
 ## `manifest.yaml`
 
