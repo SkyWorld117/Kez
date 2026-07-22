@@ -68,10 +68,11 @@ Describes how Kez fetches the source code or prebuilt binaries.
 | `git` | Git repository (uses `tag` field) |
 | `script` | Self-contained installer script |
 | `zip` | `.zip` archives |
+| `pypi` | Python distribution release metadata; installation is handled by pip |
 
 ```yaml
 source:
-  type: git | tarball | zip | script
+  type: git | tarball | zip | script | pypi
   url: <repository_or_download_url>          # Used for git repos, or as fallback URL
   releases:
     - version: <release_version>
@@ -80,6 +81,7 @@ source:
 ```
 
 For `script` type, `url` is optional — the script logic goes in `preprocessing`/`postprocessing`.
+For `pypi`, omit all URLs and tags; each release contains only its `version`.
 
 ### `dependencies`
 
@@ -122,7 +124,47 @@ version in their `config.yaml` via the `kez` map.
 | `cmake` | Generates `cmake ..` commands with `-D`-prefixed options |
 | `meson` | Generates `meson setup build` commands with `-D`-prefixed options |
 | `make` | Plain `make`; options are injected as environment variables |
+| `python` | Installs a PyPI distribution into the environment's shared virtual environment |
 | _(none)_ | No standard build-system wrappers; use `preprocessing`/`postprocessing` |
+
+Python distributions are ordinary Kez packages. Their recipe must use
+`toolchain: python`, a `pypi` source, and must not contain a `build` section.
+The Python interpreter is added as an implicit dependency, although recipes
+should declare it explicitly when they need a version constraint:
+
+```yaml
+# database/numpy/latest.yaml
+recipe:
+  name: numpy
+  type: package
+  toolchain: python
+  source:
+    type: pypi
+    releases:
+      - version: 2.4.4
+  dependencies:
+    - python@>=3.11
+```
+
+Consumers use the normal dependency syntax:
+
+```yaml
+dependencies:
+  - numpy
+```
+
+Kez converts the resolved Python package nodes to exact requirements such as
+`numpy==2.4.4`, merges them with Python packages saved by earlier incremental
+installs, and installs the complete set into `<environment>/.venv` in one pip
+transaction. Dependent native package builds start only after that transaction
+succeeds. The resolved transitive set is recorded in
+`<environment>/.kez-python/resolved.txt`.
+
+After a Python-aware native package is installed, Kez detects
+`<package>/lib{,64}/python*/site-packages` directories and registers them in
+the venv with a managed `.pth` file. All Python-aware package commands run with
+the venv at the front of `PATH` and `VIRTUAL_ENV` set. Recipes should prefer
+`${python.executable}` over an unqualified `python` command.
 
 Abstract and external packages do not have a toolchain. Vendor packages using a
 `script` source type also typically have no toolchain — their installation logic

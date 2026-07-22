@@ -163,6 +163,9 @@ void append_source_commands(const ParsedUserPackage& package, UserConfigParserCo
     if (!package.database_config->source.has_value()) {
         return;
     }
+    if (package.database_config->source->type == SourceType::PyPI) {
+        return;
+    }
     if (!yaml_has(package.user_config, "version")) {
         user_config_error("package '" + package.requested_name + "' is missing its version");
     }

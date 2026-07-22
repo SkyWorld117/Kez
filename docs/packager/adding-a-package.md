@@ -26,10 +26,10 @@ recipe:
     name: <package_name>
     description: <brief_description>
     type: <system|compiler|mpi|vendor|package|external|abstract>
-    toolchain: <autotools|cmake|meson|make>
+    toolchain: <autotools|cmake|meson|make|python>
 
     source:
-        type: <tarball|git|zip|script>
+        type: <tarball|git|zip|script|pypi>
         releases:
             - version: <x.y.z>
               url: <download_url>
@@ -50,8 +50,13 @@ recipe:
 - **`autotools`**: For packages using `./configure && make`
 - **`cmake`**: For packages using CMake
 - **`make`**: For packages using plain `make` without `./configure`
+- **`python`**: For a Python distribution installed from PyPI into the shared venv
 - **Omit**: For packages with no standard build system — use `preprocessing`/`postprocessing`
   instead (vendor scripts, prebuilt binaries, abstract packages)
+
+Python-toolchain packages use a `pypi` source whose releases contain only a
+version, and they do not have a `build` section. Native consumers list the
+Python distribution in their normal `dependencies`.
 
 ### Add dependencies
 

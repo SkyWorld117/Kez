@@ -27,7 +27,7 @@ recipe:
                 - name: Python_EXECUTABLE
                   description: Path to the Python executable
                   enabled_value:
-                      default: ${python.prefix}/bin/python3
+                      default: ${python.executable}
 
                 - name: Python_INCLUDE_DIRS
                   description: Path to the Python include directories

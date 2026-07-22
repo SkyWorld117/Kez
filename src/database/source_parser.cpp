@@ -8,9 +8,8 @@ namespace {
      * @brief Converts a YAML scalar string to the corresponding SourceType
      *        enumerator.
      *
-     * Accepts the four recognised source-type names ("git", "tarball", "zip",
-     * "script") and maps each to its SourceType equivalent.  Any other value
-     * is a fatal configuration error.
+     * Accepts the recognised source-type names and maps each to its SourceType
+     * equivalent. Any other value is a fatal configuration error.
      *
      * @param node    The YAML scalar node whose value names the source type.
      * @param path    Logical YAML path used in error messages (e.g.
@@ -38,6 +37,9 @@ namespace {
         if (value == "script") {
             return SourceType::Script;
         }
+        if (value == "pypi") {
+            return SourceType::PyPI;
+        }
         fail_config(node, path, "has unsupported source type '" + value + "'", context);
     }
 }  // namespace
@@ -52,6 +54,9 @@ Source parse_source(const YAML::Node& node, const std::string& path,
     result.url = optional_scalar(node, "url", path, context);
     if (result.type == SourceType::Git && !result.url.has_value()) {
         fail_config(node, path + ".url", "is required for git sources", context);
+    }
+    if (result.type == SourceType::PyPI && result.url.has_value()) {
+        fail_config(node["url"], path + ".url", "is not supported for pypi sources", context);
     }
 
     YAML::Node releases = required_node(node, "releases", path, context);
@@ -86,6 +91,10 @@ Source parse_source(const YAML::Node& node, const std::string& path,
             !release.url.has_value()) {
             fail_config(release_node, release_path + ".url",
                         "is required for tarball and zip releases", context);
+        }
+        if (result.type == SourceType::PyPI &&
+            (release.url.has_value() || release.tag.has_value())) {
+            fail_config(release_node, release_path, "pypi releases accept only a version", context);
         }
         result.releases.push_back(std::move(release));
     }

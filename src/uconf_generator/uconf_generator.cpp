@@ -176,7 +176,8 @@ namespace {
             }
             package_output["version"] = version;
         }
-        if (package.type != PackageType::Vendor && package.type != PackageType::External) {
+        if (package.type != PackageType::Vendor && package.type != PackageType::External &&
+            package.toolchain() != Toolchain::Python) {
             package_output["compiler"] = default_compiler;
         }
 

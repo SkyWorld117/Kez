@@ -7,6 +7,7 @@ set -Eeuo pipefail
 
 SPINNER_INTERVAL_MS=40
 ANIMATION_INTERVAL=0.02
+PYTHON_ENVIRONMENT_PACKAGE=.kez-python-environment
 
 # Ensure KEZ_HOME is set; default to the project root (parent of the scripts directory)
 : ${KEZ_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
@@ -66,6 +67,8 @@ declare -a package_command_counts=()
 declare -a package_command_progress=()
 declare -a package_exit_status=()
 declare -a package_pids=()
+declare -a package_uses_python_environment=()
+declare -a package_is_python_distribution=()
 declare -a failed_package_indices=()
 declare -a started_package_indices=()
 declare -a progress_ui_dirty=()
@@ -73,6 +76,7 @@ declare -A package_indices=()
 current_package_index=-1
 next_finalize_position=0
 running_count=0
+python_environment_declared=false
 
 sanitize_name() {
     local value=$1
@@ -102,6 +106,15 @@ package_is_recorded() {
 mark_package_installed() {
     local package=$1
     local index=$2
+
+    if [[ $package == "$PYTHON_ENVIRONMENT_PACKAGE" ]]; then
+        return 0
+    fi
+
+    if [[ ${package_uses_python_environment[$index]} == true &&
+        -d $target_env/.venv && -n ${KEZ_HOME:-} ]]; then
+        bash "$KEZ_HOME/scripts/python_env.sh" register-package "$target_env" "$package"
+    fi
 
     if package_is_recorded "$package"; then
         return 0
@@ -150,10 +163,51 @@ kez_plan_begin() {
     package_command_progress[$index]=0
     package_exit_status[$index]=
     package_pids[$index]=
+    package_uses_python_environment[$index]=false
+    package_is_python_distribution[$index]=false
     mkdir -p -- "$plan_runtime_dir/$index"
     : > "$plan_runtime_dir/$index/dependencies"
+    : > "$plan_runtime_dir/$index/python-requirements"
+    printf '%s\n' "$package" > "$plan_runtime_dir/$index/package-name"
     printf '0\n' > "$plan_runtime_dir/$index/progress"
     current_package_index=$index
+}
+
+kez_plan_requires_python() {
+    if (( current_package_index < 0 )); then
+        error "Invalid installation plan: Python environment marker outside a package"
+        return 2
+    fi
+    if [[ ${package_uses_python_environment[$current_package_index]} == false ]]; then
+        package_uses_python_environment[$current_package_index]=true
+        : > "$plan_runtime_dir/$current_package_index/uses-python-environment"
+        printf '%s\n' "$PYTHON_ENVIRONMENT_PACKAGE" \
+            >> "$plan_runtime_dir/$current_package_index/dependencies"
+    fi
+}
+
+kez_plan_python_provider() {
+    if (( current_package_index < 0 )) ||
+        [[ ${plan_packages[$current_package_index]} != python ]]; then
+        error "Invalid installation plan: Python provider marker outside the python package"
+        return 2
+    fi
+    python_environment_declared=true
+    : > "$plan_runtime_dir/$current_package_index/provides-python-environment"
+}
+
+kez_plan_python_distribution() {
+    if (( current_package_index < 0 )); then
+        error "Invalid installation plan: Python distribution outside a package"
+        return 2
+    fi
+    if [[ $1 == *$'\n'* || $1 == *$'\r'* || -z $1 ]]; then
+        error "Invalid installation plan: malformed Python distribution"
+        return 2
+    fi
+    package_is_python_distribution[$current_package_index]=true
+    kez_plan_requires_python
+    printf '%s\n' "$1" >> "$plan_runtime_dir/$current_package_index/python-requirements"
 }
 
 kez_plan_depends() {
@@ -192,8 +246,58 @@ if (( current_package_index >= 0 )); then
     exit 2
 fi
 
+# Python distributions are ordinary Kez package nodes, but their virtual
+# environment is shared. Add one internal scheduling node so the complete
+# distribution set is installed after CPython and before those nodes and their
+# native dependents.
+python_environment_required=$python_environment_declared
+if [[ -d $target_env/.kez-python ]]; then
+    python_environment_required=true
+fi
+for index in "${!plan_packages[@]}"; do
+    if [[ ${package_uses_python_environment[$index]} == true ]]; then
+        python_environment_required=true
+        break
+    fi
+done
+if [[ $python_environment_required == true ]]; then
+    kez_plan_begin "$PYTHON_ENVIRONMENT_PACKAGE"
+    if [[ -n ${package_indices[python]+set} ]]; then
+        kez_plan_depends python
+    fi
+    # Native Kez dependencies of a Python distribution must be available
+    # before pip starts. Other Python distributions are part of this same
+    # transaction and therefore must not become prerequisites of the barrier.
+    for distribution_index in "${!plan_packages[@]}"; do
+        [[ ${package_is_python_distribution[$distribution_index]} == true ]] || continue
+        while IFS= read -r dependency; do
+            if [[ -z $dependency || $dependency == python ||
+                $dependency == "$PYTHON_ENVIRONMENT_PACKAGE" ||
+                -z ${package_indices[$dependency]+set} ]]; then
+                continue
+            fi
+            dependency_index=${package_indices[$dependency]}
+            if [[ ${package_is_python_distribution[$dependency_index]} == false ]]; then
+                kez_plan_depends "$dependency"
+            fi
+        done < "$plan_runtime_dir/$distribution_index/dependencies"
+    done
+    if [[ -z ${KEZ_HOME:-} ]]; then
+        error "KEZ_HOME is required to prepare a Python virtual environment"
+        exit 2
+    fi
+    printf -v python_environment_command 'bash %q sync-plan %q %q' \
+        "$KEZ_HOME/scripts/python_env.sh" "$target_env" "$plan_runtime_dir"
+    kez_plan_command "$python_environment_command"
+    kez_plan_end
+    unset python_environment_command
+fi
+
 for index in "${!plan_packages[@]}"; do
     package=${plan_packages[$index]}
+    if [[ $package == "$PYTHON_ENVIRONMENT_PACKAGE" ]]; then
+        continue
+    fi
     if [[ $force == false ]] && package_is_recorded "$package"; then
         package_status[$index]=skipped
         package_command_progress[$index]=${package_command_counts[$index]}
@@ -432,6 +536,16 @@ run_package_body() {
     } >> "$log_file"
 
     cd "$work_dir" || return 1
+    if [[ ${package_uses_python_environment[$index]} == true ]]; then
+        if [[ ! -x $target_env/.venv/bin/python ]]; then
+            error "Python virtual environment is missing for package $package"
+            return 1
+        fi
+        export VIRTUAL_ENV="$target_env/.venv"
+        export PATH="$VIRTUAL_ENV/bin:$PATH"
+        export PYTHONNOUSERSITE=1
+        unset PYTHONHOME PYTHONPATH
+    fi
     if [[ $state_format == map ]]; then
         export KEZ_PACKAGE_VERSION_FILE="$plan_runtime_dir/$index/version"
         rm -f -- "$KEZ_PACKAGE_VERSION_FILE"
@@ -661,8 +775,8 @@ if [[ $state_format == sequence ]] && command -v yq >/dev/null 2>&1 && \
     fi
     mkdir -p -- "$modulefiles_dir"
     modulefile="$modulefiles_dir/$(basename -- "$target_env")"
-    if [[ ! -f $modulefile ]]; then
-        "${KEZ_HOME}/scripts/gen_modulefile.sh" "$target_env" > "$modulefile"
-        success "Created module file: $modulefile"
-    fi
+    modulefile_tmp="$modulefile.tmp.$$"
+    "${KEZ_HOME}/scripts/gen_modulefile.sh" "$target_env" > "$modulefile_tmp"
+    mv -f -- "$modulefile_tmp" "$modulefile"
+    success "Updated module file: $modulefile"
 fi

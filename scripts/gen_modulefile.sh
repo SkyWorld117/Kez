@@ -16,9 +16,9 @@ env_name=$(basename "$target_env")
 printf '#%%Module1.0\n'
 printf 'module-whatis "Loads the %s Kez environment"\n' "$env_name"
 
-# We iterate over all subdirectories in the environment.
-# We exclude hidden directories (like .tmp).
-for pkg_dir in $(find "$target_env" -maxdepth 1 -mindepth 1 -type d ! -name ".*"); do
+# We iterate over all package subdirectories in deterministic order. Hidden
+# executor directories and the explicitly handled .venv are excluded.
+while IFS= read -r -d '' pkg_dir; do
     # Add bin directory to PATH
     bin_dir="$pkg_dir/bin"
     if [[ -d "$bin_dir" ]]; then
@@ -38,4 +38,11 @@ for pkg_dir in $(find "$target_env" -maxdepth 1 -mindepth 1 -type d ! -name ".*"
             printf 'prepend-path PKG_CONFIG_PATH "%s"\n' "$pkgcfg_dir"
         fi
     done
-done
+done < <(find "$target_env" -maxdepth 1 -mindepth 1 -type d ! -name ".*" -print0 | sort -z)
+
+# Emit the venv last: modulecmd applies each prepend-path in sequence, so this
+# leaves the venv interpreter ahead of package-provided executables.
+if [[ -d $target_env/.venv/bin ]]; then
+    printf 'setenv VIRTUAL_ENV "%s"\n' "$target_env/.venv"
+    printf 'prepend-path PATH "%s"\n' "$target_env/.venv/bin"
+fi

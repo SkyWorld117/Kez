@@ -415,6 +415,20 @@ namespace {
             exit(EXIT_FAILURE);
         }
 
+        if (package == "python") {
+            const std::filesystem::path declarations = root / ".kez-python" / "packages";
+            if (std::filesystem::is_directory(declarations)) {
+                for (const auto& entry : std::filesystem::directory_iterator(declarations)) {
+                    if (entry.is_regular_file() &&
+                        entry.path().filename() != "python.requirements") {
+                        ERROR("Cannot remove utility Python while Python-dependent utilities are "
+                              "installed");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+            }
+        }
+
         // Remove the package directory tree.
         std::error_code error;
         std::filesystem::remove_all(pkg_path, error);
@@ -432,6 +446,14 @@ namespace {
                 document["state"] = state_without_package(document["state"], package);
                 write_yaml_atomic(document, state_file.string());
             }
+        }
+
+        if (std::filesystem::is_directory(root / ".kez-python")) {
+            const std::filesystem::path helper =
+                std::filesystem::path(get_env_var("KEZ_HOME")) / "scripts" / "python_env.sh";
+            run_external_command("bash " + shell_single_quote(helper.string()) +
+                                 " remove-package " + shell_single_quote(root.string()) + " " +
+                                 shell_single_quote(package));
         }
 
         SUCCESS("Utility package removed: " + package);

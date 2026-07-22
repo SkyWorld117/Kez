@@ -133,6 +133,11 @@ std::vector<std::string> generate_package_commands(const ParsedUserPackage& pack
                                                    UserConfigParserContext& context) {
     std::vector<std::string> commands;
     context.current_package = package.requested_name;
+    if (package.database_config->toolchain() == Toolchain::Python) {
+        const std::filesystem::path prefix = parser_package_prefix(package.requested_name, context);
+        commands.push_back("mkdir -p " + shell_single_quote(prefix.string()));
+        return commands;
+    }
     if (!package.transformed_build.has_value()) {
         return commands;
     }

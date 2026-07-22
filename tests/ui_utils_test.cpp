@@ -243,6 +243,7 @@ kez:
         std::filesystem::create_directories(package / "lib/pkgconfig");
         std::filesystem::create_directories(package / "lib64/pkgconfig");
         std::filesystem::create_directories(package / "share/pkgconfig");
+        std::filesystem::create_directories(prefix / ".venv/bin");
         std::filesystem::create_directories(prefix / ".hidden/bin");
 
         testing::internal::CaptureStdout();
@@ -253,6 +254,9 @@ kez:
         EXPECT_NE(activation.find((package / "lib/pkgconfig").string()), std::string::npos);
         EXPECT_NE(activation.find((package / "lib64/pkgconfig").string()), std::string::npos);
         EXPECT_NE(activation.find((package / "share/pkgconfig").string()), std::string::npos);
+        EXPECT_NE(activation.find((prefix / ".venv/bin").string()), std::string::npos);
+        EXPECT_NE(activation.find("export VIRTUAL_ENV="), std::string::npos);
+        EXPECT_NE(activation.find("KEZ_ACTIVE_ENV_PREVIOUS_VIRTUAL_ENV_SET"), std::string::npos);
         EXPECT_NE(activation.find("export KEZ_ACTIVE_ENV='team'\\''s environment'"),
                   std::string::npos);
         EXPECT_EQ(activation.find(".hidden"), std::string::npos);
@@ -262,6 +266,8 @@ kez:
         const std::string deactivation = testing::internal::GetCapturedStdout();
         EXPECT_NE(deactivation.find((package / "bin").string()), std::string::npos);
         EXPECT_NE(deactivation.find("export PATH=\"$kez_nw\""), std::string::npos);
+        EXPECT_NE(deactivation.find("unset VIRTUAL_ENV"), std::string::npos);
+        EXPECT_NE(deactivation.find("KEZ_ACTIVE_ENV_PREVIOUS_VIRTUAL_ENV"), std::string::npos);
         EXPECT_NE(deactivation.find("unset KEZ_ACTIVE_ENV"), std::string::npos);
         EXPECT_EQ(deactivation.find(".hidden"), std::string::npos);
     }

@@ -23,6 +23,7 @@
 
 #include <cmdline_parser/cmdline_parser.hpp>
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <utils/bash_utils.hpp>
 #include <utils/file_utils.hpp>
@@ -129,6 +130,23 @@ kez:
         std::filesystem::remove_all(directory);
     }
 
+    TEST(CommandLineParser, WritesPythonEnvironmentMetadata) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-python-plan-test-" + std::to_string(getpid()));
+        const std::filesystem::path path = directory / "plan.sh";
+        std::filesystem::remove_all(directory);
+
+        PackageCommands package {"demo", {"build"}, {"python"}};
+        package.python_distribution         = "demo==1.2.3";
+        package.requires_python_environment = true;
+        write_install_plan({package}, path);
+
+        const std::string plan = read_file(path.string());
+        EXPECT_NE(plan.find("kez_plan_python_distribution 'demo==1.2.3'\n"), std::string::npos);
+        std::filesystem::remove_all(directory);
+    }
+
     TEST(CommandLineParser, BashExecutorTracksSkipAndForceState) {
         const std::filesystem::path directory =
             std::filesystem::temp_directory_path() /
@@ -184,6 +202,199 @@ kez:
         std::filesystem::remove_all(directory);
     }
 
+    TEST(CommandLineParser, PythonEnvironmentHelperMergesAndRemovesDistributions) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-python-environment-test-" + std::to_string(getpid()));
+        const std::filesystem::path target      = directory / "target";
+        const std::filesystem::path runtime     = target / ".tmp/plan";
+        const std::filesystem::path base_python = target / "python/bin/python3";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(base_python.parent_path());
+        std::filesystem::create_directories(runtime / "0");
+        std::filesystem::create_directories(runtime / "1");
+        std::filesystem::create_directories(runtime / "2");
+
+        {
+            std::ofstream output(base_python);
+            ASSERT_TRUE(output.good());
+            output << R"(#!/usr/bin/env bash
+set -eu
+if [[ ${1:-} == -c ]]; then
+    printf '3.12.0 cpython-312\n'
+elif [[ ${1:-} == -m && ${2:-} == venv ]]; then
+    mkdir -p "$3/bin"
+    mkdir -p "$3/lib/python3.12/site-packages"
+    cp "$0" "$3/bin/python"
+    chmod +x "$3/bin/python"
+elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == install ]]; then
+    fake_env=$(cd "$(dirname "$0")/../.." && pwd)
+    if [[ -e $fake_env/require-native-ready ]]; then
+        test -f "$fake_env/native.ready"
+    fi
+    shift 4
+    printf '%s\n' "$@" > "$fake_env/pip-install.txt"
+elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == freeze ]]; then
+    printf 'pip==25.0\n'
+else
+    exit 2
+fi
+)";
+        }
+        std::filesystem::permissions(base_python,
+                                     std::filesystem::perms::owner_read |
+                                         std::filesystem::perms::owner_write |
+                                         std::filesystem::perms::owner_exec,
+                                     std::filesystem::perm_options::replace);
+
+        {
+            std::ofstream(runtime / "0/package-name") << "python\n";
+            std::ofstream(runtime / "0/python-requirements");
+            std::ofstream(runtime / "0/provides-python-environment");
+            std::ofstream(runtime / "1/package-name") << "demo\n";
+            std::ofstream(runtime / "1/uses-python-environment");
+            std::ofstream(runtime / "1/python-requirements") << "demo==1.2.3\n";
+            std::ofstream(runtime / "2/package-name") << "other\n";
+            std::ofstream(runtime / "2/uses-python-environment");
+            std::ofstream(runtime / "2/python-requirements") << "other==4.5.6\n";
+        }
+
+        const std::string helper =
+            "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) + " bash " +
+            shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/python_env.sh") +
+            " sync-plan " + shell_single_quote(target.string()) + " " +
+            shell_single_quote(runtime.string());
+        ASSERT_EQ(std::system(helper.c_str()), 0);
+        EXPECT_TRUE(std::filesystem::is_regular_file(target / ".venv/bin/python"));
+        EXPECT_EQ(read_file((target / ".kez-python/requirements.txt").string()),
+                  "demo==1.2.3\nother==4.5.6\n");
+        EXPECT_EQ(read_file((target / "pip-install.txt").string()), "demo==1.2.3\nother==4.5.6\n");
+        EXPECT_TRUE(
+            std::filesystem::is_regular_file(target / ".kez-python/packages/demo.requirements"));
+
+        const std::string remove =
+            "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) + " bash " +
+            shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/python_env.sh") +
+            " remove-package " + shell_single_quote(target.string()) + " demo";
+        ASSERT_EQ(std::system(remove.c_str()), 0);
+        EXPECT_TRUE(std::filesystem::is_directory(target / ".venv"));
+        EXPECT_EQ(read_file((target / ".kez-python/requirements.txt").string()), "other==4.5.6\n");
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(CommandLineParser, BashExecutorSchedulesPythonEnvironmentBeforeConsumers) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-python-executor-test-" + std::to_string(getpid()));
+        const std::filesystem::path target      = directory / "target";
+        const std::filesystem::path plan        = directory / "plan.sh";
+        const std::filesystem::path observation = directory / "virtual-environment";
+        const std::filesystem::path base_python = target / "python/bin/python3";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(base_python.parent_path());
+        {
+            std::ofstream output(base_python);
+            ASSERT_TRUE(output.good());
+            output << R"(#!/usr/bin/env bash
+set -eu
+if [[ ${1:-} == -c ]]; then
+    printf '3.12.0 cpython-312\n'
+elif [[ ${1:-} == -m && ${2:-} == venv ]]; then
+    mkdir -p "$3/bin"
+    mkdir -p "$3/lib/python3.12/site-packages"
+    cp "$0" "$3/bin/python"
+    chmod +x "$3/bin/python"
+elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == install ]]; then
+    fake_env=$(cd "$(dirname "$0")/../.." && pwd)
+    if [[ -e $fake_env/require-native-ready ]]; then
+        test -f "$fake_env/native.ready"
+    fi
+    shift 4
+    printf '%s\n' "$@" > "$fake_env/pip-install.txt"
+elif [[ ${1:-} == -m && ${2:-} == pip && ${3:-} == freeze ]]; then
+    printf 'pip==25.0\n'
+else
+    exit 2
+fi
+)";
+        }
+        std::filesystem::permissions(base_python,
+                                     std::filesystem::perms::owner_read |
+                                         std::filesystem::perms::owner_write |
+                                         std::filesystem::perms::owner_exec,
+                                     std::filesystem::perm_options::replace);
+
+        std::ofstream(target / "require-native-ready");
+        PackageCommands native {
+            "native",
+            {"sleep 0.1; touch " + shell_single_quote((target / "native.ready").string())},
+            {}};
+        PackageCommands python {"python", {"true"}, {}};
+        PackageCommands demo {"demo",
+                              {"mkdir -p " + shell_single_quote((target / "demo").string())},
+                              {"python", "native"},
+                              "demo==1.2.3",
+                              true};
+        PackageCommands application {
+            "application",
+            {"mkdir -p " +
+             shell_single_quote((target / "application/lib/python3.12/site-packages").string()) +
+             " && printf '%s\\n' \"$VIRTUAL_ENV\" > " + shell_single_quote(observation.string())},
+            {"demo"}};
+        application.requires_python_environment = true;
+        write_install_plan({native, python, demo, application}, plan);
+
+        const std::string executor =
+            "KEZ_HOME=" + shell_single_quote(KEZ_SOURCE_DIR) +
+            " KEZ_NJOBS=2 env -u KEZ_WORKDIR bash " +
+            shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") + " " +
+            shell_single_quote(target.string()) + " " + shell_single_quote(plan.string());
+        ASSERT_EQ(std::system(executor.c_str()), 0);
+        EXPECT_EQ(read_file(observation.string()), (target / ".venv").string() + "\n");
+        EXPECT_EQ(read_file((target / "state.yaml").string()),
+                  "state:\n  - native\n  - python\n  - demo\n  - application\n");
+        EXPECT_TRUE(std::filesystem::is_regular_file(target / ".venv/bin/python"));
+        EXPECT_EQ(read_file((target / "pip-install.txt").string()), "demo==1.2.3\n");
+        EXPECT_EQ(read_file((target / ".venv/lib/python3.12/site-packages/"
+                                      "kez-application.pth")
+                                .string()),
+                  (target / "application/lib/python3.12/site-packages").string() + "\n");
+
+        std::filesystem::remove_all(directory);
+    }
+
+    TEST(CommandLineParser, ModulefileActivatesPythonVirtualEnvironmentFirst) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-python-modulefile-test-" + std::to_string(getpid()));
+        const std::filesystem::path environment = directory / "example";
+        const std::filesystem::path modulefile  = directory / "modulefile";
+        std::filesystem::remove_all(directory);
+        std::filesystem::create_directories(environment / "application/bin");
+        std::filesystem::create_directories(environment / ".venv/bin");
+
+        const std::string generate =
+            "bash " +
+            shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/gen_modulefile.sh") + " " +
+            shell_single_quote(environment.string()) + " > " +
+            shell_single_quote(modulefile.string());
+        ASSERT_EQ(std::system(generate.c_str()), 0);
+
+        const std::string contents = read_file(modulefile.string());
+        const std::string package_path =
+            "prepend-path PATH \"" + (environment / "application/bin").string() + "\"";
+        const std::string virtual_path =
+            "prepend-path PATH \"" + (environment / ".venv/bin").string() + "\"";
+        EXPECT_NE(contents.find("setenv VIRTUAL_ENV \"" + (environment / ".venv").string() + "\""),
+                  std::string::npos);
+        ASSERT_NE(contents.find(package_path), std::string::npos);
+        ASSERT_NE(contents.find(virtual_path), std::string::npos);
+        EXPECT_LT(contents.find(package_path), contents.find(virtual_path));
+
+        std::filesystem::remove_all(directory);
+    }
+
     TEST(CommandLineParser, InitPlanEnforcesBootstrapCompilerDependencies) {
         const std::filesystem::path directory = std::filesystem::temp_directory_path() /
                                                 ("kez-init-plan-test-" + std::to_string(getpid()));
@@ -206,14 +417,14 @@ kez:
         const std::string gcc = install_plan_package_block(contents, "gcc");
         EXPECT_NE(gcc.find("kez_plan_depends binutils\n"), std::string::npos);
 
-        for (const std::string& package : {"elfutils", "m4", "autoconf", "automake", "libtool",
-                                           "make", "perl", "git", "yaml-cpp", "googletest"}) {
+        for (const char* package : {"elfutils", "m4", "autoconf", "automake", "libtool", "make",
+                                    "perl", "git", "yaml-cpp", "googletest"}) {
             const std::string block = install_plan_package_block(contents, package);
             ASSERT_FALSE(block.empty()) << package;
             EXPECT_NE(block.find("kez_plan_depends gcc\n"), std::string::npos) << package;
         }
 
-        for (const std::string& package : {"cmake", "rust", "patchelf"}) {
+        for (const char* package : {"cmake", "rust", "patchelf"}) {
             const std::string block = install_plan_package_block(contents, package);
             ASSERT_FALSE(block.empty()) << package;
             EXPECT_EQ(block.find("kez_plan_depends gcc\n"), std::string::npos) << package;

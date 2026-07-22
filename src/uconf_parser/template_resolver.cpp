@@ -348,6 +348,16 @@ namespace {
         }
 
         const PackageConfigPtr config = parser_package_config(context, package_name);
+        if (config->name == "python") {
+            const std::filesystem::path virtual_environment =
+                context.settings.install_prefix / ".venv";
+            if (property_name == "venv") {
+                return virtual_environment.string();
+            }
+            if (property_name == "executable") {
+                return (virtual_environment / "bin" / "python").string();
+            }
+        }
         if (property_name == "incflags") {
             return format_include_path(
                 resolve_parser_scalar("${" + template_package_name + ".include}", context));
