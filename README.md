@@ -31,7 +31,6 @@ Kez is built specifically for HPC, with the following key features:
 
 - Stale ARM support (aarch64): The code path is ARM-aware, but the database might be outdated due to lack of testing on ARM hardware.
 - No actual AMD GPU support (ROCm etc.): The database has almost no packages that support AMD GPUs due to lack of testing on AMD GPU hardware.
-- No Python package support yet, but it is planned for the future.
 
 ## Development Setup
 
