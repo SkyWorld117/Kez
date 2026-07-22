@@ -16,6 +16,11 @@ std::string read_file(const std::string& path) {
     return buffer.str();
 }
 
+void write_file(const std::filesystem::path& path, std::string_view content) {
+    std::ofstream file(path);
+    file << content;
+}
+
 void write_yaml(const YAML::Node& node, const std::string& path) {
     std::filesystem::path fs_path(path);
     if (fs_path.is_absolute()) {

@@ -26,6 +26,18 @@
 std::string read_file(const std::string& path);
 
 /**
+ * @brief Write content to a file.
+ *
+ * Opens the file at the given path and writes the provided content to it.
+ * If the file cannot be opened for writing, an error message is printed and
+ * the program terminates with a non-zero exit code.
+ *
+ * @param path   Filesystem path to the file to write.
+ * @param content Content to write to the file.
+ */
+void write_file(const std::filesystem::path& path, std::string_view content = "");
+
+/**
  * @brief Serialise a YAML node to a file, creating parent directories as
  *        needed.
  *
