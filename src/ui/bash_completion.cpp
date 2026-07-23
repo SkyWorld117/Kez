@@ -205,9 +205,8 @@ namespace {
         if (!contains_any(words, {"--rebuild", "-R"})) {
             append(result, {"--rebuild", "-R"});
         }
-        if (!contains_any(words, {"--config", "-c"})) {
-            append(result, {"--config", "-c"});
-        }
+        // --config can be used multiple times
+        append(result, {"--config", "-c"});
         if (!utility && !contains_any(words, {"--env", "-e"})) {
             append(result, {"--env", "-e"});
         }
