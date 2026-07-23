@@ -1,0 +1,33 @@
+---
+recipe:
+    name: nvidia-hpc-benchmarks
+    description: NVIDIA HPC Benchmarks
+    type: package
+
+    source:
+        type: tarball
+        releases:
+            # This should not be dynamically generated based on MPI, because they represent two MPI families instead of just two concrete implementations.
+            - version: 26.02-openmpi
+              url: 
+                  https://developer.download.nvidia.com/compute/nvidia-hpc-benchmarks/redist/nvidia_hpc_benchmarks_openmpi/linux-${kez.arch.nvidia-hpc-benchmarks}/nvidia_hpc_benchmarks_openmpi-linux-${kez.arch.nvidia-hpc-benchmarks}-26.02.02-archive.tar.xz
+            - version: 26.02-mpich
+              url: 
+                  https://developer.download.nvidia.com/compute/nvidia-hpc-benchmarks/redist/nvidia_hpc_benchmarks_mpich/linux-${kez.arch.nvidia-hpc-benchmarks}/nvidia_hpc_benchmarks_mpich-linux-${kez.arch.nvidia-hpc-benchmarks}-26.02.02-archive.tar.xz
+
+    dependencies:
+        - mpi
+        - cuda
+
+    build:
+        postprocessing: |-
+            mkdir -p ${nvidia-hpc-benchmarks.prefix}
+            cp -r ${source}/cuda${cuda.version.major}/* ${nvidia-hpc-benchmarks.prefix}/
+            bash ${KEZ_HOME}/tools/patch_rpath.sh ${nvidia-hpc-benchmarks.prefix}/hpl-linux-${kez.arch.nvidia-hpc-benchmarks}/xhpl ${mpi.lib}:${cuda.lib}:${nvidia-hpc-benchmarks.lib}/omp:${nvidia-hpc-benchmarks.lib}/nccl:${nvidia-hpc-benchmarks.lib}/nvshmem
+            bash ${KEZ_HOME}/tools/patch_rpath.sh ${nvidia-hpc-benchmarks.prefix}/hpl-mxp-linux-${kez.arch.nvidia-hpc-benchmarks}/xhpl_mxp ${mpi.lib}:${cuda.lib}:${nvidia-hpc-benchmarks.lib}/omp:${nvidia-hpc-benchmarks.lib}/nccl:${nvidia-hpc-benchmarks.lib}/nvshmem
+            bash ${KEZ_HOME}/tools/patch_rpath.sh ${nvidia-hpc-benchmarks.prefix}/hpcg-linux-${kez.arch.nvidia-hpc-benchmarks}/xhpcg ${mpi.lib}:${cuda.lib}:${nvidia-hpc-benchmarks.lib}/omp:${nvidia-hpc-benchmarks.lib}/nccl:${nvidia-hpc-benchmarks.lib}/nvshmem
+            bash ${KEZ_HOME}/tools/patch_rpath.sh ${nvidia-hpc-benchmarks.prefix}/stream-gpu-linux-${kez.arch.nvidia-hpc-benchmarks}/stream_test ${mpi.lib}:${cuda.lib}:${nvidia-hpc-benchmarks.lib}/omp:${nvidia-hpc-benchmarks.lib}/nccl:${nvidia-hpc-benchmarks.lib}/nvshmem
+            bash ${KEZ_HOME}/tools/patch_rpath.sh ${nvidia-hpc-benchmarks.prefix}/stream-gpu-linux-${kez.arch.nvidia-hpc-benchmarks}/stream_test_fp32 ${mpi.lib}:${cuda.lib}:${nvidia-hpc-benchmarks.lib}/omp:${nvidia-hpc-benchmarks.lib}/nccl:${nvidia-hpc-benchmarks.lib}/nvshmem
+
+    properties:
+        lib: ${nvidia-hpc-benchmarks.prefix}/lib
