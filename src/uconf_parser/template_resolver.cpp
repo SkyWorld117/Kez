@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <database/config.hpp>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <uconf_parser/parser_internal.hpp>
 #include <utility>
@@ -125,6 +126,33 @@ namespace {
         return {specification.substr(0, separator), specification.substr(separator + 1)};
     }
 
+    /**
+     * @brief Return the selected build-compiler version for a package in its namespace.
+     *
+     * The selected compiler can have the same name as the package being built
+     * (for example, GCC 15 building GCC 16). NVIDIA compiler properties can
+     * also refer to their parent package. Both references belong to the build
+     * compiler namespace and must not inherit the target package's version.
+     */
+    std::optional<std::string> selected_compiler_package_version(const std::string& requested_name,
+                                                                 UserConfigParserContext& context) {
+        const auto [compiler_name, compiler_version] = current_compiler(context);
+        if (requested_name == compiler_name) {
+            return compiler_version;
+        }
+        if (compiler_version == "system" || compiler_version == "latest") {
+            return std::nullopt;
+        }
+        const PackageConfigPtr compiler_config = parser_package_config(context, compiler_name);
+        const Property* parent_prop            = find_property(*compiler_config, "parent");
+        if (parent_prop == nullptr || !std::holds_alternative<std::string>(parent_prop->data)) {
+            return std::nullopt;
+        }
+        return std::get<std::string>(parent_prop->data) == requested_name
+                   ? std::optional<std::string>(compiler_version)
+                   : std::nullopt;
+    }
+
     /** @brief Checks whether a compiler name corresponds to an NVIDIA compiler (nvhpc, nvc, or nvcc). */
     bool is_nvidia_compiler(const std::string& compiler) {
         return compiler.find("nvhpc") != std::string::npos || compiler == "nvc" ||
@@ -183,7 +211,15 @@ namespace {
     std::string parser_package_version(const std::string& package_name,
                                        UserConfigParserContext& context) {
         const std::string requested_name = canonical_package_name(context, package_name);
-        YAML::Node user_package          = parser_user_package(context, requested_name);
+        if (context.compiler_template_depth != 0) {
+            const std::optional<std::string> compiler_version =
+                selected_compiler_package_version(requested_name, context);
+            if (compiler_version.has_value()) {
+                return *compiler_version;
+            }
+        }
+
+        YAML::Node user_package = parser_user_package(context, requested_name);
         if (yaml_has(user_package, "version")) {
             std::string version = yaml_scalar(user_package["version"], "package version");
             const std::size_t local_separator = version.find('@');
@@ -224,22 +260,10 @@ namespace {
             user_config_error("system package '" + requested_name + "' is absent from state.yaml");
         }
 
-        const auto [compiler_name, compiler_version] = current_compiler(context);
-        if (requested_name == compiler_name) {
-            return compiler_version;
-        }
-        // If the requested package is the "parent" of the current compiler
-        // (e.g. nvhpc is the parent of nvhpc-compilers), use the compiler's
-        // version rather than the first source release of the parent.
-        if (compiler_version != "system" && compiler_version != "latest") {
-            const PackageConfigPtr compiler_config = parser_package_config(context, compiler_name);
-            const Property* parent_prop            = find_property(*compiler_config, "parent");
-            if (parent_prop != nullptr && std::holds_alternative<std::string>(parent_prop->data)) {
-                const std::string& parent_name = std::get<std::string>(parent_prop->data);
-                if (parent_name == requested_name) {
-                    return compiler_version;
-                }
-            }
+        const std::optional<std::string> compiler_version =
+            selected_compiler_package_version(requested_name, context);
+        if (compiler_version.has_value()) {
+            return *compiler_version;
         }
         if (config->source.has_value() && !config->source->releases.empty()) {
             return config->source->releases.front().version;
@@ -281,24 +305,35 @@ namespace {
 
         if (package_name == "compiler") {
             const auto [compiler_name, compiler_version] = current_compiler(context);
+            ++context.compiler_template_depth;
             if (property_name == "prefix") {
-                return parser_package_prefix(compiler_name, context);
+                const std::string value = parser_package_prefix(compiler_name, context);
+                --context.compiler_template_depth;
+                return value;
             }
             PackageConfigPtr compiler = get_db_config(
                 compiler_name, compiler_version == "system" ? "latest" : compiler_version);
             if (find_property(*compiler, property_name) == nullptr) {
                 if (property_name == "incflags" && find_property(*compiler, "include") != nullptr) {
-                    return format_include_path(
-                        resolve_parser_scalar("${compiler.include}", context));
+                    const std::string value =
+                        format_include_path(resolve_parser_scalar("${compiler.include}", context));
+                    --context.compiler_template_depth;
+                    return value;
                 }
                 if ((property_name == "ldflags" || property_name == "nvldflags") &&
                     find_property(*compiler, "lib") != nullptr) {
-                    const std::string path = resolve_parser_scalar("${compiler.lib}", context);
-                    return property_name == "nvldflags" ? format_nvidia_library_path(path)
-                                                        : format_library_path(path, context);
+                    const std::string path  = resolve_parser_scalar("${compiler.lib}", context);
+                    const std::string value = property_name == "nvldflags"
+                                                  ? format_nvidia_library_path(path)
+                                                  : format_library_path(path, context);
+                    --context.compiler_template_depth;
+                    return value;
                 }
             }
-            return resolve_declared_property(name, *compiler, property_name, context);
+            const std::string value =
+                resolve_declared_property(name, *compiler, property_name, context);
+            --context.compiler_template_depth;
+            return value;
         }
 
         const auto abstract = context.abstract_packages.find(package_name);

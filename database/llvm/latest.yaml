@@ -16,9 +16,9 @@ recipe:
         postprocessing: cp -r ${source}/* ${llvm.prefix}
 
     properties:
-        c: ${compiler.prefix}/bin/clang
-        cxx: ${compiler.prefix}/bin/clang++
-        fort: ${compiler.prefix}/bin/flang
+        c: ${llvm.prefix}/bin/clang
+        cxx: ${llvm.prefix}/bin/clang++
+        fort: ${llvm.prefix}/bin/flang
         omp_flags: -fopenmp
-        lib: ${compiler.prefix}/lib
-        include: ${compiler.prefix}/include
+        lib: ${llvm.prefix}/lib
+        include: ${llvm.prefix}/include

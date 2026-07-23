@@ -10,8 +10,8 @@ recipe:
     properties:
         parent: nvhpc
         prefix: ${nvhpc.prefix}/Linux_${kez.arch}/${nvhpc.version}/compilers
-        c: ${compiler.prefix}/bin/nvc
-        cxx: ${compiler.prefix}/bin/nvc++
-        fort: ${compiler.prefix}/bin/nvfortran
+        c: ${nvhpc-compilers.prefix}/bin/nvc
+        cxx: ${nvhpc-compilers.prefix}/bin/nvc++
+        fort: ${nvhpc-compilers.prefix}/bin/nvfortran
         omp_flags: -mp
-        lib: ${compiler.prefix}/lib
+        lib: ${nvhpc-compilers.prefix}/lib

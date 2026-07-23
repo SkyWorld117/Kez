@@ -639,6 +639,79 @@ recipe:
         EXPECT_EQ(command.find("LIBS="), std::string::npos);
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase,
+           KeepsSystemBuildCompilerSeparateFromSameNamedCompilerTarget) {
+        write_package("gcc", R"(
+recipe:
+  name: gcc
+  type: compiler
+  toolchain: autotools
+  source:
+    type: tarball
+    releases:
+      - version: 16.0
+        url: https://example.invalid/gcc-16.0.tar.gz
+  build:
+    configurations: {}
+  properties:
+    c: ${gcc.prefix}/bin/gcc
+    cxx: ${gcc.prefix}/bin/g++
+    fort: ${gcc.prefix}/bin/gfortran
+    lib: ${gcc.prefix}/lib64
+)");
+        clear_db_cache();
+
+        const YAML::Node user_config = gen_user_config({"gcc"}, false, "system", {{"gcc", "16.0"}});
+        const BashCommandPlan plan   = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        const auto configure = std::find_if(
+            plan[0].commands.begin(), plan[0].commands.end(),
+            [](const std::string& command) { return command.rfind("./configure", 0) == 0; });
+        ASSERT_NE(configure, plan[0].commands.end());
+        EXPECT_NE(configure->find("--prefix=\"/opt/compilers/gcc-16.0/gcc\""), std::string::npos);
+        EXPECT_NE(configure->find("CC=\"/opt/system/bin/gcc\""), std::string::npos);
+        EXPECT_EQ(configure->find("CC=\"/opt/compilers/gcc-16.0/gcc/bin/gcc\""), std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase,
+           KeepsOlderBuildCompilerSeparateFromSameNamedCompilerTarget) {
+        write_package("gcc", R"(
+recipe:
+  name: gcc
+  type: compiler
+  toolchain: autotools
+  source:
+    type: tarball
+    releases:
+      - version: 16.0
+        url: https://example.invalid/gcc-16.0.tar.gz
+      - version: 15.0
+        url: https://example.invalid/gcc-15.0.tar.gz
+  build:
+    configurations: {}
+  properties:
+    c: ${gcc.prefix}/bin/gcc
+    cxx: ${gcc.prefix}/bin/g++
+    fort: ${gcc.prefix}/bin/gfortran
+    lib: ${gcc.prefix}/lib64
+)");
+        clear_db_cache();
+
+        const YAML::Node user_config =
+            gen_user_config({"gcc"}, false, "gcc@15.0", {{"gcc", "16.0"}});
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        const auto configure = std::find_if(
+            plan[0].commands.begin(), plan[0].commands.end(),
+            [](const std::string& command) { return command.rfind("./configure", 0) == 0; });
+        ASSERT_NE(configure, plan[0].commands.end());
+        EXPECT_NE(configure->find("--prefix=\"/opt/compilers/gcc-16.0/gcc\""), std::string::npos);
+        EXPECT_NE(configure->find("CC=\"/opt/compilers/gcc-15.0/gcc/bin/gcc\""), std::string::npos);
+        EXPECT_EQ(configure->find("CC=\"/opt/compilers/gcc-16.0/gcc/bin/gcc\""), std::string::npos);
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase, SelectsVersionedRecipeAndResolvesItsCanonicalName) {
         write_package("demo", R"(
 recipe:

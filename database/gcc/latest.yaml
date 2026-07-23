@@ -103,11 +103,11 @@ recipe:
             - target: install
 
     properties:
-        c: ${compiler.prefix}/bin/gcc
-        cxx: ${compiler.prefix}/bin/g++
-        fort: ${compiler.prefix}/bin/gfortran
+        c: ${gcc.prefix}/bin/gcc
+        cxx: ${gcc.prefix}/bin/g++
+        fort: ${gcc.prefix}/bin/gfortran
         omp_flags: -fopenmp
         self_build_ldflags:
             default: -L${gcc.prefix}/lib -Wl,-rpath,${gcc.prefix}/lib -L${gcc.prefix}/lib64 -Wl,-rpath,${gcc.prefix}/lib64
-        lib: ${compiler.prefix}/lib64
-        include: ${compiler.prefix}/include
+        lib: ${gcc.prefix}/lib64
+        include: ${gcc.prefix}/include

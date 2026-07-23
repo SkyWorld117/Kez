@@ -182,6 +182,15 @@ struct UserConfigParserContext {
     /// reject recursive template expansions.
     std::unordered_set<std::string> resolving_templates;
 
+    /**
+     * @brief Nesting depth while resolving the special @c compiler pseudo-package.
+     *
+     * Compiler properties may recursively reference @c ${compiler.prefix}. While
+     * this value is non-zero, version lookup must prefer the selected build
+     * compiler over a same-named installation target.
+     */
+    unsigned int compiler_template_depth = 0;
+
     /// Name of the package currently being processed.  Used for error
     /// messages and to scope template resolution.
     std::string current_package;
