@@ -23,6 +23,31 @@ recipe:
 
                 - name: enable-sensors
                   description: Enable sensors support
+
+                - name: with-curses
+                  description: Use ncurses library
+                  enabled_value:
+                      default: ncursesw6
+
+                - name: HWLOC_CFLAGS
+                  description: HWLOC CFLAGS
+                  enabled_value:
+                      default: ${hwloc.incflags}
+
+                - name: HWLOC_LIBS
+                  description: HWLOC LIBS
+                  enabled_value:
+                      default: ${hwloc.ldflags} ${hwloc.libs}
+
+                - name: CURSES_CFLAGS
+                  description: NCURSES CFLAGS
+                  enabled_value:
+                      default: ${ncurses.incflags}
+
+                - name: CURSES_LIBS
+                  description: NCURSES LIBS
+                  enabled_value:
+                      default: ${ncurses.ldflags} ${ncurses.libs}
         stages:
             - target:
             - target: install
