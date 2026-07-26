@@ -1,0 +1,29 @@
+---
+recipe:
+    name: htop
+    description: An interactive process viewer
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 3.5.2
+              url: https://github.com/htop-dev/htop/releases/download/3.5.2/htop-3.5.2.tar.xz
+
+    dependencies:
+        - hwloc
+
+    build:
+        configurations:
+            options:
+                - name: enable-hwloc
+                  description: Enable hwloc support
+
+                - name: enable-sensors
+                  description: Enable sensors support
+        stages:
+            - target:
+            - target: install
+
+    properties:
