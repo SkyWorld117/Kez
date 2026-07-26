@@ -1,0 +1,31 @@
+---
+recipe:
+    name: ncurses
+    description: A library for creating text-based user interfaces
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 6.6
+              url: https://ftp.gnu.org/gnu/ncurses/ncurses-6.6.tar.gz
+
+    build:
+        configurations:
+            options:
+                - name: with-shared
+                  description: Build shared libraries
+
+                - name: enable-widec
+                  description: Enable wide character support
+
+                - name: with-termlib
+                  description: Build terminfo library
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${ncurses.prefix}/lib
+        include: ${ncurses.prefix}/include
