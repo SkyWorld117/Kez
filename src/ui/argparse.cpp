@@ -66,7 +66,7 @@ UiArgumentsParseResult parse_ui_arguments(const CommandArguments& arguments) {
     } else if (command == "compiler") {
         result.command = UiCommand::Compiler;
     } else if (command == "mpi") {
-        result.command = UiCommand::Mpi;
+        result.command = UiCommand::MPI;
     } else if (command == "factory") {
         result.command = UiCommand::Factory;
     } else if (command == "info") {

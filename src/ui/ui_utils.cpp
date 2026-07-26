@@ -70,7 +70,7 @@ std::string package_type_name(PackageType type) {
         case PackageType::Package: return "package";
         case PackageType::System: return "system";
         case PackageType::Compiler: return "compiler";
-        case PackageType::Mpi: return "mpi";
+        case PackageType::MPI: return "mpi";
         case PackageType::Vendor: return "vendor";
         case PackageType::Abstract: return "abstract";
         case PackageType::External: return "external";
@@ -142,7 +142,7 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
         return configured_work_path("utilities");
     }
 
-    if ((common_type == PackageType::Compiler || common_type == PackageType::Mpi ||
+    if ((common_type == PackageType::Compiler || common_type == PackageType::MPI ||
          common_type == PackageType::Vendor || common_type == PackageType::External) &&
         targets.size() != 1) {
         ERROR("Only one compiler, MPI, vendor, or external target can be installed at a time");
@@ -150,7 +150,7 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
     }
 
     if (!renamed_version.empty()) {
-        if (common_type != PackageType::Compiler && common_type != PackageType::Mpi &&
+        if (common_type != PackageType::Compiler && common_type != PackageType::MPI &&
             common_type != PackageType::Vendor) {
             ERROR("--rename is only valid for compiler, MPI, or vendor installations");
             exit(EXIT_FAILURE);
@@ -166,7 +166,7 @@ std::filesystem::path installation_prefix(const YAML::Node& user_config,
         return configured_work_path("compilers") /
                (selected_package + "-" + (renamed_version.empty() ? version : renamed_version));
     }
-    if (common_type == PackageType::Mpi) {
+    if (common_type == PackageType::MPI) {
         const std::string version = package_version(user_config, selected_package);
         return configured_work_path("mpis") /
                (selected_package + "-" + (renamed_version.empty() ? version : renamed_version) +

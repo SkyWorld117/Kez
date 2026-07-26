@@ -44,7 +44,7 @@ using InteractiveOptionSelections =
 struct DependencyResolution {
     /**
      * @brief All resolved packages (including system-level packages such as
-     *        PackageType::System, PackageType::Compiler, or PackageType::Mpi)
+     *        PackageType::System, PackageType::Compiler, or PackageType::MPI)
      *        in dependent-before-dependency order.
      *
      * This is the reverse of a standard topological order: a package that
@@ -56,7 +56,7 @@ struct DependencyResolution {
      * @brief The subset of @ref all_packages that excludes system-level
      *        packages, preserving the same relative ordering.
      *
-     * System packages (types System, Compiler, Mpi, Vendor) are assumed to be
+     * System packages (types System, Compiler, MPI, Vendor) are assumed to be
      * pre-installed by the platform environment and are not built by Kez.
      * This list contains only packages that Kez must actually build from source.
      */
@@ -100,7 +100,7 @@ struct DependencyResolution {
  *      directly. The chosen implementation is then resolved in the same
  *      manner. Abstract packages that are
  *      **not** among the initial targets and whose type is PackageType::System,
- *      PackageType::Compiler, or PackageType::Mpi are treated as leaf nodes
+ *      PackageType::Compiler, or PackageType::MPI are treated as leaf nodes
  *      (their transitive dependencies are **not** traversed).
  *
  *   3. **Topological sort** -- The resulting concrete adjacency list is
@@ -166,7 +166,7 @@ struct DependencyResolution {
  * @see topological_sort()             Produces the initial topological order.
  * @see advise()                       Heuristics-based implementation picker.
  * @see PackageType                    Enum whose values drive traversal policy
- *                                     (System, Compiler, Mpi, Abstract, ...).
+ *                                     (System, Compiler, MPI, Abstract, ...).
  * @see get_db_config()                Database lookup backing the resolution.
  */
 DependencyResolution resolve_dependencies(const std::vector<std::string>& package_names,

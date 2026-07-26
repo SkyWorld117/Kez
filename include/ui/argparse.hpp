@@ -15,7 +15,7 @@ enum class UiCommand {
     Uconf,
     Environment,
     Compiler,
-    Mpi,
+    MPI,
     Factory,
     Info,
     DbCheck,

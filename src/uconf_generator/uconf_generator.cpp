@@ -88,7 +88,7 @@ namespace {
             std::string dirname = it.path().filename().string();
             if (dirname.rfind(prefix, 0) != 0) continue;
             std::string version = dirname.substr(prefix.size());
-            if (type == PackageType::Mpi) {
+            if (type == PackageType::MPI) {
                 // Directory format: <name>-<version>-<compiler> where <compiler>
                 // is either "system" or a "<compiler_name>-<compiler_version>"
                 // pair.  MPI versions are semver-like (dots only, never dashes),
@@ -165,9 +165,9 @@ namespace {
             std::string version = (resolved_version.empty() || resolved_version == "latest")
                                       ? package.source->releases.front().version
                                       : resolved_version;
-            if (package.type == PackageType::Mpi) {
+            if (package.type == PackageType::MPI) {
                 std::string existing =
-                    get_latest_existing_version(package.name, "mpis", PackageType::Mpi);
+                    get_latest_existing_version(package.name, "mpis", PackageType::MPI);
                 if (!existing.empty()) version = existing;
             } else if (package.type == PackageType::Vendor) {
                 std::string existing =
@@ -194,7 +194,7 @@ namespace {
         }
 
         const bool include_build =
-            (package.type != PackageType::Compiler && package.type != PackageType::Mpi) ||
+            (package.type != PackageType::Compiler && package.type != PackageType::MPI) ||
             target_packages.find(package.name) != target_packages.end();
         if (include_build && package.build.has_value()) {
             const std::optional<Build> build = uconf_generator::transformed_build(

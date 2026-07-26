@@ -19,7 +19,7 @@ enum class PackageType {
     Package,   ///< A regular, downloadable package built from source.
     System,    ///< Provided by the system package manager; not built.
     Compiler,  ///< A compiler toolchain (e.g. gcc, llvm).
-    Mpi,       ///< An MPI implementation (e.g. openmpi, mpich).
+    MPI,       ///< An MPI implementation (e.g. openmpi, mpich).
     Vendor,    ///< A vendor-provided blob or SDK (e.g. CUDA, MKL).
     Abstract,  ///< A virtual / interface-only package; requires an
                ///< implementation listed in @ref

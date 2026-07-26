@@ -32,7 +32,7 @@ std::filesystem::path configured_work_path(const std::string& name);
  * the targets and the environment name:
  *   - @c Package targets → ``<applications_path>/<environment_name>``
  *   - @c Compiler targets → ``<compilers_path>/<name>-<version>``
- *   - @c Mpi targets → ``<mpis_path>/<name>-<version>-<compiler>``
+ *   - @c MPI targets → ``<mpis_path>/<name>-<version>-<compiler>``
  *   - @c Vendor targets → ``<vendors_path>/<name>-<version>``
  *   - @c System targets → ``<system_path>``
  *   - @c Utilities (``utilities=true``) → ``<utilities_path>``
@@ -155,7 +155,7 @@ void print_command_plan(const BashCommandPlan& plan);
  *   PackageType::Package  -> "package"
  *   PackageType::System   -> "system"
  *   PackageType::Compiler -> "compiler"
- *   PackageType::Mpi      -> "mpi"
+ *   PackageType::MPI      -> "mpi"
  *   PackageType::Vendor   -> "vendor"
  *   PackageType::Abstract -> "abstract"
  *   PackageType::External -> "external"

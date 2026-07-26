@@ -97,7 +97,7 @@ namespace {
         EXPECT_EQ(package_type_name(PackageType::Package), "package");
         EXPECT_EQ(package_type_name(PackageType::System), "system");
         EXPECT_EQ(package_type_name(PackageType::Compiler), "compiler");
-        EXPECT_EQ(package_type_name(PackageType::Mpi), "mpi");
+        EXPECT_EQ(package_type_name(PackageType::MPI), "mpi");
         EXPECT_EQ(package_type_name(PackageType::Vendor), "vendor");
         EXPECT_EQ(package_type_name(PackageType::Abstract), "abstract");
         EXPECT_EQ(package_type_name(PackageType::External), "external");

@@ -67,7 +67,7 @@ void run_ui(int argc, char* argv[]) {
         case UiCommand::Uconf: execute_uconf(parsed.arguments); return;
         case UiCommand::Environment: execute_environment(parsed.arguments); return;
         case UiCommand::Compiler: execute_compiler(parsed.arguments); return;
-        case UiCommand::Mpi: execute_mpi(parsed.arguments); return;
+        case UiCommand::MPI: execute_mpi(parsed.arguments); return;
         case UiCommand::Factory: execute_factory(parsed.arguments); return;
         case UiCommand::Info: execute_info(parsed.arguments); return;
         case UiCommand::DbCheck: execute_dbcheck(parsed.arguments); return;

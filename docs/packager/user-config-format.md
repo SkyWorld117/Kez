@@ -59,7 +59,7 @@ kez:
 
     build:                         # Present only if the recipe defines a build
                                    # AND the package is not a non-target
-                                   # Compiler/Mpi type.
+                                   # Compiler/MPI type.
       configurations:
         environment:
           - name: <var_name>       # User-configurable env variables only
@@ -157,7 +157,7 @@ During parsing, each enabled patch is validated:
 
 ### `kez.<package>.build`
 
-The `build` section is **omitted** for packages of type `Compiler` or `Mpi`
+The `build` section is **omitted** for packages of type `Compiler` or `MPI`
 **unless** the package is among the resolved targets. Resolved targets are the
 packages the user originally requested, with abstract package names replaced by
 their concrete implementations — so requesting an abstract target like `mpi`

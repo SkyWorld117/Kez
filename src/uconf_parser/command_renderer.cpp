@@ -142,7 +142,7 @@ std::vector<std::string> generate_package_commands(const ParsedUserPackage& pack
         return commands;
     }
     if ((package.database_config->type == PackageType::Compiler ||
-         package.database_config->type == PackageType::Mpi) &&
+         package.database_config->type == PackageType::MPI) &&
         !yaml_has(package.user_config, "build")) {
         return commands;
     }

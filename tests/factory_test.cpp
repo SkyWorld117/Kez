@@ -80,7 +80,7 @@ factory:
         EXPECT_EQ(plan[1].profiles[0].commands, plan[0].profiles[0].commands);
     }
 
-    TEST(FactoryParser, WrapsSlurmAndMpiProfiles) {
+    TEST(FactoryParser, WrapsSlurmAndMPIProfiles) {
         EXPECT_EQ(wrap_factory_target("./bench", "mpirun", "--bind-to core", "slurm",
                                       "--partition=batch", "2", "3", "4", "8", "1"),
                   "sbatch --job-name=${PWD##*/} --nodes=2 --ntasks-per-node=3 "

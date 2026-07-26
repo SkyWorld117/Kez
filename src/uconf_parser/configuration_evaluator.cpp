@@ -163,7 +163,7 @@ namespace {
             }
             const Build& build         = *package.transformed_build;
             const bool use_user_values = (package.database_config->type != PackageType::Compiler &&
-                                          package.database_config->type != PackageType::Mpi) ||
+                                          package.database_config->type != PackageType::MPI) ||
                                          yaml_has(package.user_config, "build");
             if (build.configurations.has_value()) {
                 compute_configuration(*build.configurations, package.build_configuration_index,

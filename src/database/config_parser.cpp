@@ -22,7 +22,7 @@ namespace {
      *   `"package"`  | PackageType::Package
      *   `"system"`   | PackageType::System
      *   `"compiler"` | PackageType::Compiler
-     *   `"mpi"`      | PackageType::Mpi
+     *   `"mpi"`      | PackageType::MPI
      *   `"vendor"`   | PackageType::Vendor
      *   `"abstract"` | PackageType::Abstract
      *   `"external"` | PackageType::External
@@ -52,7 +52,7 @@ namespace {
             return PackageType::Compiler;
         }
         if (value == "mpi") {
-            return PackageType::Mpi;
+            return PackageType::MPI;
         }
         if (value == "vendor") {
             return PackageType::Vendor;

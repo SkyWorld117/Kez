@@ -226,7 +226,7 @@ namespace {
             state.system_packages.insert(concrete_package);
             return;
         }
-        if ((config->type == PackageType::Compiler || config->type == PackageType::Mpi) &&
+        if ((config->type == PackageType::Compiler || config->type == PackageType::MPI) &&
             state.target_packages.find(concrete_package) == state.target_packages.end()) {
             state.adjacency_list[concrete_package] = {};
             return;

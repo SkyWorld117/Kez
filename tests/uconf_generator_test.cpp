@@ -607,7 +607,7 @@ recipe:
                   std::string::npos);
     }
 
-    TEST_F(TemporaryGeneratorDatabase, UsesLatestInstalledMpiAndVendorVersions) {
+    TEST_F(TemporaryGeneratorDatabase, UsesLatestInstalledMPIAndVendorVersions) {
         write_package("implementation", R"(
 recipe:
   name: implementation

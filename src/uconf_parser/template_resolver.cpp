@@ -506,7 +506,7 @@ std::string parser_package_prefix(const std::string& package_name,
                                       (requested_name + "-" + version) / requested_name)
                                          .string();
     }
-    if (config->type == PackageType::Mpi) {
+    if (config->type == PackageType::MPI) {
         if (context.settings.use_install_prefix_for_managed_target &&
             is_install_target(requested_name, context)) {
             return (context.settings.install_prefix / requested_name).string();
