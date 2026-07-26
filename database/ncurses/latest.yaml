@@ -28,4 +28,6 @@ recipe:
 
     properties:
         lib: ${ncurses.prefix}/lib
+        libs:
+            default: -lformw -lmenuw -lncursesw -lpanelw -ltinfow
         include: ${ncurses.prefix}/include
