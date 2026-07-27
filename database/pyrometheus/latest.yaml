@@ -1,0 +1,14 @@
+---
+recipe:
+    name: pyrometheus
+    description: Code generator for chemical kinetics in Fortran and other languages
+    type: package
+    toolchain: python
+
+    source:
+        type: pypi
+        releases:
+            - version: 1.1.1
+
+    dependencies:
+        - cantera

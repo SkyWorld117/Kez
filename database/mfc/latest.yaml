@@ -1,0 +1,208 @@
+---
+recipe:
+    name: mfc
+    description: An exascale many-physics flow solver
+    type: package
+    toolchain: cmake
+
+    source:
+        type: tarball
+        releases:
+            - version: 5.6.1
+              url: https://github.com/MFlowCode/MFC/archive/refs/tags/v5.6.1.tar.gz
+            - version: 5.5.0
+              url: https://github.com/MFlowCode/MFC/archive/refs/tags/v5.5.0.tar.gz
+            - version: 5.4.0
+              url: https://github.com/MFlowCode/MFC/archive/refs/tags/v5.4.0.tar.gz
+            - version: 5.3.3
+              url: https://github.com/MFlowCode/MFC/archive/refs/tags/v5.3.3.tar.gz
+
+    # Core dependencies for the default build (pre_process + simulation +
+    # post_process).  Individual components can be toggled off below, which
+    # relaxes the corresponding library requirements.
+    #
+    # MFC's build system (mfc.sh) uses the Python toolchain to generate
+    # per-target Fypp case files and the thermochemistry module.  Cantera
+    # and Pyrometheus are required at build time even for non-chemistry
+    # builds because the source code unconditionally imports m_thermochem.
+    dependencies:
+        - mpi
+        - fftw3
+        - hdf5
+        - silo
+        - blas
+        - lapack
+        - python
+        - cantera
+        - pyrometheus
+        - fypp
+
+    build:
+        # Generate per-target case.fpp and the thermochemistry Fortran
+        # module before CMake configure.  MFC's mfc.sh normally does this
+        # via case.generate_fpp(), but we build through CMake directly.
+        preprocessing: |-
+            cd ${source}
+
+            # Generate case.fpp for each target with chemistry disabled
+            # (the default).  We mirror the stub at
+            # src/common/include/case.fpp which defines the
+            # analytical/mib_analytical macros used by various .fpp
+            # sources; without them Fypp raises a NameError.
+            for target in simulation pre_process post_process; do
+                mkdir -p "build/include/${target}"
+                printf '%s\n' '#:set chemistry             = False' \
+                              '#:def analytical()' \
+                              '#:enddef' \
+                              '#:def mib_analytical()' \
+                              '#:enddef' \
+                    > "build/include/${target}/case.fpp"
+            done
+
+            # Generate m_thermochem.f90 via Cantera + Pyrometheus, using
+            # the default h2o2 mechanism shipped with Cantera.  Without
+            # this module the build fails on `use m_thermochem` even when
+            # chemistry is disabled at run time.
+            python3 -c "
+            import cantera as ct, pyrometheus as pyro, os
+            sol = ct.Solution('h2o2.yaml')
+            code = pyro.FortranCodeGenerator().generate(
+                'm_thermochem', sol,
+                pyro.CodeGenerationOptions(scalar_type='real(dp)', directive_offload=None),
+            )
+            for target in ('simulation', 'pre_process', 'post_process'):
+                mod_dir = f'build/modules/{target}'
+                os.makedirs(mod_dir, exist_ok=True)
+                with open(os.path.join(mod_dir, 'm_thermochem.f90'), 'w') as f:
+                    f.write(code)
+            "
+
+        configurations:
+            options:
+                # ── Target selection ───────────────────────────────────────
+                #
+                # NOTE:  MFC_ALL forces MFC_DOCUMENTATION ON, which requires
+                # Doxygen.  Rather than pulling that in, we enable the three
+                # compute targets individually so the default build is useful
+                # without documentation tooling.
+                - name: MFC_PRE_PROCESS
+                  description: Build pre-processor (grid generation, initial conditions)
+                  user_configurable: true
+                  enabled_value:
+                      default: ON
+
+                - name: MFC_SIMULATION
+                  description: Build simulation (time-integration solver)
+                  user_configurable: true
+                  enabled_value:
+                      default: ON
+
+                - name: MFC_POST_PROCESS
+                  description: Build post-processor (analysis, visualization I/O)
+                  user_configurable: true
+                  enabled_value:
+                      default: ON
+
+                - name: MFC_SYSCHECK
+                  description: Build system-check tool (verification of GPU/CPU setup)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                # ── Convenience meta-option ────────────────────────────────
+                - name: MFC_ALL
+                  description: >
+                      Build everything including documentation.  Forces all
+                      targets ON, including MFC_DOCUMENTATION (which requires
+                      Doxygen and Graphviz).
+                  enabled_value:
+                      default: OFF
+
+                # ── Parallelism back-ends ──────────────────────────────────
+                - name: MFC_MPI
+                  description: Build with MPI distributed-memory parallelism
+                  enabled_value:
+                      default: ON
+
+                - name: MFC_OpenACC
+                  description: Build with OpenACC GPU offloading (NVHPC or Cray compilers)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: MFC_OpenMP
+                  description: Build with OpenMP GPU offloading (NVHPC or Cray compilers)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                # ── Precision ──────────────────────────────────────────────
+                - name: MFC_SINGLE_PRECISION
+                  description: Use single precision (32-bit floats)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: MFC_MIXED_PRECISION
+                  description: Use mixed precision (64/32-bit hybrid)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                # ── GPU / hardware-specific ────────────────────────────────
+                - name: MFC_Unified
+                  description: Use unified CPU & GPU memory (GH-200 Grace Hopper only)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: MFC_Fastmath
+                  description: Use -gpu=fastmath on NVIDIA GPUs
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                # ── Development / debugging ────────────────────────────────
+                - name: MFC_GCov
+                  description: Build with GCov code-coverage instrumentation
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: MFC_DOCUMENTATION
+                  description: Build Doxygen documentation
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                # ── CMake find_package hints ──────────────────────────────────
+                #
+                # MFC ships a custom FindLAPACK.cmake that calls
+                #   find_library(LAPACK_LIBRARY NAMES lapack ...)
+                # Intel MKL provides LAPACK through libmkl_rt.so (not liblapack.so),
+                # so we must pass an explicit path hint.  This option is only
+                # enabled when MKL is the selected BLAS/LAPACK provider.
+                - name: LAPACK_LIBRARY
+                  description: Path to the LAPACK library (hint for CMake find_package)
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${blas.use-intel-oneapi-mkl} true && ${lapack.use-intel-oneapi-mkl} true
+                            value: true
+                  enabled_value:
+                      default: ${blas.lib}/libmkl_rt.so
+
+        stages:
+            # Build targets sequentially — MFC's CMake does NOT set
+            # per-target Fortran_MODULE_DIRECTORY, so all .mod files
+            # land in the same build/ directory.  Building multiple
+            # targets in parallel causes them to overwrite each
+            # other's .mod files, leading to spurious compilation
+            # errors (unclassifiable statements, ambiguous references).
+            - target: simulation
+            - target: pre_process
+            - target: post_process
+            - target: install
+
+    properties:
+        bin: ${mfc.prefix}/bin

@@ -1,0 +1,11 @@
+---
+recipe:
+    name: fypp
+    description: Fortran preprocessor (Fypp) used by MFC for template-based code generation
+    type: package
+    toolchain: python
+
+    source:
+        type: pypi
+        releases:
+            - version: 3.2

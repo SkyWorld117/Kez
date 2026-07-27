@@ -1,0 +1,60 @@
+---
+recipe:
+    name: silo
+    description: >
+        Mesh and Field I/O Library and Scientific Database from LLNL. SILO provides
+        a file-based, high-performance data exchange format for scientific mesh and
+        field data, supporting structured, unstructured, AMR, and CSG mesh types.
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 4.12.0
+              url: https://github.com/llnl/Silo/releases/download/4.12.0/Silo-4.12.0.tar.xz
+
+    dependencies:
+        - mpi
+        - hdf5
+        - zlib
+        - python
+
+    build:
+        configurations:
+            options:
+                - name: enable-shared
+                  description: Build shared libraries
+
+                - name: enable-fortran
+                  description: Build Fortran bindings
+
+                - name: with-zlib
+                  description: Use zlib for compression (INC,DIR)
+                  enabled_value:
+                      default: ${zlib.include},${zlib.lib}
+
+                - name: with-hdf5
+                  description: Use HDF5 for I/O (INC,DIR)
+                  enabled_value:
+                      default: ${hdf5.include},${hdf5.prefix}/lib
+
+                - name: enable-pythonmodule
+                  description: Build the Python module
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: with-python_exec_prefix
+                  description: Path to the Python executable
+                  enabled_value:
+                      default: ${python.executable}
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${silo.prefix}/lib
+        libs:
+            default: -lsiloh5
+        include: ${silo.prefix}/include

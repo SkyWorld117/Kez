@@ -1,0 +1,11 @@
+---
+recipe:
+    name: cantera
+    description: Chemical kinetics library for thermodynamics, kinetics, and transport
+    type: package
+    toolchain: python
+
+    source:
+        type: pypi
+        releases:
+            - version: 3.2.0

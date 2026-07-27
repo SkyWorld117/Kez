@@ -1,0 +1,418 @@
+---
+kez:
+    mfc:
+        description: "An exascale many-physics flow solver from the MFlowCode team. MFC simulates compressible multi-phase flows with native support for
+            4-, 5-, and 6-equation models, phase change, surface tension, bubble dynamics, Euler-Lagrange particle tracking, magnetohydrodynamics (including
+            RMHD), immersed boundary methods, and portable GPU acceleration for NVIDIA (CUDA) and AMD (ROCm) hardware. Scaled to 200 trillion grid points
+            on El Capitan (2025 Gordon Bell finalist).\n"
+        version: 5.6.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: MFC_PRE_PROCESS
+                      description: Build pre-processor (grid generation, initial conditions)
+                      enabled: true
+                      enabled_value: ON
+                    - name: MFC_SIMULATION
+                      description: Build simulation (time-integration solver)
+                      enabled: true
+                      enabled_value: ON
+                    - name: MFC_POST_PROCESS
+                      description: Build post-processor (analysis, visualization I/O)
+                      enabled: true
+                      enabled_value: ON
+                    - name: MFC_SYSCHECK
+                      description: Build system-check tool (verification of GPU/CPU setup)
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_OpenACC
+                      description: Build with OpenACC GPU offloading (NVHPC or Cray compilers)
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_OpenMP
+                      description: Build with OpenMP GPU offloading (NVHPC or Cray compilers)
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_SINGLE_PRECISION
+                      description: Use single precision (32-bit floats)
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_MIXED_PRECISION
+                      description: Use mixed precision (64/32-bit hybrid)
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_Unified
+                      description: Use unified CPU & GPU memory (GH-200 Grace Hopper only)
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_Fastmath
+                      description: Use -gpu=fastmath on NVIDIA GPUs
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_GCov
+                      description: Build with GCov code-coverage instrumentation
+                      enabled: true
+                      enabled_value: OFF
+                    - name: MFC_DOCUMENTATION
+                      description: Build Doxygen documentation
+                      enabled: true
+                      enabled_value: OFF
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${mfc.prefix}
+                    - name: CMAKE_BUILD_TYPE
+                      enabled: true
+                      enabled_value: Release
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CMAKE_CXX_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} 
+                          ${blas.incflags} ${lapack.incflags} ${python.incflags}
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} 
+                          ${blas.incflags} ${lapack.incflags} ${python.incflags}
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} 
+                          ${blas.incflags} ${lapack.incflags} ${python.incflags}
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3 ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} ${blas.incflags} 
+                          ${lapack.incflags} ${python.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${hdf5.ldflags} ${silo.ldflags} ${blas.ldflags} 
+                          ${lapack.ldflags} ${python.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} ${lapack.libs} 
+                          ${python.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${hdf5.ldflags} ${silo.ldflags} ${blas.ldflags} 
+                          ${lapack.ldflags} ${python.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} ${lapack.libs} 
+                          ${python.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${hdf5.ldflags} ${silo.ldflags} ${blas.ldflags} 
+                          ${lapack.ldflags} ${python.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} ${lapack.libs} 
+                          ${python.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${fftw3.lib};${hdf5.lib};${silo.lib};${blas.lib};${lapack.lib};${python.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${fftw3.lib};${hdf5.lib};${silo.lib};${blas.lib};${lapack.lib};${python.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: 
+                          ${mpi.prefix};${fftw3.prefix};${hdf5.prefix};${silo.prefix};${blas.prefix};${lapack.prefix};${python.prefix};${cantera.prefix};${pyrometheus.prefix};${fypp.prefix}
+    pyrometheus:
+        description: Code generator for chemical kinetics in Fortran and other languages
+        version: 1.1.1
+    silo:
+        description: "Mesh and Field I/O Library and Scientific Database from LLNL. SILO provides a file-based, high-performance data exchange format for
+            scientific mesh and field data, supporting structured, unstructured, AMR, and CSG mesh types.\n"
+        version: 4.12.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-pythonmodule
+                      description: Build the Python module
+                      enabled: false
+                      enabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${silo.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags} ${hdf5.incflags} ${zlib.incflags} ${python.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${hdf5.incflags} ${zlib.incflags} ${python.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${hdf5.incflags} ${zlib.incflags} ${python.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${hdf5.incflags} ${zlib.incflags} ${python.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${zlib.ldflags} ${python.ldflags} ${silo.ldflags}
+    intel-oneapi-mkl:
+        description: Intel oneAPI Math Kernel Library for high-performance math routines
+        build:
+            configurations:
+                options:
+                    - name: fortran_format
+                      description: Fortran Format [ gf | intel ]
+                      enabled: true
+                      enabled_value: gf
+                    - name: integer_size
+                      description: Use ilp64 interface [ lp64 | ilp64 ]
+                      enabled: true
+                      enabled_value: lp64
+                    - name: multithreaded
+                      description: Use multithreading
+                      enabled: false
+                      enabled_value:
+                    - name: multithreading_library
+                      description: Multithreading library [ gnu | tbb ]
+                      enabled: true
+                      enabled_value: gnu
+                    - name: mpi-family
+                      description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
+                      enabled: true
+                      enabled_value: openmpi
+    intel-oneapi:
+        version: 2026.1.0.192
+    hdf5:
+        description: High-performance data management and storage suite
+        version: 2.1.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: BUILD_SHARED_LIBS
+                      description: Build shared libraries
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_BUILD_CPP_LIB
+                      description: Build C++ library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_FORTRAN_LIB
+                      description: Build Fortran library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_HL_LIB
+                      description: Build High Level library
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_BUILD_TOOLS
+                      description: Build tools
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_ENABLE_PARALLEL
+                      description: Enable parallel support
+                      enabled: true
+                      enabled_value: ON
+                      requires:
+                          - mpi
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${hdf5.prefix}
+                    - name: CMAKE_BUILD_TYPE
+                      enabled: true
+                      enabled_value: Release
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CMAKE_CXX_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3 ${mpi.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${mpi.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${mpi.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${hdf5.ldflags} ${mpi.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${hdf5.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${hdf5.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${mpi.prefix}
+    fypp:
+        description: Fortran preprocessor (Fypp) used by MFC for template-based code generation
+        version: 3.2
+    fftw3:
+        description: FFTW is a C library for computing the discrete Fourier transform in one or more dimensions, of arbitrary input size, and of both 
+            real and complex data.
+        version: 3.3.11
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-float
+                      description: Build single-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: enable-long-double
+                      description: Build long double-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: enable-quad-precision
+                      description: Build quad-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: enable-sse
+                      description: Build SSE-optimized version of the library [x86_64]
+                      enabled: false
+                      enabled_value:
+                    - name: enable-sse2
+                      description: Build SSE/SSE2-optimized version of the library [x86_64]
+                      enabled: true
+                      enabled_value:
+                    - name: enable-avx
+                      description: Build AVX-optimized version of the library [x86_64]
+                      enabled: false
+                      enabled_value:
+                    - name: enable-avx2
+                      description: Build AVX/AVX2-optimized version of the library [x86_64]
+                      enabled: true
+                      enabled_value:
+                    - name: enable-avx512
+                      description: Build AVX-512-optimized version of the library [x86_64]
+                      enabled: true
+                      enabled_value:
+                    - name: enable-avx-128-fma
+                      description: Build AVX-128-FMA-optimized version of the library [x86_64]
+                      enabled: true
+                      enabled_value:
+                    - name: enable-neon
+                      description: Build NEON-optimized version of the library [arm64]
+                      enabled: false
+                      enabled_value:
+                    - name: enable-sve
+                      description: Build SVE-optimized version of the library [arm64]
+                      enabled: false
+                      enabled_value:
+                    - name: enable-fma
+                      description: Enable FMA if the machine architecture "naturally" prefers it
+                      enabled: true
+                      enabled_value:
+                    - name: enable-mpi
+                      description: Enable MPI support
+                      enabled: false
+                      enabled_value:
+                      requires:
+                          - mpi
+                    - name: enable-openmp
+                      description: Enable OpenMP support
+                      enabled: true
+                      enabled_value:
+                    - name: CFLAGS
+                      description: C compiler flags
+                      enabled: true
+                      enabled_value: -O3 -fPIC
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${fftw3.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags}
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+    cantera:
+        description: Chemical kinetics library for thermodynamics, kinetics, and transport
+        version: 3.2.0
+    python:
+        description: Python Programming Language
+        version: 3.14.6
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${python.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${python.ldflags}
+recipe:
+    abstract_packages:
+        blas: intel-oneapi-mkl
+        lapack: intel-oneapi-mkl
+        mpi: openmpi
+    dependencies:
+        - mfc
+        - pyrometheus
+        - silo
+        - zlib
+        - intel-oneapi-mkl
+        - intel-oneapi
+        - hdf5
+        - fypp
+        - fftw3
+        - openmpi
+        - cantera
+        - python
+    targets:
+        - mfc
