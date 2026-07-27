@@ -36,60 +36,102 @@ recipe:
                   enabled:
                       default: false
 
-                - name: enable-sse
-                  description: Build SSE-optimized version of the library [x86_64]
+                # ========= Virtual Options for CPU Instruction Set Extensions =========
+                - name: x86-256bit
+                  description: Build x86 256-bit vectorized version
                   user_configurable: true
                   enabled:
                       default: false
+                  enabled_format: ''
+                  disabled_format: ''
+
+                - name: x86-512bit
+                  description: Build x86 512-bit vectorized version
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_format: ''
+                  disabled_format: ''
+
+                - name: arm
+                  description: Build arm vectorized version
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_format: ''
+                  disabled_format: ''
+
+                # ========= Actual Options for CPU Instruction Set Extensions =========
+                - name: enable-sse
+                  description: Build SSE-optimized version of the library [x86_64]
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${fftw3.config.enable-float} true && (${fftw3.config.x86-256bit} true || ${fftw3.config.x86-512bit} true)
+                            value: true
 
                 - name: enable-sse2
                   description: Build SSE/SSE2-optimized version of the library [x86_64]
-                  user_configurable: true
                   enabled:
-                      default: true
+                      default: false
+                      conditions:
+                          - condition: ${fftw3.config.x86-256bit} true || ${fftw3.config.x86-512bit} true
+                            value: true
 
                 - name: enable-avx
                   description: Build AVX-optimized version of the library [x86_64]
-                  user_configurable: true
                   enabled:
                       default: false
+                      conditions:
+                          - condition: ${fftw3.config.x86-256bit} true || ${fftw3.config.x86-512bit} true
+                            value: true
 
                 - name: enable-avx2
                   description: Build AVX/AVX2-optimized version of the library [x86_64]
-                  user_configurable: true
                   enabled:
-                      default: true
+                      default: false
+                      conditions:
+                          - condition: ${fftw3.config.x86-256bit} true || ${fftw3.config.x86-512bit} true
+                            value: true
 
                 - name: enable-avx512
                   description: Build AVX-512-optimized version of the library [x86_64]
-                  user_configurable: true
                   enabled:
-                      default: true
+                      default: false
+                      conditions:
+                          - condition: ${fftw3.config.x86-512bit} true
+                            value: true
 
                 - name: enable-avx-128-fma
                   description: Build AVX-128-FMA-optimized version of the library [x86_64]
-                  user_configurable: true
                   enabled:
-                      default: true
+                      default: false
+                      conditions:
+                          - condition: ${fftw3.config.x86-256bit} true || ${fftw3.config.x86-512bit} true
+                            value: true
 
                 - name: enable-neon
                   description: Build NEON-optimized version of the library [arm64]
-                  user_configurable: true
                   enabled:
-                      default: true
+                      default: false
+                      conditions:
+                          - condition: ${fftw3.config.arm} true
+                            value: true
 
                 - name: enable-sve
                   description: Build SVE-optimized version of the library [arm64]
-                  user_configurable: true
                   enabled:
-                      default: true
+                      default: false
+                      conditions:
+                          - condition: ${fftw3.config.arm} true
+                            value: true
 
                 - name: enable-fma
                   description: Enable FMA if the machine architecture "naturally" prefers it
-                  user_configurable: true
                   enabled:
                       default: true
 
+                # ========= Optional Features =========
                 - name: enable-mpi
                   description: Enable MPI support
                   user_configurable: true
@@ -105,18 +147,19 @@ recipe:
 
                 - name: MPICC
                   description: MPI C compiler wrapper
-                  enabled_value:
-                      default: ${compiler.c}
+                  enabled:
+                      default: false
                       conditions:
                           - condition: ${fftw3.config.enable-mpi} true
-                            action: set
-                            value: ${mpi.c}
+                            value: true
+                  enabled_value:
+                      default: ${mpi.c}
 
                 - name: CFLAGS
                   description: C compiler flags
                   user_configurable: true
                   enabled_value:
-                      default: -O3 -fPIC
+                      default: -O3 -march=native -mtune=native -fPIC
         stages:
             - target:
             - target: install
@@ -125,4 +168,8 @@ recipe:
         lib: ${fftw3.prefix}/lib
         libs:
             default: -lfftw3
+            conditions:
+                - condition: ${fftw3.config.enable-openmp} true
+                  action: prepend
+                  value: -lfftw3_omp
         include: ${fftw3.prefix}/include

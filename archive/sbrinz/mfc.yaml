@@ -1,10 +1,7 @@
 ---
 kez:
     mfc:
-        description: "An exascale many-physics flow solver from the MFlowCode team. MFC simulates compressible multi-phase flows with native support for
-            4-, 5-, and 6-equation models, phase change, surface tension, bubble dynamics, Euler-Lagrange particle tracking, magnetohydrodynamics (including
-            RMHD), immersed boundary methods, and portable GPU acceleration for NVIDIA (CUDA) and AMD (ROCm) hardware. Scaled to 200 trillion grid points
-            on El Capitan (2025 Gordon Bell finalist).\n"
+        description: An exascale many-physics flow solver
         version: 5.6.1
         compiler: system
         build:
@@ -284,42 +281,21 @@ kez:
                       description: Build quad-precision version of the library
                       enabled: false
                       enabled_value:
-                    - name: enable-sse
-                      description: Build SSE-optimized version of the library [x86_64]
+                    - name: x86-256bit
+                      description: Build x86 256-bit vectorized version
                       enabled: false
                       enabled_value:
-                    - name: enable-sse2
-                      description: Build SSE/SSE2-optimized version of the library [x86_64]
+                      disabled_value:
+                    - name: x86-512bit
+                      description: Build x86 512-bit vectorized version
                       enabled: true
                       enabled_value:
-                    - name: enable-avx
-                      description: Build AVX-optimized version of the library [x86_64]
+                      disabled_value:
+                    - name: arm
+                      description: Build arm vectorized version
                       enabled: false
                       enabled_value:
-                    - name: enable-avx2
-                      description: Build AVX/AVX2-optimized version of the library [x86_64]
-                      enabled: true
-                      enabled_value:
-                    - name: enable-avx512
-                      description: Build AVX-512-optimized version of the library [x86_64]
-                      enabled: true
-                      enabled_value:
-                    - name: enable-avx-128-fma
-                      description: Build AVX-128-FMA-optimized version of the library [x86_64]
-                      enabled: true
-                      enabled_value:
-                    - name: enable-neon
-                      description: Build NEON-optimized version of the library [arm64]
-                      enabled: false
-                      enabled_value:
-                    - name: enable-sve
-                      description: Build SVE-optimized version of the library [arm64]
-                      enabled: false
-                      enabled_value:
-                    - name: enable-fma
-                      description: Enable FMA if the machine architecture "naturally" prefers it
-                      enabled: true
-                      enabled_value:
+                      disabled_value:
                     - name: enable-mpi
                       description: Enable MPI support
                       enabled: false
@@ -333,7 +309,7 @@ kez:
                     - name: CFLAGS
                       description: C compiler flags
                       enabled: true
-                      enabled_value: -O3 -fPIC
+                      enabled_value: -O3 -march=native -mtune=native -fPIC
                     - name: prefix
                       enabled: true
                       enabled_value: ${fftw3.prefix}
