@@ -1,0 +1,95 @@
+---
+recipe:
+    name: netcdf-c
+    description: Unidata netCDF C library, a self-describing, portable, array-oriented set of software libraries and data formats for scientific data,
+        with the netCDF-4/HDF5 backend enabled
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 4.10.1
+              url: https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.10.1.tar.gz
+
+    dependencies:
+        - hdf5
+        - zlib
+        - zstd
+        - bzip2
+
+    build:
+        configurations:
+            options:
+                - name: enable-hdf5
+                  description: Enable the netCDF-4/HDF5 storage backend
+
+                - name: enable-shared
+                  description: Build shared libraries, required for --enable-plugins dynamic filter loading
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  disabled_format: disable-shared
+
+                - name: enable-plugins
+                  description: Enable dynamically loaded HDF5 compression filter plugins (zstd, bzip2, blosc, ...)
+
+                - name: disable-dap
+                  description: Disable DAP2/DAP4 remote data access, requires libcurl which is not available in this database
+
+                - name: disable-byterange
+                  description: Disable HTTP byte-range and S3 access, requires libcurl which is not available in this database
+
+                - name: enable-parallel4
+                  description: Enable parallel I/O for netCDF-4/HDF5 files, must be true if and only if the linked HDF5 was built with parallel (MPI) 
+                      support
+                  enabled:
+                      default: true
+                      conditions:
+                          - condition: ${hdf5.config.HDF5_ENABLE_PARALLEL} false
+                            action: set
+                            value: false
+                  requires:
+                      - mpi
+
+                - name: enable-pnetcdf
+                  description: Enable parallel netCDF (pnetCDF) support
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: with-default-chunk-size
+                  description: Default chunk size in bytes for netCDF-4 variables
+                  user_configurable: true
+                  enabled_value:
+                      default: 4194304
+
+                - name: with-default-chunk-cache-size
+                  description: Default per-variable chunk cache size in bytes, raised above the upstream default for large HPC datasets
+                  user_configurable: true
+                  enabled_value:
+                      default: 134217728
+
+        # --with-default-chunk-cache-preemption is intentionally omitted: netCDF-C
+        # 4.10.0's configure.ac reads the wrong shell variable for it (upstream bug),
+        # so the value is silently dropped and DEFAULT_CHUNK_CACHE_PREEMPTION compiles
+        # empty, breaking the build. Tune preemption at runtime via nc_set_chunk_cache() instead.
+
+                - name: CC
+                  description: C compiler
+                  enabled_value:
+                      default: ${compiler.c}
+                      conditions:
+                          - condition: ${netcdf-c.config.enable-parallel4} true || ${netcdf-c.config.enable-pnetcdf} true
+                            action: set
+                            value: ${mpi.c}
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${netcdf-c.prefix}/lib
+        libs:
+            default: -lnetcdf
+        include: ${netcdf-c.prefix}/include

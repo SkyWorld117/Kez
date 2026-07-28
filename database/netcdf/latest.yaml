@@ -1,0 +1,21 @@
+---
+recipe:
+    name: netcdf
+    description: An abstract package for merging netcdf-c and netcdf-fortran into a single package.
+    type: package
+
+    dependencies:
+        - netcdf-c
+        - netcdf-fortran
+
+    build:
+        postprocessing: |-
+            mkdir -p ${netcdf.prefix}
+            cp -rsf ${netcdf-c.prefix}/* ${netcdf.prefix}/
+            cp -rsf ${netcdf-fortran.prefix}/* ${netcdf.prefix}/
+
+    properties:
+        lib: ${netcdf.prefix}/lib
+        libs:
+            default: -lnetcdf -lnetcdff
+        include: ${netcdf.prefix}/include

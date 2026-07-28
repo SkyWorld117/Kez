@@ -1,0 +1,56 @@
+---
+recipe:
+    name: pnetcdf
+    description: Parallel netCDF is a parallel I/O library that provides a simple interface for writing and reading scientific data
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.15.0
+              url: https://parallel-netcdf.github.io/Release/pnetcdf-1.15.0.tar.gz
+
+    dependencies:
+        - mpi
+
+    build:
+        configurations:
+            options:
+                - name: enable-cxx
+                  description: Enable C++ interface
+                  user_configurable: true
+
+                - name: enable-fortran
+                  description: Enable Fortran interface
+                  user_configurable: true
+
+                - name: with-mpi
+                  description: Use MPI for parallel I/O
+                  enabled_value:
+                      default: ${mpi.prefix}
+
+                - name: MPICC
+                  description: MPI C compiler
+                  enabled_value:
+                      default: ${mpi.c}
+
+                - name: MPICXX
+                  description: MPI C++ compiler
+                  enabled_value:
+                      default: ${mpi.cxx}
+
+                - name: MPIFC
+                  description: MPI Fortran compiler
+                  enabled_value:
+                      default: ${mpi.fort}
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${pnetcdf.prefix}/lib
+        libs:
+            default: -lpnetcdf
+        include: ${pnetcdf.prefix}/include

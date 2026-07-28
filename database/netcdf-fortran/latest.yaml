@@ -1,0 +1,81 @@
+---
+recipe:
+    name: netcdf-fortran
+    description: Unidata netCDF Fortran library, providing the Fortran 77/90 APIs on top of the netCDF-C library
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 4.6.3
+              url: https://github.com/Unidata/netcdf-fortran/archive/refs/tags/v4.6.3.tar.gz
+
+    dependencies:
+        - netcdf-c
+
+    build:
+        configurations:
+            options:
+                - name: enable-shared
+                  description: Build shared libraries
+                  user_configurable: true
+                  disabled_format: disable-shared
+
+                - name: CC
+                  description: C compiler, must match the compiler used to build netcdf-c
+                  enabled_value:
+                      default: ${compiler.c}
+                      conditions:
+                          - condition: ${netcdf-c.config.enable-parallel4} true
+                            value: ${mpi.c}
+
+                - name: FC
+                  description: Fortran 90 compiler, must match the compiler used to build netcdf-c/hdf5
+                  enabled_value:
+                      default: ${mpi.fort}
+                      conditions:
+                          - condition: ${netcdf-c.config.enable-parallel4} true
+                            value: ${mpi.fort}
+
+        # - name: F77
+        #   description: Fortran 77 compiler
+        #   enabled_value:
+        #     default: ${mpi.fort}
+
+        # - name: CFLAGS
+        #   description: C compiler flags
+        #   user_configurable: true
+        #   enabled_value:
+        #     default: -O3
+
+        # - name: FCFLAGS
+        #   description: Fortran 90 compiler flags
+        #   user_configurable: true
+        #   enabled_value:
+        #     default: -O3
+
+        # - name: FFLAGS
+        #   description: Fortran 77 compiler flags
+        #   user_configurable: true
+        #   enabled_value:
+        #     default: -O3
+
+        # - name: CPPFLAGS
+        #   description: (Objective) C/C++ preprocessor flags, used to locate netCDF-C headers
+        #   enabled_value:
+        #     default: ${netcdf-c.includes}
+
+        # - name: LDFLAGS
+        #   description: Linker flags, used to locate the netCDF-C library and the compiler's own runtime libraries (e.g. libifcoremt/libifport for Intel, needed at link time since libnetcdff.so pulls them in transitively)
+        #   enabled_value:
+        #     default: ${compiler.ldflags} ${netcdf-c.ldflags}
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${netcdf-fortran.prefix}/lib
+        libs:
+            default: -lnetcdff
+        include: ${netcdf-fortran.prefix}/include
