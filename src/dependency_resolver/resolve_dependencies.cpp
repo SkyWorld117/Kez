@@ -18,6 +18,10 @@
 #include <utils/terminal_ui.hpp>
 
 namespace {
+    using DependencyConstraintMap =
+        std::unordered_map<std::string, std::vector<DependencyConstraint>>;
+    using PackageVersionMap = std::unordered_map<std::string, std::string>;
+
     struct OptionReference {
         std::string package;
         std::string option;
@@ -38,10 +42,8 @@ namespace {
         std::vector<std::string> optional_package_order;
         std::unordered_map<std::string, std::vector<OptionReference>> option_references;
         InteractiveOptionSelections option_selections;
-        /** @brief Maps package name → resolved version string, populated during
-         *         graph construction.  Contains only packages that had explicit
-         *         version constraints in their parent's dependency list. */
-        std::unordered_map<std::string, std::string> package_versions;
+        /** @brief Maps constrained or overridden packages to their globally resolved version. */
+        PackageVersionMap package_versions;
     };
 
     std::string resolve_abstract(const ResolutionState& state, const std::string& package_name) {
@@ -143,7 +145,8 @@ namespace {
     }
 
     std::vector<std::string> select_dependencies(ResolutionState& state,
-                                                 const PackageConfig& config) {
+                                                 const PackageConfig& config,
+                                                 bool record_selection) {
         std::vector<std::string> dependencies;
         dependencies.reserve(config.dependencies.size());
         for (const Dependency& dep : config.dependencies) {
@@ -165,20 +168,25 @@ namespace {
                 continue;
             }
             if (!optional_dependency_available(state, dependency)) {
-                print_heading();
-                INFO("- Skip unavailable optional dependency: " + dependency);
+                if (record_selection) {
+                    print_heading();
+                    INFO("- Skip unavailable optional dependency: " + dependency);
+                }
                 continue;
             }
             available_dependencies.push_back(dependency);
         }
 
-        if (state.interactive) {
+        if (state.interactive && record_selection) {
             register_optional_requirements(state, config, available_dependencies);
         }
         for (const std::string& dependency : available_dependencies) {
-            const bool include =
-                state.interactive ? state.optional_package_choices.at(dependency) : true;
-            if (!state.interactive) {
+            bool include = true;
+            if (state.interactive) {
+                const auto choice = state.optional_package_choices.find(dependency);
+                include = choice != state.optional_package_choices.end() && choice->second;
+            }
+            if (!state.interactive && record_selection) {
                 print_heading();
                 INFO("- Include optional dependency: " + dependency);
             }
@@ -187,39 +195,164 @@ namespace {
         return dependencies;
     }
 
-    std::string resolve_version_for_dependency(const PackageConfig& config,
-                                               const std::string& dep_name) {
-        for (const Dependency& dep : config.dependencies) {
-            if (dep.name == dep_name && !dep.constraints.empty()) {
-                return resolve_dependency_version(dep_name, dep.constraints);
-            }
-        }
-        return "latest";
+    std::string selected_version(const PackageVersionMap& package_versions,
+                                 const std::string& package_name) {
+        const auto version = package_versions.find(package_name);
+        return version == package_versions.end() ? "latest" : version->second;
     }
 
-    void build_adjacency_list(ResolutionState& state, const std::string& package_name,
-                              const std::string& version = "latest") {
-        if (state.adjacency_list.find(package_name) != state.adjacency_list.end()) {
-            // If we already visited under "latest" but now need a specific version,
-            // still skip — the first visit handles all transitive deps correctly
-            // since version constraints only affect the immediate parent's view.
+    void collect_constraints(const PackageConfig& config,
+                             DependencyConstraintMap& dependency_constraints) {
+        for (const Dependency& dep : config.dependencies) {
+            if (dep.constraints.empty()) {
+                continue;
+            }
+            std::vector<DependencyConstraint>& constraints = dependency_constraints[dep.name];
+            for (const DependencyConstraint& constraint : dep.constraints) {
+                if (std::find(constraints.begin(), constraints.end(), constraint) ==
+                    constraints.end()) {
+                    constraints.push_back(constraint);
+                }
+            }
+        }
+    }
+
+    bool version_satisfies_constraints(const std::string& version,
+                                       const std::vector<DependencyConstraint>& constraints) {
+        for (const DependencyConstraint& constraint : constraints) {
+            const int comparison = compare_versions(version, constraint.version);
+            if ((constraint.op == ">=" && comparison < 0) ||
+                (constraint.op == ">" && comparison <= 0) ||
+                (constraint.op == "<=" && comparison > 0) ||
+                (constraint.op == "<" && comparison >= 0) ||
+                (constraint.op == "==" && comparison != 0)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    PackageVersionMap root_version_overrides(
+        const std::vector<std::string>& package_names,
+        const std::unordered_map<std::string, std::string>& version_overrides) {
+        PackageVersionMap result;
+        for (const std::string& package_name : package_names) {
+            const auto version = version_overrides.find(package_name);
+            if (version != version_overrides.end()) {
+                result.emplace(package_name, version->second);
+            }
+        }
+        return result;
+    }
+
+    std::string version_map_signature(const PackageVersionMap& package_versions) {
+        std::vector<std::pair<std::string, std::string>> entries(package_versions.begin(),
+                                                                 package_versions.end());
+        std::sort(entries.begin(), entries.end());
+
+        std::string signature;
+        for (const auto& [package, version] : entries) {
+            signature += package + "@" + version + "\n";
+        }
+        return signature;
+    }
+
+    void discover_constraints(ResolutionState& state, const std::string& package_name,
+                              const PackageVersionMap& package_versions,
+                              DependencyConstraintMap& dependency_constraints,
+                              std::unordered_set<std::string>& visited) {
+        const std::string version    = selected_version(package_versions, package_name);
+        PackageConfigPtr config      = get_db_config(package_name, version);
+        std::string concrete_package = package_name;
+        if (config->type == PackageType::Abstract) {
+            concrete_package = select_implementation(state, package_name, *config);
+            config           = get_db_config(concrete_package,
+                                             selected_version(package_versions, concrete_package));
+        }
+
+        if (!visited.emplace(concrete_package).second) {
             return;
         }
 
-        PackageConfigPtr config      = get_db_config(package_name, version);
+        if (config->type == PackageType::System) {
+            return;
+        }
+        if ((config->type == PackageType::Compiler || config->type == PackageType::MPI) &&
+            state.target_packages.find(concrete_package) == state.target_packages.end()) {
+            return;
+        }
+
+        collect_constraints(*config, dependency_constraints);
+        const std::vector<std::string> dependencies = select_dependencies(state, *config, false);
+        for (const std::string& dependency : dependencies) {
+            discover_constraints(state, dependency, package_versions, dependency_constraints,
+                                 visited);
+        }
+    }
+
+    PackageVersionMap resolve_package_versions(
+        ResolutionState& state, const std::vector<std::string>& package_names,
+        const std::unordered_map<std::string, std::string>& version_overrides) {
+        const PackageVersionMap overrides =
+            root_version_overrides(package_names, version_overrides);
+        PackageVersionMap package_versions            = overrides;
+        std::unordered_set<std::string> seen_versions = {version_map_signature(package_versions)};
+
+        while (true) {
+            DependencyConstraintMap dependency_constraints;
+            std::unordered_set<std::string> visited;
+            for (const std::string& package_name : package_names) {
+                discover_constraints(state, package_name, package_versions, dependency_constraints,
+                                     visited);
+            }
+
+            PackageVersionMap resolved_versions = overrides;
+            for (const auto& [package, constraints] : dependency_constraints) {
+                if (constraints.empty()) {
+                    continue;
+                }
+                const auto overridden = overrides.find(package);
+                if (overridden != overrides.end()) {
+                    if (!version_satisfies_constraints(overridden->second, constraints)) {
+                        ERROR("Version override '" + overridden->second + "' for '" + package +
+                              "' does not satisfy its dependency constraints");
+                        exit(EXIT_FAILURE);
+                    }
+                    continue;
+                }
+                resolved_versions.emplace(package,
+                                          resolve_dependency_version(package, constraints));
+            }
+
+            if (resolved_versions == package_versions) {
+                return resolved_versions;
+            }
+
+            const std::string signature = version_map_signature(resolved_versions);
+            if (!seen_versions.emplace(signature).second) {
+                ERROR("Dependency version resolution did not converge");
+                exit(EXIT_FAILURE);
+            }
+            package_versions = std::move(resolved_versions);
+        }
+    }
+
+    void build_adjacency_list(ResolutionState& state, const std::string& package_name) {
+        if (state.adjacency_list.find(package_name) != state.adjacency_list.end()) {
+            return;
+        }
+
+        PackageConfigPtr config =
+            get_db_config(package_name, selected_version(state.package_versions, package_name));
         std::string concrete_package = package_name;
         if (config->type == PackageType::Abstract) {
             concrete_package = select_implementation(state, package_name, *config);
             if (state.adjacency_list.find(concrete_package) != state.adjacency_list.end()) {
                 return;
             }
-            config = get_db_config(concrete_package);
+            config = get_db_config(concrete_package,
+                                   selected_version(state.package_versions, concrete_package));
         }
-
-        // Record the version used for this package so callers (e.g.
-        // gen_user_config) can generate config entries pointing at the
-        // correct version instead of always using "latest".
-        state.package_versions[concrete_package] = version;
 
         if (config->type == PackageType::System) {
             state.adjacency_list[concrete_package] = {};
@@ -232,11 +365,10 @@ namespace {
             return;
         }
 
-        std::vector<std::string> dependencies  = select_dependencies(state, *config);
+        std::vector<std::string> dependencies  = select_dependencies(state, *config, true);
         state.adjacency_list[concrete_package] = dependencies;
         for (const std::string& dependency : dependencies) {
-            const std::string dep_version = resolve_version_for_dependency(*config, dependency);
-            build_adjacency_list(state, dependency, dep_version);
+            build_adjacency_list(state, dependency);
         }
     }
 
@@ -245,13 +377,10 @@ namespace {
         state.adjacency_list.clear();
         state.system_packages.clear();
         state.encountered_abstract_packages.clear();
+        state.package_versions = resolve_package_versions(state, package_names, version_overrides);
+        state.encountered_abstract_packages.clear();
         for (const std::string& package_name : package_names) {
-            const auto override = version_overrides.find(package_name);
-            if (override != version_overrides.end()) {
-                build_adjacency_list(state, package_name, override->second);
-            } else {
-                build_adjacency_list(state, package_name);
-            }
+            build_adjacency_list(state, package_name);
         }
     }
 

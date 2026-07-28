@@ -105,9 +105,14 @@ system-stack:
         }
 
         void write_package(const std::string& package, const std::string& contents) const {
+            write_package_config(package, "latest.yaml", contents);
+        }
+
+        void write_package_config(const std::string& package, const std::string& filename,
+                                  const std::string& contents) const {
             const std::filesystem::path directory = path_ / "database" / package;
             std::filesystem::create_directories(directory);
-            std::ofstream output(directory / "latest.yaml");
+            std::ofstream output(directory / filename);
             ASSERT_TRUE(output.good());
             output << contents;
         }
@@ -340,6 +345,62 @@ recipe:
         EXPECT_EQ(result["kez"]["library"]["version"].as<std::string>(), "main");
         EXPECT_EQ(result["kez"]["library"]["compiler"].as<std::string>(), "gcc@13.4.0");
         EXPECT_FALSE(result["kez"]["external-tool"]["compiler"].IsDefined());
+    }
+
+    TEST_F(TemporaryGeneratorDatabase, GeneratesSharedDependencyFromGloballyConstrainedRecipe) {
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [facade, library@<2.0.0]
+)");
+        write_package("facade", R"(
+recipe:
+  name: facade
+  type: package
+  dependencies: [library]
+)");
+        write_package("library", R"(
+recipe:
+  name: library
+  description: Modern library recipe
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 2.1.0
+        url: https://example.invalid/library-2.1.0.tar.gz
+  build:
+    configurations:
+      options:
+        - name: modern-only
+          user_configurable: true
+)");
+        write_package_config("library", "1.5.0-1.5.0.yaml", R"(
+recipe:
+  name: library
+  description: Legacy library recipe
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 1.5.0
+        url: https://example.invalid/library-1.5.0.tar.gz
+  build:
+    configurations:
+      options:
+        - name: legacy-only
+          user_configurable: true
+)");
+
+        const YAML::Node result  = gen_user_config({"application"}, false, "system");
+        const YAML::Node library = result["kez"]["library"];
+        const YAML::Node options = library["build"]["configurations"]["options"];
+
+        EXPECT_EQ(library["version"].as<std::string>(), "1.5.0");
+        EXPECT_EQ(library["description"].as<std::string>(), "Legacy library recipe");
+        EXPECT_TRUE(has_option(options, "legacy-only"));
+        EXPECT_FALSE(has_option(options, "modern-only"));
     }
 
     TEST_F(TemporaryGeneratorDatabase, ExposesToolchainGeneratedOptionsAsEditableTemplates) {

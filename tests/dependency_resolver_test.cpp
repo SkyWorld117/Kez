@@ -115,9 +115,14 @@ namespace {
         }
 
         void write_package(const std::string& package, const std::string& contents) const {
+            write_package_config(package, "latest.yaml", contents);
+        }
+
+        void write_package_config(const std::string& package, const std::string& filename,
+                                  const std::string& contents) const {
             const std::filesystem::path directory = path_ / "database" / package;
             std::filesystem::create_directories(directory);
-            std::ofstream output(directory / "latest.yaml");
+            std::ofstream output(directory / filename);
             ASSERT_TRUE(output.good());
             output << contents;
         }
@@ -339,6 +344,99 @@ recipe:
 
         const DependencyResolution compiler = resolve_dependencies({"compiler"}, false);
         EXPECT_EQ(compiler.all_packages, std::vector<std::string>({"compiler", "compiler-core"}));
+    }
+
+    TEST_F(TemporaryResolverDatabase, CombinesConstraintsBeforeBuildingSharedDependencyGraph) {
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [facade, library@<2.0.0]
+)");
+        write_package("facade", R"(
+recipe:
+  name: facade
+  type: package
+  dependencies: [library]
+)");
+        write_package("library", R"(
+recipe:
+  name: library
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 2.1.0
+        url: https://example.invalid/library-2.1.0.tar.gz
+  dependencies: [latest-child]
+)");
+        write_package_config("library", "1.5.0-1.5.0.yaml", R"(
+recipe:
+  name: library
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 1.5.0
+        url: https://example.invalid/library-1.5.0.tar.gz
+  dependencies: [legacy-child]
+)");
+        write_package("latest-child", "recipe: {name: latest-child, type: package}\n");
+        write_package("legacy-child", "recipe: {name: legacy-child, type: package}\n");
+
+        const DependencyResolution result = resolve_dependencies({"application"}, false);
+
+        EXPECT_EQ(result.package_versions.at("library"), "1.5.0");
+        EXPECT_EQ(
+            as_set(result.all_packages),
+            std::unordered_set<std::string>({"application", "facade", "library", "legacy-child"}));
+        EXPECT_EQ(result.all_packages.end(), std::find(result.all_packages.begin(),
+                                                       result.all_packages.end(), "latest-child"));
+    }
+
+    TEST_F(TemporaryResolverDatabase, RejectsConflictingConstraintsFromDifferentParents) {
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  dependencies: [left, right]
+)");
+        write_package("left", R"(
+recipe:
+  name: left
+  type: package
+  dependencies: [library@<2.0.0]
+)");
+        write_package("right", R"(
+recipe:
+  name: right
+  type: package
+  dependencies: [library@>=2.0.0]
+)");
+        write_package("library", R"(
+recipe:
+  name: library
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 2.1.0
+        url: https://example.invalid/library-2.1.0.tar.gz
+)");
+        write_package_config("library", "1.5.0-1.5.0.yaml", R"(
+recipe:
+  name: library
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 1.5.0
+        url: https://example.invalid/library-1.5.0.tar.gz
+)");
+
+        EXPECT_EXIT(static_cast<void>(resolve_dependencies({"application"}, false)),
+                    ::testing::ExitedWithCode(EXIT_FAILURE),
+                    "No available version of 'library' satisfies");
     }
 
     TEST_F(TemporaryResolverDatabase, InteractiveModeDerivesOptionalAndSelectsAbstractPackages) {

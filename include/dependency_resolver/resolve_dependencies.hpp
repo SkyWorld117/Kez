@@ -69,11 +69,12 @@ struct DependencyResolution {
     AbstractPackageSelections abstract_packages;
 
     /**
-     * @brief Maps package name to the version that was resolved, for any
-     *        package whose parent recipe specified version constraints.
+     * @brief Maps package name to the globally resolved version for packages
+     *        with dependency constraints or explicit root-version overrides.
      *
-     * Packages without constraints are not present in this map; callers
-     * should fall back to "latest" for those.
+     * Constraints from every incoming dependency edge are combined before the
+     * final graph is built. Packages without constraints or overrides are not
+     * present in this map; callers should fall back to "latest" for those.
      */
     std::unordered_map<std::string, std::string> package_versions;
 };
@@ -84,15 +85,18 @@ struct DependencyResolution {
  * Starting from the given target packages, this function drives the core
  * resolution pipeline:
  *
- *   1. **Adjacency-list construction** -- For each target and every package
- *      reachable from it, the function retrieves the package's database
- *      configuration and collects its essential (hard) dependencies from
- *      its database config.  Optional (conditional) dependencies are
- *      handled according to the @p interactive flag (see below). Interactive
- *      discovery groups configurable options by the optional package they
- *      require before asking for option states.
+ *   1. **Version resolution** -- Dependency discovery aggregates constraints
+ *      from every incoming edge. Discovery repeats when a selected version
+ *      changes so version-specific recipes and their transitive constraints
+ *      reach a stable result.
  *
- *   2. **Abstract-package resolution** -- If a package's type is
+ *   2. **Adjacency-list construction** -- The graph is rebuilt using the
+ *      globally resolved package versions. Optional (conditional) dependencies
+ *      are handled according to the @p interactive flag (see below).
+ *      Interactive discovery groups configurable options by the optional
+ *      package they require before asking for option states.
+ *
+ *   3. **Abstract-package resolution** -- If a package's type is
  *      PackageType::Abstract, a concrete implementation must be selected.
  *      In interactive mode the implementation selector is shown after optional
  *      packages and their build options have been processed. In
@@ -103,12 +107,12 @@ struct DependencyResolution {
  *      PackageType::Compiler, or PackageType::MPI are treated as leaf nodes
  *      (their transitive dependencies are **not** traversed).
  *
- *   3. **Topological sort** -- The resulting concrete adjacency list is
+ *   4. **Topological sort** -- The resulting concrete adjacency list is
  *      topologically sorted via topological_sort() and then **reversed** so
  *      that dependents appear before their dependencies (a "dependent-before-
  *      dependency" order).
  *
- *   4. **System-package filtering** -- Packages whose type is
+ *   5. **System-package filtering** -- Packages whose type is
  *      PackageType::System are identified and a second list containing only
  *      non-system packages is produced, preserving the original order.
  *
