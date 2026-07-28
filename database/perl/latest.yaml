@@ -1,0 +1,7 @@
+---
+recipe:
+    name: perl
+    description: Perl programming language interpreter
+    type: system
+    properties:
+        prefix: ${perl.prefix}
