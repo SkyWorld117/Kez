@@ -30,12 +30,27 @@ recipe:
                   enabled:
                       default: false
 
-                - name: enable-parallel
+                - name: HDF5_ENABLE_PARALLEL
                   description: Search for MPI-IO and MPI support
                   user_configurable: true
                   enabled:
                       default: true
+                  enabled_format: --enable-parallel
+                  disabled_format: --disable-parallel
                   requires: [mpi]
+
+                - name: enable-hl
+                  description: Compile the high-level library
+                  user_configurable: true
+                  enabled:
+                      default: true
+
+                - name: with-zlib
+                  description: Search for zlib support
+                  user_configurable: true
+                  enabled_value:
+                      default: ${zlib.prefix}
+                  requires: [zlib]
 
         stages:
             - target:

@@ -13,19 +13,6 @@ recipe:
 
     build:
         configurations:
-        # self.define_from_variant("HDF5_ENABLE_SUBFILING_VFD", "subfiling"),
-        # self.define_from_variant("HDF5_ENABLE_MAP_API", "map"),
-        # self.define_from_variant("HDF5_ENABLE_SZIP_SUPPORT", "szip"),
-        # self.define_from_variant("HDF5_ENABLE_SZIP_ENCODING", "szip"),
-        # self.define_from_variant("BUILD_SHARED_LIBS", "shared"),
-        # self.define("ONLY_SHARED_LIBS", False),
-        # self.define_from_variant("HDF5_ENABLE_PARALLEL", "mpi"),
-        # self.define_from_variant("HDF5_ENABLE_THREADSAFE", "threadsafe"),
-        # self.define_from_variant("HDF5_BUILD_HL_LIB", "hl"),
-        # self.define_from_variant("HDF5_BUILD_CPP_LIB", "cxx"),
-        # self.define_from_variant("HDF5_BUILD_FORTRAN", "fortran"),
-        # self.define_from_variant("HDF5_BUILD_JAVA", "java"),
-        # self.define_from_variant("HDF5_BUILD_TOOLS", "tools"),
             options:
                 - name: BUILD_SHARED_LIBS
                   description: Build shared libraries
@@ -50,7 +37,7 @@ recipe:
                   enabled_value:
                       default: ON
 
-                - name: HDF5_BUILD_FORTRAN_LIB
+                - name: HDF5_BUILD_FORTRAN
                   description: Build Fortran library
                   user_configurable: true
                   enabled:
@@ -110,6 +97,26 @@ recipe:
                             value: true
                   enabled_value:
                       default: ${mpi.fort}
+
+                # ============ Compression filters ============
+                - name: HDF5_ENABLE_ZLIB_SUPPORT
+                  description: Enable Zlib (deflate) compression filters
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+                  requires:
+                      - zlib
+
+                - name: ZLIB_ROOT
+                  description: Path to zlib installation
+                  enabled:
+                      conditions:
+                          - condition: ${hdf5.config.HDF5_ENABLE_ZLIB_SUPPORT} true
+                            value: true
+                  enabled_value:
+                      default: ${zlib.prefix}
         stages:
             - target:
             - target: install
