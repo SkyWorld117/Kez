@@ -409,21 +409,7 @@ build_make() {
         LDFLAGS="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
-    record_package_version "${version}"
-}
-
-build_gmake() {
-    local version
-
-    if is_installed "gmake"; then
-        warning "gmake is already installed, skipping..."
-        return 0
-    fi
-
-    info "Installing gmake..."
     ln -s ${KEZ_SYSTEM}/bin/make ${KEZ_SYSTEM}/bin/gmake
-
-    version=$(yq -e '.state.make' "${KEZ_SYSTEM}/state.yaml")
     record_package_version "${version}"
 }
 
@@ -737,7 +723,6 @@ write_init_plan() {
     init_plan_package "${plan_file}" automake "${use_distro_compiler}" gcc autoconf
     init_plan_package "${plan_file}" libtool "${use_distro_compiler}" gcc m4
     init_plan_package "${plan_file}" make "${use_distro_compiler}" gcc
-    init_plan_package "${plan_file}" gmake "${use_distro_compiler}" make
     init_plan_package "${plan_file}" perl "${use_distro_compiler}" gcc
     init_plan_package "${plan_file}" git "${use_distro_compiler}" gcc
     init_plan_package "${plan_file}" python "${use_distro_compiler}" gcc
@@ -794,7 +779,6 @@ build_package() {
         automake) build_automake ;;
         libtool) build_libtool ;;
         make) build_make ;;
-        gmake) build_gmake ;;
         cmake) build_cmake ;;
         rust) build_rust ;;
         perl) build_perl ;;
