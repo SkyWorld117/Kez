@@ -22,7 +22,14 @@ recipe:
                 - name: LIB_METIS
                   description: Path to METIS library
                   enabled_value:
-                      default: ${metis.prefix}/lib/libmetis.a
+                      # METIS builds a shared library by default. If it is
+                      # configured without shared support, fall back to the
+                      # static archive.
+                      default: ${metis.prefix}/lib/libmetis.so
+                      conditions:
+                          - condition: ${metis.config.SHARED} false
+                            action: set
+                            value: ${metis.prefix}/lib/libmetis.a
 
                 - name: MPI_C_COMPILER
                   description: MPI C compiler

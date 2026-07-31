@@ -7,28 +7,15 @@ recipe:
     toolchain: cmake
 
     source:
-        type: git
-        url: https://github.com/KarypisLab/METIS
+        type: tarball
         releases:
-            # v5.2.1 is the only release tag on GitHub. Starting from version
-            # 5.2.1 GKlib is an external dependency of METIS and must be
-            # installed separately.
-            - version: 5.2.1
-              tag: v5.2.1
-
-    dependencies:
-        - gklib
+            # Before version 5.2.1 GKlib is bundled with METIS and compiled into
+            # libmetis, so this recipe needs no external GKlib. It covers METIS
+            # 5.1.0, the last release of that line.
+            - version: 5.1.0
+              url: http://papers.karypis.org/glaros/files/sw/metis/metis-5.1.0.tar.gz
 
     build:
-        # The CMake files of METIS 5.2.1 expect a build/xinclude directory (the
-        # shipped Makefile wrapper normally creates it) and use an old CMake
-        # minimum version, so the same build directory and policy flag as the
-        # wrapper are reproduced here.
-        preprocessing: |-
-            mkdir -p build/xinclude
-            printf '#define IDXTYPEWIDTH 32\n#define REALTYPEWIDTH 32\n' > build/xinclude/metis.h
-            cat include/metis.h >> build/xinclude/metis.h
-            cp include/CMakeLists.txt build/xinclude/
         configurations:
             options:
                 - name: OPENMP
@@ -46,7 +33,7 @@ recipe:
                 - name: GKLIB_PATH
                   description: Path to GKlib
                   enabled_value:
-                      default: ${gklib.prefix}
+                      default: ${source}/GKlib
 
                 - name: CMAKE_POLICY_VERSION_MINIMUM
                   description: Minimum CMake policy version
@@ -58,8 +45,7 @@ recipe:
 
     properties:
         lib: ${metis.prefix}/lib
-        # The installed programs link against GKlib, but libmetis itself is
-        # self-contained (it includes its own amalgamated GKlib implementation).
+        # GKlib is compiled into libmetis for 5.1.0, so -lGKlib is not needed.
         libs:
             default: -lmetis
         include: ${metis.prefix}/include

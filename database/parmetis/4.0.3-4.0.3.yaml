@@ -7,20 +7,21 @@ recipe:
     toolchain: make
 
     source:
-        type: git
-        url: https://github.com/KarypisLab/ParMETIS
+        type: tarball
         releases:
-            # The ParMETIS repository has no release tags. The main branch tracks
-            # the current development version and links against an installed
-            # METIS that consumes GKlib as an external dependency.
-            - version: main
-              tag: main
+            # ParMETIS 4.0.3 is the original release that pairs with METIS 5.1.0.
+            # It bundles a byte-identical copy of the METIS 5.1.0 sources, which
+            # are compiled into libparmetis, so an external METIS/GKlib are not
+            # needed to build it; the metis dependency below only provides the
+            # library for consumers to link against.
+            - version: 4.0.3
+              url: http://papers.karypis.org/glaros/files/sw/parmetis/parmetis-4.0.3.tar.gz
 
     dependencies:
         - mpi
-        - gklib
-        # Requires the newer METIS (5.2.1+) that builds against an external GKlib.
-        - metis@>=5.2.0
+        # Keep the pairing with the bundled METIS 5.1.0 line (before GKlib
+        # became an external dependency of METIS).
+        - metis@<5.2.0
 
     build:
         preprocessing: |-
@@ -34,20 +35,18 @@ recipe:
                         enabled_value:
                             default: ${parmetis.prefix}
 
-                      - name: gklib_path
-                        description: GKlib installation path
-                        enabled_value:
-                            default: ${gklib.prefix}
-
-                      - name: metis_path
-                        description: Metis installation path
-                        enabled_value:
-                            default: ${metis.prefix}
-
                       - name: cc
                         description: C compiler
                         enabled_value:
                             default: ${mpi.c}
+
+                      # parmetis-4.0.3 defaults cxx to the bare 'mpicxx' command,
+                      # which is only valid with the MPI bin directory on PATH,
+                      # so the full path is passed explicitly.
+                      - name: cxx
+                        description: C++ compiler
+                        enabled_value:
+                            default: ${mpi.cxx}
 
                       - name: shared
                         description: Build shared library
@@ -59,6 +58,7 @@ recipe:
 
     properties:
         lib: ${parmetis.prefix}/lib
+        # The bundled METIS 5.1.0 sources are compiled into libparmetis.
         libs:
-            default: -lparmetis -lmetis -lGKlib
+            default: -lparmetis -lmetis
         include: ${parmetis.prefix}/include

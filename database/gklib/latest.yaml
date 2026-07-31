@@ -13,6 +13,9 @@ recipe:
               tag: master
 
     build:
+        # Both the static and shared libraries are built and installed. METIS
+        # 5.2.1 only looks for GKlib under the gklib prefix's lib/ directory, so
+        # both are mirrored there from lib64/.
         stages:
             - target: config
               configurations:
@@ -21,9 +24,31 @@ recipe:
                         description: Installation prefix
                         enabled_value:
                             default: ${gklib.prefix}
-            - target:
+
             - target: install
+
+            - target: config
+              configurations:
+                  options:
+                      - name: prefix
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${gklib.prefix}
+
+                      - name: shared
+                        description: Build shared library
+                        enabled_value:
+                            default: '1'
+
+            - target: install
+
         postprocessing: |-
             mkdir -p ${gklib.prefix}/lib
             cp ${gklib.prefix}/lib64/libGKlib.a ${gklib.prefix}/lib/
+            cp ${gklib.prefix}/lib64/libGKlib.so* ${gklib.prefix}/lib/
 
+    properties:
+        lib: ${gklib.prefix}/lib
+        libs:
+            default: -lGKlib
+        include: ${gklib.prefix}/include
