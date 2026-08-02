@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 4.6.3
-              url: https://github.com/Unidata/netcdf-fortran/archive/refs/tags/v4.6.3.tar.gz
+            - version: 4.6.4
+              url: https://github.com/Unidata/netcdf-fortran/archive/refs/tags/v4.6.4.tar.gz
 
     dependencies:
         - netcdf-c
@@ -38,38 +38,6 @@ recipe:
                           - condition: ${netcdf-c.config.enable-parallel4} true
                             value: ${mpi.fort}
 
-        # - name: F77
-        #   description: Fortran 77 compiler
-        #   enabled_value:
-        #     default: ${mpi.fort}
-
-        # - name: CFLAGS
-        #   description: C compiler flags
-        #   user_configurable: true
-        #   enabled_value:
-        #     default: -O3
-
-        # - name: FCFLAGS
-        #   description: Fortran 90 compiler flags
-        #   user_configurable: true
-        #   enabled_value:
-        #     default: -O3
-
-        # - name: FFLAGS
-        #   description: Fortran 77 compiler flags
-        #   user_configurable: true
-        #   enabled_value:
-        #     default: -O3
-
-        # - name: CPPFLAGS
-        #   description: (Objective) C/C++ preprocessor flags, used to locate netCDF-C headers
-        #   enabled_value:
-        #     default: ${netcdf-c.includes}
-
-        # - name: LDFLAGS
-        #   description: Linker flags, used to locate the netCDF-C library and the compiler's own runtime libraries (e.g. libifcoremt/libifport for Intel, needed at link time since libnetcdff.so pulls them in transitively)
-        #   enabled_value:
-        #     default: ${compiler.ldflags} ${netcdf-c.ldflags}
         stages:
             - target:
             - target: install
