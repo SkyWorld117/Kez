@@ -1,0 +1,138 @@
+---
+recipe:
+    name: namd
+    description: >
+        NAMD - Nanoscale Molecular Dynamics. A parallel molecular dynamics code
+        (UIUC Theoretical and Computational Biophysics Group) designed for
+        high-performance simulation of large biomolecular systems with the
+        CHARMM/VMD tool chain.
+        NOTE: the NAMD source tarball is distributed under the UIUC NAMD
+        license and its download is gated behind free registration at
+        https://www.ks.uiuc.edu/Research/namd/ ; the recipe points at the
+        canonical download location, which requires a logged-in session to
+        serve the archive.
+    type: package
+    toolchain: make
+
+    source:
+        type: tarball
+        releases:
+            - version: 3.0.3
+              url: https://www.ks.uiuc.edu/Research/namd/3.0.3/download/724630//NAMD_3.0.3_Source.tar.gz
+
+    dependencies:
+        - mpi
+        - ucx
+        - pmix
+        - tcl
+        - fftw3
+
+    build:
+        # NAMD uses its own ./config architecture system (not autotools/cmake).
+        # The bundled Charm++ archive must be built first, then NAMD is
+        # configured against the resulting charm build and Tcl/FFTW, then
+        # compiled in the generated Linux-<arch>-g++ directory.  GNU make
+        # (gmake) and csh are required on the build machine.
+        configurations:
+            options:
+                # ── GPU acceleration ────────────────────────────────────────
+                - name: enable-cuda
+                  description: Enable NVIDIA GPU acceleration (--with-cuda)
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: false
+                  requires: [cuda]
+
+                # CUDA compute capability for the GPU build; consumed by the
+                # NAMD_CUDA_ARGS gencode below (virtual option, not a make var).
+                - name: CUDA_ARCH
+                  description: CUDA compute capability for the GPU build (e.g. 90 for Hopper, 80 for Ampere)
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled_value:
+                      default: '90'
+                  requires: [cuda]
+
+                # Compiler optimisation flags for the NAMD `make` step (rendered
+                # as a make variable, e.g. FLOATOPTS="-O3 -ffast-math ...").
+                - name: FLOATOPTS
+                  description: Fortran/float optimisation flags passed to the NAMD make
+                  user_configurable: true
+                  enabled_value:
+                      default: -O3 -ffast-math -fomit-frame-pointer
+
+            environment:
+                # The MPI/UCX/PMIx wrappers (and nvcc for the CUDA dlink step)
+                # must be on PATH for charm's cmake FindMPI and for compiling.
+                # Declaring PATH via the configuration environment scopes it to
+                # the build command and restores the previous value afterwards.
+                - name: PATH
+                  description: Add the MPI/CUDA/UCX/PMIx toolchain binaries to PATH
+                  default: ${cuda.prefix}/bin:${mpi.prefix}/bin:${ucx.prefix}/bin:${pmix.prefix}/bin:$PATH
+
+                # The default 'mpi' charm backend links through the MPI compiler
+                # wrappers (no PMIx/OpenMPI runtime libs), which is the most
+                # robust. 'ucx' + pmix is the InfiniBand-tuned alternative.
+                - name: NAMD_CHARM_BACKEND
+                  description: Charm++ networking backend (mpi, ucx, verbs, ...)
+                  user_configurable: true
+                  default: mpi
+
+                - name: NAMD_JOBS
+                  description: Number of parallel make jobs
+                  default: ${KEZ_NPROC}
+
+                - name: NAMD_CUDA_ARGS
+                  description: Extra ./config options appended when CUDA is enabled
+                  default: ''
+                  conditions:
+                      - condition: ${namd.config.enable-cuda} true
+                        action: set
+                        value: >-
+                            --with-cuda --with-single-node-cuda
+                            --cuda-prefix ${cuda.prefix}
+                            --cuda-gencode arch=compute_${namd.config.CUDA_ARCH},code=sm_${namd.config.CUDA_ARCH}
+                            --cuda-dlink arch=compute_${namd.config.CUDA_ARCH},code=sm_${namd.config.CUDA_ARCH}
+
+            # The make toolchain has no configure step: the whole architecture
+            # selection, charm build, NAMD config and compile happen here. The
+            # charm target is <backend>-linux-<arch> with -smp threading; the
+            # ucx backend additionally needs the ompipmix PMIx flavor. The
+            # platform architecture comes from kez's KEZ_ARCH (x86_64/arm64).
+            command: |-
+                set -e
+                case "$KEZ_ARCH" in
+                    arm64) NAMD_CPU=ARM64  ; CHARM_ARCH=arm8  ;;
+                    *)     NAMD_CPU=x86_64 ; CHARM_ARCH=x86_64 ;;
+                esac
+                tar -xf charm-8.0.0.tar
+                charm_base="${namd.env.NAMD_CHARM_BACKEND}-linux-${CHARM_ARCH}"
+                charm_flavor="smp"
+                charm_arch_suffix="-smp"
+                if [ "${namd.env.NAMD_CHARM_BACKEND}" = "ucx" ]; then
+                    charm_flavor="smp ompipmix"
+                    charm_arch_suffix="-smp-ompipmix"
+                fi
+                ( cd charm-8.0.0 && \
+                    ./build charm++ ${charm_base} ${charm_flavor} --with-production \
+                        --basedir=${mpi.prefix} --basedir=${ucx.prefix} --basedir=${pmix.prefix} )
+                ./config Linux-${NAMD_CPU}-g++ \
+                    --charm-arch ${charm_base}${charm_arch_suffix} \
+                    --tcl-prefix ${tcl.prefix} --with-fftw3 --fftw-prefix ${fftw3.prefix} \
+                    ${namd.env.NAMD_CUDA_ARGS}
+                cd Linux-${NAMD_CPU}-g++
+                make -j${namd.env.NAMD_JOBS}
+
+        # NAMD has no install target; copy the built binary into the prefix.
+        # (cwd is inside the generated Linux-<arch>-g++ build dir after make.)
+        postprocessing: |-
+            cd ${source}
+            mkdir -p ${namd.prefix}/bin
+            cp -v Linux-*/namd3 ${namd.prefix}/bin/namd3
+
+    properties:
+        lib: ${namd.prefix}/lib
+        include: ${namd.prefix}/include

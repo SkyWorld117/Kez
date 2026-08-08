@@ -1,0 +1,479 @@
+---
+kez:
+    namd:
+        description: "NAMD - Nanoscale Molecular Dynamics. A parallel molecular dynamics code (UIUC Theoretical and Computational Biophysics Group) designed
+            for high-performance simulation of large biomolecular systems with the CHARMM/VMD tool chain. NOTE: the NAMD source tarball is distributed under
+            the UIUC NAMD license and its download is gated behind free registration at https://www.ks.uiuc.edu/Research/namd/ ; the recipe points at the
+            canonical download location, which requires a logged-in session to serve the archive.\n"
+        version: 3.0.3
+        compiler: system
+        build:
+            configurations:
+                environment:
+                    - name: NAMD_CHARM_BACKEND
+                      description: Charm++ networking backend (mpi, ucx, verbs, ...)
+                      value: mpi
+                options:
+                    - name: enable-cuda
+                      description: Enable NVIDIA GPU acceleration (--with-cuda)
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: CUDA_ARCH
+                      description: CUDA compute capability for the GPU build (e.g. 90 for Hopper, 80 for Ampere)
+                      enabled: true
+                      enabled_value: 90
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: FLOATOPTS
+                      description: Fortran/float optimisation flags passed to the NAMD make
+                      enabled: true
+                      enabled_value: -O3 -ffast-math -fomit-frame-pointer
+    tcl:
+        description: "Tcl - the Tool Command Language scripting language (8.6 line). Built from the unix/ subdirectory of the source tree; configured static
+            for embedding by clients such as NAMD.\n"
+        version: 8.6.18
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-shared
+                      description: Build shared libraries (static is embedded by clients such as NAMD)
+                      enabled: false
+                      enabled_value:
+                    - name: enable-threads
+                      description: Build with POSIX thread support
+                      enabled: false
+                      enabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${tcl.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${zlib.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${tcl.ldflags}
+    pmix:
+        description: Process Management Interface for Exascale
+        version: 6.1.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${pmix.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${hwloc.incflags} ${libevent.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags}
+    ucx:
+        description: Unified Communication X
+        version: 1.21.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: use_cuda
+                      description: Enable CUDA support
+                      enabled: false
+                      enabled_value: ${cuda.prefix}
+                      requires:
+                          - cuda
+                    - name: use_rocm
+                      description: Enable ROCm support
+                      enabled: false
+                      enabled_value: ${rocm.prefix}
+                      requires:
+                          - rocm
+                    - name: with-gdrcopy
+                      description: Specify gdrcopy installation path
+                      enabled: false
+                      enabled_value: ${gdrcopy.prefix}
+                      requires:
+                          - gdrcopy
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${ucx.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${rdma-core.ldflags} ${cuda.ldflags} ${gdrcopy.ldflags} ${ucx.ldflags}
+    rdma-core:
+        description: RDMA core userspace libraries and daemons
+    libevent:
+        description: Event notification library
+        version: 2.1.13
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libevent.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${openssl.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${openssl.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${openssl.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${openssl.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${openssl.ldflags} ${libevent.ldflags}
+    openssl:
+        description: OpenSSL is a robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication over 
+            computer networks.
+        version: 4.0.1
+        compiler: system
+    hwloc:
+        description: Hardware Locality
+        version: 2.14.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: use_cuda
+                      description: Use CUDA support
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: use_pciaccess
+                      description: Use libpciaccess for PCI device discovery
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - libpciaccess
+                    - name: use_rocm
+                      description: Use ROCm support
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - rocm
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${hwloc.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} ${libpciaccess.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} 
+                          ${libpciaccess.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} 
+                          ${libpciaccess.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} 
+                          ${libpciaccess.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libxml2.ldflags} ${cuda.ldflags} ${libpciaccess.ldflags} 
+                          ${hwloc.ldflags}
+    rocm:
+        description: ROCm is a software stack for GPU computing on AMD hardware.
+    libpciaccess:
+        description: Generic PCI access library.
+        version: 0.19
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: install-scanpci
+                      description: Install scanpci program and man page
+                      enabled: false
+                      enabled_value:
+                    - name: linux-rom-fallback
+                      description: Enable falling back to /dev/mem for ROMs
+                      enabled: false
+                      enabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libpciaccess.prefix}
+                    - name: buildtype
+                      enabled: true
+                      enabled_value: release
+                    - name: c_args
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: cpp_args
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: fortran_args
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: c_link_args
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${libpciaccess.ldflags} ${zlib.libs}
+                    - name: cpp_link_args
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${libpciaccess.ldflags} ${zlib.libs}
+                    - name: fortran_link_args
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${libpciaccess.ldflags} ${zlib.libs}
+                    - name: pkg_config_path
+                      enabled: true
+                      enabled_value: ${zlib.prefix}
+    libxml2:
+        description: A library for parsing XML documents.
+        version: 2.15.3
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libxml2.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${zlib.incflags} ${xz.incflags} ${python.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${xz.incflags} ${python.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${xz.incflags} ${python.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${xz.incflags} ${python.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${xz.ldflags} ${python.ldflags} ${libxml2.ldflags}
+    python:
+        description: Python Programming Language
+        version: 3.14.6
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${python.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${python.ldflags}
+    gdrcopy:
+        description: GDRCopy userspace library
+    fftw3:
+        description: FFTW is a C library for computing the discrete Fourier transform in one or more dimensions, of arbitrary input size, and of both 
+            real and complex data.
+        version: 3.3.11
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-float
+                      description: Build single-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: enable-long-double
+                      description: Build long double-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: enable-quad-precision
+                      description: Build quad-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: x86-256bit
+                      description: Build x86 256-bit vectorized version
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: x86-512bit
+                      description: Build x86 512-bit vectorized version
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: arm
+                      description: Build arm vectorized version
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-mpi
+                      description: Enable MPI support
+                      enabled: false
+                      enabled_value:
+                      requires:
+                          - mpi
+                    - name: enable-openmp
+                      description: Enable OpenMP support
+                      enabled: true
+                      enabled_value:
+                    - name: CFLAGS
+                      description: C compiler flags
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native -fPIC
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${fftw3.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags}
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 12.9
+recipe:
+    abstract_packages:
+        mpi: openmpi
+    dependencies:
+        - namd
+        - tcl
+        - pmix
+        - ucx
+        - rdma-core
+        - libevent
+        - openssl
+        - hwloc
+        - rocm
+        - libpciaccess
+        - libxml2
+        - python
+        - xz
+        - lz4
+        - zlib
+        - gdrcopy
+        - fftw3
+        - openmpi
+        - cuda
+    targets:
+        - namd
