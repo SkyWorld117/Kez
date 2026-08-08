@@ -1,0 +1,48 @@
+---
+recipe:
+    name: tcl
+    description: >
+        Tcl - the Tool Command Language scripting language (8.6 line). Built
+        from the unix/ subdirectory of the source tree; configured static for
+        embedding by clients such as NAMD.
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 8.6.18
+              url: https://downloads.sourceforge.net/project/tcl/Tcl/8.6.18/tcl8.6.18-src.tar.gz
+
+    dependencies:
+        - zlib
+
+    build:
+        # Tcl only supports in-source configuration, from within unix/; the
+        # prefix is embedded into the binaries, so the directory must not move
+        # after install.
+        preprocessing: cd ${source}/unix
+
+        configurations:
+            options:
+                - name: enable-shared
+                  description: Build shared libraries (static is embedded by clients such as NAMD)
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: enable-threads
+                  description: Build with POSIX thread support
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${tcl.prefix}/lib
+        include: ${tcl.prefix}/include
+        libs:
+            default: -ltcl8.6 -ltclstub8.6
