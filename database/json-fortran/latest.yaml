@@ -1,0 +1,48 @@
+---
+recipe:
+    name: json-fortran
+    description: >
+        JSON-Fortran - a Fortran 2008 library for parsing, writing and
+        manipulating JSON. The pure-Fortran implementation used by Neko and
+        other HPC codes; discovers via pkg-config (json-fortran.pc).
+    type: package
+    toolchain: cmake
+
+    source:
+        type: tarball
+        releases:
+            - version: 9.3.1
+              url: https://github.com/jacobwilliams/json-fortran/archive/refs/tags/9.3.1.tar.gz
+
+    build:
+        # USE_GNU_INSTALL_CONVENTION is required so the library, headers and
+        # json-fortran.pc install into the conventional GNU layout (upon which
+        # Neko's pkg-config lookup depends) instead of the default
+        # compiler-namespaced jsonfortran-gnu-<version>/ directory.
+        configurations:
+            options:
+                - name: CMAKE_BUILD_TYPE
+                  description: CMake build type
+                  enabled_value:
+                      default: Release
+
+                - name: USE_GNU_INSTALL_CONVENTION
+                  description: Install with the standard GNU library layout
+                  enabled_value:
+                      default: 'TRUE'
+
+                - name: ENABLE_RUNTIME_CHECKS
+                  description: Enable Fortran runtime checks (-fcheck=all)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${json-fortran.prefix}/lib64
+        include: ${json-fortran.prefix}/include
+        libs:
+            default: -ljsonfortran
