@@ -1,0 +1,43 @@
+---
+kez:
+    openlb:
+        description: "OpenLB - the open-source lattice Boltzmann solver. A C++ code library with a large set of examples; the installed prefix is a self-contained
+            OpenLB source tree (with the core library pre-built) that downstream applications compile their own examples against via OLB_ROOT.\n"
+        version: 1.9.0
+        compiler: system
+        build:
+            configurations:
+                environment:
+                    - name: OLB_PLATFORM_CONFIG
+                      description: OpenLB config.mk template (CPU or GPU)
+                      value: config/cpu_gcc_openmpi.mk
+                options:
+                    - name: enable-cuda
+                      description: Enable NVIDIA GPU acceleration (switch the config template to a CUDA build)
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: CUDA_ARCH
+                      description: CUDA compute capability for the GPU build (e.g. 90 for Hopper, 86 for Ampere)
+                      enabled: true
+                      enabled_value: 90
+                      requires:
+                          - cuda
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
+recipe:
+    abstract_packages:
+        mpi: openmpi
+    dependencies:
+        - openlb
+        - openmpi
+        - cuda
+    targets:
+        - openlb

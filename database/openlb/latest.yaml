@@ -1,0 +1,85 @@
+---
+recipe:
+    name: openlb
+    description: >
+        OpenLB - the open-source lattice Boltzmann solver. A C++ code library
+        with a large set of examples; the installed prefix is a self-contained
+        OpenLB source tree (with the core library pre-built) that downstream
+        applications compile their own examples against via OLB_ROOT.
+    type: package
+    toolchain: make
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.9.0
+              url: https://zenodo.org/records/17899765/files/olb-1.9r0.tgz?download=1
+
+    dependencies:
+        - mpi
+
+    build:
+        # OpenLB is configured by a root config.mk copied from a template in
+        # config/; the root `make` builds the bundled dependencies (zlib,
+        # tinyxml2, gtest) and the static core library into build/.
+        configurations:
+            options:
+                # ── Virtual GPU switch; changing it selects the config.mk
+                #    template that OpenLB will build against. ────────────────
+                - name: enable-cuda
+                  description: Enable NVIDIA GPU acceleration (switch the config template to a CUDA build)
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: false
+                  requires: [cuda]
+
+                # CUDA compute capability, e.g. 90 for Hopper, 86 for Ampere.
+                # Passed to make (overriding the template's value) and written
+                # into the installed config.mk so downstream apps target the
+                # same architecture.
+                - name: CUDA_ARCH
+                  description: CUDA compute capability for the GPU build (e.g. 90 for Hopper, 86 for Ampere)
+                  user_configurable: true
+                  enabled_value:
+                      default: 90
+                  requires: [cuda]
+
+            environment:
+                # The MPI/cuda templates invoke mpic++ and (for GPU) nvcc, so
+                # their bin dirs are put on PATH here. Declaring PATH through the
+                # configuration environment (rather than exporting it in the
+                # command) lets kez scope it to this build command and restore
+                # the previous value afterwards.
+                - name: PATH
+                  description: Add the MPI/CUDA toolchain binaries to PATH
+                  default: ${cuda.prefix}/bin:${mpi.prefix}/bin:$PATH
+
+                - name: OLB_PLATFORM_CONFIG
+                  description: OpenLB config.mk template (CPU or GPU)
+                  user_configurable: true
+                  default: config/cpu_gcc_openmpi.mk
+                  conditions:
+                      - condition: ${openlb.config.enable-cuda} true
+                        action: set
+                        value: config/gpu_openmpi_mixed.mk
+
+            # The make toolchain has no configure step; the config.mk template
+            # selection and the root build are done here.  Because config.mk is
+            # generated it must not be part of the default `make` stage.  The
+            # release tarball ships a default config.mk, so the selected
+            # template must always overwrite it.
+            command: |-
+                cp -f ${openlb.env.OLB_PLATFORM_CONFIG} config.mk
+                sed -i "s/^CUDA_ARCH.*/CUDA_ARCH := ${openlb.config.CUDA_ARCH}/" config.mk
+                make -j ${KEZ_NPROC}
+
+        # Install a ready-to-use OpenLB tree (source + built core library).
+        postprocessing: |-
+            mkdir -p ${openlb.prefix}
+            cp -a ${source}/. ${openlb.prefix}/
+
+    properties:
+        lib: ${openlb.prefix}/build/lib
+        include: ${openlb.prefix}/src
