@@ -1,0 +1,120 @@
+---
+recipe:
+    name: neko
+    description: >
+        Neko - a portable framework for high-order spectral element flow
+        simulations (ExtremeFlow, EPFL). Provides hybrid MPI/OpenMP/CUDA/HIP/OpenCL
+        backends and a Fortran DSL (makeneko) for defining cases.
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.1.0
+              url: https://github.com/ExtremeFLOW/neko/releases/download/v1.1.0/neko-1.1.0.tar.gz
+
+    dependencies:
+        - mpi
+        - blas
+        - lapack
+        - json-fortran
+        - metis
+        - parmetis
+        # libparmetis.so has a DT_NEEDED on libGKlib; declaring gklib keeps
+        # its -L on the link line so the configure probe for -lparmetis passes.
+        - gklib
+
+    build:
+        # The release tarball ships a pre-generated configure script, so no
+        # bootstrap is needed. json-fortran is located by pkg-config; its .pc
+        # file directory must be on PKG_CONFIG_PATH during configure. Both the
+        # lib and lib64 layouts are covered. The PATH export persists so neko's
+        # configure can find nvcc and -lcudart when the CUDA backend is on.
+        preprocessing: export PATH="${cuda.prefix}/bin:$PATH"
+
+        configurations:
+            environment:
+                - name: PKG_CONFIG_PATH
+                  description: Path to json-fortran pkg-config files
+                  default: ${json-fortran.prefix}/lib/pkgconfig:${json-fortran.prefix}/lib64/pkgconfig:${PKG_CONFIG_PATH:-}
+
+            options:
+                - name: enable-openmp
+                  description: Enable OpenMP threading
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: with-blas
+                  description: BLAS link flags (--with-blas)
+                  enabled_value:
+                      default: ${blas.libs}
+
+                - name: with-lapack
+                  description: LAPACK link flags (--with-lapack)
+                  enabled_value:
+                      default: ${lapack.libs}
+
+                - name: with-metis
+                  description: Enable METIS for mesh partitioning
+                  user_configurable: true
+                  enabled_value:
+                      default: ${metis.prefix}
+                  requires: [metis]
+
+                - name: with-parmetis
+                  description: Enable ParMETIS for parallel mesh partitioning
+                  user_configurable: true
+                  enabled_value:
+                      default: ${parmetis.prefix}
+                  requires: [parmetis]
+
+                - name: with-hdf5
+                  description: Enable HDF5 I/O support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${hdf5.prefix}
+                  requires: [hdf5]
+
+                # ── GPU backend ────────────────────────────────────────────
+                - name: with-cuda
+                  description: Enable the CUDA device backend
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${cuda.prefix}
+                  requires: [cuda]
+
+                - name: CUDA_ARCH
+                  description: CUDA architecture flags, e.g. -arch=sm_90
+                  user_configurable: true
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${neko.config.with-cuda} true
+                            value: true
+                  enabled_value:
+                      default: -arch=sm_90
+                  requires: [cuda]
+
+                - name: enable-device-mpi
+                  description: Enable device-aware MPI (requires an explicit CUDA_ARCH >= sm_60)
+                  user_configurable: true
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${neko.config.with-cuda} true
+                            value: true
+                  requires: [cuda]
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${neko.prefix}/lib
+        include: ${neko.prefix}/include

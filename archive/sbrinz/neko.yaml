@@ -1,0 +1,349 @@
+---
+kez:
+    neko:
+        description: "Neko - a portable framework for high-order spectral element flow simulations (ExtremeFlow, EPFL). Provides hybrid MPI/OpenMP/CUDA/HIP/OpenCL
+            backends and a Fortran DSL (makeneko) for defining cases.\n"
+        version: 1.1.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-openmp
+                      description: Enable OpenMP threading
+                      enabled: true
+                      enabled_value:
+                    - name: with-metis
+                      description: Enable METIS for mesh partitioning
+                      enabled: true
+                      enabled_value: ${metis.prefix}
+                      requires:
+                          - metis
+                    - name: with-parmetis
+                      description: Enable ParMETIS for parallel mesh partitioning
+                      enabled: true
+                      enabled_value: ${parmetis.prefix}
+                      requires:
+                          - parmetis
+                    - name: with-hdf5
+                      description: Enable HDF5 I/O support
+                      enabled: true
+                      enabled_value: ${hdf5.prefix}
+                      requires:
+                          - hdf5
+                    - name: with-cuda
+                      description: Enable the CUDA device backend
+                      enabled: true
+                      enabled_value: ${cuda.prefix}
+                      requires:
+                          - cuda
+                    - name: CUDA_ARCH
+                      description: CUDA architecture flags, e.g. -arch=sm_90
+                      enabled: true
+                      enabled_value: -arch=sm_90
+                      requires:
+                          - cuda
+                    - name: enable-device-mpi
+                      description: Enable device-aware MPI (requires an explicit CUDA_ARCH >= sm_60)
+                      enabled: true
+                      enabled_value:
+                      requires:
+                          - cuda
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${neko.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${json-fortran.incflags} ${metis.incflags} 
+                          ${parmetis.incflags} ${gklib.incflags} ${hdf5.incflags} ${cuda.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${json-fortran.incflags} 
+                          ${metis.incflags} ${parmetis.incflags} ${gklib.incflags} ${hdf5.incflags} ${cuda.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${json-fortran.incflags} 
+                          ${metis.incflags} ${parmetis.incflags} ${gklib.incflags} ${hdf5.incflags} ${cuda.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${blas.incflags} ${lapack.incflags} ${json-fortran.incflags} 
+                          ${metis.incflags} ${parmetis.incflags} ${gklib.incflags} ${hdf5.incflags} ${cuda.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${blas.ldflags} ${lapack.ldflags} ${json-fortran.ldflags} ${metis.ldflags} 
+                          ${parmetis.ldflags} ${gklib.ldflags} ${hdf5.ldflags} ${cuda.ldflags} ${neko.ldflags}
+    parmetis:
+        description: ParMETIS is an MPI-based library for partitioning graphs, partitioning finite element meshes, and producing fill reducing 
+            orderings for sparse matrices.
+        version: main
+        compiler: system
+        build:
+            stages:
+                - target: config
+                  configurations:
+                      options:
+                          - name: shared
+                            description: Build shared library
+                            enabled: true
+                            enabled_value: 1
+    metis:
+        description: METIS is a set of serial programs for partitioning graphs, partitioning finite element meshes, and producing fill reducing 
+            orderings for sparse matrices.
+        version: 5.2.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: OPENMP
+                      description: Enable OpenMP support
+                      enabled: true
+                      enabled_value: 1
+                    - name: SHARED
+                      description: Build shared library
+                      enabled: true
+                      enabled_value: 1
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${metis.prefix}
+                    - name: CMAKE_BUILD_TYPE
+                      enabled: true
+                      enabled_value: Release
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CMAKE_CXX_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${gklib.incflags}
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${gklib.incflags}
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${gklib.incflags}
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3 ${gklib.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${gklib.ldflags} ${metis.ldflags} ${gklib.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${gklib.ldflags} ${metis.ldflags} ${gklib.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${gklib.ldflags} ${metis.ldflags} ${gklib.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${gklib.lib};${metis.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${gklib.lib};${metis.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${gklib.prefix}
+    json-fortran:
+        description: "JSON-Fortran - a Fortran 2008 library for parsing, writing and manipulating JSON. The pure-Fortran implementation used by Neko and
+            other HPC codes; discovers via pkg-config (json-fortran.pc).\n"
+        version: 9.3.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: ENABLE_RUNTIME_CHECKS
+                      description: Enable Fortran runtime checks (-fcheck=all)
+                      enabled: true
+                      enabled_value: OFF
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${json-fortran.prefix}
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CMAKE_CXX_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${json-fortran.ldflags}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${json-fortran.ldflags}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${json-fortran.ldflags}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${json-fortran.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${json-fortran.lib}
+    intel-oneapi-mkl:
+        description: Intel oneAPI Math Kernel Library for high-performance math routines
+        build:
+            configurations:
+                options:
+                    - name: fortran_format
+                      description: Fortran Format [ gf | intel ]
+                      enabled: true
+                      enabled_value: gf
+                    - name: integer_size
+                      description: Use ilp64 interface [ lp64 | ilp64 ]
+                      enabled: true
+                      enabled_value: lp64
+                    - name: multithreaded
+                      description: Use multithreading
+                      enabled: false
+                      enabled_value:
+                    - name: multithreading_library
+                      description: Multithreading library [ gnu | tbb ]
+                      enabled: true
+                      enabled_value: gnu
+                    - name: mpi-family
+                      description: Use MPI implementation (OpenMPI or MPICH) [ openmpi | intelmpi ]
+                      enabled: true
+                      enabled_value: openmpi
+    intel-oneapi:
+        version: 2026.1.0.192
+    hdf5:
+        description: High-performance data management and storage suite
+        version: 2.1.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: BUILD_SHARED_LIBS
+                      description: Build shared libraries
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_BUILD_CPP_LIB
+                      description: Build C++ library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_FORTRAN
+                      description: Build Fortran library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_HL_LIB
+                      description: Build High Level library
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_BUILD_TOOLS
+                      description: Build tools
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_ENABLE_PARALLEL
+                      description: Enable parallel support
+                      enabled: false
+                      enabled_value: ON
+                      requires:
+                          - mpi
+                    - name: HDF5_ENABLE_ZLIB_SUPPORT
+                      description: Enable Zlib (deflate) compression filters
+                      enabled: true
+                      enabled_value: ON
+                      requires:
+                          - zlib
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${hdf5.prefix}
+                    - name: CMAKE_BUILD_TYPE
+                      enabled: true
+                      enabled_value: Release
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CMAKE_CXX_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3 ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${zlib.ldflags} ${hdf5.ldflags} ${mpi.libs} ${zlib.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${zlib.ldflags} ${hdf5.ldflags} ${mpi.libs} ${zlib.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${zlib.ldflags} ${hdf5.ldflags} ${mpi.libs} ${zlib.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${zlib.lib};${hdf5.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${zlib.lib};${hdf5.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${mpi.prefix};${zlib.prefix}
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+    gklib:
+        description: A library of various helper routines and frameworks used by many of the lab's software
+        version: master
+        compiler: system
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
+recipe:
+    abstract_packages:
+        blas: intel-oneapi-mkl
+        lapack: intel-oneapi-mkl
+        mpi: openmpi
+    dependencies:
+        - neko
+        - parmetis
+        - metis
+        - json-fortran
+        - intel-oneapi-mkl
+        - intel-oneapi
+        - hdf5
+        - zlib
+        - openmpi
+        - gklib
+        - cuda
+    targets:
+        - neko
