@@ -1,0 +1,100 @@
+---
+recipe:
+    name: paraview
+    description: >
+        ParaView - an open-source, multi-platform data analysis and
+        visualization application from Kitware. This recipe builds the
+        headless client-server suite (pvserver, pvbatch, pvpython) for HPC:
+        users render from their local ParaView GUI client and connect to
+        pvserver launched on compute nodes.
+    type: package
+    toolchain: cmake
+
+    source:
+        type: tarball
+        releases:
+            - version: 6.1.1
+              url: https://www.paraview.org/files/v6.1/ParaView-v6.1.1.tar.xz
+
+    dependencies:
+        - mpi
+        - python
+
+    build:
+        configurations:
+            # Some OpenMPI builds (e.g. the NVHPC one) bundle PMIx/PRRTE in
+            # non-default directories. CMake's FindMPI asks the mpicc wrapper
+            # (mpicc --showme:link) for its link flags; the OpenMPI wrapper
+            # appends OMPI_LDFLAGS verbatim, so exporting it here makes the
+            # MPI try-compile and the real links find the bundled libraries.
+            environment:
+                - name: OMPI_LDFLAGS
+                  description: Extra linker dirs for the wrapped OpenMPI (its bundled PMIx/PRRTE)
+                  user_configurable: true
+                  default: -L${mpi.prefix}/../pmix/lib -L${mpi.prefix}/../prrte/lib
+
+            options:
+                - name: CMAKE_BUILD_TYPE
+                  description: CMake build type
+                  enabled_value:
+                      default: Release
+
+                - name: PARAVIEW_USE_MPI
+                  description: Enable MPI for client-server and parallel rendering
+                  enabled_value:
+                      default: ON
+                  requires: [mpi]
+
+                - name: PARAVIEW_USE_PYTHON
+                  description: Enable Python scripting and plugins (pvpython, pvbatch)
+                  enabled_value:
+                      default: ON
+                  requires: [python]
+
+                - name: PARAVIEW_USE_QT
+                  description: Build the Qt GUI (off for headless HPC server builds)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: PARAVIEW_USE_EGL
+                  description: Enable EGL offscreen rendering for GPU compute nodes without a display
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: PARAVIEW_USE_OSMESA
+                  description: Enable OSMesa software offscreen rendering (CPU-only fallback)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: PARAVIEW_USE_CUDA
+                  description: Enable CUDA-based GPU compute rendering (VisKores/VTK-m device adapter)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+                  requires: [cuda]
+
+                - name: CMAKE_CUDA_ARCHITECTURES
+                  description: CUDA architecture to target (e.g. 80 for Ampere, 90 for Hopper)
+                  user_configurable: true
+                  enabled_value:
+                      default: 80
+                  requires: [cuda]
+
+                - name: CMAKE_CUDA_COMPILER
+                  description: nvcc to use for the CUDA device code (pin the toolkit explicitly)
+                  user_configurable: true
+                  enabled_value:
+                      default: ${cuda.prefix}/bin/nvcc
+                  requires: [cuda]
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        prefix: ${paraview.prefix}
+        lib: ${paraview.prefix}/lib
+        include: ${paraview.prefix}/include
