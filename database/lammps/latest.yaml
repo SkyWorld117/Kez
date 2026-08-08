@@ -1,0 +1,186 @@
+---
+recipe:
+    name: lammps
+    description: >
+        LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator.
+        A classical molecular dynamics code from Sandia National Laboratories
+        supporting a wide range of interatomic potentials, long-range solvers
+        (KSPACE), rigid bodies, granular flows and GPU acceleration via KOKKOS.
+    type: package
+    toolchain: cmake
+
+    source:
+        type: tarball
+        releases:
+            - version: stable_22Jul2025_update4
+              url: https://download.lammps.org/tars/lammps-22Jul2025_update4.tar.gz
+
+    dependencies:
+        - mpi
+        - fftw3
+
+    build:
+        # LAMMPS keeps its CMake project in the cmake/ subdirectory; there is no
+        # top-level CMakeLists.txt, so the configure command points CMake at it
+        # with -S (no cd into cmake/ is needed). The generated build/ tree then
+        # lives at the source root, so the default cmake --build build and
+        # cmake --install build stages are used unchanged.
+        #
+        # Kokkos' nvcc_wrapper needs nvcc on PATH at configure time and while
+        # compiling, so PATH is declared through the configuration 'environment'
+        # mechanism: kez exports it only for the running command of each
+        # configuration block and restores the previous value afterwards, so the
+        # environment variable is never contaminated. The CMake configure step
+        # and the compile stage each carry their own declaration.
+        configurations:
+            command: cmake -S cmake -B build
+
+            environment:
+                - name: PATH
+                  description: Add the CUDA toolkit binaries so Kokkos finds nvcc
+                  default: ${cuda.prefix}/bin:$PATH
+
+            options:
+                - name: CMAKE_BUILD_TYPE
+                  description: CMake build type
+                  enabled_value:
+                      default: Release
+
+                - name: BUILD_MPI
+                  description: Enable MPI parallel communication for HPC builds
+                  enabled_value:
+                      default: yes
+
+                - name: BUILD_OMP
+                  description: Enable OpenMP thread parallelism
+                  user_configurable: true
+                  enabled_value:
+                      default: yes
+
+                - name: BUILD_SHARED_LIBS
+                  description: Build shared libraries in addition to the static one
+                  user_configurable: true
+                  enabled_value:
+                      default: no
+
+                - name: FFTW3
+                  description: Use FFTW3 for the KSPACE package FFTs (falls back to the internal KISS FFT otherwise)
+                  user_configurable: true
+                  enabled_value:
+                      default: yes
+
+                # ── Core packages used by virtually all production MD setups ──
+                - name: PKG_KSPACE
+                  description: Enable the KSPACE package (long-range Coulomb/wave-space solvers)
+                  enabled_value:
+                      default: yes
+
+                - name: PKG_MOLECULE
+                  description: Enable the MOLECULE package
+                  enabled_value:
+                      default: yes
+
+                - name: PKG_RIGID
+                  description: Enable the RIGID package
+                  enabled_value:
+                      default: yes
+
+                - name: PKG_MANYBODY
+                  description: Enable the MANYBODY package
+                  enabled_value:
+                      default: yes
+
+                # ── Performance portability (KOKKOS) ────────────────────────
+                - name: enable-kokkos
+                  description: Enable the KOKKOS package for performance-portable kernels
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: false
+
+                - name: PKG_KOKKOS
+                  description: KOKKOS package state
+                  enabled_value:
+                      default: no
+                      conditions:
+                          - condition: ${lammps.config.enable-kokkos} true
+                            action: set
+                            value: yes
+
+                - name: Kokkos_ENABLE_OPENMP
+                  description: Use OpenMP threading inside KOKKOS
+                  enabled_value:
+                      default: no
+                      conditions:
+                          - condition: ${lammps.config.enable-kokkos} true
+                            action: set
+                            value: yes
+
+                # ── GPU acceleration (KOKKOS + CUDA) ────────────────────────
+                - name: enable-cuda
+                  description: Enable NVIDIA GPU acceleration through the KOKKOS CUDA backend
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: false
+                  requires: [cuda]
+
+                - name: Kokkos_ENABLE_CUDA
+                  description: Use the CUDA backend inside KOKKOS
+                  enabled_value:
+                      default: no
+                      conditions:
+                          - condition: ${lammps.config.enable-cuda} true
+                            action: set
+                            value: yes
+                  requires: [cuda]
+
+                - name: CMAKE_CUDA_ARCHITECTURES
+                  description: CUDA architecture to target (e.g. 90 for Hopper, 80 for Ampere)
+                  user_configurable: true
+                  enabled_value:
+                      default: 90
+                  requires: [cuda]
+
+                # Kokkos must compile with its nvcc_wrapper when CUDA is on, and
+                # nvcc itself must be on PATH (handled via the PATH environment
+                # below). This option overrides the auto-generated CMAKE_CXX_COMPILER
+                # only for the CUDA configuration.
+                - name: CMAKE_CXX_COMPILER
+                  description: C++ compiler (Kokkos nvcc_wrapper when CUDA is enabled)
+                  enabled_value:
+                      default: ${mpi.cxx}
+                      conditions:
+                          - condition: ${lammps.config.enable-cuda} true
+                            action: set
+                            value: ${source}/lib/kokkos/bin/nvcc_wrapper
+
+                - name: FFT_KOKKOS
+                  description: Use cuFFT for KSPACE FFTs on GPU builds
+                  enabled_value:
+                      default: KISS
+                      conditions:
+                          - condition: ${lammps.config.enable-cuda} true
+                            action: set
+                            value: CUFFT
+                  requires: [cuda]
+
+        stages:
+            - target:
+              configurations:
+                  # The compile stage invokes Kokkos' nvcc_wrapper, which needs
+                  # nvcc resolvable from PATH. Declared here (not pre-processing)
+                  # so kez sets PATH only for this stage and restores it after.
+                  environment:
+                      - name: PATH
+                        description: Add the CUDA toolkit binaries so Kokkos finds nvcc
+                        default: ${cuda.prefix}/bin:$PATH
+            - target: install
+              # cmake --install does not compile, so no PATH override is needed.
+
+    properties:
+        prefix: ${lammps.prefix}
+        lib: ${lammps.prefix}/lib
+        include: ${lammps.prefix}/include/lammps

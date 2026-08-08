@@ -1,0 +1,172 @@
+---
+kez:
+    lammps:
+        description: "LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator. A classical molecular dynamics code from Sandia National Laboratories
+            supporting a wide range of interatomic potentials, long-range solvers (KSPACE), rigid bodies, granular flows and GPU acceleration via KOKKOS.\n"
+        version: stable_22Jul2025_update4
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: BUILD_OMP
+                      description: Enable OpenMP thread parallelism
+                      enabled: true
+                      enabled_value: yes
+                    - name: BUILD_SHARED_LIBS
+                      description: Build shared libraries in addition to the static one
+                      enabled: true
+                      enabled_value: no
+                    - name: FFTW3
+                      description: Use FFTW3 for the KSPACE package FFTs (falls back to the internal KISS FFT otherwise)
+                      enabled: true
+                      enabled_value: yes
+                    - name: enable-kokkos
+                      description: Enable the KOKKOS package for performance-portable kernels
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-cuda
+                      description: Enable NVIDIA GPU acceleration through the KOKKOS CUDA backend
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - cuda
+                    - name: CMAKE_CUDA_ARCHITECTURES
+                      description: CUDA architecture to target (e.g. 90 for Hopper, 80 for Ampere)
+                      enabled: true
+                      enabled_value: 90
+                      requires:
+                          - cuda
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${lammps.prefix}
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${cuda.incflags}
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${cuda.incflags}
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${cuda.incflags}
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3 ${mpi.incflags} ${fftw3.incflags} ${cuda.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${cuda.ldflags} ${lammps.ldflags} ${mpi.libs} ${fftw3.libs} 
+                          ${cuda.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${cuda.ldflags} ${lammps.ldflags} ${mpi.libs} ${fftw3.libs} 
+                          ${cuda.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${cuda.ldflags} ${lammps.ldflags} ${mpi.libs} ${fftw3.libs} 
+                          ${cuda.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${fftw3.lib};${cuda.lib};${lammps.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${fftw3.lib};${cuda.lib};${lammps.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${mpi.prefix};${fftw3.prefix};${cuda.prefix}
+    fftw3:
+        description: FFTW is a C library for computing the discrete Fourier transform in one or more dimensions, of arbitrary input size, and of both 
+            real and complex data.
+        version: 3.3.11
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-float
+                      description: Build single-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: enable-long-double
+                      description: Build long double-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: enable-quad-precision
+                      description: Build quad-precision version of the library
+                      enabled: false
+                      enabled_value:
+                    - name: x86-256bit
+                      description: Build x86 256-bit vectorized version
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: x86-512bit
+                      description: Build x86 512-bit vectorized version
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: arm
+                      description: Build arm vectorized version
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-mpi
+                      description: Enable MPI support
+                      enabled: false
+                      enabled_value:
+                      requires:
+                          - mpi
+                    - name: enable-openmp
+                      description: Enable OpenMP support
+                      enabled: true
+                      enabled_value:
+                    - name: CFLAGS
+                      description: C compiler flags
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native -fPIC
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${fftw3.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags}
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
+recipe:
+    abstract_packages:
+        mpi: openmpi
+    dependencies:
+        - lammps
+        - fftw3
+        - openmpi
+        - cuda
+    targets:
+        - lammps
