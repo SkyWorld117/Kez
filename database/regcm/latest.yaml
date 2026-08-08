@@ -1,0 +1,88 @@
+---
+recipe:
+    name: regcm
+    description: >
+        RegCM5 - the Abdus Salam ICTP regional climate model. A flexible,
+        netCDF-based limited-area modeling system with multiple model physics
+        and chemistry options, primarily used for regional climate simulations
+        and the CORDEX initiative.
+    type: package
+    toolchain: autotools
+
+    source:
+        type: git
+        url: https://github.com/ICTP/RegCM
+        releases:
+            - version: 5.0.0
+              tag: 5.0.0
+
+    dependencies:
+        - mpi
+        - netcdf
+        - hdf5
+
+    build:
+        # The configure script is not shipped in the repository, so the
+        # autotools bootstrap sequence must run first.  A top-level `tag` file
+        # is written so the `make version` rule does not depend on git describe
+        # (which fails on a source archive without a git dir).
+        preprocessing: |-
+            libtoolize --force && autoreconf -f -i && echo 5.0.0 > tag
+
+        configurations:
+            options:
+                - name: with-netcdf
+                  description: Path to the merged netCDF-C/Fortran installation
+                  enabled_value:
+                      default: ${netcdf.prefix}
+
+                - name: with-hdf5
+                  description: Path to the HDF5 installation
+                  enabled_value:
+                      default: ${hdf5.prefix}
+
+                - name: with-szip
+                  description: Path to the libaec/Szip installation (HDF5/NetCDF4 compression; add libaec to the environment when enabled)
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ${libaec.prefix}
+
+                - name: enable-pnetcdf
+                  description: Enable parallel netCDF (PnetCDF) I/O (add pnetcdf to the environment when enabled)
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: enable-nc4-filters
+                  description: Enable HDF5-4 compression filters for netCDF4 output (add c-blosc2/bzip2 to the environment when enabled)
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: MPIFC
+                  description: MPI Fortran compiler wrapper
+                  enabled_value:
+                      default: ${mpi.fort}
+
+                # RegCM5 defines packed YYYYMMDDHHMM date literals in
+                # integer(ik8) array constructors that overflow the default
+                # kind during parsing; -fno-range-check is required on modern
+                # gfortran (documented in the RegCM build instructions). It is
+                # applied through FCFLAGS so the per-dependency include paths
+                # are preserved.
+                - name: FCFLAGS
+                  description: Fortran compiler flags
+                  enabled_value:
+                      default: -O3 -march=native -mtune=native -fno-range-check ${mpi.incflags} ${netcdf.incflags} ${hdf5.incflags}
+
+        stages:
+            - target: version
+              multithreaded: false
+            - target:
+            - target: install
+
+    properties:
+        lib: ${regcm.prefix}/lib
+        include: ${regcm.prefix}/include
