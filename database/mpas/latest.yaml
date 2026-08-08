@@ -1,0 +1,229 @@
+---
+recipe:
+    name: mpas
+    description: >
+        MPAS - Model for Prediction Across Scales. A collaborative software
+        framework for weather and climate applications that uses unstructured
+        Voronoi meshes; the atmosphere core (MPAS-A) is the primary HPC target.
+    type: package
+    toolchain: make
+
+    source:
+        type: tarball
+        releases:
+            - version: 8.4.1
+              url: https://github.com/MPAS-Dev/MPAS-Model/archive/refs/tags/v8.4.1.tar.gz
+
+    dependencies:
+        - mpi
+        - netcdf
+        - pnetcdf
+        - hdf5
+        - zlib
+
+    build:
+        # MPAS has no autotools/cmake project and no `make install`; the classic
+        # make flow builds each core in place. Its Makefile is parameterised by
+        # make variables, so each variable below is declared as a configuration
+        # option (kez appends them as NAME=value arguments to `make`). The two
+        # cores are separate stages that share the same option/environment lists
+        # through YAML anchors.
+        configurations:
+            options:
+                # ── Virtual switches driving the makefile variables ──────────
+                - name: enable-openmp
+                  description: Enable OpenMP threading (sets the OPENMP makefile variable)
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: true
+
+                - name: enable-openmp-offload
+                  description: Enable OpenMP GPU offload (sets OPENMP_OFFLOAD; NVHPC target)
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: false
+
+                - name: enable-debug
+                  description: Build with DEBUG=true (reduced optimization)
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: false
+
+        stages:
+            - target: init_atmosphere
+              configurations:
+                  command: make -j ${KEZ_NPROC} CORE=init_atmosphere all
+
+                  environment: &mpas_env
+                      - name: NETCDF
+                        description: Path to a merged netCDF-C/Fortran installation
+                        default: ${netcdf.prefix}
+
+                      - name: PNETCDF
+                        description: Path to the parallel netCDF installation
+                        default: ${pnetcdf.prefix}
+
+                  # make-variable options, appended as NAME="value" to `make`.
+                  options: &mpas_vars
+                      # ── Derived from the virtual switches above ───────────
+                      - name: OPENMP
+                        description: OPENMP makefile variable
+                        enabled_value:
+                            default: 'true'
+                            conditions:
+                                - condition: ${mpas.config.enable-openmp} true
+                                  action: set
+                                  value: 'true'
+                                - condition: ${mpas.config.enable-openmp} false
+                                  action: set
+                                  value: 'false'
+
+                      - name: OPENMP_OFFLOAD
+                        description: OPENMP_OFFLOAD makefile variable
+                        enabled_value:
+                            default: 'false'
+                            conditions:
+                                - condition: ${mpas.config.enable-openmp-offload} true
+                                  action: set
+                                  value: 'true'
+
+                      - name: DEBUG
+                        description: DEBUG makefile variable
+                        enabled_value:
+                            default: 'false'
+                            conditions:
+                                - condition: ${mpas.config.enable-debug} true
+                                  action: set
+                                  value: 'true'
+
+                      # ── Tuning / toolchain selection ───────────────────────
+                      - name: BUILD_TARGET
+                        description: MPAS compiler build target (gnu, gfortran, ifort, nvhpc, ...)
+                        user_configurable: true
+                        enabled_value:
+                            default: gnu
+
+                      - name: FC_PARALLEL
+                        description: Parallel Fortran compiler wrapper
+                        enabled_value:
+                            default: ${mpi.fort}
+
+                      - name: CC_PARALLEL
+                        description: Parallel C compiler wrapper
+                        enabled_value:
+                            default: ${mpi.c}
+
+                      - name: CXX_PARALLEL
+                        description: Parallel C++ compiler wrapper
+                        enabled_value:
+                            default: ${mpi.cxx}
+
+                      - name: FC_SERIAL
+                        description: Serial Fortran compiler
+                        enabled_value:
+                            default: ${compiler.fort}
+
+                      - name: CC_SERIAL
+                        description: Serial C compiler
+                        enabled_value:
+                            default: ${compiler.c}
+
+                      - name: CXX_SERIAL
+                        description: Serial C++ compiler
+                        enabled_value:
+                            default: ${compiler.cxx}
+
+                      - name: FFLAGS_PROMOTION
+                        description: Fortran real/double-8 promotion flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -fdefault-real-8 -fdefault-double-8
+
+                      - name: FFLAGS_OPT
+                        description: Fortran optimisation flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -std=f2008 -O3 -march=native -mtune=native -ffree-line-length-none -fconvert=big-endian -ffree-form
+
+                      - name: CFLAGS_OPT
+                        description: C optimisation flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -O3 -march=native -mtune=native
+
+                      - name: CXXFLAGS_OPT
+                        description: C++ optimisation flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -O3 -march=native -mtune=native
+
+                      - name: LDFLAGS_OPT
+                        description: Linker optimisation flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -O3
+
+                      - name: FFLAGS_OMP
+                        description: Fortran OpenMP flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -fopenmp
+
+                      - name: CFLAGS_OMP
+                        description: C OpenMP flags
+                        user_configurable: true
+                        enabled_value:
+                            default: -fopenmp
+
+                      - name: PICFLAG
+                        description: Position-independent-code flag
+                        user_configurable: true
+                        enabled_value:
+                            default: -fPIC
+
+                      - name: USE_PAPI
+                        description: Enable PAPI profiling
+                        user_configurable: true
+                        enabled_value:
+                            default: 'false'
+
+                      - name: OPENACC
+                        description: Enable OpenACC offload
+                        user_configurable: true
+                        enabled_value:
+                            default: 'false'
+
+                      # libnetcdf.so leaves the HDF5 symbols to be resolved at
+                      # the final executable link; MPAS exposes MPAS_EXTERNAL_LIBS
+                      # as the sanctioned hook to append extra libraries.
+                      - name: MPAS_EXTERNAL_LIBS
+                        description: Extra libraries appended to the MPAS link (HDF5 for netCDF-4)
+                        enabled_value:
+                            default: -L${hdf5.prefix}/lib -lhdf5_hl -lhdf5 -lz ${hdf5.libs}
+
+                      - name: CPPFLAGS
+                        description: C preprocessor defines
+                        user_configurable: true
+                        enabled_value:
+                            default: -D_MPI
+
+            - target: atmosphere
+              configurations:
+                  command: make -j ${KEZ_NPROC} CORE=atmosphere all
+                  environment: *mpas_env
+                  options: *mpas_vars
+
+        # The make flow leaves the coupled executables at the source root.
+        postprocessing: |-
+            mkdir -p ${mpas.prefix}/bin
+            cp -v atmosphere_model init_atmosphere_model ${mpas.prefix}/bin/ 2>/dev/null || true
+
+    properties:
+        lib: ${mpas.prefix}/lib
+        include: ${mpas.prefix}/include

@@ -1,0 +1,383 @@
+---
+kez:
+    mpas:
+        description: "MPAS - Model for Prediction Across Scales. A collaborative software framework for weather and climate applications that uses unstructured
+            Voronoi meshes; the atmosphere core (MPAS-A) is the primary HPC target.\n"
+        version: 8.4.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-openmp
+                      description: Enable OpenMP threading (sets the OPENMP makefile variable)
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-openmp-offload
+                      description: Enable OpenMP GPU offload (sets OPENMP_OFFLOAD; NVHPC target)
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-debug
+                      description: Build with DEBUG=true (reduced optimization)
+                      enabled: false
+                      enabled_value:
+                      disabled_value:
+            stages:
+                - target: init_atmosphere
+                  configurations:
+                      options:
+                          - name: BUILD_TARGET
+                            description: MPAS compiler build target (gnu, gfortran, ifort, nvhpc, ...)
+                            enabled: true
+                            enabled_value: gnu
+                          - name: FFLAGS_PROMOTION
+                            description: Fortran real/double-8 promotion flags
+                            enabled: true
+                            enabled_value: -fdefault-real-8 -fdefault-double-8
+                          - name: FFLAGS_OPT
+                            description: Fortran optimisation flags
+                            enabled: true
+                            enabled_value: -std=f2008 -O3 -march=native -mtune=native -ffree-line-length-none -fconvert=big-endian -ffree-form
+                          - name: CFLAGS_OPT
+                            description: C optimisation flags
+                            enabled: true
+                            enabled_value: -O3 -march=native -mtune=native
+                          - name: CXXFLAGS_OPT
+                            description: C++ optimisation flags
+                            enabled: true
+                            enabled_value: -O3 -march=native -mtune=native
+                          - name: LDFLAGS_OPT
+                            description: Linker optimisation flags
+                            enabled: true
+                            enabled_value: -O3
+                          - name: FFLAGS_OMP
+                            description: Fortran OpenMP flags
+                            enabled: true
+                            enabled_value: -fopenmp
+                          - name: CFLAGS_OMP
+                            description: C OpenMP flags
+                            enabled: true
+                            enabled_value: -fopenmp
+                          - name: PICFLAG
+                            description: Position-independent-code flag
+                            enabled: true
+                            enabled_value: -fPIC
+                          - name: USE_PAPI
+                            description: Enable PAPI profiling
+                            enabled: true
+                            enabled_value: false
+                          - name: OPENACC
+                            description: Enable OpenACC offload
+                            enabled: true
+                            enabled_value: false
+                          - name: CPPFLAGS
+                            description: C preprocessor defines
+                            enabled: true
+                            enabled_value: -D_MPI
+                - target: atmosphere
+                  configurations:
+                      options:
+                          - name: BUILD_TARGET
+                            description: MPAS compiler build target (gnu, gfortran, ifort, nvhpc, ...)
+                            enabled: true
+                            enabled_value: gnu
+                          - name: FFLAGS_PROMOTION
+                            description: Fortran real/double-8 promotion flags
+                            enabled: true
+                            enabled_value: -fdefault-real-8 -fdefault-double-8
+                          - name: FFLAGS_OPT
+                            description: Fortran optimisation flags
+                            enabled: true
+                            enabled_value: -std=f2008 -O3 -march=native -mtune=native -ffree-line-length-none -fconvert=big-endian -ffree-form
+                          - name: CFLAGS_OPT
+                            description: C optimisation flags
+                            enabled: true
+                            enabled_value: -O3 -march=native -mtune=native
+                          - name: CXXFLAGS_OPT
+                            description: C++ optimisation flags
+                            enabled: true
+                            enabled_value: -O3 -march=native -mtune=native
+                          - name: LDFLAGS_OPT
+                            description: Linker optimisation flags
+                            enabled: true
+                            enabled_value: -O3
+                          - name: FFLAGS_OMP
+                            description: Fortran OpenMP flags
+                            enabled: true
+                            enabled_value: -fopenmp
+                          - name: CFLAGS_OMP
+                            description: C OpenMP flags
+                            enabled: true
+                            enabled_value: -fopenmp
+                          - name: PICFLAG
+                            description: Position-independent-code flag
+                            enabled: true
+                            enabled_value: -fPIC
+                          - name: USE_PAPI
+                            description: Enable PAPI profiling
+                            enabled: true
+                            enabled_value: false
+                          - name: OPENACC
+                            description: Enable OpenACC offload
+                            enabled: true
+                            enabled_value: false
+                          - name: CPPFLAGS
+                            description: C preprocessor defines
+                            enabled: true
+                            enabled_value: -D_MPI
+    pnetcdf:
+        description: Parallel netCDF is a parallel I/O library that provides a simple interface for writing and reading scientific data
+        version: 1.15.0
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-cxx
+                      description: Enable C++ interface
+                      enabled: true
+                      enabled_value:
+                    - name: enable-fortran
+                      description: Enable Fortran interface
+                      enabled: true
+                      enabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${pnetcdf.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${pnetcdf.ldflags}
+    netcdf:
+        description: An abstract package for merging netcdf-c and netcdf-fortran into a single package.
+        compiler: system
+    netcdf-fortran:
+        description: Unidata netCDF Fortran library, providing the Fortran 77/90 APIs on top of the netCDF-C library
+        version: 4.6.4
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-shared
+                      description: Build shared libraries
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${netcdf-fortran.prefix}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${netcdf-c.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${netcdf-c.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${netcdf-c.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${netcdf-c.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${netcdf-c.ldflags} ${netcdf-fortran.ldflags}
+    netcdf-c:
+        description: Unidata netCDF C library, a self-describing, portable, array-oriented set of software libraries and data formats for scientific 
+            data, with the netCDF-4/HDF5 backend enabled
+        version: 4.10.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-shared
+                      description: Build shared libraries, required for --enable-plugins dynamic filter loading
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                    - name: enable-pnetcdf
+                      description: Enable parallel netCDF (pnetCDF) support
+                      enabled: false
+                      enabled_value:
+                    - name: with-default-chunk-size
+                      description: Default chunk size in bytes for netCDF-4 variables
+                      enabled: true
+                      enabled_value: 4194304
+                    - name: with-default-chunk-cache-size
+                      description: Default per-variable chunk cache size in bytes, raised above the upstream default for large HPC datasets
+                      enabled: true
+                      enabled_value: 134217728
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${netcdf-c.prefix}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${hdf5.incflags} ${zlib.incflags} ${zstd.incflags} ${bzip2.incflags} ${mpi.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${hdf5.incflags} ${zlib.incflags} ${zstd.incflags} ${bzip2.incflags} 
+                          ${mpi.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${hdf5.incflags} ${zlib.incflags} ${zstd.incflags} ${bzip2.incflags} 
+                          ${mpi.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${hdf5.incflags} ${zlib.incflags} ${zstd.incflags} ${bzip2.incflags} 
+                          ${mpi.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${hdf5.ldflags} ${zlib.ldflags} ${zstd.ldflags} ${bzip2.ldflags} ${mpi.ldflags} 
+                          ${netcdf-c.ldflags}
+    hdf5:
+        description: High-performance data management and storage suite
+        version: 2.1.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: BUILD_SHARED_LIBS
+                      description: Build shared libraries
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_BUILD_CPP_LIB
+                      description: Build C++ library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_FORTRAN
+                      description: Build Fortran library
+                      enabled: false
+                      enabled_value: ON
+                    - name: HDF5_BUILD_HL_LIB
+                      description: Build High Level library
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_BUILD_TOOLS
+                      description: Build tools
+                      enabled: true
+                      enabled_value: ON
+                    - name: HDF5_ENABLE_PARALLEL
+                      description: Enable parallel support
+                      enabled: true
+                      enabled_value: ON
+                      requires:
+                          - mpi
+                    - name: HDF5_ENABLE_ZLIB_SUPPORT
+                      description: Enable Zlib (deflate) compression filters
+                      enabled: true
+                      enabled_value: ON
+                      requires:
+                          - zlib
+                    - name: CMAKE_INSTALL_PREFIX
+                      enabled: true
+                      enabled_value: ${hdf5.prefix}
+                    - name: CMAKE_BUILD_TYPE
+                      enabled: true
+                      enabled_value: Release
+                    - name: CMAKE_C_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CMAKE_CXX_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: CMAKE_Fortran_COMPILER
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CMAKE_C_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_CXX_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_Fortran_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_CUDA_FLAGS
+                      enabled: true
+                      enabled_value: -O3 -Xptxas -O3 ${mpi.incflags} ${zlib.incflags}
+                    - name: CMAKE_EXE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${zlib.ldflags} ${hdf5.ldflags} ${mpi.libs} ${zlib.libs}
+                    - name: CMAKE_SHARED_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${zlib.ldflags} ${hdf5.ldflags} ${mpi.libs} ${zlib.libs}
+                    - name: CMAKE_MODULE_LINKER_FLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${zlib.ldflags} ${hdf5.ldflags} ${mpi.libs} ${zlib.libs}
+                    - name: CMAKE_BUILD_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${zlib.lib};${hdf5.lib}
+                    - name: CMAKE_INSTALL_RPATH
+                      enabled: true
+                      enabled_value: ${compiler.lib};${mpi.lib};${zlib.lib};${hdf5.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${mpi.prefix};${zlib.prefix}
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+    bzip2:
+        description: A high-quality data compressor
+        version: 1.0.8
+        compiler: system
+        build:
+            stages:
+                - target: -f Makefile-libbz2_so
+                  configurations:
+                      options:
+                          - name: CFLAGS
+                            description: C compiler flags
+                            enabled: true
+                            enabled_value: -O3 -fPIC -D_FILE_OFFSET_BITS=64
+                - target:
+                  configurations:
+                      options:
+                          - name: CFLAGS
+                            description: C compiler flags
+                            enabled: true
+                            enabled_value: -O3 -fPIC -D_FILE_OFFSET_BITS=64
+recipe:
+    abstract_packages:
+        mpi: openmpi
+    dependencies:
+        - mpas
+        - pnetcdf
+        - netcdf
+        - netcdf-fortran
+        - netcdf-c
+        - zstd
+        - hdf5
+        - zlib
+        - openmpi
+        - bzip2
+    targets:
+        - mpas
