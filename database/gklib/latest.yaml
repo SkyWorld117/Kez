@@ -50,5 +50,5 @@ recipe:
     properties:
         lib: ${gklib.prefix}/lib
         libs:
-            default: -lGKlib
+            default: ${gklib.lib}/libGKlib.a
         include: ${gklib.prefix}/include

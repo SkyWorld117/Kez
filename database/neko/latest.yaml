@@ -21,9 +21,6 @@ recipe:
         - json-fortran
         - metis
         - parmetis
-        # libparmetis.so has a DT_NEEDED on libGKlib; declaring gklib keeps
-        # its -L on the link line so the configure probe for -lparmetis passes.
-        - gklib
 
     build:
         # The release tarball ships a pre-generated configure script, so no
