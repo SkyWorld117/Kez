@@ -67,6 +67,8 @@ UiArgumentsParseResult parse_ui_arguments(const CommandArguments& arguments) {
         result.command = UiCommand::Compiler;
     } else if (command == "mpi") {
         result.command = UiCommand::MPI;
+    } else if (command == "vendor") {
+        result.command = UiCommand::Vendor;
     } else if (command == "factory") {
         result.command = UiCommand::Factory;
     } else if (command == "info") {
@@ -380,6 +382,25 @@ ManagedEnvironmentArgumentsParseResult parse_managed_environment_arguments(
         parse_exact_name(arguments, command + " remove", result.arguments.name, result.error);
     } else {
         result.error = "Unknown " + command + " command: " + action;
+    }
+    return result;
+}
+
+VendorArgumentsParseResult parse_vendor_arguments(const CommandArguments& arguments) {
+    VendorArgumentsParseResult result;
+    if (arguments.empty() || arguments.front() == "-h" || arguments.front() == "--help") {
+        return result;
+    }
+
+    const std::string& action = arguments.front();
+    if (action == "list") {
+        result.arguments.action = VendorAction::List;
+        parse_no_arguments(arguments, "vendor list", result.error);
+    } else if (action == "remove") {
+        result.arguments.action = VendorAction::Remove;
+        parse_exact_name(arguments, "vendor remove", result.arguments.name, result.error);
+    } else {
+        result.error = "Unknown vendor command: " + action;
     }
     return result;
 }

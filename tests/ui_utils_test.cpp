@@ -13,6 +13,7 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <ui/commands.hpp>
 #include <ui/ui_utils.hpp>
 #include <vector>
 
@@ -41,6 +42,7 @@ namespace {
                                            "  compilers: env/compilers\n"
                                            "  mpis: env/mpis\n"
                                            "  vendors: env/vendors\n"
+                                           "  modulefiles: modulefiles\n"
                                            "  absolute: " +
                                                (root_ / "absolute").string() + "\n");
             setenv("KEZ_HOME", root_.c_str(), 1);
@@ -233,6 +235,26 @@ kez:
         list_directories(root_ / "missing", "environments");
         EXPECT_NE(testing::internal::GetCapturedStdout().find("No environments found"),
                   std::string::npos);
+    }
+
+    TEST_F(TemporaryUiEnvironment, ListsAndRemovesInstalledVendors) {
+        const std::filesystem::path vendors    = root_ / "work/env/vendors";
+        const std::filesystem::path modulefile = root_ / "work/modulefiles/cuda-12.8";
+        std::filesystem::create_directories(vendors / "cuda-12.8");
+        write(modulefile, "modulefile\n");
+
+        testing::internal::CaptureStdout();
+        execute_vendor({"list"});
+        const std::string listed = testing::internal::GetCapturedStdout();
+        EXPECT_NE(listed.find("Available vendors"), std::string::npos);
+        EXPECT_NE(listed.find("cuda-12.8"), std::string::npos);
+
+        testing::internal::CaptureStdout();
+        execute_vendor({"remove", "cuda-12.8"});
+        const std::string removed = testing::internal::GetCapturedStdout();
+        EXPECT_NE(removed.find("vendor removed: cuda-12.8"), std::string::npos);
+        EXPECT_FALSE(std::filesystem::exists(vendors / "cuda-12.8"));
+        EXPECT_FALSE(std::filesystem::exists(modulefile));
     }
 
     TEST_F(TemporaryUiEnvironment, EmitsActivationAndDeactivationCommandsForExistingPaths) {

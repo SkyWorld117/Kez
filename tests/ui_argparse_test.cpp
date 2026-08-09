@@ -20,6 +20,7 @@ namespace {
         EXPECT_TRUE(install.error.empty());
         EXPECT_EQ(install.command, UiCommand::Install);
         EXPECT_EQ(install.arguments, (CommandArguments {"hdf5", "--dry-run"}));
+        EXPECT_EQ(parse_ui_arguments({"vendor", "list"}).command, UiCommand::Vendor);
         EXPECT_EQ(parse_ui_arguments({"unknown"}).error, "Unknown command: unknown");
     }
 
@@ -118,6 +119,17 @@ namespace {
         EXPECT_EQ(load.arguments.name, "gcc-14");
         EXPECT_EQ(parse_managed_environment_arguments({"unload", "extra"}, "mpi").error,
                   "mpi unload does not accept additional arguments");
+
+        const VendorArgumentsParseResult remove = parse_vendor_arguments({"remove", "cuda-12.8"});
+        EXPECT_TRUE(remove.error.empty());
+        EXPECT_EQ(remove.arguments.action, VendorAction::Remove);
+        EXPECT_EQ(remove.arguments.name, "cuda-12.8");
+        EXPECT_EQ(parse_vendor_arguments({"list", "extra"}).error,
+                  "vendor list does not accept additional arguments");
+        EXPECT_EQ(parse_vendor_arguments({"remove"}).error,
+                  "vendor remove requires exactly one name");
+        EXPECT_EQ(parse_vendor_arguments({"load", "cuda-12.8"}).error,
+                  "Unknown vendor command: load");
     }
 
     TEST(UiArgparse, ParsesFactoryCommandsAndBuildOptions) {

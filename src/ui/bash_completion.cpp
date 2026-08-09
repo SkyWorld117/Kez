@@ -159,6 +159,19 @@ namespace {
         return {};
     }
 
+    std::vector<std::string> vendor_suggestions(int current_word_index,
+                                                const std::vector<std::string>& words) {
+        if (current_word_index == 2) {
+            return {"list", "remove", "-h", "--help"};
+        }
+        if (current_word_index == 3 && word_at(words, 2) == "remove") {
+            std::vector<std::string> result = help_options();
+            append(result, configured_directories("vendors"));
+            return result;
+        }
+        return {};
+    }
+
     std::vector<std::string> install_suggestions(int current_word_index,
                                                  const std::vector<std::string>& words,
                                                  bool utility) {
@@ -316,8 +329,9 @@ namespace {
     std::vector<std::string> command_suggestions(int current_word_index,
                                                  const std::vector<std::string>& words) {
         if (current_word_index == 1) {
-            return {"init",    "update", "install", "uconf", "utilities", "env", "compiler", "mpi",
-                    "factory", "info",   "dbcheck", "-h",    "--help",    "-V",  "--version"};
+            return {"init",     "update", "install", "uconf",    "utilities", "env",
+                    "compiler", "mpi",    "vendor",  "factory",  "info",      "dbcheck",
+                    "-h",       "--help", "-V",      "--version"};
         }
 
         const std::string command = word_at(words, 1);
@@ -341,6 +355,9 @@ namespace {
         }
         if (command == "mpi") {
             return managed_environment_suggestions(current_word_index, words, "mpis");
+        }
+        if (command == "vendor") {
+            return vendor_suggestions(current_word_index, words);
         }
         if (command == "factory") {
             return factory_suggestions(current_word_index, words);

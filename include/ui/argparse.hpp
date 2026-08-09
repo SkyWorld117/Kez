@@ -16,6 +16,7 @@ enum class UiCommand {
     Environment,
     Compiler,
     MPI,
+    Vendor,
     Factory,
     Info,
     DbCheck,
@@ -186,6 +187,24 @@ struct ManagedEnvironmentArgumentsParseResult {
 /** @brief Parse compiler or MPI arguments using @p command in diagnostics. */
 ManagedEnvironmentArgumentsParseResult parse_managed_environment_arguments(
     const CommandArguments& arguments, const std::string& command);
+
+/** @brief Supported vendor-management actions. */
+enum class VendorAction { Help, List, Remove };
+
+/** @brief Parsed vendor action and optional installation name. */
+struct VendorArguments {
+    VendorAction action = VendorAction::Help;
+    std::string name;
+};
+
+/** @brief Non-terminating result of vendor argument parsing. */
+struct VendorArgumentsParseResult {
+    VendorArguments arguments;
+    std::string error;
+};
+
+/** @brief Parse @c vendor arguments without printing or exiting. */
+VendorArgumentsParseResult parse_vendor_arguments(const CommandArguments& arguments);
 
 /** @brief Options controlling factory-build plan execution. */
 struct FactoryBuildOptions {

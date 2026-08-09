@@ -12,13 +12,13 @@
  *
  * Suggestions are derived from:
  *   - The set of valid subcommands (`init`, `install`, `env`, `compiler`,
- *     `mpi`, `factory`, `uconf`, `info`, `utilities`, `dbcheck`, etc.).
+ *     `mpi`, `vendor`, `factory`, `uconf`, `info`, `utilities`, `dbcheck`, etc.).
  *   - Subcommand-specific flags and options (e.g. `--dry-run`, `--force`,
  *     `--env`, `--read`).  Single-use options that have already appeared on
  *     the command line are **not** suggested again.
  *   - Package names discovered by scanning the directory pointed to by the
  *     `KEZ_DB` environment variable.
- *   - Configured environment, compiler, MPI, and factory directory names
+ *   - Configured environment, compiler, MPI, vendor, and factory directory names
  *     under the path resolved via `configured_work_path()` (requires
  *     `KEZ_HOME` and `KEZ_WORKDIR` to be set).
  *   - Filesystem entries (files and directories) when completing after a
@@ -47,6 +47,7 @@
  * @see install_suggestions()  Logic for the `install` subcommand.
  * @see environment_suggestions()  Logic for the `env` subcommand.
  * @see managed_environment_suggestions()  Logic for `compiler` / `mpi`.
+ * @see vendor_suggestions()  Logic for the `vendor` subcommand.
  * @see factory_suggestions()  Logic for the `factory` subcommand.
  */
 std::vector<std::string> completion_suggestions(int current_word_index,

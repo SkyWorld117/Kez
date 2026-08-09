@@ -115,7 +115,7 @@ Command-line interface, implemented with lightweight manual argument parsing.
 | File | Responsibility |
 |---|---|
 | `ui.cpp` | Command dispatcher |
-| `environment.cpp` | `env`, `compiler`, `mpi` commands |
+| `environment.cpp` | `env`, `compiler`, `mpi`, `vendor` commands |
 | `factory.cpp` | `factory` commands |
 | `init.cpp` | `init` and `update` commands |
 | `install.cpp` | `install` and `utilities` commands |

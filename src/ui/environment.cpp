@@ -27,6 +27,9 @@ namespace {
         INFO("Usage: kez " + command + " <load|unload|list|which|remove> [name]");
     }
 
+    /** @brief Print the usage message for the vendor subcommand. */
+    void vendor_help() { INFO("Usage: kez vendor <list|remove> [name]"); }
+
     /** @brief Create a managed directory, erroring if it already exists. */
     void create_managed_directory(const std::filesystem::path& path,
                                   const std::string& description) {
@@ -210,4 +213,31 @@ void execute_compiler(const CommandArguments& arguments) {
 void execute_mpi(const CommandArguments& arguments) {
     execute_managed_environment(arguments, "mpi", "mpis", "KEZ_MPI", "MPI environment",
                                 "MPI environments");
+}
+
+/** @brief Dispatch vendor list and remove actions. */
+void execute_vendor(const CommandArguments& arguments) {
+    const VendorArgumentsParseResult parsed = parse_vendor_arguments(arguments);
+    if (!parsed.error.empty()) {
+        ERROR(parsed.error);
+        exit(EXIT_FAILURE);
+    }
+    if (parsed.arguments.action == VendorAction::Help) {
+        vendor_help();
+        return;
+    }
+
+    const std::filesystem::path root = configured_work_path("vendors");
+    switch (parsed.arguments.action) {
+        case VendorAction::Help: return;
+        case VendorAction::List: list_directories(root, "vendors"); return;
+        case VendorAction::Remove: {
+            const std::string& name = parsed.arguments.name;
+            validate_path_component(name, "vendor remove name");
+            const std::filesystem::path path = root / name;
+            remove_directory(path, "vendor");
+            remove_modulefile(path);
+            return;
+        }
+    }
 }

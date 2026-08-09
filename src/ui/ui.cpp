@@ -30,6 +30,7 @@ namespace {
              "  env         Manage application environments\n"
              "  compiler    Manage installed compiler environments\n"
              "  mpi         Manage installed MPI environments\n"
+             "  vendor      List or remove installed vendor environments\n"
              "  factory     Manage batch build and profiling factories\n"
              "  info        Show package metadata\n"
              "  dbcheck     Parse and validate the package database\n\n"
@@ -68,6 +69,7 @@ void run_ui(int argc, char* argv[]) {
         case UiCommand::Environment: execute_environment(parsed.arguments); return;
         case UiCommand::Compiler: execute_compiler(parsed.arguments); return;
         case UiCommand::MPI: execute_mpi(parsed.arguments); return;
+        case UiCommand::Vendor: execute_vendor(parsed.arguments); return;
         case UiCommand::Factory: execute_factory(parsed.arguments); return;
         case UiCommand::Info: execute_info(parsed.arguments); return;
         case UiCommand::DbCheck: execute_dbcheck(parsed.arguments); return;

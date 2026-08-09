@@ -21,7 +21,8 @@
  * @see  CommandArguments (std::vector<std::string>) in commands.hpp
  * @see  execute_init, execute_install, execute_info, execute_dbcheck,
  *       execute_update, execute_utilities, execute_uconf,
- *       execute_environment, execute_compiler, execute_mpi, execute_factory
+ *       execute_environment, execute_compiler, execute_mpi, execute_vendor,
+ *       execute_factory
  *
  * @note  This function does **not** return when an unknown command is given;
  *        it calls ERROR() and exit(EXIT_FAILURE) instead.

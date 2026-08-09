@@ -297,6 +297,23 @@ Only one MPI can be loaded at a time.
 
 ---
 
+### `kez vendor`
+
+List or remove installed vendor environments.
+
+```
+Usage: kez vendor <list|remove> [name]
+```
+
+**Subcommands:**
+
+| Subcommand | Description |
+|---|---|
+| `list` | List installed vendor environments |
+| `remove NAME` | Remove a vendor environment and its module file |
+
+---
+
 ### `kez utilities`
 
 Manage the shared utilities environment.

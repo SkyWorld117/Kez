@@ -228,6 +228,23 @@ void execute_compiler(const CommandArguments& arguments);
 void execute_mpi(const CommandArguments& arguments);
 
 /**
+ * @brief List or remove installed vendor environments.
+ *
+ * Manages vendor installations under `KEZ_WORKDIR/vendors/`. Supported
+ * actions:
+ * - `list`        : List all installed vendors
+ * - `remove NAME` : Delete a vendor installation and its modulefile
+ *
+ * @param arguments  Command-line tokens after the `vendor` subcommand.
+ *                   `remove` requires a second token giving the vendor name.
+ *                   - `-h` / `--help` : Print usage and return
+ *
+ * @see execute_compiler
+ * @see execute_mpi
+ */
+void execute_vendor(const CommandArguments& arguments);
+
+/**
  * @brief Show metadata for a single package from the database.
  *
  * Displays the package's name, description, author, type, toolchain,
