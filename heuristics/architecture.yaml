@@ -1,8 +1,8 @@
 ---
 architecture:
     llvm:
-        x86_64: X64
-        arm64: ARM64
+        x86_64: X86
+        arm64: AArch64
     ripgrep:
         x86_64: x86_64-unknown-linux-musl
         arm64: aarch64-unknown-linux-gnu

@@ -3,17 +3,90 @@ recipe:
     name: llvm
     description: LLVM Compiler Infrastructure
     type: compiler
+    toolchain: cmake
 
     source:
-        type: tarball
+        type: git
+        url: https://github.com/llvm/llvm-project
         releases:
             - version: 22.1.8
-              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-${kez.arch.llvm}.tar.xz
-            - version: 21.1.0
-              url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-${kez.arch.llvm}.tar.xz
+              tag: llvmorg-22.1.8
+            - version: 21.1.8
+              tag: llvmorg-21.1.8
+            - version: 20.1.8
+              tag: llvmorg-20.1.8
 
     build:
-        postprocessing: cp -r ${source}/* ${llvm.prefix}
+        configurations:
+            # The llvm-project monorepo has no top-level CMakeLists.txt; the LLVM
+            # project cmake lives in llvm/ (with clang/ and lld/ as siblings that
+            # LLVM_ENABLE_PROJECTS picks up), so configure from there. The build
+            # dir still lands at ${source}/build for the standard cmake stages.
+            command: cmake -S llvm -B build
+
+            options:
+                - name: LLVM_ENABLE_PROJECTS
+                  description: >
+                      Sub-projects to build: clang, lld for device-code linking,
+                      the openmp runtime (libomp + omp.h) that clang -fopenmp
+                      links against, and the flang Fortran frontend (built on the
+                      mlir project, so mlir must be enabled alongside it).
+                  enabled_value:
+                      default: flang;mlir;clang;lld;openmp
+
+                - name: LLVM_TARGETS_TO_BUILD
+                  description: >
+                      Target backends compiled into clang. NVPTX is mandatory for
+                      AdaptiveCpp to compile SYCL kernels to NVIDIA GPUs; add the
+                      host target (X86 or AArch64) matching the machine.
+                  user_configurable: true
+                  enabled_value:
+                      default: ${kez.arch.llvm};NVPTX
+
+                - name: LLVM_BUILD_LLVM_DYLIB
+                  description: Build a monolithic libLLVM shared library (required by AdaptiveCpp's clang plugin)
+                  enabled_value:
+                      default: ON
+
+                - name: LLVM_LINK_LLVM_DYLIB
+                  description: Link clang/lld against the monolithic libLLVM
+                  enabled_value:
+                      default: ON
+
+                - name: LLVM_ENABLE_ASSERTIONS
+                  description: Enable LLVM assertions (kept off for a release build)
+                  enabled_value:
+                      default: OFF
+
+                - name: LLVM_INCLUDE_TESTS
+                  description: Build the LLVM test suite
+                  enabled_value:
+                      default: OFF
+
+                - name: LLVM_INCLUDE_BENCHMARKS
+                  description: Build the LLVM benchmark suite
+                  enabled_value:
+                      default: OFF
+
+                - name: LLVM_INCLUDE_EXAMPLES
+                  description: Build LLVM examples
+                  enabled_value:
+                      default: OFF
+
+                - name: LLVM_INCLUDE_DOCS
+                  description: Build LLVM documentation
+                  enabled_value:
+                      default: OFF
+
+                - name: LLVM_PARALLEL_LINK_JOBS
+                  description: Cap parallel link jobs (each LLVM link uses a few GB of RSS)
+                  user_configurable: true
+                  enabled_value:
+                      default: ${KEZ_NPROC}
+
+        stages:
+            - target:
+            - target: install
 
     properties:
         c: ${llvm.prefix}/bin/clang
