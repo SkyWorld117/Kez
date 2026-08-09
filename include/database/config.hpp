@@ -596,7 +596,6 @@ inline const Property* find_property(const PackageConfig& config, const std::str
  * |-----------------|-----------------|
  * | ``"incflags"``  | ``"include"``   |
  * | ``"ldflags"``   | ``"lib"``       |
- * | ``"nvldflags"`` | ``"lib"``       |
  *
  * @param config   The package configuration to inspect.
  * @param property The property name (or alias) to query.
@@ -612,7 +611,7 @@ inline bool has_property(const PackageConfig& config, const std::string& propert
     if (property == "incflags") {
         return find_property(config, "include") != nullptr;
     }
-    if (property == "ldflags" || property == "nvldflags") {
+    if (property == "ldflags") {
         return find_property(config, "lib") != nullptr;
     }
     return false;

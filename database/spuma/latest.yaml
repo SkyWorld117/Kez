@@ -123,16 +123,16 @@ recipe:
                 - name: FOAM_EXTRA_CFLAGS
                   description: Extra compiler flags for OpenFOAM to bake RPATH
                   user_configurable: true
-                  default: ${spuma.nvldflags} ${gmp.incflags} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+                  default: ${spuma.ldflags} ${gmp.incflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs} ${cuda.ldflags}
 
                 - name: FOAM_EXTRA_CXXFLAGS
                   description: Extra C++ compiler flags for OpenFOAM to bake RPATH
                   user_configurable: true
-                  default: ${spuma.nvldflags} ${gmp.incflags} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+                  default: ${spuma.ldflags} ${gmp.incflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs} ${cuda.ldflags}
 
                 - name: FOAM_EXTRA_LDFLAGS
                   description: Extra linker flags for OpenFOAM to bake RPATH
-                  default: ${spuma.nvldflags} ${gmp.nvldflags} ${gmp.libs} ${mpfr.nvldflags} ${mpfr.libs} ${cuda.nvldflags}
+                  default: ${spuma.ldflags} ${gmp.ldflags} ${gmp.libs} ${mpfr.ldflags} ${mpfr.libs} ${cuda.ldflags}
 
         postprocessing: |-
             cp -r ${source}/platforms/linux*/* ${spuma.prefix}/
@@ -144,6 +144,3 @@ recipe:
         lib: ${spuma.prefix}/lib
         ldflags:
             default: -L${spuma.prefix}/lib -Wl,-rpath,${spuma.prefix}/lib -L${spuma.prefix}/lib/sys-openmpi -Wl,-rpath,${spuma.prefix}/lib/sys-openmpi
-        nvldflags:
-            default: -L${spuma.prefix}/lib -Xlinker -rpath,${spuma.prefix}/lib -L${spuma.prefix}/lib/sys-openmpi -Xlinker 
-                -rpath,${spuma.prefix}/lib/sys-openmpi

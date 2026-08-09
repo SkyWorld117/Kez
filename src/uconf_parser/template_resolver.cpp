@@ -320,12 +320,9 @@ namespace {
                     --context.compiler_template_depth;
                     return value;
                 }
-                if ((property_name == "ldflags" || property_name == "nvldflags") &&
-                    find_property(*compiler, "lib") != nullptr) {
+                if (property_name == "ldflags" && find_property(*compiler, "lib") != nullptr) {
                     const std::string path  = resolve_parser_scalar("${compiler.lib}", context);
-                    const std::string value = property_name == "nvldflags"
-                                                  ? format_nvidia_library_path(path)
-                                                  : format_library_path(path, context);
+                    const std::string value = format_library_path(path, context);
                     --context.compiler_template_depth;
                     return value;
                 }
@@ -397,11 +394,10 @@ namespace {
             return format_include_path(
                 resolve_parser_scalar("${" + template_package_name + ".include}", context));
         }
-        if (property_name == "ldflags" || property_name == "nvldflags") {
+        if (property_name == "ldflags") {
             const std::string path =
                 resolve_parser_scalar("${" + template_package_name + ".lib}", context);
-            return property_name == "nvldflags" ? format_nvidia_library_path(path)
-                                                : format_library_path(path, context);
+            return format_library_path(path, context);
         }
 
         return resolve_declared_property(name, *config, property_name, context);

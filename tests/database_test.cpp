@@ -317,7 +317,6 @@ recipe:
         EXPECT_EQ(find_property(generic, "missing"), nullptr);
         EXPECT_TRUE(has_property(generic, "incflags"));
         EXPECT_TRUE(has_property(generic, "ldflags"));
-        EXPECT_TRUE(has_property(generic, "nvldflags"));
         EXPECT_TRUE(has_property(generic, "libs"));
         EXPECT_FALSE(has_property(generic, "bin"));
     }

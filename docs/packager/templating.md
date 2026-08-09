@@ -19,8 +19,7 @@ Access any property declared by another package:
 |---|---|
 | `${foo.lib}` | Raw library directory of package `foo` |
 | `${foo.include}` | Raw include directory of package `foo` |
-| `${foo.ldflags}` | Linker flags derived from `lib` |
-| `${foo.nvldflags}` | NVIDIA linker-driver syntax flags |
+| `${foo.ldflags}` | Linker flags derived from `lib`, formatted for the selected compiler |
 | `${foo.incflags}` | Compiler `-I` flags derived from `include` |
 | `${foo.prefix}` | Installation prefix of package `foo` |
 | `${foo.version}` | Version of package `foo` |
@@ -72,7 +71,7 @@ multiple passes:
 
 1. Resolve Kez predefined variables (`kez.prefix`, `kez.arch`, etc.)
 2. Resolve package properties (`package.prefix`, `package.libs`, etc.)
-3. Resolve derived properties (`package.includes`, `package.ldflags`, `package.nvldflags`)
+3. Resolve derived properties (`package.includes`, `package.ldflags`)
 4. Resolve configuration option values (`package.config.<option_name>`)
 5. Resolve environment variable values (`package.env.<variable_name>`)
 

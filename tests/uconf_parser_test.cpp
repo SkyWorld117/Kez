@@ -591,7 +591,7 @@ recipe:
   toolchain: cmake
   dependencies: [library]
   build:
-    preprocessing: echo ${library.incflags} ${library.ldflags} ${library.nvldflags}
+    preprocessing: echo ${library.incflags} ${library.ldflags}
     configurations:
       command: cmake -B build
       options:
@@ -610,10 +610,8 @@ recipe:
 
         ASSERT_EQ(plan.size(), 1U);
         ASSERT_EQ(plan[0].commands.size(), 2U);
-        EXPECT_EQ(plan[0].commands[0],
-                  "echo -I/opt/env/library/include -L/opt/env/library/lib64 "
-                  "-Wl,-rpath,/opt/env/library/lib64 "
-                  "-L/opt/env/library/lib64 -Xlinker -rpath,/opt/env/library/lib64");
+        EXPECT_EQ(plan[0].commands[0], "echo -I/opt/env/library/include -L/opt/env/library/lib64 "
+                                       "-Wl,-rpath,/opt/env/library/lib64");
         const std::string& command = plan[0].commands[1];
         EXPECT_NE(command.find("-DFEATURE=ON"), std::string::npos);
         EXPECT_NE(command.find("-DCMAKE_INSTALL_PREFIX=\"/opt/env/application\""),

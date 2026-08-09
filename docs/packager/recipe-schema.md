@@ -383,8 +383,9 @@ properties:
 ```
 
 `include` and `lib` contain paths, not compiler flags. The parser derives
-`${package.incflags}`, `${package.ldflags}`, and `${package.nvldflags}` from them.
-Explicit `incflags`, `ldflags`, or `nvldflags` properties override the derived form.
+`${package.incflags}` and `${package.ldflags}` from them. `${package.ldflags}`
+uses the linker-driver syntax required by the package's selected compiler.
+Explicit `incflags` or `ldflags` properties override the derived form.
 
 For Autotools and CMake configurations, raw include/library paths from selected
 dependencies are written to generated compile/link options automatically. Linker/RPATH
