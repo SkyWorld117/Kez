@@ -2,9 +2,7 @@
 recipe:
     name: tcl
     description: >
-        Tcl - the Tool Command Language scripting language (8.6 line). Built
-        from the unix/ subdirectory of the source tree; configured static for
-        embedding by clients such as NAMD.
+        Tcl - the Tool Command Language scripting language (8.6 line).
     type: package
     toolchain: autotools
 

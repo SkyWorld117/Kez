@@ -3,8 +3,10 @@ recipe:
     name: json-fortran
     description: >
         JSON-Fortran - a Fortran 2008 library for parsing, writing and
-        manipulating JSON. The pure-Fortran implementation used by Neko and
-        other HPC codes; discovers via pkg-config (json-fortran.pc).
+        manipulating JSON. A pure-Fortran implementation used by Neko and
+        other HPC codes.
+    # Downstream code (e.g. Neko) locates the build via pkg-config
+    # (json-fortran.pc).
     type: package
     toolchain: cmake
 

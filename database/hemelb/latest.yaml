@@ -1,7 +1,9 @@
 ---
 recipe:
     name: hemelb
-    description: HemePure LBM blood flow solver (UCL-CCS); 2-stage build — bundled deps first, then src/
+    description: HemePure LBM blood flow solver (UCL-CCS)
+    # 2-stage build: the bundled dependencies are built first, then the src/
+    # tree.
     type: package
     toolchain: cmake
 

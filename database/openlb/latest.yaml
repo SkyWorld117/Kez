@@ -3,9 +3,10 @@ recipe:
     name: openlb
     description: >
         OpenLB - the open-source lattice Boltzmann solver. A C++ code library
-        with a large set of examples; the installed prefix is a self-contained
-        OpenLB source tree (with the core library pre-built) that downstream
-        applications compile their own examples against via OLB_ROOT.
+        with a large set of examples.
+    # The installed prefix is a self-contained OpenLB source tree (with the
+    # core library pre-built) that downstream applications compile their own
+    # examples against via OLB_ROOT.
     type: package
     toolchain: make
 

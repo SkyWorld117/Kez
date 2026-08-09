@@ -6,11 +6,11 @@ recipe:
         (UIUC Theoretical and Computational Biophysics Group) designed for
         high-performance simulation of large biomolecular systems with the
         CHARMM/VMD tool chain.
-        NOTE: the NAMD source tarball is distributed under the UIUC NAMD
-        license and its download is gated behind free registration at
-        https://www.ks.uiuc.edu/Research/namd/ ; the recipe points at the
-        canonical download location, which requires a logged-in session to
-        serve the archive.
+    # The NAMD source tarball is distributed under the UIUC NAMD license and
+    # its download is gated behind free registration at
+    # https://www.ks.uiuc.edu/Research/namd/; the recipe points at the canonical
+    # download location, which requires a logged-in session to serve the
+    # archive.
     type: package
     toolchain: make
 
