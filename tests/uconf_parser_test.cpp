@@ -21,6 +21,8 @@
 #include <string>
 #include <uconf_generator/uconf_generator.hpp>
 #include <uconf_parser/user_config_parser.hpp>
+#include <utils/bash_utils.hpp>
+#include <utils/file_utils.hpp>
 #include <vector>
 
 namespace {
@@ -260,8 +262,11 @@ recipe:
         EXPECT_EQ(commands[4],
                   "tar -czf '/opt/.cache/application-2.0.tar.gz' --format=posix -z source");
         EXPECT_EQ(commands[5], "cd source");
-        EXPECT_EQ(commands[6],
-                  "git apply '" + (path_ / "patches" / "application" / "fix.patch").string() + "'");
+        EXPECT_EQ(commands[6], "if [[ -e .git ]]; then git apply '" +
+                                   (path_ / "patches" / "application" / "fix.patch").string() +
+                                   "'; else patch --batch --forward -p1 --input='" +
+                                   (path_ / "patches" / "application" / "fix.patch").string() +
+                                   "'; fi");
         EXPECT_EQ(commands[7], "prepare /opt/env/.tmp/application/source");
         EXPECT_EQ(commands[8], "export CFLAGS=\"-O2 ${PATH}\"");
         EXPECT_EQ(commands[9], "cmake -B build -DFEATURE=ON "
@@ -290,6 +295,45 @@ recipe:
         ASSERT_EQ(local_plan.size(), 2U);
         ASSERT_FALSE(local_plan[1].commands.empty());
         EXPECT_EQ(local_plan[1].commands[0], "cp -a '" + local_source.string() + "' source");
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, AppliesPatchToNonGitLocalSource) {
+        const std::filesystem::path local_source = path_ / "local source";
+        const std::filesystem::path build_dir    = path_ / "build directory";
+        std::filesystem::create_directories(local_source);
+        std::filesystem::create_directories(build_dir);
+        write_file(local_source / "message.txt", "before\n");
+        write_file(path_ / "patches" / "application" / "fix.patch", R"(--- a/message.txt
++++ b/message.txt
+@@ -1 +1 @@
+-before
++after
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 1.0
+        url: https://example.invalid/application.tar.gz
+  build:
+    preprocessing: "true"
+)");
+
+        YAML::Node user_config = gen_user_config({"application"}, false, "system");
+        user_config["kez"]["application"]["version"]               = "dev@" + local_source.string();
+        user_config["kez"]["application"]["patches"][0]["enabled"] = true;
+        const BashCommandPlan plan = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        ASSERT_GE(plan[0].commands.size(), 3U);
+        const std::string apply_patch = "cd " + shell_single_quote(build_dir.string()) + " && " +
+                                        plan[0].commands[0] + " && " + plan[0].commands[1] +
+                                        " && " + plan[0].commands[2];
+        ASSERT_EQ(std::system(apply_patch.c_str()), 0);
+        EXPECT_EQ(read_file((build_dir / "source" / "message.txt").string()), "after\n");
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, ResolvesPythonEnvironmentTemplatesAndPlanMetadata) {

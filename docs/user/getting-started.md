@@ -10,6 +10,7 @@ Kez is supposed to run on Linux systems. It heavily relies on the GNU toolchain.
 - git
 - jq
 - tar
+- patch
 - gettext (autopoint)
 
 Since Kez is an HPC-focused package manager, it is designed to work seamlessly with HPC Linux distributions such as CentOS, Rocky Linux, and RHEL. It is tested on Rocky Linux.

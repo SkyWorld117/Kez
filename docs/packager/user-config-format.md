@@ -55,7 +55,7 @@ kez:
     # Listed alphabetically; all disabled by default.
     patches:
       - name: <patch_filename>     # Filename from patches/<pkg>/
-        enabled: false             # Set to true to apply via git apply
+        enabled: false             # Set to true to apply to the source tree
 
     build:                         # Present only if the recipe defines a build
                                    # AND the package is not a non-target
@@ -153,7 +153,10 @@ During parsing, each enabled patch is validated:
 - The patch name must pass a path-traversal check (the filename component
   must equal the full name — no `/` or `..` allowed).
 - The patch file must exist on disk at `KEZ_HOME/patches/<package>/<name>`.
-- Enabled patches are applied to the unpacked source via `git apply <path>`.
+- Enabled patches are applied after entering the unpacked source directory. Git
+  worktrees use `git apply`; all other source directories use GNU
+  `patch --batch --forward -p1`. Patch paths should therefore include one
+  leading component, as produced by standard Git-style `a/` and `b/` paths.
 
 ### `kez.<package>.build`
 

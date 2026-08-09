@@ -123,7 +123,10 @@ namespace {
             if (!std::filesystem::is_regular_file(path)) {
                 user_config_error("patch file does not exist: " + path.string());
             }
-            commands.push_back("git apply " + shell_single_quote(path.string()));
+            const std::string quoted_path = shell_single_quote(path.string());
+            commands.push_back("if [[ -e .git ]]; then git apply " + quoted_path +
+                               "; else patch --batch --forward -p1 --input=" + quoted_path +
+                               "; fi");
         }
     }
 
