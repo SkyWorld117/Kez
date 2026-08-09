@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <variant>
@@ -436,6 +437,8 @@ class PackageConfig {
 
     // ---- Parsed recipe fields -------------------------------------------
 
+    /** @brief Path to the YAML recipe from which this configuration was parsed. */
+    std::filesystem::path recipe_path;
     /** @brief Package name (unique identifier, e.g. ``"zlib"``). */
     std::string name;
     /** @brief Optional human-readable description of the package. */

@@ -16,6 +16,11 @@ mkdir database/<package_name>/
 Each package gets its own directory with a `latest.yaml` file. This format supports
 future multiple-version entries.
 
+If the package needs source patches, create `database/<package_name>/patches/`, place the patch
+files there, and describe each one in `patches/_rules.yaml`. See
+[Package Patches](recipe-schema.md#package-patches) for the version-constraint and default-state
+schema.
+
 ## 3. Write the Recipe
 
 Start with the minimal skeleton:

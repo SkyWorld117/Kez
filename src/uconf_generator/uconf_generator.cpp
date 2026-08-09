@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <database/config.hpp>
 #include <database/database.hpp>
+#include <database/patch_rules.hpp>
 #include <dependency_resolver/resolve_dependencies.hpp>
 #include <filesystem>
 #include <optional>
@@ -48,28 +49,6 @@ namespace {
             const auto selected = abstract_packages.find(target);
             result.insert(selected == abstract_packages.end() ? target : selected->second);
         }
-        return result;
-    }
-
-    std::vector<std::string> available_patches(const std::string& package_name) {
-        const std::string home = get_env_var_noerr("KEZ_HOME");
-        if (home.empty()) {
-            return {};
-        }
-
-        const std::filesystem::path directory =
-            std::filesystem::path(home) / "patches" / package_name;
-        if (!std::filesystem::is_directory(directory)) {
-            return {};
-        }
-
-        std::vector<std::string> result;
-        for (const auto& entry : std::filesystem::directory_iterator(directory)) {
-            if (entry.is_regular_file()) {
-                result.push_back(entry.path().filename().string());
-            }
-        }
-        std::sort(result.begin(), result.end());
         return result;
     }
 
@@ -156,38 +135,39 @@ namespace {
                                const std::string& default_compiler,
                                const std::string& resolved_version = "") {
         YAML::Node package_output(YAML::NodeType::Map);
+        std::string selected_version;
         if (package.description.has_value()) {
             package_output["description"] = *package.description;
         }
         if (package.source.has_value() && !package.source->releases.empty()) {
             // Use the dependency-resolved version when a specific version
             // was constrained; otherwise fall back to the first release.
-            std::string version = (resolved_version.empty() || resolved_version == "latest")
-                                      ? package.source->releases.front().version
-                                      : resolved_version;
+            selected_version = (resolved_version.empty() || resolved_version == "latest")
+                                   ? package.source->releases.front().version
+                                   : resolved_version;
             if (package.type == PackageType::MPI) {
                 std::string existing =
                     get_latest_existing_version(package.name, "mpis", PackageType::MPI);
-                if (!existing.empty()) version = existing;
+                if (!existing.empty()) selected_version = existing;
             } else if (package.type == PackageType::Vendor) {
                 std::string existing =
                     get_latest_existing_version(package.name, "vendors", PackageType::Vendor);
-                if (!existing.empty()) version = existing;
+                if (!existing.empty()) selected_version = existing;
             }
-            package_output["version"] = version;
+            package_output["version"] = selected_version;
         }
         if (package.type != PackageType::Vendor && package.type != PackageType::External &&
             package.toolchain() != Toolchain::Python) {
             package_output["compiler"] = default_compiler;
         }
 
-        const std::vector<std::string> patches = available_patches(package.name);
+        const std::vector<PatchRule> patches = applicable_patch_rules(package, selected_version);
         if (!patches.empty()) {
             YAML::Node patch_output(YAML::NodeType::Sequence);
-            for (const std::string& patch : patches) {
+            for (const PatchRule& patch : patches) {
                 YAML::Node item(YAML::NodeType::Map);
-                item["name"]    = patch;
-                item["enabled"] = false;
+                item["name"]    = patch.name;
+                item["enabled"] = patch.enabled;
                 patch_output.push_back(item);
             }
             package_output["patches"] = patch_output;

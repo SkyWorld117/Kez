@@ -12,13 +12,50 @@ database/
  │   └── latest.yaml
  ├── scotch/
  │   ├── latest.yaml
- │   └── 6.1.3-6.1.3.yaml   # Version-specific recipe
+ │   ├── 6.1.3-6.1.3.yaml   # Version-specific recipe
+ │   └── patches/
+ │       ├── _rules.yaml
+ │       └── fix-build.patch
  ...
 ```
 
 Most packages contain a single `latest.yaml` file. A package may also hold
 version-specific files named `<version>.yaml` alongside `latest.yaml`. Both
 formats are parsed identically.
+
+## Package Patches
+
+Patches live beside their package recipes in `database/<package>/patches/`. A package with a
+`patches` directory must include `_rules.yaml`, and every other regular file in the directory must
+have exactly one rule:
+
+```yaml
+---
+patches:
+    - name: fix-build.patch
+      enabled: true
+      versions:
+          - ">=1.2.0"
+          - "<2.0.0"
+    - name: optional-optimization.patch
+      enabled: false
+```
+
+Each rule has these fields:
+
+| Field | Required | Description |
+|---|---|---|
+| `name` | Yes | Patch filename. Paths and `_rules.yaml` are not accepted. |
+| `enabled` | Yes | Default state written to generated user configuration. |
+| `versions` | No | Sequence of `==`, `>=`, `>`, `<=`, or `<` constraints. All entries must match. Omission or an empty sequence applies to every version. |
+
+Only rules matching the resolved package version appear in generated configuration. Users may
+still override the generated `enabled` value. `kez dbcheck` validates rule syntax, duplicate and
+missing entries, and the one-to-one relationship between rules and patch files.
+
+Patch paths should have one leading component, as produced by standard Git-style `a/` and `b/`
+paths. Kez applies them with `git apply` in Git worktrees and with
+`patch --batch --forward -p1` in other source directories.
 
 
 ## Concrete Package Format

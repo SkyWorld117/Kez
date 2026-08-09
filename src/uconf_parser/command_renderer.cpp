@@ -3,7 +3,9 @@
  * @brief Rendering of resolved package build configurations into shell commands.
  */
 
+#include <algorithm>
 #include <cstdlib>
+#include <database/patch_rules.hpp>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -98,7 +100,7 @@ namespace {
         }
     }
 
-    void append_patch_commands(const ParsedUserPackage& package, UserConfigParserContext& context,
+    void append_patch_commands(const ParsedUserPackage& package,
                                std::vector<std::string>& commands) {
         if (!yaml_has(package.user_config, "patches")) {
             return;
@@ -107,6 +109,8 @@ namespace {
         if (!patches.IsSequence()) {
             user_config_error("package patches must be a sequence");
         }
+        const std::vector<PatchRule> rules =
+            load_patch_rules(package.database_config->recipe_path.parent_path());
         for (const YAML::Node& patch : patches) {
             if (!patch.IsMap() || !yaml_has(patch, "name") || !yaml_has(patch, "enabled")) {
                 user_config_error("patch entries must contain name and enabled fields");
@@ -115,11 +119,20 @@ namespace {
                 continue;
             }
             const std::string name = yaml_scalar(patch["name"], "patch name");
-            if (std::filesystem::path(name).filename() != name) {
+            if (name.empty() || name == "." || name == ".." ||
+                std::filesystem::path(name).filename() != name) {
                 user_config_error("invalid patch name '" + name + "'");
             }
+            const auto rule =
+                std::find_if(rules.begin(), rules.end(),
+                             [&name](const PatchRule& item) { return item.name == name; });
+            if (rule == rules.end()) {
+                user_config_error(
+                    "patch '" + name + "' is not declared in " +
+                    (package_patch_directory(*package.database_config) / "_rules.yaml").string());
+            }
             const std::filesystem::path path =
-                context.settings.kez_home / "patches" / package.requested_name / name;
+                package_patch_directory(*package.database_config) / name;
             if (!std::filesystem::is_regular_file(path)) {
                 user_config_error("patch file does not exist: " + path.string());
             }
@@ -158,7 +171,7 @@ std::vector<std::string> generate_package_commands(const ParsedUserPackage& pack
     }
 
     append_source_commands(package, context, commands);
-    append_patch_commands(package, context, commands);
+    append_patch_commands(package, commands);
 
     const Build& build = *package.transformed_build;
     if (build.preprocessing.has_value()) {

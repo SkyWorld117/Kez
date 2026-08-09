@@ -1,0 +1,6 @@
+---
+patches:
+    - name: fix-nvhpc-init-generic-collision.patch
+      enabled: true
+      versions:
+          - ==2026.04

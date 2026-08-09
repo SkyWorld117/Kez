@@ -1,0 +1,10 @@
+---
+patches:
+    - name: fix-gemmforge-cmake-prefix.patch
+      enabled: true
+      versions:
+          - ==1.3.2
+    - name: fix-sycl-device-compile-1.3.2.patch
+      enabled: true
+      versions:
+          - ==1.3.2

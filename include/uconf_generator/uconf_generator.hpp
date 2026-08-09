@@ -23,7 +23,7 @@
  *     compiler: ...
  *     patches:
  *       - name: ...
- *         enabled: false
+ *         enabled: true|false
  *     build:
  *       configurations:
  *         environment: [...]
@@ -41,6 +41,8 @@
  * The `kez` map contains per-package settings that the user can customise.
  * The `recipe` section records the resolved dependency graph and abstract-package
  * selections.
+ * Package patch entries are selected from the package-local ``patches/_rules.yaml``
+ * using the resolved version, and inherit the default enabled state declared there.
  *
  * @param package_names  Non-empty list of top-level package names (keys in
  *                       `database/<pkg>/latest.yaml`) to include in the config.

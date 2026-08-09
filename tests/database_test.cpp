@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <database/database.hpp>
+#include <database/patch_rules.hpp>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -55,8 +56,9 @@ namespace {
         void write(const std::string& package, const std::string& filename,
                    const std::string& contents) const {
             const std::filesystem::path directory = path_ / package;
-            std::filesystem::create_directories(directory);
-            std::ofstream output(directory / filename);
+            const std::filesystem::path file      = directory / filename;
+            std::filesystem::create_directories(file.parent_path());
+            std::ofstream output(file);
             ASSERT_TRUE(output.good());
             output << contents;
         }
@@ -93,6 +95,59 @@ recipe:
         EXPECT_EQ(latest->default_stage_command(BuildStage {"install", true, std::nullopt}, 4),
                   "cmake --install build");
         EXPECT_EQ(get_db_config("demo")->name, latest->name);
+        EXPECT_EQ(latest->recipe_path, path_ / "demo" / "latest.yaml");
+    }
+
+    TEST_F(TemporaryDatabase, LoadsSortedPatchRulesAndFiltersThemByVersion) {
+        write("demo", "latest.yaml", R"(
+recipe:
+  name: demo
+  type: package
+)");
+        write("demo", "patches/new.patch", "new");
+        write("demo", "patches/all.patch", "all");
+        write("demo", "patches/old.patch", "old");
+        write("demo", "patches/_rules.yaml", R"(
+patches:
+  - name: old.patch
+    enabled: false
+    versions: ["<2.0"]
+  - name: new.patch
+    enabled: true
+    versions: [">=2.0", "<3.0"]
+  - name: all.patch
+    enabled: false
+)");
+
+        const PackageConfigPtr package     = get_db_config("demo");
+        const std::vector<PatchRule> rules = applicable_patch_rules(*package, "2.1");
+
+        ASSERT_EQ(rules.size(), 2U);
+        EXPECT_EQ(rules[0].name, "all.patch");
+        EXPECT_FALSE(rules[0].enabled);
+        EXPECT_EQ(rules[1].name, "new.patch");
+        EXPECT_TRUE(rules[1].enabled);
+    }
+
+    TEST_F(TemporaryDatabase, RejectsPatchFilesMissingFromRules) {
+        write("demo", "patches/unlisted.patch", "patch");
+        write("demo", "patches/_rules.yaml", "patches: []\n");
+
+        EXPECT_EXIT(static_cast<void>(load_patch_rules(path_ / "demo")),
+                    ::testing::ExitedWithCode(EXIT_FAILURE), "has no entry in _rules.yaml");
+    }
+
+    TEST_F(TemporaryDatabase, RejectsInvalidPatchVersionConstraints) {
+        write("demo", "patches/fix.patch", "patch");
+        write("demo", "patches/_rules.yaml", R"(
+patches:
+  - name: fix.patch
+    enabled: true
+    versions: [1.0]
+)");
+
+        EXPECT_EXIT(static_cast<void>(load_patch_rules(path_ / "demo")),
+                    ::testing::ExitedWithCode(EXIT_FAILURE), "must begin with");
     }
 
     TEST_F(TemporaryDatabase, ConvertsEveryDocumentedSectionToTypedData) {

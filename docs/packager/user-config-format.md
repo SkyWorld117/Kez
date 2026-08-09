@@ -51,11 +51,11 @@ kez:
     # Generated for all package types except vendor and external.
     compiler: <string>             # e.g. "gcc@13.4.0", "system"
 
-    # Present only when patches/<package>/ exists on disk.
-    # Listed alphabetically; all disabled by default.
+    # Present only for package-local patch rules matching this version.
+    # Listed alphabetically; defaults come from patches/_rules.yaml.
     patches:
-      - name: <patch_filename>     # Filename from patches/<pkg>/
-        enabled: false             # Set to true to apply to the source tree
+      - name: <patch_filename>     # Filename from database/<pkg>/patches/
+        enabled: true|false        # May be overridden before installation
 
     build:                         # Present only if the recipe defines a build
                                    # AND the package is not a non-target
@@ -145,14 +145,17 @@ omitted — the compiler resolves to the platform's default system compiler
 
 ### `kez.<package>.patches`
 
-The generator scans `KEZ_HOME/patches/<package_name>/` for regular files.
-Each discovered file becomes an entry (sorted alphabetically by filename)
-with `enabled: false`. Users enable individual patches by setting `enabled: true`.
+The generator reads `database/<package_name>/patches/_rules.yaml` from the directory beside the
+selected recipe. It emits matching rules sorted by filename and copies each rule's default
+`enabled` state. Version constraints and the packager-facing schema are documented under
+[Package Patches](recipe-schema.md#package-patches). Users may override individual generated
+states.
 
 During parsing, each enabled patch is validated:
 - The patch name must pass a path-traversal check (the filename component
   must equal the full name — no `/` or `..` allowed).
-- The patch file must exist on disk at `KEZ_HOME/patches/<package>/<name>`.
+- The patch must be declared in the package's `_rules.yaml`.
+- The patch file must exist at `database/<package>/patches/<name>` beside the selected recipe.
 - Enabled patches are applied after entering the unpacked source directory. Git
   worktrees use `git apply`; all other source directories use GNU
   `patch --batch --forward -p1`. Patch paths should therefore include one
@@ -275,7 +278,8 @@ every implementation (see [Abstract Package Resolution](#abstract-package-resolu
 | `patches` must be a YAML sequence | `package patches must be a sequence` |
 | Each patch entry must contain `name` and `enabled` fields | `patch entries must contain name and enabled fields` |
 | Patch names must not contain path separators or `..` | `invalid patch name '<name>'` |
-| Enabled patches must exist on disk at `patches/<pkg>/<name>` | `patch file does not exist: <path>` |
+| Enabled patches must be declared in package-local `_rules.yaml` | `patch '<name>' is not declared in <path>` |
+| Enabled patches must exist on disk at `database/<pkg>/patches/<name>` | `patch file does not exist: <path>` |
 
 ### Stage Validation
 

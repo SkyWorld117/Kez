@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Kez combines a C++ backend, Bash frontend, and YAML package database. C++ headers live in `include/` and mirror implementations in `src/` by component (`database/`, `dependency_resolver/`, `uconf_generator/`, `ui/`, and `utils/`). GoogleTest cases are in `tests/`. Package recipes use `database/<package>/latest.yaml`; related source patches belong in `patches/<package>/`. Shell entry points and helpers are in `main.sh`, `scripts/`, and `tools/`. Keep user, developer, and packager documentation in `docs/`. Build artifacts under `bin/`, `lib/`, and `obj/` are generated and should not be committed.
+Kez combines a C++ backend, Bash frontend, and YAML package database. C++ headers live in `include/` and mirror implementations in `src/` by component (`database/`, `dependency_resolver/`, `uconf_generator/`, `ui/`, and `utils/`). GoogleTest cases are in `tests/`. Package recipes use `database/<package>/latest.yaml`; related source patches and their `_rules.yaml` belong in `database/<package>/patches/`. Shell entry points and helpers are in `main.sh`, `scripts/`, and `tools/`. Keep user, developer, and packager documentation in `docs/`. Build artifacts under `bin/`, `lib/`, and `obj/` are generated and should not be committed.
 
 ## Build, Test, and Development Commands
 

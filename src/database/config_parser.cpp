@@ -267,6 +267,7 @@ PackageConfigPtr parse_config_document(const YAML::Node& document,
     validate_templates(document, "document", context);
 
     std::unique_ptr<PackageConfig> config = make_package_config(recipe, context);
+    config->recipe_path                   = context.source_path;
     config->name                          = required_scalar(recipe, "name", "recipe", context);
     if (config->name.empty()) {
         fail_config(recipe["name"], "recipe.name", "must not be empty", context);

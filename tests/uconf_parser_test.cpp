@@ -71,7 +71,6 @@ namespace {
                     ("kez-user-config-parser-test-" + std::to_string(getpid()));
             std::filesystem::remove_all(path_);
             std::filesystem::create_directories(path_ / "database");
-            std::filesystem::create_directories(path_ / "patches" / "application");
             setenv("KEZ_DB", (path_ / "database").c_str(), 1);
             setenv("KEZ_HOME", path_.c_str(), 1);
             setenv("KEZ_ARCH", "x86_64", 1);
@@ -127,6 +126,7 @@ recipe:
         }
 
         void write_file(const std::filesystem::path& path, const std::string& contents) const {
+            std::filesystem::create_directories(path.parent_path());
             std::ofstream output(path);
             ASSERT_TRUE(output.good());
             output << contents;
@@ -165,7 +165,13 @@ recipe:
 
     TEST_F(TemporaryUserConfigParserDatabase,
            GeneratesDependencyOrderedCommandsFromTypedRecipesAndUserValues) {
-        write_file(path_ / "patches" / "application" / "fix.patch", "patch");
+        write_file(path_ / "database" / "application" / "patches" / "fix.patch", "patch");
+        write_file(path_ / "database" / "application" / "patches" / "_rules.yaml", R"(
+patches:
+  - name: fix.patch
+    enabled: false
+    versions: ["==2.0"]
+)");
         write_package("application", R"(
 recipe:
   name: application
@@ -262,11 +268,12 @@ recipe:
         EXPECT_EQ(commands[4],
                   "tar -czf '/opt/.cache/application-2.0.tar.gz' --format=posix -z source");
         EXPECT_EQ(commands[5], "cd source");
-        EXPECT_EQ(commands[6], "if [[ -e .git ]]; then git apply '" +
-                                   (path_ / "patches" / "application" / "fix.patch").string() +
-                                   "'; else patch --batch --forward -p1 --input='" +
-                                   (path_ / "patches" / "application" / "fix.patch").string() +
-                                   "'; fi");
+        EXPECT_EQ(commands[6],
+                  "if [[ -e .git ]]; then git apply '" +
+                      (path_ / "database" / "application" / "patches" / "fix.patch").string() +
+                      "'; else patch --batch --forward -p1 --input='" +
+                      (path_ / "database" / "application" / "patches" / "fix.patch").string() +
+                      "'; fi");
         EXPECT_EQ(commands[7], "prepare /opt/env/.tmp/application/source");
         EXPECT_EQ(commands[8], "export CFLAGS=\"-O2 ${PATH}\"");
         EXPECT_EQ(commands[9], "cmake -B build -DFEATURE=ON "
@@ -303,11 +310,18 @@ recipe:
         std::filesystem::create_directories(local_source);
         std::filesystem::create_directories(build_dir);
         write_file(local_source / "message.txt", "before\n");
-        write_file(path_ / "patches" / "application" / "fix.patch", R"(--- a/message.txt
+        write_file(path_ / "database" / "application" / "patches" / "fix.patch",
+                   R"(--- a/message.txt
 +++ b/message.txt
 @@ -1 +1 @@
 -before
 +after
+)");
+        write_file(path_ / "database" / "application" / "patches" / "_rules.yaml", R"(
+patches:
+  - name: fix.patch
+    enabled: false
+    versions: ["==1.0"]
 )");
         write_package("application", R"(
 recipe:

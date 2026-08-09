@@ -1,0 +1,10 @@
+---
+patches:
+    - name: fast_kernel.patch
+      enabled: false
+      versions:
+          - ==default
+    - name: openmp_init.patch
+      enabled: true
+      versions:
+          - ==default

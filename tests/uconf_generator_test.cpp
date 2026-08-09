@@ -37,7 +37,7 @@ namespace {
      *   - Saves the current `KEZ_DB`, `KEZ_HOME`, `KEZ_WORKDIR`, and
      *     `KEZ_ARCH` environment variables for later restoration.
      *   - Creates a temporary directory with subdirectories for `database`,
-     *     `heuristics`, `mpis`, `patches/<pkg>`, and `vendors`.
+     *     `heuristics`, `mpis`, and `vendors`.
      *   - Sets those environment variables to point into the temp directory
      *     and forces `KEZ_ARCH` to `x86_64`.
      *   - Writes a minimal `manifest.yaml`.
@@ -63,7 +63,6 @@ namespace {
             std::filesystem::create_directories(path_ / "database");
             std::filesystem::create_directories(path_ / "heuristics");
             std::filesystem::create_directories(path_ / "mpis");
-            std::filesystem::create_directories(path_ / "patches" / "application");
             std::filesystem::create_directories(path_ / "vendors");
             setenv("KEZ_DB", (path_ / "database").c_str(), 1);
             setenv("KEZ_HOME", path_.c_str(), 1);
@@ -118,6 +117,7 @@ system-stack:
         }
 
         void write_file(const std::filesystem::path& path, const std::string& contents) const {
+            std::filesystem::create_directories(path.parent_path());
             std::ofstream output(path);
             ASSERT_TRUE(output.good());
             output << contents;
@@ -237,8 +237,17 @@ system-stack:
 settings:
   default_compiler: gcc@13.4.0
 )");
-        write_file(path_ / "patches" / "application" / "z-last.patch", "last");
-        write_file(path_ / "patches" / "application" / "a-first.patch", "first");
+        write_file(path_ / "database" / "application" / "patches" / "z-last.patch", "last");
+        write_file(path_ / "database" / "application" / "patches" / "a-first.patch", "first");
+        write_file(path_ / "database" / "application" / "patches" / "_rules.yaml", R"(
+patches:
+  - name: z-last.patch
+    enabled: false
+    versions: ["<2.0.0"]
+  - name: a-first.patch
+    enabled: true
+    versions: [">=2.0.0", "<3.0.0"]
+)");
 
         write_package("application", R"(
 recipe:
@@ -322,10 +331,16 @@ recipe:
         EXPECT_EQ(application["description"].as<std::string>(), "Test application");
         EXPECT_EQ(application["version"].as<std::string>(), "2.0.0");
         EXPECT_EQ(application["compiler"].as<std::string>(), "gcc@13.4.0");
-        ASSERT_EQ(application["patches"].size(), 2U);
+        ASSERT_EQ(application["patches"].size(), 1U);
         EXPECT_EQ(application["patches"][0]["name"].as<std::string>(), "a-first.patch");
-        EXPECT_FALSE(application["patches"][0]["enabled"].as<bool>());
-        EXPECT_EQ(application["patches"][1]["name"].as<std::string>(), "z-last.patch");
+        EXPECT_TRUE(application["patches"][0]["enabled"].as<bool>());
+
+        const YAML::Node old_result =
+            gen_user_config({"application"}, false, "system", {{"application", "1.0.0"}});
+        const YAML::Node old_patches = old_result["kez"]["application"]["patches"];
+        ASSERT_EQ(old_patches.size(), 1U);
+        EXPECT_EQ(old_patches[0]["name"].as<std::string>(), "z-last.patch");
+        EXPECT_FALSE(old_patches[0]["enabled"].as<bool>());
 
         const YAML::Node configurations = application["build"]["configurations"];
         ASSERT_EQ(configurations["environment"].size(), 1U);

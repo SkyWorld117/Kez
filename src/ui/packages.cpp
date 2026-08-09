@@ -5,6 +5,7 @@
 #include <database/config.hpp>
 #include <database/config_selector.hpp>
 #include <database/database.hpp>
+#include <database/patch_rules.hpp>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -336,6 +337,7 @@ void execute_dbcheck(const CommandArguments& arguments) {
             ERROR("Package not found in database: " + package);
             exit(EXIT_FAILURE);
         }
+        load_patch_rules(package_directory);
         get_db_config(package);
         for (const auto& entry : std::filesystem::directory_iterator(package_directory)) {
             if (entry.is_regular_file() && entry.path().extension() == ".yaml") {

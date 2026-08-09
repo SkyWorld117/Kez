@@ -1,0 +1,11 @@
+---
+patches:
+    - name: fix-cmake4-cache-var-if-list.patch
+      enabled: true
+      versions:
+          - '>=6.36.04'
+          - <=6.40.02
+    - name: fix-multi-value-build-rpath-636.patch
+      enabled: true
+      versions:
+          - ==6.36.04
