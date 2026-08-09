@@ -1,0 +1,77 @@
+---
+recipe:
+    name: eccodes
+    description: >
+        ecCodes - ECMWF's open-source package for encoding and decoding GRIB
+        and BUFR meteorological data, with C and Fortran interfaces.
+    # Provides libeccodes (-leccodes) and libeccodes_f90 (-leccodes_f90), used
+    # by NWP models such as ICON.
+    type: package
+    toolchain: cmake
+
+    source:
+        type: tarball
+        releases:
+            - version: 2.48.0
+              url: https://github.com/ecmwf/eccodes/archive/refs/tags/2.48.0.tar.gz
+
+    build:
+        # ecbuild may be fetched from GitHub on the first configure (network
+        # access is available during installs). AEC (CCSDS packing) is disabled
+        # by default because ecbuild's find_package(libaec) requires a CMake
+        # package config that the plain autotools libaec does not ship;
+        # JPEG2000 and NetCDF support are also disabled here.
+        configurations:
+            options:
+                - name: ENABLE_FORTRAN
+                  description: Build the Fortran interface (libeccodes_f90)
+                  enabled_value:
+                      default: ON
+
+                # ecbuild DEFAULTS ENABLE_AEC to ON and hard-fails if libaec is
+                # not found, so OFF must be passed explicitly (not just the
+                # absence of the flag). Users can set the value to ON with a
+                # libaec build that ships a CMake package config.
+                - name: ENABLE_AEC
+                  description: Enable AEC (libaec, WMO CCSDS) support; OFF by default despite ecbuild's ON default
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: OFF
+
+                - name: ENABLE_JPG
+                  description: Enable JPEG2000 support (requires a JPEG2000 backend)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: ENABLE_NETCDF
+                  description: Enable NetCDF support for the grib_to_netcdf tool (add netcdf to the environment when enabled)
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ON
+
+                - name: ENABLE_EXAMPLES
+                  description: Build example programs
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: ENABLE_MEMFS
+                  description: Build with in-memory file-system support
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${eccodes.prefix}/lib64
+        include: ${eccodes.prefix}/include
+        libs:
+            default: -leccodes_f90 -leccodes

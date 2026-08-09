@@ -1,0 +1,47 @@
+---
+recipe:
+    name: libfyaml
+    description: >
+        libfyaml - "I love you YAML", a C parsing library for YAML 1.2.
+        Fast and dependency-free (only libc + pthread); used by the ICON model
+        for YAML namelists.
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.0.0-alpha8
+              url: https://github.com/pantoniou/libfyaml/releases/download/v1.0.0-alpha8/libfyaml-1.0.0-alpha8.tar.gz
+            - version: 0.9.6
+              url: https://github.com/pantoniou/libfyaml/archive/refs/tags/v0.9.6.tar.gz
+
+    build:
+        # The newest release asset (1.0.0-alpha8) ships a pre-generated
+        # configure script, so no bootstrap is needed. Git-tag archives
+        # (0.9.6) need a bootstrap that resolves pkg.m4 from the system aclocal
+        # dir to expand PKG_CHECK_MODULES; the guard handles both forms.
+        preprocessing: |
+            if [ ! -x ./configure ] && [ -f ./bootstrap.sh ]; then \
+                aclocal -I /usr/share/aclocal && \
+                libtoolize --copy --force && \
+                autoheader && autoconf && automake --add-missing --copy --force-missing; \
+            fi
+
+        configurations:
+            options:
+                - name: enable-shared
+                  description: Build shared libraries
+                  user_configurable: true
+                  enabled:
+                      default: true
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${libfyaml.prefix}/lib
+        include: ${libfyaml.prefix}/include
+        libs:
+            default: -lfyaml

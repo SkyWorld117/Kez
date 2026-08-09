@@ -1,0 +1,323 @@
+# Silences the nvfortran 26.5 generic-resolution failure on the bare
+# import `USE mo_fortran_tools, ONLY: init` when the same module declares a
+# type-bound `Init` procedure (case-insensitive collision). nvfortran then
+# mis-resolves the generic `init` as a FUNCTION and every `CALL init(...,
+# lacc=.TRUE.)` fails with NVFORTRAN-S-0084 "attempt to CALL a FUNCTION" /
+# S-0079 "keyword form of argument illegal". DWD builds ICON-GPU with
+# nvfortran 24.7 where this does not occur. The fix renames the import (and
+# call sites) to `ft_init`; semantics are unchanged.
+
+diff --git a/src/atm_phy_aes/tmx/mo_vdf.f90 b/src/atm_phy_aes/tmx/mo_vdf.f90
+index d443efd..eca0b4f 100644
+--- a/src/atm_phy_aes/tmx/mo_vdf.f90
++++ b/src/atm_phy_aes/tmx/mo_vdf.f90
+@@ -19,7 +19,7 @@ MODULE mo_vdf
+ 
+   USE mo_kind,              ONLY: wp, vp
+   USE mo_exception,         ONLY: message, finish
+-  USE mo_fortran_tools,     ONLY: init, copy, insert_dimension
++  USE mo_fortran_tools,     ONLY: ft_init => init, copy, insert_dimension
+   USE mo_util_string,       ONLY: int2string, real2string
+   USE mtime,                ONLY: t_datetime => datetime
+   USE mo_timer,             ONLY: timer_start, timer_stop, ltimer
+@@ -654,7 +654,7 @@ CONTAINS
+     )
+ 
+ !$OMP PARALLEL
+-    CALL init(top_flx, lacc=.TRUE.)
++    CALL ft_init(top_flx, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     dtime        => conf_atmo%dtime%Get_ptr_r0d()
+@@ -727,11 +727,11 @@ CONTAINS
+ !$OMP END PARALLEL
+       CASE (2) ! cloud water
+ !$OMP PARALLEL
+-        CALL init(sfc_flx, lacc=.TRUE.)
++        CALL ft_init(sfc_flx, lacc=.TRUE.)
+ !$OMP END PARALLEL
+       CASE (3) ! cloud ice
+ !$OMP PARALLEL
+-        CALL init(sfc_flx, lacc=.TRUE.)
++        CALL ft_init(sfc_flx, lacc=.TRUE.)
+ !$OMP END PARALLEL
+       CASE (4)
+ !$OMP PARALLEL
+@@ -740,8 +740,8 @@ CONTAINS
+       END SELECT
+ 
+ !$OMP PARALLEL
+-      CALL init(tend, lacc=.TRUE.)
+-      CALL init(rhs, lacc=.TRUE.)
++      CALL ft_init(tend, lacc=.TRUE.)
++      CALL ft_init(rhs, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb,jc) ICON_OMP_RUNTIME_SCHEDULE
+@@ -1010,9 +1010,9 @@ CONTAINS
+ 
+ 
+ !$OMP PARALLEL
+-    CALL init(top_flx, lacc=.TRUE.)
+-    CALL init(tend_energy, lacc=.TRUE.)
+-    CALL init(rhs, lacc=.TRUE.)
++    CALL ft_init(top_flx, lacc=.TRUE.)
++    CALL ft_init(tend_energy, lacc=.TRUE.)
++    CALL ft_init(rhs, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     IF (use_scale_turb_energy_flux) THEN ! Scale turbulent energy flux
+@@ -1300,8 +1300,8 @@ CONTAINS
+     mflux_v => diags_sfc%vstress%Get_ptr_r2d()
+ 
+ !$OMP PARALLEL
+-    CALL init(tend_u, lacc=.TRUE.)
+-    CALL init(tend_v, lacc=.TRUE.)
++    CALL ft_init(tend_u, lacc=.TRUE.)
++    CALL ft_init(tend_v, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     !$ACC DATA &
+@@ -1322,7 +1322,7 @@ CONTAINS
+     !---------------------------------------------------------------
+ 
+ !$OMP PARALLEL
+-    CALL init(tot_tend, lacc=.TRUE.)
++    CALL ft_init(tot_tend, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     CALL sync_patch_array(SYNC_C, patch, rho, lacc=.TRUE.)
+@@ -1439,7 +1439,7 @@ CONTAINS
+     ! 2) Vertical tendency
+ 
+ !$OMP PARALLEL
+-    CALL init(zrhs, lacc=.TRUE.)
++    CALL ft_init(zrhs, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     ! Sync momentum fluxes (otherwise, MPI test fails)
+@@ -1697,9 +1697,9 @@ CONTAINS
+       rdtime = 1._wp / dtime
+ 
+ !$OMP PARALLEL
+-    CALL init(tend, lacc=.TRUE.)
+-    CALL init(new_state, lacc=.TRUE.)
+-    CALL init(rhs, lacc=.TRUE.)
++    CALL ft_init(tend, lacc=.TRUE.)
++    CALL ft_init(new_state, lacc=.TRUE.)
++    CALL ft_init(rhs, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     !---------------------------------------------------------------
+@@ -1784,7 +1784,7 @@ CONTAINS
+     i_endblk   = patch%edges%end_block(rl_end)
+ 
+ !$OMP PARALLEL
+-    CALL init(hori_tend_e, lacc=.TRUE.)
++    CALL ft_init(hori_tend_e, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, je, i_startidx, i_endidx, jcn, jbn, dvn1, dvn2, flux_up_c, flux_dn_c, &
+@@ -1999,7 +1999,7 @@ CONTAINS
+     rdtime = 1._wp / dtime
+ 
+ !$OMP PARALLEL
+-    CALL init(heating, lacc=.TRUE.)
++    CALL ft_init(heating, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL
+diff --git a/src/atm_phy_aes/tmx/mo_vdf_atmo.f90 b/src/atm_phy_aes/tmx/mo_vdf_atmo.f90
+index 6927ab4..e5a5cec 100644
+--- a/src/atm_phy_aes/tmx/mo_vdf_atmo.f90
++++ b/src/atm_phy_aes/tmx/mo_vdf_atmo.f90
+@@ -44,7 +44,7 @@ MODULE mo_vdf_atmo
+   USE mo_loopindices,       ONLY: get_indices_e, get_indices_c
+   USE mo_impl_constants_grf,ONLY: grf_bdywidth_c, grf_bdywidth_e
+   USE mo_intp_rbf,          ONLY: rbf_vec_interpol_vertex, rbf_vec_interpol_edge
+-  USE mo_fortran_tools,     ONLY: init
++  USE mo_fortran_tools,     ONLY: ft_init => init
+ 
+ #ifdef _OPENACC
+   use openacc
+@@ -385,9 +385,9 @@ CONTAINS
+     !     values might not
+     !----------------------------------------------------------------------------
+ !$OMP PARALLEL
+-    CALL init(u_vert, lacc=.TRUE.)
+-    CALL init(v_vert, lacc=.TRUE.)
+-    CALL init(w_vert, lacc=.TRUE.)
++    CALL ft_init(u_vert, lacc=.TRUE.)
++    CALL ft_init(v_vert, lacc=.TRUE.)
++    CALL ft_init(w_vert, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     CALL cells2verts_scalar(pwp1, patch, p_int%cells_aw_verts, w_vert, &
+@@ -444,11 +444,11 @@ CONTAINS
+     ! cell centers
+     !----------------------------------------------------------------------------
+ !$OMP PARALLEL
+-    CALL init(km_iv, lacc=.TRUE.)
+-    CALL init(km_c,  lacc=.TRUE.)
+-    CALL init(km_ie, lacc=.TRUE.)
+-    CALL init(kh_ic, lacc=.TRUE.)
+-    CALL init(km_ic, lacc=.TRUE.)
++    CALL ft_init(km_iv, lacc=.TRUE.)
++    CALL ft_init(km_c,  lacc=.TRUE.)
++    CALL ft_init(km_ie, lacc=.TRUE.)
++    CALL ft_init(kh_ic, lacc=.TRUE.)
++    CALL ft_init(km_ic, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     IF (.NOT. use_km_const) THEN
+@@ -591,9 +591,9 @@ CONTAINS
+       & )
+ 
+ !$OMP PARALLEL
+-      CALL init(ctgzvi, lacc=.TRUE.)
+-      CALL init(dissip_ke_vi, lacc=.TRUE.)
+-      CALL init(int_energy_vi_tend, lacc=.TRUE.)
++      CALL ft_init(ctgzvi, lacc=.TRUE.)
++      CALL ft_init(dissip_ke_vi, lacc=.TRUE.)
++      CALL ft_init(int_energy_vi_tend, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, jc) ICON_OMP_DEFAULT_SCHEDULE
+@@ -772,7 +772,7 @@ CONTAINS
+     ASSOCIATE(domain => this%domain)
+ 
+ !$OMP PARALLEL
+-    CALL init(flux_x, lacc=.TRUE.)
++    CALL ft_init(flux_x, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+     SELECT CASE(energy_type)
+@@ -827,7 +827,7 @@ CONTAINS
+     INTEGER :: jb, jk, jc
+ 
+ !$OMP PARALLEL
+-    CALL init(static_energy, lacc=.TRUE.)
++    CALL ft_init(static_energy, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, jc) ICON_OMP_DEFAULT_SCHEDULE
+@@ -862,7 +862,7 @@ CONTAINS
+     INTEGER :: jb, jk, jc
+ 
+ !$OMP PARALLEL
+-    CALL init(temperature, lacc=.TRUE.)
++    CALL ft_init(temperature, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, jc) ICON_OMP_DEFAULT_SCHEDULE
+@@ -898,7 +898,7 @@ CONTAINS
+     nlevp1 = domain%nlev + 1
+ 
+ !$OMP PARALLEL
+-    CALL init(ghf, lacc=.TRUE.)
++    CALL ft_init(ghf, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, jc) ICON_OMP_DEFAULT_SCHEDULE
+@@ -953,7 +953,7 @@ CONTAINS
+     CHARACTER(len=*), PARAMETER :: routine = modname//':compute_internal_energy'
+ 
+ !$OMP PARALLEL
+-    CALL init(energy, lacc=.TRUE.)
++    CALL ft_init(energy, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, jc, q_liquid, q_solid) ICON_OMP_DEFAULT_SCHEDULE
+@@ -1018,7 +1018,7 @@ CONTAINS
+     CHARACTER(len=*), PARAMETER :: routine = modname//':compute_temperature_from_internal_energy'
+ 
+ !$OMP PARALLEL
+-    CALL init(temperature, lacc=.TRUE.)
++    CALL ft_init(temperature, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, jc, q_liquid, q_solid, u) ICON_OMP_DEFAULT_SCHEDULE
+@@ -1084,7 +1084,7 @@ CONTAINS
+     CHARACTER(len=*), PARAMETER :: routine = modname//':compute_internal_energy_vi'
+ 
+ !$OMP PARALLEL
+-    CALL init(uvi, lacc=.TRUE.)
++    CALL ft_init(uvi, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb, jk, jc, q_liquid, q_solid) ICON_OMP_DEFAULT_SCHEDULE
+diff --git a/src/atm_phy_aes/tmx/mo_vdf_sfc.f90 b/src/atm_phy_aes/tmx/mo_vdf_sfc.f90
+index 7394cfb..953de25 100644
+--- a/src/atm_phy_aes/tmx/mo_vdf_sfc.f90
++++ b/src/atm_phy_aes/tmx/mo_vdf_sfc.f90
+@@ -19,7 +19,7 @@ MODULE mo_vdf_sfc
+ 
+   USE mo_kind,              ONLY: wp, vp, i1, i4
+   USE mo_exception,         ONLY: message, finish
+-  USE mo_fortran_tools,     ONLY: init, copy
++  USE mo_fortran_tools,     ONLY: ft_init => init, copy
+   USE mtime,                ONLY: t_datetime => datetime
+   USE mo_timer,             ONLY: timer_start, timer_stop, ltimer
+   USE mo_master_config,     ONLY: isrestart  ! TODO: use config instead of USE
+@@ -382,7 +382,7 @@ CONTAINS
+       CASE(isfc_oce)
+         ! Ocean surface temperature is calculated outside of this, set tendency to zero
+ !$OMP PARALLEL
+-        CALL init(tend_tsfc(:,:,jtile),                         lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
++        CALL ft_init(tend_tsfc(:,:,jtile),                         lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+         CALL copy(old_tsfc(:,:,jtile), new_tsfc(:,:,jtile),     lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+         CALL copy(old_tsfc(:,:,jtile), new_tsfc_rad(:,:,jtile), lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+         CALL copy(old_tsfc(:,:,jtile), new_tsfc_eff(:,:,jtile), lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+@@ -393,10 +393,10 @@ CONTAINS
+           & opt_acc_async_queue=acc_async_queues(jtile))
+         ! TODO: This should be replaced by routine mo_surface_ocean:update_albedo_ocean from ECHAM6.2
+ !$OMP PARALLEL
+-        CALL init(albvisdir_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+-        CALL init(albvisdif_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+-        CALL init(albnirdir_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+-        CALL init(albnirdif_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
++        CALL ft_init(albvisdir_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
++        CALL ft_init(albvisdif_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
++        CALL ft_init(albnirdir_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
++        CALL ft_init(albnirdif_tile(:,:,jtile), albedoW, lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jc, jcl, jb) ICON_OMP_DEFAULT_SCHEDULE
+@@ -413,7 +413,7 @@ CONTAINS
+       CASE(isfc_ice)
+         IF (nice_thickness_classes /= 1) CALL finish(routine, 'Only one ice thickness class (kice) implemented!')
+ !$OMP PARALLEL
+-        CALL init(tend_tsfc(:,:,jtile), lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
++        CALL ft_init(tend_tsfc(:,:,jtile), lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+ !$OMP END PARALLEL
+         CALL update_sea_ice(this%domain, this%dt, &
+           & nvalid(:,jtile), indices(:,:,jtile), &
+@@ -452,7 +452,7 @@ CONTAINS
+           & opt_acc_async_queue=acc_async_queues(jtile))
+       CASE(isfc_lnd)
+ !$OMP PARALLEL
+-        CALL init(tend_tsfc(:,:,jtile), lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
++        CALL ft_init(tend_tsfc(:,:,jtile), lacc=.TRUE., opt_acc_async_queue=acc_async_queues(jtile))
+ !$OMP END PARALLEL
+         CALL update_land(jg, this%domain, datetime, this%dt, cvd, &
+           & dz, psfc, ta, qa, pa, &
+@@ -1039,8 +1039,8 @@ CONTAINS
+     !$ACC DATA CREATE(pfrc_test, loidx, is) PRESENT(fract_tile, indices, nvalid) ASYNC(1)
+ 
+ !$OMP PARALLEL
+-    CALL init(nvalid, lacc=.TRUE.)
+-    CALL init(indices, lacc=.TRUE.)
++    CALL ft_init(nvalid, lacc=.TRUE.)
++    CALL ft_init(indices, lacc=.TRUE.)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL
+@@ -1140,7 +1140,7 @@ CONTAINS
+     ELSE
+ 
+ !$OMP PARALLEL
+-      CALL init(var_out, lacc=.TRUE., opt_acc_async_queue=this%aggregation_queue)
++      CALL ft_init(var_out, lacc=.TRUE., opt_acc_async_queue=this%aggregation_queue)
+ !$OMP END PARALLEL
+ 
+ !$OMP PARALLEL DO PRIVATE(jb,jls,js,jsfc) ICON_OMP_RUNTIME_SCHEDULE

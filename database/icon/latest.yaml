@@ -1,0 +1,140 @@
+---
+recipe:
+    name: icon
+    description: >
+        ICON - ICOsahedral Non-hydrostatic model. The German weather and climate
+        model developed by DWD, MPI-M, KIT and ECMWF for global numerical
+        weather prediction and climate, atmosphere and ocean modelling. Source
+        is BSD-3 licensed and distributed through DKRZ GitLab.
+    # The recipe fetches the repository with its submodules; bundled externals
+    # such as YAXT and YAC are unbuildable from plain archives.
+    type: package
+    toolchain: autotools
+
+    source:
+        type: git
+        url: https://gitlab.dkrz.de/icon/icon-model.git
+        releases:
+            - version: 2026.04
+              tag: icon-2026.04-public
+
+    dependencies:
+        - mpi
+        - netcdf
+        - hdf5
+        - zlib
+        - blas
+        - lapack
+        - libfyaml
+        - eccodes
+        - libaec
+        - libxml2
+        - cmake
+
+    build:
+        # The GitLab archive of the ICON repository contains only empty
+        # placeholders for the git submodules, so they must be fetched after the
+        # clone and before configure.
+        preprocessing: git submodule update --init --recursive
+
+        configurations:
+            options:
+                # ── Physics/components ──────────────────────────────────────
+                - name: enable-openmp
+                  description: Enable OpenMP shared-memory parallelism
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  # NVHPC GPU builds must disable OpenMP: nvfortran rejects the
+                  # !$omp do directives nested inside !$ACC PARALLEL LOOP regions
+                  # (DWD's levante.gpu.nvhpc config also passes --disable-openmp).
+                  disabled_format: disable-openmp
+
+                - name: enable-atmo
+                  description: Enable the atmosphere component (dynamical core)
+                  user_configurable: true
+                  enabled:
+                      default: true
+
+                - name: enable-ocean
+                  description: Enable the ocean component
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: enable-jsbach
+                  description: Enable the JSBACH land-biosphere component
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: enable-yaxt
+                  description: Enable the YAXT communication abstraction (recommended for performance)
+                  user_configurable: true
+                  enabled:
+                      default: true
+
+                - name: enable-grib2
+                  description: Enable GRIB2 output (requires eccodes with Fortran interface)
+                  user_configurable: true
+                  enabled:
+                      default: true
+
+                - name: enable-parallel-netcdf
+                  description: Enable parallel netCDF I/O (add pnetcdf to the environment when enabled)
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                # ── GPU acceleration ────────────────────────────────────────
+                - name: enable-gpu
+                  description: Enable GPU support, value like openacc+cuda (requires the CUDA toolkit)
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: openacc+cuda
+                  requires: [cuda]
+
+                # CUDA C++ compiler (nvcc) for the GPU build. The all-caps name
+                # is rendered by the autotools toolchain as a VAR=value configure
+                # argument, which is exactly how ICON's configure (AC_ARG_VAR)
+                # consumes CUDACXX.
+                - name: CUDACXX
+                  description: CUDA C++ compiler (nvcc) for the GPU build (CUDACXX)
+                  user_configurable: true
+                  enabled_value:
+                      default: ${cuda.prefix}/bin/nvcc
+                  requires: [cuda]
+
+                # Clock the .cu sources for a specific GPU. Adjust for the
+                # machine, e.g. -arch=sm_90 for Hopper/A100-family targets.
+                - name: CUDAFLAGS
+                  description: CUDA C++ compiler flags for the GPU build (CUDAFLAGS), e.g. -arch=sm_90
+                  user_configurable: true
+                  enabled_value:
+                      default: -arch=sm_90
+                  requires: [cuda]
+
+                # ── Link line ───────────────────────────────────────────────
+                # ICON's configure takes the full link line through LIBS. The
+                # -L/-rpath flags are injected from the declared dependencies by
+                # the standard LDFLAGS handling.  Must come after enable-gpu so
+                # its condition resolves.
+                - name: LIBS
+                  description: Linker libraries passed to configure
+                  enabled_value:
+                      default: ${netcdf.libs} ${eccodes.libs} ${hdf5.libs} ${zlib.libs} ${lapack.libs} ${blas.libs} ${libfyaml.libs} ${libxml2.libs} 
+                          -lstdc++
+                      conditions:
+                          - condition: ${icon.config.enable-gpu} true
+                            action: append
+                            value: -lcudart -lcuda
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${icon.prefix}/lib
+        include: ${icon.prefix}/include

@@ -1,0 +1,34 @@
+---
+recipe:
+    name: libaec
+    description: >
+        libaec - Adaptive Entropy Coding library. Provides both the libaec
+        codec and libsz, a drop-in implementation of the historical Szip
+        compression API used by HDF5/NetCDF4 (eccodes, RegCM, ICON).
+    type: package
+    toolchain: autotools
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.1.7
+              url: https://github.com/Deutsches-Klimarechenzentrum/libaec/releases/download/v1.1.7/libaec-1.1.7.tar.gz
+
+    build:
+        configurations:
+            options:
+                - name: enable-shared
+                  description: Build shared libraries
+                  user_configurable: true
+                  enabled:
+                      default: true
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${libaec.prefix}/lib
+        include: ${libaec.prefix}/include
+        libs:
+            default: -laec
