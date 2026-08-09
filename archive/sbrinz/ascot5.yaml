@@ -87,12 +87,16 @@ kez:
                       description: Compile the Fortran interface
                       enabled: false
                       enabled_value:
-                    - name: enable-parallel
+                    - name: HDF5_ENABLE_PARALLEL
                       description: Search for MPI-IO and MPI support
                       enabled: true
                       enabled_value:
                       requires:
                           - mpi
+                    - name: enable-hl
+                      description: Compile the high-level library
+                      enabled: true
+                      enabled_value:
                     - name: prefix
                       enabled: true
                       enabled_value: ${hdf5.prefix}
