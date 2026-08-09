@@ -677,6 +677,39 @@ kez:
         std::filesystem::remove_all(directory);
     }
 
+    TEST(CommandLineParser, BashExecutorAlignsProgressWithDifferentStepWidths) {
+        const std::filesystem::path directory =
+            std::filesystem::temp_directory_path() /
+            ("kez-install-alignment-test-" + std::to_string(getpid()));
+        const std::filesystem::path target = directory / "target";
+        const std::filesystem::path plan   = directory / "plan.sh";
+        const std::filesystem::path output = directory / "executor output";
+        std::filesystem::remove_all(directory);
+
+        write_install_plan(
+            {{"short",
+              {"true", "true", "true", "true", "true", "true", "true", "true", "true"},
+              {}},
+             {"long",
+              {"true", "true", "true", "true", "true", "true", "true", "true", "true", "true"},
+              {}}},
+            plan);
+        const std::string executor =
+            "KEZ_NJOBS=2 env -u KEZ_HOME -u KEZ_WORKDIR bash " +
+            shell_single_quote(std::string(KEZ_SOURCE_DIR) + "/scripts/install.sh") + " " +
+            shell_single_quote(target.string()) + " " + shell_single_quote(plan.string()) + " > " +
+            shell_single_quote(output.string()) + " 2>&1";
+
+        ASSERT_EQ(std::system(executor.c_str()), 0);
+        const std::string console = read_file(output.string());
+        EXPECT_NE(console.find("[I]: short:  command  0/ 9 [...............]"), std::string::npos);
+        EXPECT_NE(console.find("[I]: long:   command  0/10 [...............]"), std::string::npos);
+        EXPECT_NE(console.find("[S]: short:  command  9/ 9 [###############]"), std::string::npos);
+        EXPECT_NE(console.find("[S]: long:   command 10/10 [###############]"), std::string::npos);
+
+        std::filesystem::remove_all(directory);
+    }
+
     TEST(CommandLineParser, BashExecutorReportsFailureLog) {
         const std::filesystem::path directory =
             std::filesystem::temp_directory_path() /

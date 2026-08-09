@@ -315,11 +315,18 @@ if [[ -t 1 && -t 2 && ${TERM:-dumb} != dumb ]]; then
 fi
 progress_ui_rendered=false
 progress_ui_package_width=0
-for package in "${plan_packages[@]}"; do
+progress_ui_step_width=1
+for index in "${!plan_packages[@]}"; do
+    package=${plan_packages[$index]}
     if (( ${#package} > progress_ui_package_width )); then
         progress_ui_package_width=${#package}
     fi
+    command_count=${package_command_counts[$index]}
+    if (( ${#command_count} > progress_ui_step_width )); then
+        progress_ui_step_width=${#command_count}
+    fi
 done
+unset command_count index package
 progress_ui_spinners=('-' '\' '|' '/')
 progress_ui_start_time=0
 progress_bar_width=15
@@ -426,7 +433,8 @@ print_package_progress() {
             ;;
     esac
 
-    printf -v count_text '%*d/%d' "${#total}" "$progress" "$total"
+    printf -v count_text '%*d/%*d' "$progress_ui_step_width" "$progress" \
+        "$progress_ui_step_width" "$total"
     printf -v message '%s:%*scommand %s [%s]%s' "$package" "$padding" '' "$count_text" "$bar" \
         "$suffix"
     colored_print "$level" "$message"
