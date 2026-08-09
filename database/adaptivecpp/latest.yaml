@@ -1,0 +1,91 @@
+---
+recipe:
+    name: adaptivecpp
+    description: >
+        AdaptiveCpp (formerly hipSYCL / Open SYCL) - an independent SYCL
+        implementation with multiple backends, providing the acpp compiler
+        driver used to compile SYCL code for CUDA, HIP and other backends.
+    # SeisSol 1.3.x compiles its general SYCL offloading library (GPU dynamic
+    # rupture, streams, ...) with AdaptiveCpp targeting CUDA
+    # (ACPP_TARGETS=cuda:sm_90) even when the main device backend is CUDA,
+    # picking it up via find_package(AdaptiveCpp) and add_sycl_to_target().
+    # The acpp driver is built against llvm (clang, 20.x) and the CUDA toolkit.
+    type: package
+    toolchain: cmake
+
+    source:
+        type: git
+        url: https://github.com/AdaptiveCpp/AdaptiveCpp
+        releases:
+            - version: 25.10.0
+              tag: v25.10.0
+
+    dependencies:
+        # LLVM 15 through 20 for the CUDA (clang) compilation flow (padded
+        # version comparison: <<=20>> would exclude 20.x releases, so the upper
+        # bound is expressed as <21); the CUDA toolkit the generated kernels are
+        # compiled against; python is required by the acpp driver at build time.
+        - llvm@>=15,<21
+        - cuda
+        - python
+
+    build:
+        configurations:
+            # clang++, nvcc/ptxas and the venv python must be found on PATH
+            # while AdaptiveCpp probes the tool chain and later while the acpp
+            # driver compiles SYCL to CUDA.
+            environment:
+                - name: PATH
+                  description: Add the clang and CUDA toolkit binaries to PATH
+                  default: ${llvm.prefix}/bin:${cuda.prefix}/bin:$PATH
+
+            options:
+                - name: WITH_CUDA_BACKEND
+                  description: Build the CUDA backend (requires clang with NVPTX)
+                  enabled_value:
+                      default: ON
+                  requires: [cuda, llvm]
+
+                - name: ACPP_COMPILER_FEATURE_PROFILE
+                  description: >
+                      AdaptiveCpp compiler feature level. 'minimal' keeps the
+                      classic --acpp-targets=cuda/hip interop flows that SeisSol
+                      uses while dropping the generic-JIT/stdpar/accelerated-CPU
+                      features; these require a libLLVM.so monolith that the
+                      official LLVM binary distribution does not ship.
+                  user_configurable: true
+                  enabled_value:
+                      default: minimal
+
+                - name: LLVM_DIR
+                  description: CMake package directory of the LLVM install
+                  enabled_value:
+                      default: ${llvm.prefix}/lib/cmake/llvm
+                  requires: [llvm]
+
+                - name: CLANG_EXECUTABLE_PATH
+                  description: clang++ used by acpp to compile SYCL kernels to CUDA
+                  enabled_value:
+                      default: ${llvm.prefix}/bin/clang++
+                  requires: [llvm]
+
+                - name: CUDA_TOOLKIT_ROOT_DIR
+                  description: CUDA toolkit root for device-code tooling (ptxas, cudart)
+                  enabled_value:
+                      default: ${cuda.prefix}
+                  requires: [cuda]
+
+                - name: CMAKE_CUDA_COMPILER
+                  description: nvcc belonging to the CUDA toolkit to target
+                  enabled_value:
+                      default: ${cuda.prefix}/bin/nvcc
+                  requires: [cuda]
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${adaptivecpp.prefix}/lib
+        include: ${adaptivecpp.prefix}/include
+        bin: ${adaptivecpp.prefix}/bin

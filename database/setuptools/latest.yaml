@@ -1,0 +1,19 @@
+---
+recipe:
+    name: setuptools
+    description: >
+        Setuptools - the legacy Python build/packaging library (build and
+        install tooling for Python packages).
+    # Pinned to the 80.10.x line: it is the last release that still provides
+    # the pkg_resources module, which legacy code generators (e.g. yateto used
+    # by SeisSol) import at build time; setuptools >80 removed it.
+    type: package
+    toolchain: python
+
+    source:
+        type: pypi
+        releases:
+            - version: 80.10.2
+
+    dependencies:
+        - python@>=3.9

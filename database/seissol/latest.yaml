@@ -1,0 +1,135 @@
+---
+recipe:
+    name: seissol
+    description: >
+        SeisSol - an open-source numerical solver for wave propagation and
+        dynamic rupture in earthquakes. Uses the ADER-DG method with high-order
+        derivative time stepping on unstructured tetrahedral meshes, CPU and
+        GPU (CUDA/HIP/SYCL) backends.
+    type: package
+    toolchain: cmake
+
+    source:
+        type: git
+        url: https://github.com/SeisSol/SeisSol
+        releases:
+            - version: 1.3.2
+              tag: v1.3.2
+
+    dependencies:
+        - mpi
+        - hdf5
+        - eigen
+        - easi
+        - metis
+        - parmetis
+        # The CUDA device backend compiles against the CUDA toolkit.
+        - cuda
+        # SeisSol's CMake requires netCDF for model/solution I/O
+        # (find_package(NetCDF ... REQUIRED), CMakeLists.txt).
+        - netcdf
+        # SeisSol's CMake requires libnuma (find_package(NUMA)) and, because its
+        # parallel HDF5 check is strict, HDF5 must be built with MPI support.
+        - numactl
+        # The build-time code generator (yateto) runs Python that needs numpy
+        # and the legacy pkg_resources module; depending on these makes the
+        # build use the environment venv where they are installed. gemmforge
+        # is required for the CUDA/GPU code generation (SeisSol auto-adds it
+        # to GEMM_TOOLS_LIST when DEVICE_BACKEND != none).
+        - numpy
+        - setuptools
+        - gemmforge
+        # v1.3.2 always compiles its general SYCL offloading library (GPU
+        # dynamic rupture, streams, ...) with a SYCL compiler even for the CUDA
+        # backend; AdaptiveCpp targeting CUDA fills that role.
+        - adaptivecpp
+
+    build:
+        # The GitHub archive tarball ships empty git-submodule placeholders
+        # (yateto, etc.), so the submodules must be fetched after the clone.
+        # CUDA 12/13 toolkits no longer ship libnvToolsExt (NVTX is a separate
+        # package), so drop the nvToolsExt link that SeisSol's Device submodule
+        # requests unconditionally (its CUDA::nvToolsExt target cannot exist).
+        preprocessing: |-
+            git submodule update --init --recursive
+            sed -i 's/ CUDA::nvToolsExt//' submodules/Device/cuda.cmake
+
+        # SeisSol force-sets the build type to Release at configure time, so the
+        # standard generator CMAKE_BUILD_TYPE option is redundant but harmless.
+        configurations:
+            # For GPU builds SeisSol compiles its SYCL offloading library with
+            # AdaptiveCpp (acpp), which drives clang++ and the CUDA toolkit;
+            # make those binaries findable for the build commands.
+            environment:
+                - name: PATH
+                  description: Add the AdaptiveCpp, clang (LLVM) and CUDA toolkit binaries to PATH
+                  default: ${adaptivecpp.prefix}/bin:${llvm.prefix}/bin:${cuda.prefix}/bin:$PATH
+
+            options:
+                # ── Device backend ──────────────────────────────────────────
+                - name: DEVICE_BACKEND
+                  description: Compute device backend (none, cuda, hip, oneapi, acpp)
+                  user_configurable: true
+                  enabled_value:
+                      default: none
+
+                # DEVICE_ARCH is only meaningful when a GPU DEVICE_BACKEND is
+                # selected; SeisSol rejects it otherwise, so it defaults to
+                # disabled (user enables for GPU builds). Note: there is no
+                # DEVICE_CODEGEN option upstream in 1.3.2 - gemmforge is
+                # auto-appended to GEMM_TOOLS_LIST when DEVICE_BACKEND != none.
+                - name: DEVICE_ARCH
+                  description: Device architecture for CUDA, e.g. sm_80 (valid only with a GPU backend)
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: sm_90
+
+                - name: CMAKE_CUDA_COMPILER
+                  description: nvcc to use for the CUDA device code
+                  user_configurable: true
+                  enabled_value:
+                      default: ${cuda.prefix}/bin/nvcc
+                  requires: [cuda]
+
+                - name: ASAGI
+                  description: Enable ASAGI interface look-ups (requires easi built with ASAGI)
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: USE_GRAPH_CAPTURING
+                  description: Use CUDA graph capturing on supported GPUs
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+                - name: HOST_ARCH
+                  description: >
+                      Host CPU microarchitecture from SeisSol's list
+                      (noarch;wsm;snb;hsw;knc;knl;skx;naples;rome;milan;bergamo;
+                      thunderx2t99;power9;a64fx;neon;apple-m1;apple-m2). "native"
+                      is NOT accepted upstream; noarch is the portable default.
+                  user_configurable: true
+                  enabled_value:
+                      default: noarch
+
+                # ── Partitioning ────────────────────────────────────────────
+                - name: USE_METIS
+                  description: Use METIS for mesh partitioning
+                  enabled_value:
+                      default: ON
+
+                - name: USE_PARMETIS
+                  description: Use ParMETIS for parallel mesh partitioning
+                  enabled_value:
+                      default: ON
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${seissol.prefix}/lib
+        include: ${seissol.prefix}/include

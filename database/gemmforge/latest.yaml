@@ -1,0 +1,48 @@
+---
+recipe:
+    name: gemmforge
+    description: >
+        gemmforge - SeisSol's GPU GEMM / tensor-contraction code generator.
+        Generates the dense matrix-multiplication kernels that SeisSol's GPU
+        device layer is built from.
+    # SeisSol requires gemmforge >= 0.0.207, which is not published on PyPI at
+    # the required versions, so the package is fetched from its Git repository
+    # and uv-installed into the environment's Python venv. SeisSol's GPU build
+    # discovers it via `python3 -c "import gemmforge; gemmforge.print_cmake_path()"`
+    # and `find_package(GemmForge 0.0.207 REQUIRED)`.
+    type: package
+    toolchain: make
+
+    source:
+        type: git
+        url: https://github.com/SeisSol/gemmforge
+        releases:
+            # v0.0.208 is the first release supporting sm_90 (Hopper). SeisSol
+            # 1.3.2's find_package(GemmForge 0.0.207 REQUIRED) uses a version
+            # file with an exact-match check, so the build command below relaxes
+            # it to "greater-or-equal" for any newer gemmforge.
+            - version: 0.0.208
+              tag: v0.0.208
+
+    dependencies:
+        # Depending on the Python distribution makes this package "Python-aware",
+        # so VIRTUAL_ENV points at the environment venv during its build.
+        - python
+        - numpy
+
+    build:
+        # The package is installed into the environment venv with uv. numpy is
+        # already provided as a declared dependency (runtime requirement).
+        # SeisSol 1.3.2 requests GemmForge 0.0.207 with an exact-match version
+        # file (VERSION_EQUAL); relax it to greater-or-equal so the newer,
+        # sm_90-capable v0.0.208 satisfies SeisSol's find_package.
+        configurations:
+            command: |-
+                uv pip install --no-config --no-deps \
+                    --python "${VIRTUAL_ENV}/bin/python" ${source}
+                sed -i 's/VERSION_EQUAL/VERSION_GREATER_EQUAL/' \
+                    "${VIRTUAL_ENV}"/lib/python*/site-packages/gemmforge/share/cmake/GemmForgeConfigVersion.cmake
+
+    properties:
+        lib: ${gemmforge.prefix}/lib
+        include: ${gemmforge.prefix}/include

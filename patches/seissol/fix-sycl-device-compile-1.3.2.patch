@@ -1,0 +1,33 @@
+diff --git a/src/Initializer/BatchRecorders/DataTypes/Table.h b/src/Initializer/BatchRecorders/DataTypes/Table.h
+index 5ed644d..85d0422 100644
+--- a/src/Initializer/BatchRecorders/DataTypes/Table.h
++++ b/src/Initializer/BatchRecorders/DataTypes/Table.h
+@@ -31,11 +31,11 @@ class GenericTableEntry {
+   GenericTableEntry(const GenericTableEntry& other)
+       : hostVector(other.hostVector), deviceDataPtr(nullptr) {
+     if (!hostVector.empty()) {
+-      if (other.devicePtrs != nullptr) {
++      if (other.deviceDataPtr != nullptr) {
+         deviceDataPtr = static_cast<PointerType>(
+-            device.api->allocGlobMem(other.pointers.size() * sizeof(Type)));
++            device.api->allocGlobMem(other.hostVector.size() * sizeof(Type)));
+         device.api->copyBetween(
+-            deviceDataPtr, other.devicePtrs, other.pointers.size() * sizeof(Type));
++            deviceDataPtr, other.deviceDataPtr, other.hostVector.size() * sizeof(Type));
+       }
+     }
+   }
+diff --git a/src/Parallel/Runtime/Stream.h b/src/Parallel/Runtime/Stream.h
+index 69b3cc5..cfc3840 100644
+--- a/src/Parallel/Runtime/Stream.h
++++ b/src/Parallel/Runtime/Stream.h
+@@ -3,7 +3,9 @@
+ 
+ #include <Initializer/Tree/Layer.h>
+ #include <functional>
++#ifndef SYCL_DEVICE_ONLY
+ #include <omp.h>
++#endif
+ #include <utility>
+ 
+ #ifdef ACL_DEVICE

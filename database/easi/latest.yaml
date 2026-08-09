@@ -1,0 +1,68 @@
+---
+recipe:
+    name: easi
+    description: >
+        easi - Environment for Abstractions for SeisSol Input. SeisSol's model
+        and material description library for defining material models in YAML.
+    # SeisSol requires easi at build time (find_package(easi)) and at runtime
+    # to read its material-model YAML files.
+    type: package
+    toolchain: cmake
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.6.2
+              url: https://github.com/SeisSol/easi/archive/refs/tags/v1.6.2.tar.gz
+
+    build:
+        configurations:
+            options:
+                # ── NetCDF (ASAGI) model access ─────────────────────────────
+                - name: enable-asagi
+                  description: Enable the ASAGI (netCDF-based) model file interface (add hdf5/netcdf/mpi to the environment when enabled)
+                  user_configurable: true
+                  enabled_format: ''
+                  disabled_format: ''
+                  enabled:
+                      default: false
+
+                - name: ASAGI
+                  description: ASAGI model file interface support
+                  enabled_value:
+                      default: OFF
+                      conditions:
+                          - condition: ${easi.config.enable-asagi} true
+                            action: set
+                            value: ON
+
+                - name: enable-lua
+                  description: Enable the Lua-based model file interface
+                  user_configurable: true
+                  enabled:
+                      default: false
+
+                - name: LUA
+                  description: Lua model file interface
+                  enabled_value:
+                      default: OFF
+                      conditions:
+                          - condition: ${easi.config.enable-lua} true
+                            action: set
+                            value: ON
+
+                - name: BUILD_SHARED_LIBS
+                  description: Build shared libraries
+                  user_configurable: true
+                  enabled_value:
+                      default: OFF
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${easi.prefix}/lib64
+        include: ${easi.prefix}/include
+        libs:
+            default: -leasi
