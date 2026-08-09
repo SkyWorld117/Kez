@@ -2,7 +2,7 @@
 kez:
     acts:
         description: A Common Tracking Software framework
-        version: 44.2.0
+        version: 44.4.0
         compiler: gcc@13.4.0
         build:
             configurations:
@@ -28,37 +28,43 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${boost.incflags} ${xerces-c.incflags} ${hepmc3.incflags} ${geant4.incflags} ${dd4hep.incflags} 
-                          ${root.incflags} ${lcio.incflags} ${sio.incflags} ${pythia.incflags} ${json.incflags} ${intel-oneapi-tbb.incflags} 
-                          ${eigen.incflags} ${intel-oneapi-mkl.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${boost.incflags} ${xerces-c.incflags} ${hepmc3.incflags} ${geant4.incflags} 
+                          ${dd4hep.incflags} ${root.incflags} ${lcio.incflags} ${sio.incflags} ${pythia.incflags} ${json.incflags} 
+                          ${intel-oneapi-tbb.incflags} ${eigen.incflags} ${intel-oneapi-mkl.incflags} ${python.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${boost.incflags} ${xerces-c.incflags} ${hepmc3.incflags} ${geant4.incflags} ${dd4hep.incflags} 
-                          ${root.incflags} ${lcio.incflags} ${sio.incflags} ${pythia.incflags} ${json.incflags} ${intel-oneapi-tbb.incflags} 
-                          ${eigen.incflags} ${intel-oneapi-mkl.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${boost.incflags} ${xerces-c.incflags} ${hepmc3.incflags} ${geant4.incflags} 
+                          ${dd4hep.incflags} ${root.incflags} ${lcio.incflags} ${sio.incflags} ${pythia.incflags} ${json.incflags} 
+                          ${intel-oneapi-tbb.incflags} ${eigen.incflags} ${intel-oneapi-mkl.incflags} ${python.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${boost.incflags} ${xerces-c.incflags} ${hepmc3.incflags} ${geant4.incflags} ${dd4hep.incflags} 
+                      enabled_value: -O3 -Xptxas -O3 ${boost.incflags} ${xerces-c.incflags} ${hepmc3.incflags} ${geant4.incflags} ${dd4hep.incflags} 
                           ${root.incflags} ${lcio.incflags} ${sio.incflags} ${pythia.incflags} ${json.incflags} ${intel-oneapi-tbb.incflags} 
-                          ${eigen.incflags} ${intel-oneapi-mkl.incflags}
+                          ${eigen.incflags} ${intel-oneapi-mkl.incflags} ${python.incflags}
                     - name: CMAKE_SHARED_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${boost.ldflags} ${xerces-c.ldflags} ${hepmc3.ldflags} ${geant4.ldflags} ${dd4hep.ldflags} 
                           ${root.ldflags} ${lcio.ldflags} ${sio.ldflags} ${pythia.ldflags} ${intel-oneapi-tbb.ldflags} ${intel-oneapi-mkl.ldflags} 
-                          ${acts.ldflags} ${hepmc3.libs} ${root.libs} ${lcio.libs} ${sio.libs} ${intel-oneapi-tbb.libs} ${intel-oneapi-mkl.libs}
+                          ${python.ldflags} ${acts.ldflags} ${hepmc3.libs} ${root.libs} ${lcio.libs} ${sio.libs} ${intel-oneapi-tbb.libs} 
+                          ${intel-oneapi-mkl.libs} ${python.libs}
                     - name: CMAKE_MODULE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${boost.ldflags} ${xerces-c.ldflags} ${hepmc3.ldflags} ${geant4.ldflags} ${dd4hep.ldflags} 
                           ${root.ldflags} ${lcio.ldflags} ${sio.ldflags} ${pythia.ldflags} ${intel-oneapi-tbb.ldflags} ${intel-oneapi-mkl.ldflags} 
-                          ${acts.ldflags} ${hepmc3.libs} ${root.libs} ${lcio.libs} ${sio.libs} ${intel-oneapi-tbb.libs} ${intel-oneapi-mkl.libs}
+                          ${python.ldflags} ${acts.ldflags} ${hepmc3.libs} ${root.libs} ${lcio.libs} ${sio.libs} ${intel-oneapi-tbb.libs} 
+                          ${intel-oneapi-mkl.libs} ${python.libs}
                     - name: CMAKE_BUILD_RPATH
                       enabled: true
                       enabled_value: 
-                          ${compiler.lib};${boost.lib};${xerces-c.lib};${hepmc3.lib};${geant4.lib};${dd4hep.lib};${root.lib};${lcio.lib};${sio.lib};${pythia.lib};${intel-oneapi-tbb.lib};${intel-oneapi-mkl.lib};${acts.lib}
+                          ${compiler.lib};${boost.lib};${xerces-c.lib};${hepmc3.lib};${geant4.lib};${dd4hep.lib};${root.lib};${lcio.lib};${sio.lib};${pythia.lib};${intel-oneapi-tbb.lib};${intel-oneapi-mkl.lib};${python.lib};${acts.lib}
                     - name: CMAKE_INSTALL_RPATH
                       enabled: true
                       enabled_value: 
-                          ${compiler.lib};${boost.lib};${xerces-c.lib};${hepmc3.lib};${geant4.lib};${dd4hep.lib};${root.lib};${lcio.lib};${sio.lib};${pythia.lib};${intel-oneapi-tbb.lib};${intel-oneapi-mkl.lib};${acts.lib}
+                          ${compiler.lib};${boost.lib};${xerces-c.lib};${hepmc3.lib};${geant4.lib};${dd4hep.lib};${root.lib};${lcio.lib};${sio.lib};${pythia.lib};${intel-oneapi-tbb.lib};${intel-oneapi-mkl.lib};${python.lib};${acts.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: 
+                          ${boost.prefix};${xerces-c.prefix};${hepmc3.prefix};${geant4.prefix};${dd4hep.prefix};${root.prefix};${lcio.prefix};${sio.prefix};${pythia.prefix};${json.prefix};${intel-oneapi-tbb.prefix};${eigen.prefix};${intel-oneapi-mkl.prefix};${python.prefix}
     intel-oneapi-mkl:
         description: Intel oneAPI Math Kernel Library for high-performance math routines
         build:
@@ -108,16 +114,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -Xptxas -O3
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags}
@@ -157,16 +163,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -Xptxas -O3
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags}
@@ -221,19 +227,19 @@ kez:
                       enabled_value: ${hepmc3.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hepmc3.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hepmc3.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hepmc3.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hepmc3.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hepmc3.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hepmc3.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${hepmc3.ldflags} ${pythia.ldflags}
     dd4hep:
         description: Detector description toolkit for high energy physics
-        version: 01-33
+        version: 01-37
         compiler: gcc@13.4.0
         build:
             configurations:
@@ -255,40 +261,47 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${geant4.incflags} ${lcio.incflags} ${sio.incflags} ${root.incflags} ${xerces-c.incflags} 
-                          ${intel-oneapi-tbb.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${boost.incflags} ${geant4.incflags} ${lcio.incflags} ${sio.incflags} 
+                          ${root.incflags} ${xerces-c.incflags} ${intel-oneapi-tbb.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${geant4.incflags} ${lcio.incflags} ${sio.incflags} ${root.incflags} ${xerces-c.incflags} 
-                          ${intel-oneapi-tbb.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${boost.incflags} ${geant4.incflags} ${lcio.incflags} ${sio.incflags} 
+                          ${root.incflags} ${xerces-c.incflags} ${intel-oneapi-tbb.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${geant4.incflags} ${lcio.incflags} ${sio.incflags} ${root.incflags} ${xerces-c.incflags} 
-                          ${intel-oneapi-tbb.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${boost.incflags} ${geant4.incflags} ${lcio.incflags} ${sio.incflags} 
+                          ${root.incflags} ${xerces-c.incflags} ${intel-oneapi-tbb.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${geant4.incflags} ${lcio.incflags} ${sio.incflags} ${root.incflags} ${xerces-c.incflags} 
-                          ${intel-oneapi-tbb.incflags}
+                      enabled_value: -O3 -Xptxas -O3 ${boost.incflags} ${geant4.incflags} ${lcio.incflags} ${sio.incflags} ${root.incflags} 
+                          ${xerces-c.incflags} ${intel-oneapi-tbb.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${geant4.ldflags} ${lcio.ldflags} ${sio.ldflags} ${root.ldflags} ${xerces-c.ldflags} 
-                          ${intel-oneapi-tbb.ldflags} ${dd4hep.ldflags} ${lcio.libs} ${sio.libs} ${root.libs} ${intel-oneapi-tbb.libs}
+                      enabled_value: ${compiler.ldflags} ${boost.ldflags} ${geant4.ldflags} ${lcio.ldflags} ${sio.ldflags} ${root.ldflags} 
+                          ${xerces-c.ldflags} ${intel-oneapi-tbb.ldflags} ${dd4hep.ldflags} ${lcio.libs} ${sio.libs} ${root.libs} 
+                          ${intel-oneapi-tbb.libs}
                     - name: CMAKE_SHARED_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${geant4.ldflags} ${lcio.ldflags} ${sio.ldflags} ${root.ldflags} ${xerces-c.ldflags} 
-                          ${intel-oneapi-tbb.ldflags} ${dd4hep.ldflags} ${lcio.libs} ${sio.libs} ${root.libs} ${intel-oneapi-tbb.libs}
+                      enabled_value: ${compiler.ldflags} ${boost.ldflags} ${geant4.ldflags} ${lcio.ldflags} ${sio.ldflags} ${root.ldflags} 
+                          ${xerces-c.ldflags} ${intel-oneapi-tbb.ldflags} ${dd4hep.ldflags} ${lcio.libs} ${sio.libs} ${root.libs} 
+                          ${intel-oneapi-tbb.libs}
                     - name: CMAKE_MODULE_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${geant4.ldflags} ${lcio.ldflags} ${sio.ldflags} ${root.ldflags} ${xerces-c.ldflags} 
-                          ${intel-oneapi-tbb.ldflags} ${dd4hep.ldflags} ${lcio.libs} ${sio.libs} ${root.libs} ${intel-oneapi-tbb.libs}
+                      enabled_value: ${compiler.ldflags} ${boost.ldflags} ${geant4.ldflags} ${lcio.ldflags} ${sio.ldflags} ${root.ldflags} 
+                          ${xerces-c.ldflags} ${intel-oneapi-tbb.ldflags} ${dd4hep.ldflags} ${lcio.libs} ${sio.libs} ${root.libs} 
+                          ${intel-oneapi-tbb.libs}
                     - name: CMAKE_BUILD_RPATH
                       enabled: true
                       enabled_value: 
-                          ${compiler.lib};${geant4.lib};${lcio.lib};${sio.lib};${root.lib};${xerces-c.lib};${intel-oneapi-tbb.lib};${dd4hep.lib}
+                          ${compiler.lib};${boost.lib};${geant4.lib};${lcio.lib};${sio.lib};${root.lib};${xerces-c.lib};${intel-oneapi-tbb.lib};${dd4hep.lib}
                     - name: CMAKE_INSTALL_RPATH
                       enabled: true
                       enabled_value: 
-                          ${compiler.lib};${geant4.lib};${lcio.lib};${sio.lib};${root.lib};${xerces-c.lib};${intel-oneapi-tbb.lib};${dd4hep.lib}
+                          ${compiler.lib};${boost.lib};${geant4.lib};${lcio.lib};${sio.lib};${root.lib};${xerces-c.lib};${intel-oneapi-tbb.lib};${dd4hep.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: 
+                          ${boost.prefix};${geant4.prefix};${lcio.prefix};${sio.prefix};${root.prefix};${xerces-c.prefix};${intel-oneapi-tbb.prefix}
     intel-oneapi-tbb:
         description: Intel oneAPI Threading Building Blocks for parallel programming
     intel-oneapi:
@@ -317,16 +330,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -Xptxas -O3
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${sio.ldflags}
@@ -344,7 +357,7 @@ kez:
                       enabled_value: ${compiler.lib};${sio.lib}
     lcio:
         description: Linear Collider I/O - persistency framework for HEP and HEP-like applications
-        version: 02-23
+        version: 02-23-02
         compiler: system
         build:
             configurations:
@@ -366,16 +379,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${root.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${root.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${root.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${root.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${root.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${root.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${root.incflags}
+                      enabled_value: -O3 -Xptxas -O3 ${root.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${root.ldflags} ${lcio.ldflags} ${root.libs}
@@ -391,10 +404,18 @@ kez:
                     - name: CMAKE_INSTALL_RPATH
                       enabled: true
                       enabled_value: ${compiler.lib};${root.lib};${lcio.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${root.prefix}
     root:
         description: ROOT Data Analysis Framework
         version: 6.36.04
         compiler: system
+        patches:
+            - name: fix-cmake4-cache-var-if-list.patch
+              enabled: true
+            - name: fix-multi-value-build-rpath-636.patch
+              enabled: true
         build:
             configurations:
                 options:
@@ -415,36 +436,68 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${python.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${python.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native ${python.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -Xptxas -O3 ${python.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${root.ldflags}
+                      enabled_value: ${compiler.ldflags} ${python.ldflags} ${root.ldflags} ${python.libs}
                     - name: CMAKE_SHARED_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${root.ldflags}
+                      enabled_value: ${compiler.ldflags} ${python.ldflags} ${root.ldflags} ${python.libs}
                     - name: CMAKE_MODULE_LINKER_FLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${root.ldflags}
+                      enabled_value: ${compiler.ldflags} ${python.ldflags} ${root.ldflags} ${python.libs}
                     - name: CMAKE_BUILD_RPATH
                       enabled: true
-            # A bug makes it only possible to set one single path for the build rpath
-            # Maybe one can also just simply disable this option
-                      enabled_value: ${root.lib}
+                      enabled_value: ${compiler.lib};${python.lib};${root.lib}
                     - name: CMAKE_INSTALL_RPATH
                       enabled: true
-                      enabled_value: ${compiler.lib};${root.lib}
+                      enabled_value: ${compiler.lib};${python.lib};${root.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${python.prefix}
+    python:
+        description: Python Programming Language
+        version: 3.14.6
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${python.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${compiler.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${compiler.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${compiler.fort}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${python.ldflags}
     geant4:
         description: Geant4 - A toolkit for the simulation of the passage of particles through matter
-        version: 11.3.2
+        version: 11.4.2
         compiler: system
         build:
             configurations:
@@ -466,16 +519,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${xerces-c.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${xerces-c.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${xerces-c.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${xerces-c.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${xerces-c.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${xerces-c.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3 ${xerces-c.incflags}
+                      enabled_value: -O3 -Xptxas -O3 ${xerces-c.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${xerces-c.ldflags} ${geant4.ldflags}
@@ -491,6 +544,9 @@ kez:
                     - name: CMAKE_INSTALL_RPATH
                       enabled: true
                       enabled_value: ${compiler.lib};${xerces-c.lib};${geant4.lib}
+                    - name: CMAKE_PREFIX_PATH
+                      enabled: true
+                      enabled_value: ${xerces-c.prefix}
     hepmc3:
         description: HepMC3 - A C++ event record for Monte Carlo generators
         version: 3.3.1
@@ -515,16 +571,16 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CMAKE_C_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -Xptxas -O3
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${hepmc3.ldflags}
@@ -561,19 +617,19 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${xerces-c.ldflags}
     boost:
         description: Boost C++ Libraries
-        version: 1.89.0
+        version: 1.91.0
         compiler: system
         build:
             configurations:
@@ -596,6 +652,7 @@ recipe:
         - sio
         - lcio
         - root
+        - python
         - geant4
         - hepmc3
         - xerces-c

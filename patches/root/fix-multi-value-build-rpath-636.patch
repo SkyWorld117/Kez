@@ -1,0 +1,13 @@
+diff --git a/cmake/modules/RootMacros.cmake b/cmake/modules/RootMacros.cmake
+index 9f3dac7..4c43116 100644
+--- a/cmake/modules/RootMacros.cmake
++++ b/cmake/modules/RootMacros.cmake
+@@ -990,7 +990,7 @@ function(ROOT_LINKER_LIBRARY library)
+             endforeach()
+           endif()
+           if(lib_rpath)
+-            set_target_properties(${library} PROPERTIES BUILD_RPATH ${lib_rpath})
++            set_target_properties(${library} PROPERTIES BUILD_RPATH "${lib_rpath}")
+           endif()
+         endif()
+       endforeach()
