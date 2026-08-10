@@ -1,0 +1,58 @@
+---
+kez:
+    rast-3dmhd:
+        description: "Rast-3DMHD - a GPU-accelerated 3D magnetohydrodynamics (MHD) solver.\n"
+        version: main@/home/zyi/Kez/workspace/Rast-3dmhd
+        compiler: system
+        build:
+            stages:
+                - target:
+                  configurations:
+                      options:
+                          - name: BACKEND
+                            description: Build backend [ cpu | gpu ]
+                            enabled: true
+                            enabled_value: gpu
+                            requires:
+                                - cuda
+                          - name: NVCC_ARCH
+                            description: CUDA compute capability (e.g. sm_90 for H100/H200)
+                            enabled: true
+                            enabled_value: sm_90a
+                          - name: NVCCFLAGS
+                            description: "Device (CUDA) compiler flags.  The default keeps the golden bit-exact match (-fmad=false disables FMA contraction
+                                on the GPU); drop or change -fmad=false for more speed at the cost of reproducible rounding. Structural flags (-rdc=true,
+                                --cudart=static, -x cu, -arch) are always appended by the Makefile.\n"
+                            enabled: true
+                            enabled_value: -O3 -Xptxas -O3 -use_fast_math -std=c++17
+                            requires:
+                                - cuda
+                          - name: CXXFLAGS
+                            description: "C++ compiler flags.  The default (fast) flags keep the golden bit-exact match (-ffp-contract=off, the host counterpart
+                                of the GPU -fmad=false); override -ffp-contract=off for more speed at the cost of reproducible rounding - the code only
+                                guarantees bit-exact results with contraction disabled.\n"
+                            enabled: true
+                            enabled_value: -Ofast -march=native -mtune=native -std=c++17
+                          - name: DUMPMODE
+                            description: "Compile-time gstate dump policy [ periodic | final | none ].  periodic writes a dump every NSTEP0 steps plus the
+                                final one (and gstate.start); final writes only the last step's dump; none writes no gstate files at all (progress is still
+                                logged).  Each dump is ~NX*NY*NZ*27*8 B per rank (~118 GB per checkpoint at the default grid), so 'final'/'none' keep long
+                                runs from filling the filesystem.\n"
+                            enabled: true
+                            enabled_value: none
+    openmpi:
+        description: Open Source Implementation of the Message Passing Interface
+        version: 5.0.10
+        compiler: system
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 13.3
+recipe:
+    abstract_packages:
+        mpi: openmpi
+    dependencies:
+        - rast-3dmhd
+        - openmpi
+        - cuda
+    targets:
+        - rast-3dmhd

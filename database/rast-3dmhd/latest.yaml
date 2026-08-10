@@ -1,0 +1,132 @@
+---
+recipe:
+    name: rast-3dmhd
+    description: >
+        Rast-3DMHD - a GPU-accelerated 3D magnetohydrodynamics (MHD) solver.
+    type: package
+    toolchain: make
+
+    source:
+        # Fork of https://github.com/dsmithlasp/Rast-3dmhd
+        # The code is being rewritten from Fortran to C++/CUDA.
+        type: git
+        url: https://github.com/SkyWorld117/Rast-3dmhd.git
+        releases:
+            - version: main
+              tag: main
+
+    dependencies:
+        - mpi
+        - cuda
+
+    build:
+        stages:
+            - target:
+              multithreaded: true
+              configurations:
+                  environment:
+                      - name: PATH
+                        description: Add the MPI and CUDA toolkit binaries to PATH
+                        default: ${mpi.prefix}/bin:${cuda.prefix}/bin:$PATH
+
+                  options:
+                      - name: BACKEND
+                        description: Build backend [ cpu | gpu ]
+                        user_configurable: true
+                        enabled_value:
+                            default: gpu
+                        requires: [cuda]
+
+                      - name: CXX
+                        description: >
+                            MPI C++ compiler (the makefile is MPI-only; CXX is
+                            also used to discover the MPI include/link flags
+                            for the GPU build, so it must stay an MPI wrapper).
+                        enabled_value:
+                            default: ${mpi.cxx}
+
+                      - name: NVCC
+                        description: NVIDIA CUDA compiler
+                        enabled:
+                            default: false
+                            conditions:
+                                - condition: ${rast-3dmhd.config.BACKEND} true gpu
+                                  value: true
+                        enabled_value:
+                            default: ${cuda.prefix}/bin/nvcc
+                        requires: [cuda]
+
+                      - name: NVCC_ARCH
+                        description: CUDA compute capability (e.g. sm_90 for H100/H200)
+                        user_configurable: true
+                        enabled_value:
+                            default: sm_90
+
+                      - name: NVCCFLAGS
+                        description: >
+                            Device (CUDA) compiler flags.  The default keeps the
+                            golden bit-exact match (-fmad=false disables FMA
+                            contraction on the GPU); drop or change -fmad=false
+                            for more speed at the cost of reproducible rounding.
+                            Structural flags (-rdc=true, --cudart=static, -x cu,
+                            -arch) are always appended by the Makefile.
+                        user_configurable: true
+                        enabled_value:
+                            default: -O2 -g -std=c++17 -fmad=false
+                        requires: [cuda]
+
+                      - name: CXXFLAGS
+                        description: >
+                            C++ compiler flags.  The default (fast) flags keep
+                            the golden bit-exact match (-ffp-contract=off, the
+                            host counterpart of the GPU -fmad=false); override
+                            -ffp-contract=off for more speed at the cost of
+                            reproducible rounding - the code only guarantees
+                            bit-exact results with contraction disabled.
+                        user_configurable: true
+                        enabled_value:
+                            default: -O3 -std=c++17 -ffp-contract=off
+
+                      - name: DUMPMODE
+                        description: >
+                            Compile-time gstate dump policy [ periodic | final |
+                            none ].  periodic writes a dump every NSTEP0 steps
+                            plus the final one (and gstate.start); final writes
+                            only the last step's dump; none writes no gstate
+                            files at all (progress is still logged).  Each dump
+                            is ~NX*NY*NZ*27*8 B per rank (~118 GB per checkpoint
+                            at the default grid), so 'final'/'none' keep long
+                            runs from filling the filesystem.
+                        user_configurable: true
+                        enabled_value:
+                            default: none
+
+                      - name: WITH_TESTS
+                        description: >
+                            Build and run the optional GoogleTest suite
+                            (requires the googletest system package, which is
+                            0 by default - the library and binary never need
+                            gtest).
+                        user_configurable: true
+                        enabled_value:
+                            default: 0
+                        requires: [googletest]
+
+                      - name: GTEST_PREFIX
+                        description: GoogleTest prefix (used only when WITH_TESTS=1)
+                        enabled_value:
+                            default: ${googletest.prefix}
+                        requires: [googletest]
+
+            - target: install
+              configurations:
+                  options:
+                      - name: PREFIX
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${rast-3dmhd.prefix}
+
+
+    properties:
+        lib: ${rast-3dmhd.prefix}/lib
+        include: ${rast-3dmhd.prefix}/include
