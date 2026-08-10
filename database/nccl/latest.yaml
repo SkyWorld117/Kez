@@ -1,0 +1,70 @@
+---
+recipe:
+    name: nccl
+    description: >
+        NCCL - NVIDIA Collective Communications Library.  GPU-to-GPU
+        collectives (AllReduce/AllGather and point-to-point send/recv);
+        used here for the Rast-3DMHD device-side halo exchange.  Built from
+        the NVIDIA source tree so it links against the installed CUDA
+        toolkit.  The NVIDIA "secure" txz download is login-gated, so the
+        release comes from the matching GitHub tag, which ships the
+        identical source.
+    type: package
+    toolchain: make
+
+    source:
+        type: tarball
+        releases:
+            - version: 2.30.7
+              url: https://github.com/NVIDIA/nccl/archive/refs/tags/v2.30.7-1.tar.gz
+
+    dependencies:
+        - cuda
+
+    build:
+        stages:
+            - target:
+              multithreaded: true
+              configurations:
+                  environment:
+                      - name: PATH
+                        description: Put the CUDA toolkit binaries on PATH
+                        default: ${cuda.prefix}/bin:$PATH
+
+                  options:
+                      - name: CUDA_HOME
+                        description: >
+                            CUDA toolkit root (NCCL resolves nvcc, libcudart
+                            and the CUDA headers from it).  Defaults to the
+                            installed cuda package.
+                        enabled_value:
+                            default: ${cuda.prefix}
+
+                      - name: NVCC_GENCODE
+                        description: >
+                            CUDA compute-capability list for the device-side
+                            code (e.g. -gencode=arch=compute_90,code=sm_90 for
+                            H100/H200).  Empty by default: NCCL then targets
+                            the full set of architectures supported by the
+                            installed toolkit, which is portable but slower to
+                            build.  Set this to narrow the build to the
+                            cluster's GPUs.
+                        user_configurable: true
+                        enabled:
+                            default: false
+                        enabled_value:
+                            default: ''
+
+            - target: install
+              configurations:
+                  options:
+                      - name: PREFIX
+                        description: Installation prefix
+                        enabled_value:
+                            default: ${nccl.prefix}
+
+    properties:
+        lib: ${nccl.prefix}/lib
+        include: ${nccl.prefix}/include
+        libs:
+            default: -lnccl

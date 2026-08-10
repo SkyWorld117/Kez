@@ -62,6 +62,36 @@ recipe:
                         enabled_value:
                             default: sm_90
 
+                      - name: USE_NCCL
+                        description: >
+                            Use device-side NCCL collectives for the GPU halo
+                            exchange and the per-step timestep reduction
+                            (ncclAllGather-based exchange + ncclAllReduce), all
+                            on the GPU.  Off by default: the host-staged MPI
+                            exchange is used, which is reliable on any transport
+                            and the bit-exact golden default.  Enabling pulls in
+                            the optional nccl package; only meaningful for the
+                            gpu backend.
+                        user_configurable: true
+                        enabled:
+                            default: false
+                        enabled_value:
+                            default: 1
+                        requires: [nccl]
+
+                      - name: NCCL_HOME
+                        description: >
+                            NCCL installation prefix, used when USE_NCCL is
+                            enabled (ignored otherwise).
+                        enabled:
+                            default: false
+                            conditions:
+                                - condition: ${rast-3dmhd.config.USE_NCCL} true
+                                  value: true
+                        enabled_value:
+                            default: ${nccl.prefix}
+                        requires: [nccl]
+
                       - name: NVCCFLAGS
                         description: >
                             Device (CUDA) compiler flags.  The default keeps the
