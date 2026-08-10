@@ -22,3 +22,6 @@ latex/
 # Ignore slurm logs
 *.out
 *.err
+
+# Ignore workspace files
+workspace/
