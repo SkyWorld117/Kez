@@ -1,0 +1,15 @@
+---
+recipe:
+    name: googletest
+    description: >
+        GoogleTest/GTest - Google's C++ testing framework.  A system package:
+        already provided in the Kez system cellar (env/system, see its
+        state.yaml), used by packages that build the optional test suites.
+    type: system
+    toolchain: make
+
+    properties:
+        lib: ${googletest.prefix}/lib64
+        libs:
+            default: -lgtest
+        include: ${googletest.prefix}/include
