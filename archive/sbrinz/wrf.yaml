@@ -27,18 +27,18 @@ kez:
                     - name: WRF_FCOPTIM
                       description: "Fortran optimization flags.  Overrides FCOPTIM in configure.wrf.  Empty leaves stanza defaults.\n"
                       enabled: true
-                      enabled_value: -O3 -march=native -mtune=native
+                      enabled_value: -O3 -march=native -mtune=native -ffp-contract=off
                       disabled_value:
                     - name: WRF_FCNOOPT
                       description: "Fortran no-optimization flags (used for files that don't optimize well).  Overrides FCNOOPT in configure.wrf.  Empty
                           leaves stanza defaults.\n"
                       enabled: true
-                      enabled_value: -O3 -march=native -mtune=native
+                      enabled_value: -O3 -march=native -mtune=native -ffp-contract=off
                       disabled_value:
                     - name: WRF_FCREDUCEDOPT
                       description: "Fortran reduced optimization flags.  Overrides FCREDUCEDOPT in configure.wrf.  Empty leaves stanza defaults.\n"
                       enabled: true
-                      enabled_value: -O3 -march=native -mtune=native
+                      enabled_value: -O3 -march=native -mtune=native -ffp-contract=off
                       disabled_value:
                     - name: WRF_CFLAGS_LOCAL
                       description: "Extra C compiler flags.  Appended to CFLAGS_LOCAL in configure.wrf, preserving stanza flags like -c and -w that are
