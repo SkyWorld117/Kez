@@ -62,3 +62,11 @@ When updating the database, follow these steps:
 2. If the package has a new version, check if the existing recipe is still valid for the new version. If not, move the existing recipe to a new file with the version range it is valid for (e.g., `1.0.0-1.2.0.yaml`) and create a new `latest.yaml` for the new version. Then, perform the packaging workflow for the new version.
 3. If the existing recipe is still valid for the new version, update the `latest.yaml` file with the new version source URL.
 4. Remove redundant versions of the package from the database if they are no longer needed. We only keep the unique major and middle version numbers of the package. For example, if we have `1.0.0` in the database and we find `1.0.2`, we can remove `1.0.0` and keep `1.0.2`. If we find `1.1.0`, we can keep both `1.0.2` and `1.1.0`. If we find `2.0.0`, we should keep all three versions. The goal is to keep the database clean and only have the unique major and middle version numbers of the package. The exception to this rule is if the package changes its build recipe or interface drastically between minor versions (e.g. `1.0.0` and `1.0.1`), in which case we should keep both versions in the database.
+
+### Package Development Protocol
+
+When developing a new package as a developer, you can use the `workspace/dev-<package>` folder for development. Ideally, the workflow should be as follows:
+1. Read the instructions in `workspace/dev-<package>/TODO.md` to understand the current state of the workspace and what needs to be done.
+2. When working on a package, after having a working build toolchain (typically Makefile, we prefer Makefile over anything else), you can integrate the package into the database with a recipe.
+3. From here, you are encouraged to use `kez install <package> --env test-<package>` to build the package in a temporary environment and test it. If the configuration is complicated, you can also generate a user configuration file with `kez uconf <package> --env test-<package>` and edit it to your needs.
+4. Iterate until the items in TODO are done. Notify the user to review the changes.
