@@ -3,7 +3,7 @@ kez:
     mfc:
         description: An exascale many-physics flow solver
         version: 5.6.1
-        compiler: system
+        compiler: nvhpc-compilers@26.5
         build:
             configurations:
                 options:
@@ -26,35 +26,27 @@ kez:
                     - name: MFC_OpenACC
                       description: Build with OpenACC GPU offloading (NVHPC or Cray compilers)
                       enabled: true
-                      enabled_value: OFF
+                      enabled_value: ON
                     - name: MFC_OpenMP
                       description: Build with OpenMP GPU offloading (NVHPC or Cray compilers)
-                      enabled: true
-                      enabled_value: OFF
+                      enabled: false
+                      enabled_value: ON
                     - name: MFC_SINGLE_PRECISION
                       description: Use single precision (32-bit floats)
-                      enabled: true
-                      enabled_value: OFF
+                      enabled: false
+                      enabled_value: ON
                     - name: MFC_MIXED_PRECISION
                       description: Use mixed precision (64/32-bit hybrid)
-                      enabled: true
-                      enabled_value: OFF
+                      enabled: false
+                      enabled_value: ON
                     - name: MFC_Unified
                       description: Use unified CPU & GPU memory (GH-200 Grace Hopper only)
                       enabled: true
                       enabled_value: OFF
                     - name: MFC_Fastmath
                       description: Use -gpu=fastmath on NVIDIA GPUs
-                      enabled: true
-                      enabled_value: OFF
-                    - name: MFC_GCov
-                      description: Build with GCov code-coverage instrumentation
-                      enabled: true
-                      enabled_value: OFF
-                    - name: MFC_DOCUMENTATION
-                      description: Build Doxygen documentation
-                      enabled: true
-                      enabled_value: OFF
+                      enabled: false
+                      enabled_value: ON
                     - name: CMAKE_INSTALL_PREFIX
                       enabled: true
                       enabled_value: ${mfc.prefix}
@@ -343,7 +335,7 @@ kez:
     openmpi:
         description: Open Source Implementation of the Message Passing Interface
         version: 5.0.10
-        compiler: system
+        compiler: nvhpc-compilers@26.5
     cantera:
         description: Chemical kinetics library for thermodynamics, kinetics, and transport
         version: 3.2.0

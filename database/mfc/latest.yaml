@@ -68,7 +68,7 @@ recipe:
             sol = ct.Solution('h2o2.yaml')
             code = pyro.FortranCodeGenerator().generate(
                 'm_thermochem', sol,
-                pyro.CodeGenerationOptions(scalar_type='real(dp)', directive_offload=None),
+                pyro.CodeGenerationOptions(scalar_type='${mfc.config.MFC_SCALAR_TYPE}', directive_offload='${mfc.config.MFC_OFFLOAD_TARGET}'),
             )
             for target in ('simulation', 'pre_process', 'post_process'):
                 mod_dir = f'build/modules/{target}'
@@ -127,27 +127,66 @@ recipe:
                 - name: MFC_OpenACC
                   description: Build with OpenACC GPU offloading (NVHPC or Cray compilers)
                   user_configurable: true
+                  enabled:
+                      default: false
                   enabled_value:
-                      default: OFF
+                      default: ON
 
                 - name: MFC_OpenMP
                   description: Build with OpenMP GPU offloading (NVHPC or Cray compilers)
                   user_configurable: true
+                  enabled:
+                      default: false
                   enabled_value:
-                      default: OFF
+                      default: ON
+
+                # Match MFC's own toolchain (toolchain/mfc/run/input.py):
+                # the generated m_thermochem must carry GPU-offload routine
+                # directives matching the build mode -- 'acc' for OpenACC,
+                # 'mp' for OpenMP offload, none for CPU-only builds.
+                # Otherwise nvfortran fails with S-1061 ("Procedures called
+                # in a compute region must have acc routine information")
+                # when compiling m_chemistry.fpp, which calls thermochem
+                # functions inside !$acc compute regions.
+                - name: MFC_OFFLOAD_TARGET
+                  description: Virtual target for OpenACC/OpenMP offload
+                  enabled_value:
+                      default: None
+                      conditions:
+                          - condition: ${mfc.config.MFC_OpenACC} true
+                            value: acc
+                          - condition: ${mfc.config.MFC_OpenMP} true
+                            value: mp
+                  enabled_format: ''
 
                 # ── Precision ──────────────────────────────────────────────
                 - name: MFC_SINGLE_PRECISION
                   description: Use single precision (32-bit floats)
                   user_configurable: true
+                  enabled:
+                      default: false
                   enabled_value:
-                      default: OFF
+                      default: ON
 
                 - name: MFC_MIXED_PRECISION
                   description: Use mixed precision (64/32-bit hybrid)
                   user_configurable: true
+                  enabled:
+                      default: false
                   enabled_value:
-                      default: OFF
+                      default: ON
+
+                # Mirror MFC's precision selection for the thermochem scalar
+                # type (real(sp) for single or mixed precision, real(dp)
+                # otherwise).
+                - name: MFC_SCALAR_TYPE
+                  description: Virtual scalar type for thermochemistry module (real(sp) or real(dp))
+                  enabled_value:
+                      default: real(dp)
+                      conditions:
+                          - condition: ${mfc.config.MFC_SINGLE_PRECISION} true || ${mfc.config.MFC_MIXED_PRECISION} true
+                            value: real(sp)
+                  enabled_format: ''
 
                 # ── GPU / hardware-specific ────────────────────────────────
                 - name: MFC_Unified
@@ -159,19 +198,19 @@ recipe:
                 - name: MFC_Fastmath
                   description: Use -gpu=fastmath on NVIDIA GPUs
                   user_configurable: true
+                  enabled:
+                      default: false
                   enabled_value:
-                      default: OFF
+                      default: ON
 
                 # ── Development / debugging ────────────────────────────────
                 - name: MFC_GCov
                   description: Build with GCov code-coverage instrumentation
-                  user_configurable: true
                   enabled_value:
                       default: OFF
 
                 - name: MFC_DOCUMENTATION
                   description: Build Doxygen documentation
-                  user_configurable: true
                   enabled_value:
                       default: OFF
 
