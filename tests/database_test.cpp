@@ -262,6 +262,96 @@ recipe:
                     "type 'pypi' requires toolchain 'python'");
     }
 
+    TEST_F(TemporaryDatabase, ParsesGzipSourceWithPerReleaseUrls) {
+        write("demo", "latest.yaml", R"(
+recipe:
+  name: demo
+  type: package
+  source:
+    type: gzip
+    releases:
+      - version: 1.2.3
+        url: https://example.invalid/demo-linux-x86_64.gz
+)");
+
+        PackageConfigPtr config = get_db_config("demo");
+        ASSERT_TRUE(config->source.has_value());
+        EXPECT_EQ(config->source->type, SourceType::GZip);
+        ASSERT_EQ(config->source->releases.size(), 1U);
+        EXPECT_EQ(config->source->releases.front().version, "1.2.3");
+        ASSERT_TRUE(config->source->releases.front().url.has_value());
+        EXPECT_EQ(*config->source->releases.front().url,
+                  "https://example.invalid/demo-linux-x86_64.gz");
+    }
+
+    TEST_F(TemporaryDatabase, RejectsGzipSourceReleaseWithoutUrl) {
+        // A gzip release table is a download URL for a single file, exactly like
+        // tarball and zip sources, so the URL must be required at parse time
+        // rather than surfacing later when the install plan is generated.
+        write("invalid", "latest.yaml", R"(
+recipe:
+  name: invalid
+  type: package
+  source:
+    type: gzip
+    releases:
+      - version: 1.0.0
+)");
+
+        EXPECT_EXIT(static_cast<void>(get_db_config("invalid")),
+                    ::testing::ExitedWithCode(EXIT_FAILURE), "is required for");
+    }
+
+    TEST_F(TemporaryDatabase, ListsEveryRecipeFileNewestFirst) {
+        // The package's newest releases use a zip source, while the older range
+        // is distributed as a gzip-compressed single file, so both recipe files
+        // must be reachable for their versions to be presented.
+        write("demo", "latest.yaml", R"(
+recipe:
+  name: demo
+  type: package
+  source:
+    type: zip
+    releases:
+      - version: 2.0.0
+        url: https://example.invalid/demo-2.0.0.zip
+)");
+        write("demo", "1.0.0-1.5.0.yaml", R"(
+recipe:
+  name: demo
+  type: package
+  source:
+    type: tarball
+    releases:
+      - version: 1.5.0
+        url: https://example.invalid/demo-1.5.0.tar.gz
+)");
+        write("demo", "0.1.0-0.9.0.yaml", R"(
+recipe:
+  name: demo
+  type: package
+  source:
+    type: gzip
+    releases:
+      - version: 0.9.0
+        url: https://example.invalid/demo-0.9.0.gz
+)");
+
+        const std::vector<PackageConfigPtr> configs = get_all_db_configs("demo");
+
+        ASSERT_EQ(configs.size(), 3U);
+        // latest.yaml comes first, then ranges ordered by descending lower bound.
+        ASSERT_TRUE(configs[0]->source.has_value());
+        EXPECT_EQ(configs[0]->source->type, SourceType::Zip);
+        ASSERT_TRUE(configs[1]->source.has_value());
+        EXPECT_EQ(configs[1]->source->type, SourceType::Tarball);
+        ASSERT_TRUE(configs[2]->source.has_value());
+        EXPECT_EQ(configs[2]->source->type, SourceType::GZip);
+        ASSERT_EQ(configs[2]->source->releases.size(), 1U);
+        ASSERT_TRUE(configs[2]->source->releases.front().url.has_value());
+        EXPECT_EQ(*configs[2]->source->releases.front().url, "https://example.invalid/demo-0.9.0.gz");
+    }
+
     TEST_F(TemporaryDatabase, IgnoresUnexpectedKeysAtAnySchemaLevelAndEmitsWarning) {
         write("invalid", "latest.yaml", R"(
 recipe:
@@ -414,11 +504,23 @@ recipe:
 recipe:
   name: libfoo-legacy
   type: package
+  source:
+    type: git
+    url: https://example.invalid/libfoo.git
+    releases:
+      - version: 1.0.0
+        tag: v1.0.0
 )");
     write("libfoo", "1.5.0-1.5.0.yaml", R"(
 recipe:
   name: libfoo-middle
   type: package
+  source:
+    type: git
+    url: https://example.invalid/libfoo.git
+    releases:
+      - version: 1.5.0
+        tag: v1.5.0
 )");
 
     // No constraints -> "latest"

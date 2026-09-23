@@ -1,0 +1,20 @@
+---
+recipe:
+    name: tree-sitter
+    description: tree-sitter - a parser generator tool and an incremental parsing library
+    type: package
+
+    source:
+        type: gzip
+        releases:
+            - version: 0.26.6
+              url: https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.6/tree-sitter-linux-${kez.arch.tree-sitter}.gz
+            - version: 0.25.10
+              url: https://github.com/tree-sitter/tree-sitter/releases/download/v0.25.10/tree-sitter-linux-${kez.arch.tree-sitter}.gz
+            - version: 0.24.7
+              url: https://github.com/tree-sitter/tree-sitter/releases/download/v0.24.7/tree-sitter-linux-${kez.arch.tree-sitter}.gz
+
+    build:
+        postprocessing: |-
+            mkdir -p ${tree-sitter.prefix}/bin
+            install -m 755 source ${tree-sitter.prefix}/bin/tree-sitter

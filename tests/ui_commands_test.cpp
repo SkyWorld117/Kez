@@ -4,12 +4,17 @@
  */
 
 #include <gtest/gtest.h>
+#include <unistd.h>
 #include <yaml-cpp/yaml.h>
 
+#include <cstdlib>
 #include <database/config.hpp>
+#include <database/database.hpp>
 #include <filesystem>
+#include <fstream>
 #include <regex>
 #include <string>
+#include <ui/commands.hpp>
 #include <ui/factory.hpp>
 #include <ui/install.hpp>
 #include <ui/packages.hpp>
@@ -105,12 +110,88 @@ namespace {
         EXPECT_EQ(toolchain_name(Toolchain::CMake), "cmake");
         EXPECT_EQ(toolchain_name(Toolchain::Python), "python");
         EXPECT_EQ(source_type_name(SourceType::Tarball), "tarball");
+        EXPECT_EQ(source_type_name(SourceType::Zip), "zip");
+        EXPECT_EQ(source_type_name(SourceType::GZip), "gzip");
         EXPECT_EQ(source_type_name(SourceType::PyPI), "pypi");
         EXPECT_EQ(property_display_value(Property {"prefix", std::string("/opt/demo")}),
                   "/opt/demo");
         EXPECT_EQ(property_display_value(
                       Property {"conditional", ConfigurableValue<std::string> {std::nullopt, {}}}),
                   "<conditional>");
+    }
+
+    /**
+     * @brief Fixture that provisions a temporary package database for tests of
+     *        the `info` report, which resolves recipes through KEZ_DB.
+     */
+    class TemporaryInfoDatabase : public ::testing::Test {
+       protected:
+        void SetUp() override {
+            const char* current = std::getenv("KEZ_DB");
+            if (current != nullptr) {
+                previous_database_ = current;
+            }
+            path_ = std::filesystem::temp_directory_path() /
+                    ("kez-info-test-" + std::to_string(getpid()));
+            std::filesystem::remove_all(path_);
+            std::filesystem::create_directories(path_ / "demo");
+            setenv("KEZ_DB", path_.c_str(), 1);
+            clear_db_cache();
+        }
+
+        void TearDown() override {
+            clear_db_cache();
+            std::filesystem::remove_all(path_);
+            if (previous_database_.empty()) {
+                unsetenv("KEZ_DB");
+            } else {
+                setenv("KEZ_DB", previous_database_.c_str(), 1);
+            }
+        }
+
+        void write(const std::string& filename, const std::string& contents) const {
+            std::ofstream output(path_ / "demo" / filename);
+            ASSERT_TRUE(output.good());
+            output << contents;
+        }
+
+        std::filesystem::path path_;
+        std::string previous_database_;
+    };
+
+    TEST_F(TemporaryInfoDatabase, ListsReleasesFromEveryRecipeFile) {
+        // A package whose newest releases ship as .zip and whose older range
+        // ships as .gz must list both: `info` previously read latest.yaml alone,
+        // which hid the gzip-era versions and their different source type.
+        write("latest.yaml", R"(
+recipe:
+  name: demo
+  type: package
+  source:
+    type: zip
+    releases:
+      - version: 2.0.0
+        url: https://example.invalid/demo-2.0.0.zip
+)");
+        write("0.1.0-0.9.0.yaml", R"(
+recipe:
+  name: demo
+  type: package
+  source:
+    type: gzip
+    releases:
+      - version: 0.9.0
+        url: https://example.invalid/demo-0.9.0.gz
+)");
+
+        testing::internal::CaptureStdout();
+        execute_info({"demo"});
+        const std::string output = testing::internal::GetCapturedStdout();
+
+        // Release URLs are printed without coloring, so they stay stable whether
+        // or not ANSI styling is applied to the surrounding report.
+        EXPECT_NE(output.find("https://example.invalid/demo-2.0.0.zip"), std::string::npos);
+        EXPECT_NE(output.find("https://example.invalid/demo-0.9.0.gz"), std::string::npos);
     }
 
 }  // namespace
