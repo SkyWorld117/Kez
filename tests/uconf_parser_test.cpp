@@ -800,6 +800,45 @@ recipe:
         EXPECT_EQ(plan[0].commands, std::vector<std::string>({"echo /opt/env/demo"}));
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase, PlansGzipSourceDownloadAndDecompression) {
+        write_package("tool", R"(
+recipe:
+  name: tool
+  type: package
+  source:
+    type: gzip
+    releases:
+      - version: 1.2.3
+        url: https://example.invalid/tool-linux-${kez.arch}.gz
+  build:
+    postprocessing: install -m 755 source ${tool.prefix}/bin/tool
+)");
+        clear_db_cache();
+
+        const YAML::Node user_config = gen_user_config({"tool"}, false, "system");
+        const BashCommandPlan plan   = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        const std::vector<std::string>& commands = plan[0].commands;
+        ASSERT_EQ(commands.size(), 7U);
+
+        EXPECT_EQ(commands[0], "wget --quiet --show-progress --no-check-certificate "
+                               "--output-document=source.gz "
+                               "'https://example.invalid/tool-linux-x86_64.gz'");
+        EXPECT_EQ(commands[1],
+                  "bash '" + (path_ / "tools" / "unpack.sh").string() + "' source.gz source");
+        // The archive is removed and cached before entering the unpack directory, so
+        // the cached tarball holds the source tree rather than the payload file.
+        EXPECT_EQ(commands[2], "rm source.gz");
+        EXPECT_EQ(commands[3], "mkdir -p '/opt/.cache'");
+        EXPECT_EQ(commands[4], "tar -czf '/opt/.cache/tool-1.2.3.tar.gz' --format=posix -z source");
+        EXPECT_EQ(commands[5], "cd source");
+        // The unpack directory and the decompressed payload share the name "source",
+        // so the recipe renames it on install. gzip restores no file mode, hence the
+        // explicit 755 that a plain copy would not provide.
+        EXPECT_EQ(commands[6], "install -m 755 source /opt/env/tool/bin/tool");
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase,
            UsesRenamedInstallRootForManagedTargetButKeepsPackageVersion) {
         write_package("openmpi", R"(

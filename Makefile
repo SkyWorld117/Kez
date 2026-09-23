@@ -86,6 +86,7 @@ TEST_SOURCES := \
 	tests/ui_argparse_test.cpp \
 	tests/ui_commands_test.cpp \
 	tests/ui_utils_test.cpp \
+	tests/unpack_test.cpp \
 	tests/utils_test.cpp \
 	tests/uconf_parser_test.cpp \
 	tests/uconf_generator_test.cpp

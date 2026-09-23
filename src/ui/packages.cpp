@@ -77,6 +77,7 @@ std::string source_type_name(SourceType source_type) {
         case SourceType::Git: return "git";
         case SourceType::Tarball: return "tarball";
         case SourceType::Zip: return "zip";
+        case SourceType::GZip: return "gzip";
         case SourceType::Script: return "script";
         case SourceType::PyPI: return "pypi";
     }
@@ -233,22 +234,29 @@ void execute_info(const CommandArguments& arguments) {
     } else {
         // --- Releases ---
         print_section_header("Releases");
-        if (package->source) {
-            print_text("Type: " + normal_color(source_type_name(package->source->type)), max_width);
+        bool has_source = false;
+        for (const PackageConfigPtr& config : get_all_db_configs(name)) {
+            if (!config->source) {
+                continue;
+            }
+            has_source           = true;
+            const Source& source = *config->source;
+            print_text("Type: " + normal_color(source_type_name(source.type)), max_width);
 
-            if (package->source->type == SourceType::Git && package->source->url) {
-                print_text("Repository: " + normal_color(*package->source->url));
+            if (source.type == SourceType::Git && source.url) {
+                print_text("Repository: " + normal_color(*source.url));
             }
 
-            for (const Release& release : package->source->releases) {
+            for (const Release& release : source.releases) {
                 print_text("Version " + normal_color(release.version), max_width);
-                if (package->source->type == SourceType::Git && release.tag) {
+                if (source.type == SourceType::Git && release.tag) {
                     print_text(*release.tag, 0, indent);
                 } else if (release.url) {
                     print_text(*release.url, 0, indent);
                 }
             }
-        } else {
+        }
+        if (!has_source) {
             print_text("None");
         }
 
