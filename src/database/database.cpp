@@ -63,56 +63,16 @@ namespace {
      * @param package_name   Package to enumerate versions for.
      * @return A vector of version strings, possibly empty.
      */
-    std::vector<std::string> collect_available_versions(const std::filesystem::path& database_path,
-                                                        const std::string& package_name) {
-        std::unordered_set<std::string> seen;
+    std::vector<std::string> collect_available_versions(const std::string& package_name) {
+        std::vector<PackageConfigPtr> configs = get_all_db_configs(package_name);
         std::vector<std::string> versions;
-        const std::filesystem::path package_dir = database_path / package_name;
-
-        // 1. Scan version-range YAML files.
-        if (std::filesystem::is_directory(package_dir)) {
-            for (const auto& entry : std::filesystem::directory_iterator(package_dir)) {
-                if (!entry.is_regular_file() || entry.path().extension() != ".yaml" ||
-                    entry.path().filename() == "latest.yaml") {
-                    continue;
-                }
-                const std::string stem = entry.path().stem().string();
-                // Quick check for a valid range pattern before we try to parse.
-                if (stem.find('-') == std::string::npos) continue;
-
-                const auto [start, end] = parse_range_stem(stem);
-                for (const std::string& v : {start, end}) {
-                    if (seen.emplace(v).second) {
-                        versions.push_back(v);
-                    }
+        for (const PackageConfigPtr& config : configs) {
+            if (config->source) {
+                for (const Release& release : config->source->releases) {
+                    versions.push_back(release.version);
                 }
             }
         }
-
-        // 2. Read releases from latest.yaml.
-        const std::filesystem::path latest_path = package_dir / "latest.yaml";
-        if (std::filesystem::is_regular_file(latest_path)) {
-            YAML::Node doc;
-            try {
-                doc = YAML::LoadFile(latest_path.string());
-            } catch (...) {
-                return versions;
-            }
-            if (doc.IsMap() && doc["recipe"].IsMap()) {
-                const YAML::Node recipe = doc["recipe"];
-                if (recipe["source"].IsMap() && recipe["source"]["releases"].IsSequence()) {
-                    for (const YAML::Node& release : recipe["source"]["releases"]) {
-                        if (release["version"].IsScalar()) {
-                            const std::string version = release["version"].Scalar();
-                            if (seen.emplace(version).second) {
-                                versions.push_back(version);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         return versions;
     }
 
@@ -157,6 +117,49 @@ PackageConfigPtr get_db_config(const std::string& package_name) {
     return get_db_config(package_name, "latest");
 }
 
+std::vector<PackageConfigPtr> get_all_db_configs(const std::string& package_name) {
+    validate_package_name(package_name);
+    const std::filesystem::path package_path =
+        std::filesystem::path(get_env_var("KEZ_DB")) / package_name;
+    if (!std::filesystem::is_directory(package_path)) {
+        ERROR("Package config directory not found: " + package_path.string());
+        exit(EXIT_FAILURE);
+    }
+
+    std::vector<std::filesystem::path> paths;
+    const std::filesystem::path latest_path = package_path / "latest.yaml";
+    if (std::filesystem::is_regular_file(latest_path)) {
+        paths.push_back(latest_path);
+    }
+
+    std::vector<std::pair<std::string, std::filesystem::path>> ranges;
+    for (const auto& entry : std::filesystem::directory_iterator(package_path)) {
+        if (!entry.is_regular_file() || entry.path().extension() != ".yaml" ||
+            entry.path().filename() == "latest.yaml") {
+            continue;
+        }
+        const std::string stem      = entry.path().stem().string();
+        const std::size_t separator = stem.find('-');
+        if (separator == std::string::npos) {
+            continue;
+        }
+        ranges.emplace_back(stem.substr(0, separator), entry.path());
+    }
+    std::sort(ranges.begin(), ranges.end(), [](const auto& left, const auto& right) {
+        return compare_versions(left.first, right.first) > 0;
+    });
+    for (const auto& range : ranges) {
+        paths.push_back(range.second);
+    }
+
+    std::vector<PackageConfigPtr> configs;
+    configs.reserve(paths.size());
+    for (const std::filesystem::path& path : paths) {
+        configs.push_back(parse_db_config(path));
+    }
+    return configs;
+}
+
 void clear_db_cache() { db_cache.clear(); }
 
 std::string resolve_dependency_version(const std::string& package_name,
@@ -169,7 +172,7 @@ std::string resolve_dependency_version(const std::string& package_name,
     validate_package_name(package_name);
     const std::filesystem::path database_path = get_env_var("KEZ_DB");
 
-    std::vector<std::string> candidates = collect_available_versions(database_path, package_name);
+    std::vector<std::string> candidates = collect_available_versions(package_name);
 
     // Filter by all constraints.
     std::vector<std::string> matching;

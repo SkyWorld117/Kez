@@ -111,11 +111,27 @@ NR==1 {
     rm -rf "$tmpdir"
 }
 
-case "$ARCHIVE" in
-    *.zip)
-        extract_zip "$ARCHIVE" "$DEST"
-        ;;
-    *)
-        extract_tar "$ARCHIVE" "$DEST"
-        ;;
-esac
+extract_gz() {
+    local gzfile=$1
+    local dest=$2
+    local filename
+
+    # Kez always downloads gzip sources as "source.gz", so the payload lands as
+    # "$dest/source".
+    filename=$(basename "$gzfile" .gz)
+    gunzip -c "$gzfile" > "$dest/$filename"
+}
+
+# Tarball extensions are matched before the bare *.gz pattern, which would
+# otherwise capture every *.tar.gz source. These mirror tarball_extension() in
+# src/uconf_parser/source_commands.cpp.
+if [[ "$ARCHIVE" == *.tar || "$ARCHIVE" == *.tar.* || "$ARCHIVE" == *.tgz || "$ARCHIVE" == *.tbz || "$ARCHIVE" == *.tbz2 ]]; then
+    extract_tar "$ARCHIVE" "$DEST"
+elif [[ "$ARCHIVE" == *.zip ]]; then
+    extract_zip "$ARCHIVE" "$DEST"
+elif [[ "$ARCHIVE" == *.gz ]]; then
+    extract_gz "$ARCHIVE" "$DEST"
+else
+    echo "Unknown archive format: $ARCHIVE"
+    exit 1
+fi

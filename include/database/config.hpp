@@ -51,6 +51,7 @@ enum class SourceType {
     Git,      ///< Git repository clone (uses a tag or branch).
     Tarball,  ///< Compressed tarball archive (`.tar.gz`, `.tar.bz2`, etc.).
     Zip,      ///< ZIP archive.
+    GZip,    ///< GZip-compressed single file (e.g. `.gz`); use tarball for `.tar.gz`.
     Script,   ///< An inline script fragment that produces the source tree.
     PyPI,     ///< Distribution release metadata resolved from the Python Package Index.
 };

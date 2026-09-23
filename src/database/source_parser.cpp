@@ -34,6 +34,9 @@ namespace {
         if (value == "zip") {
             return SourceType::Zip;
         }
+        if (value == "gzip") {
+            return SourceType::GZip;
+        }
         if (value == "script") {
             return SourceType::Script;
         }
@@ -87,10 +90,11 @@ Source parse_source(const YAML::Node& node, const std::string& path,
             fail_config(release_node, release_path + ".tag", "is required for git releases",
                         context);
         }
-        if ((result.type == SourceType::Tarball || result.type == SourceType::Zip) &&
+        if ((result.type == SourceType::Tarball || result.type == SourceType::Zip ||
+             result.type == SourceType::GZip) &&
             !release.url.has_value()) {
             fail_config(release_node, release_path + ".url",
-                        "is required for tarball and zip releases", context);
+                        "is required for tarball, zip and gzip releases", context);
         }
         if (result.type == SourceType::PyPI &&
             (release.url.has_value() || release.tag.has_value())) {

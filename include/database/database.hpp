@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <vector>
 
 /**
  * @brief Shared pointer to an immutable PackageConfig.
@@ -62,6 +63,29 @@ PackageConfigPtr get_db_config(const std::string& package_name, const std::strin
  * @see get_db_config(const std::string&, const std::string&)
  */
 PackageConfigPtr get_db_config(const std::string& package_name);
+
+/**
+ * @brief Load every recipe file that can serve a package.
+ *
+ * Returns one parsed configuration per recipe file in the package's database
+ * directory: ``latest.yaml`` first, followed by each version-range file
+ * ordered from the newest range to the oldest.  Unlike
+ * get_db_config(const std::string&), which resolves a single version to a
+ * single file, this exposes the whole set, so callers can present every
+ * version a package offers -- including versions whose source differs from
+ * the latest one (for example a package shipping a ``.zip`` for its newest
+ * releases and a ``.gz`` for older ones).
+ *
+ * @param package_name  Name of the package to enumerate.
+ * @return The parsed configurations, newest recipe first.
+ *
+ * @warning Aborts the program (via ERROR macro) if @p package_name fails
+ *          validation, the package directory does not exist, or any recipe
+ *          file is malformed.
+ *
+ * @see get_db_config(const std::string&, const std::string&)
+ */
+std::vector<PackageConfigPtr> get_all_db_configs(const std::string& package_name);
 
 /**
  * @brief Parse a single package recipe YAML file at an explicit filesystem path.

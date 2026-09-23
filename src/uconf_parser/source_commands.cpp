@@ -50,7 +50,7 @@ namespace {
     /**
      * @brief Append shell commands to fetch and unpack a remote source.
      *
-     * Dispatches on the source type (``Git``, ``Script``, ``Zip``, or
+     * Dispatches on the source type (``Git``, ``Script``, ``Zip``, ``GZip`` or
      * tarball) to produce the appropriate download/extract commands.  Uses a
      * cached tarball of the previously-unpacked source tree when available to
      * avoid re-downloading.
@@ -129,6 +129,17 @@ namespace {
             commands.push_back("bash " + shell_single_quote(helper.string()) +
                                " source.zip source");
             commands.push_back("rm source.zip");
+            pack_as_cache();
+            commands.push_back("cd source");
+            return;
+        }
+        if (source.type == SourceType::GZip) {
+            if (use_cache(false)) return;
+            commands.push_back("wget --quiet --show-progress --no-check-certificate "
+                               "--output-document=source.gz " +
+                               shell_single_quote(url));
+            commands.push_back("bash " + shell_single_quote(helper.string()) + " source.gz source");
+            commands.push_back("rm source.gz");
             pack_as_cache();
             commands.push_back("cd source");
             return;
