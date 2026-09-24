@@ -1,0 +1,19 @@
+---
+recipe:
+    name: bear
+    description: Build EAR, 
+    type: package
+
+    source:
+        type: tarball
+        releases:
+            - version: 4.2.2
+              url: https://github.com/rizsotto/Bear/archive/refs/tags/4.2.2.tar.gz
+
+    # dependencies:
+    #     - cargo
+
+    build:
+        postprocessing: |-
+            cargo build --release
+            PREFIX=${bear.prefix} ./scripts/install.sh
