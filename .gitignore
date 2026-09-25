@@ -25,3 +25,5 @@ latex/
 
 # Ignore workspace files
 workspace/
+workspace
+.dacecache/
