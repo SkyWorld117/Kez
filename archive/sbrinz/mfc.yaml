@@ -3,7 +3,7 @@ kez:
     mfc:
         description: An exascale many-physics flow solver
         version: 5.6.1
-        compiler: nvhpc-compilers@26.5
+        compiler: nvhpc-compilers@25.7
         build:
             configurations:
                 options:
@@ -335,7 +335,7 @@ kez:
     openmpi:
         description: Open Source Implementation of the Message Passing Interface
         version: 5.0.10
-        compiler: nvhpc-compilers@26.5
+        compiler: nvhpc-compilers@25.7
     cantera:
         description: Chemical kinetics library for thermodynamics, kinetics, and transport
         version: 3.2.0
