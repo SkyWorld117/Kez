@@ -277,5 +277,107 @@ recipe:
             - target: install
               # cmake --install does not compile.
 
+        # MFC's own command-line interface (mfc.sh: run, test, count, validate,
+        # params, ...) only runs from inside an MFC source tree, and executes its
+        # targets from a per-case build directory Kez does not reproduce.  Install
+        # the tree behind a launcher that cd's into it, plus a shim that points
+        # MFC's binary lookup at ${mfc.prefix}/bin and disables compilation:
+        # `mfc.sh build` becomes a no-op and `mfc.sh test` runs against the
+        # binaries installed here.  The shim reaches into MFC internals, so an
+        # MFC that renames them surfaces as an error in sitecustomize rather
+        # than being patched silently.
+        postprocessing: |-
+            (
+            set -euo pipefail
+            root=${mfc.prefix}/share/mfc
+            bin=${mfc.prefix}/bin
+
+            # Copy the tree wholesale rather than a list of directories: MFC
+            # moves directories between releases, and mfc.sh's lint, format and
+            # spelling subcommands read the repository's dotfiles.  build/ is
+            # this package's CMake directory, not part of the source.
+            mkdir -p "$root"
+            cp -a ${source}/. "$root/"
+            rm -rf "$root/build"
+
+            # mfc.sh builds this virtualenv, and fills it from PyPI, on its first
+            # run.  SETUPTOOLS_SCM_PRETEND_VERSION is required because a release
+            # tarball carries no .git for hatch-vcs to read; VIRTUAL_ENV points at
+            # the environment's shared venv, which has to stay out of this one.
+            export SETUPTOOLS_SCM_PRETEND_VERSION=${mfc.version}
+            env -u VIRTUAL_ENV uv venv --python ${python.prefix}/bin/python3 ${mfc.prefix}/share/mfc-venv
+            env -u VIRTUAL_ENV uv pip install --python ${mfc.prefix}/share/mfc-venv/bin/python "$root/toolchain"
+
+            mkdir -p ${mfc.prefix}/share/mfc-kez
+            cat > ${mfc.prefix}/share/mfc-kez/sitecustomize.py <<'KEZ_EOF'
+            import os
+            import sys
+
+            # Kez shim.  MFC executes its targets at <root>/build/install/<slug>/
+            # bin/<name>, where <slug> hashes the build configuration and the
+            # case's generated case.fpp, so point that lookup at the installed
+            # bin/ and disable compilation.
+            bin_dir = os.environ.get("KEZ_MFC_BIN")
+            toolchain = os.environ.get("KEZ_MFC_TOOLCHAIN")
+            if bin_dir and toolchain:
+                # This runs while site.py is imported, i.e. before CPython adds
+                # the run script's directory to sys.path.  Without it `import
+                # mfc` finds the copy uv installed into the venv, and mfc.common
+                # then locates MFC_ROOT_DIR inside that venv.
+                sys.path.insert(0, toolchain)
+                try:
+                    import mfc.build
+                except ImportError:
+                    pass  # mfc.sh's own bootstrap probes, before the venv appears
+                else:
+                    for name in ("get_install_binpath", "is_buildable"):
+                        if not hasattr(mfc.build.MFCTarget, name):
+                            raise RuntimeError(f"MFCTarget.{name} is gone")
+
+                    def binpath(self, case):
+                        return os.path.join(bin_dir, self.name)
+
+                    mfc.build.MFCTarget.get_install_binpath = binpath
+                    mfc.build.MFCTarget.is_buildable = lambda self: False
+                    # syscheck is a required pre-flight target of every run and
+                    # test, but is only built when MFC_SYSCHECK is on.
+                    if not os.path.exists(os.path.join(bin_dir, "syscheck")):
+                        mfc.build.REQUIRED_TARGETS.discard(mfc.build.SYSCHECK)
+            KEZ_EOF
+
+            # ${mfc.prefix}/bin is what the environment's modulefile puts on PATH.
+            mkdir -p "$bin"
+            cat > "$bin/mfc.sh" <<'KEZ_EOF'
+            #!/usr/bin/env bash
+
+            # Kez-installed MFC entry point.  mfc.sh only runs from inside an MFC
+            # source tree, so cd into the copy Kez installed.  The job scripts it
+            # generates need an MPI launcher, which the application environment
+            # does not provide, hence the PATH line below.
+            set -euo pipefail
+            prefix=$(cd "$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." && pwd)
+            PATH=${mpi.prefix}/bin:$PATH
+            export PATH
+            cd "$prefix/share/mfc"
+
+            # `mfc.sh clean` deletes build/, which also holds its virtualenv and
+            # the fingerprint it uses to decide whether to reinstall.
+            mkdir -p build
+            [ -e build/venv ] || ln -sfn "$prefix/share/mfc-venv" build/venv
+            [ -f build/pyproject.toml ] || cp toolchain/pyproject.toml build/pyproject.toml
+
+            export KEZ_MFC_BIN="$prefix/bin"
+            export KEZ_MFC_TOOLCHAIN="$prefix/share/mfc/toolchain"
+            export PYTHONPATH="$prefix/share/mfc-kez${PYTHONPATH:+:$PYTHONPATH}"
+
+            if [ "${1:-}" = build ]; then
+                echo "mfc: built by Kez; 'mfc.sh build' is a no-op (binaries in $KEZ_MFC_BIN)."
+            fi
+
+            exec ./mfc.sh "$@"
+            KEZ_EOF
+            chmod +x "$bin/mfc.sh"
+            )
+
     properties:
         bin: ${mfc.prefix}/bin
