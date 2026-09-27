@@ -92,6 +92,23 @@ recipe:
                   enabled_value:
                       default: ${prrte.prefix}
 
+                # External PMIx leaves libmpi.so / libopen-pal.so with undefined
+                # PMIx_* symbols, resolvable only at runtime via DT_NEEDED
+                # libpmix.so.2. The wrapper link line must name the library,
+                # otherwise consumers linking with -lmpi alone rely on ld
+                # tolerating unresolved shlib symbols -- which it stops doing as
+                # soon as any other library on the line disturbs the resolution
+                # (e.g. two different CUDA majors).
+                - name: with-wrapper-ldflags
+                  description: Link flags added to the wrapper compilers
+                  enabled_value:
+                      default: -L${pmix.prefix}/lib
+
+                - name: with-wrapper-libs
+                  description: Libraries added to the wrapper compilers
+                  enabled_value:
+                      default: ${pmix.libs}
+
                 - name: with-slurm
                   description: Build with SLURM support
 
