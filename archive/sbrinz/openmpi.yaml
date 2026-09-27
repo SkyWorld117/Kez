@@ -26,6 +26,12 @@ kez:
                       enabled_value: ${cuda.prefix}
                       requires:
                           - cuda
+                    - name: with-hcoll
+                      description: Build with HCOLL support
+                      enabled: true
+                      enabled_value: ${hpcx-hcoll.prefix}
+                      requires:
+                          - hpcx-hcoll
                     - name: prefix
                       enabled: true
                       enabled_value: ${openmpi.prefix}
@@ -41,26 +47,26 @@ kez:
                     - name: CPPFLAGS
                       enabled: true
                       enabled_value: ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags} 
-                          ${cuda.incflags}
+                          ${cuda.incflags} ${hpcx-hcoll.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags}
-                          ${cuda.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} 
+                          ${ucx.incflags} ${numactl.incflags} ${cuda.incflags} ${hpcx-hcoll.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags}
-                          ${cuda.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} 
+                          ${ucx.incflags} ${numactl.incflags} ${cuda.incflags} ${hpcx-hcoll.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} ${ucx.incflags} ${numactl.incflags}
-                          ${cuda.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags} ${prrte.incflags} 
+                          ${ucx.incflags} ${numactl.incflags} ${cuda.incflags} ${hpcx-hcoll.incflags}
                     - name: LDFLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags} ${prrte.ldflags} ${ucx.ldflags} 
-                          ${numactl.ldflags} ${cuda.ldflags}
+                          ${numactl.ldflags} ${cuda.ldflags} ${hpcx-hcoll.ldflags} ${openmpi.ldflags}
     ucx:
         description: Unified Communication X
-        version: 1.20.0
+        version: 1.21.0
         compiler: system
         build:
             configurations:
@@ -94,21 +100,21 @@ kez:
                       enabled_value: ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${rdma-core.incflags} ${cuda.incflags} ${gdrcopy.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${rdma-core.ldflags} ${cuda.ldflags} ${gdrcopy.ldflags}
+                      enabled_value: ${compiler.ldflags} ${rdma-core.ldflags} ${cuda.ldflags} ${gdrcopy.ldflags} ${ucx.ldflags}
     rdma-core:
         description: RDMA core userspace libraries and daemons
     prrte:
         description: PMIx Reference RunTime Environment
-        version: 4.0.0
+        version: 4.1.0
         compiler: system
         build:
             configurations:
@@ -130,16 +136,16 @@ kez:
                       enabled_value: ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${pmix.incflags}
     pmix:
         description: Process Management Interface for Exascale
-        version: 6.0.0
+        version: 6.1.0
         compiler: system
         build:
             configurations:
@@ -161,16 +167,16 @@ kez:
                       enabled_value: ${hwloc.incflags} ${libevent.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${hwloc.incflags} ${libevent.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags}
+                      enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags}
     numactl:
         description: NUMA support for Linux
         version: 2.0.19
@@ -192,19 +198,19 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3
+                      enabled_value: -O3 -march=native -mtune=native
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags}
+                      enabled_value: ${compiler.ldflags} ${numactl.ldflags}
     libevent:
         description: Event notification library
-        version: 2.1.12
+        version: 2.1.13
         compiler: system
         build:
             configurations:
@@ -226,24 +232,24 @@ kez:
                       enabled_value: ${openssl.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${openssl.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${openssl.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${openssl.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${openssl.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${openssl.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${openssl.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${openssl.ldflags}
+                      enabled_value: ${compiler.ldflags} ${openssl.ldflags} ${libevent.ldflags}
     openssl:
         description: OpenSSL is a robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication over 
             computer networks.
-        version: 3.5.2
+        version: 4.0.1
         compiler: system
     hwloc:
         description: Hardware Locality
-        version: 2.12.1
+        version: 2.14.0
         compiler: system
         build:
             configurations:
@@ -255,6 +261,13 @@ kez:
                       disabled_value:
                       requires:
                           - cuda
+                    - name: use_pciaccess
+                      description: Use libpciaccess for PCI device discovery
+                      enabled: true
+                      enabled_value:
+                      disabled_value:
+                      requires:
+                          - libpciaccess
                     - name: prefix
                       enabled: true
                       enabled_value: ${hwloc.prefix}
@@ -269,22 +282,68 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
+                      enabled_value: ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} ${libpciaccess.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} 
+                          ${libpciaccess.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} 
+                          ${libpciaccess.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.incflags} ${lz4.incflags} ${libpciaccess.incflags} ${libxml2.incflags} ${cuda.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${lz4.incflags} ${libxml2.incflags} ${cuda.incflags} 
+                          ${libpciaccess.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libpciaccess.ldflags} ${libxml2.ldflags} ${cuda.ldflags}
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${lz4.ldflags} ${libxml2.ldflags} ${cuda.ldflags} ${libpciaccess.ldflags} 
+                          ${hwloc.ldflags}
+    libpciaccess:
+        description: Generic PCI access library.
+        version: 0.19
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: install-scanpci
+                      description: Install scanpci program and man page
+                      enabled: false
+                      enabled_value:
+                    - name: linux-rom-fallback
+                      description: Enable falling back to /dev/mem for ROMs
+                      enabled: false
+                      enabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${libpciaccess.prefix}
+                    - name: buildtype
+                      enabled: true
+                      enabled_value: release
+                    - name: c_args
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: cpp_args
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: fortran_args
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags}
+                    - name: c_link_args
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${libpciaccess.ldflags} ${zlib.libs}
+                    - name: cpp_link_args
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${libpciaccess.ldflags} ${zlib.libs}
+                    - name: fortran_link_args
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${libpciaccess.ldflags} ${zlib.libs}
+                    - name: pkg_config_path
+                      enabled: true
+                      enabled_value: ${zlib.prefix}
     libxml2:
         description: A library for parsing XML documents.
-        version: 2.14.5
+        version: 2.15.3
         compiler: system
         build:
             configurations:
@@ -306,50 +365,22 @@ kez:
                       enabled_value: ${zlib.incflags} ${xz.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.incflags} ${xz.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${xz.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.incflags} ${xz.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${xz.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 ${zlib.incflags} ${xz.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${zlib.incflags} ${xz.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${xz.ldflags}
-    libpciaccess:
-        description: Generic PCI access library.
-        version: 0.17
-        compiler: system
-        build:
-            configurations:
-                options:
-                    - name: prefix
-                      enabled: true
-                      enabled_value: ${libpciaccess.prefix}
-                    - name: CC
-                      enabled: true
-                      enabled_value: ${compiler.c}
-                    - name: CXX
-                      enabled: true
-                      enabled_value: ${compiler.cxx}
-                    - name: FC
-                      enabled: true
-                      enabled_value: ${compiler.fort}
-                    - name: CPPFLAGS
-                      enabled: true
-                      enabled_value: ${zlib.incflags}
-                    - name: CFLAGS
-                      enabled: true
-                      enabled_value: -O3 ${zlib.incflags}
-                    - name: CXXFLAGS
-                      enabled: true
-                      enabled_value: -O3 ${zlib.incflags}
-                    - name: FCFLAGS
-                      enabled: true
-                      enabled_value: -O3 ${zlib.incflags}
-                    - name: LDFLAGS
-                      enabled: true
-                      enabled_value: ${compiler.ldflags} ${zlib.ldflags}
+                      enabled_value: ${compiler.ldflags} ${zlib.ldflags} ${xz.ldflags} ${libxml2.ldflags}
+    hpcx-hcoll:
+        description: HPC-X HCOLL
+    hpcx:
+        description: NVIDIA® HPC-X is a comprehensive software package that includes Message Passing Interface (MPI), Symmetrical Hierarchical Memory 
+            (SHMEM) and Partitioned Global Address Space (PGAS) communications libraries, and various acceleration packages.
+        version: 2.50.rhel.9
     gdrcopy:
         description: GDRCopy userspace library
     cuda:
@@ -367,11 +398,13 @@ recipe:
         - libevent
         - openssl
         - hwloc
+        - libpciaccess
         - libxml2
         - xz
-        - libpciaccess
         - lz4
         - zlib
+        - hpcx-hcoll
+        - hpcx
         - gdrcopy
         - cuda
     targets:
