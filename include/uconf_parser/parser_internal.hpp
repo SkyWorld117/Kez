@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <database/database.hpp>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <uconf_parser/user_config_parser.hpp>
@@ -312,6 +313,42 @@ std::string resolve_parser_scalar(const std::string& value, UserConfigParserCont
  */
 std::string parser_package_prefix(const std::string& package_name,
                                   UserConfigParserContext& context);
+
+/**
+ * @brief Warn about compilers and MPI implementations the user configuration
+ *        selects but that are not installed.
+ *
+ * For every package in the user configuration the compiler named by its
+ * @c compiler field is resolved to its installation prefix and that prefix is
+ * checked for existence; every package whose recipe is of type
+ * @ref PackageType::MPI is checked the same way.  A missing toolchain is
+ * reported through the @c WARNING macro rather than treated as a fatal error,
+ * because @p plan_prefixes may cover it or the user may install it separately.
+ *
+ * A toolchain is not reported when the plan being assembled would install it
+ * itself: a toolchain prefix that equals, or lies inside, an install prefix in
+ * @p plan_prefixes is skipped.  This covers a toolchain that is a managed
+ * target, one renamed by @c --rename, and one whose prefix is produced by a
+ * parent vendor the plan builds as a dependency (for example
+ * @c nvhpc-compilers, whose prefix lives inside the @c nvhpc vendor tree).
+ *
+ * Each distinct toolchain is reported at most once.  A @c system compiler needs
+ * no installation and is skipped, and malformed or unknown specifications are
+ * left to the parser proper to diagnose.
+ *
+ * @param context         Parser context with packages loaded and values
+ *                        precomputed.  @ref
+ *                        UserConfigParserContext::current_package is restored
+ *                        before returning.
+ * @param plan_prefixes   Installation prefixes of the packages the assembled
+ *                        plan will build.  Callers derive this from the
+ *                        generated commands, so a package that emits none is
+ *                        correctly treated as already installed.
+ *
+ * @see parser_package_prefix()  For how the installation prefix is derived.
+ */
+void warn_missing_toolchains(UserConfigParserContext& context,
+                             const std::vector<std::filesystem::path>& plan_prefixes);
 
 /**
  * @brief Generate the shell source commands for a resolved user package and

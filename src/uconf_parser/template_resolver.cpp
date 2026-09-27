@@ -13,6 +13,7 @@
 #include <string>
 #include <uconf_parser/parser_internal.hpp>
 #include <utility>
+#include <utils/bash_utils.hpp>
 #include <utils/colored_io.hpp>
 #include <utils/yaml_utils.hpp>
 #include <variant>
@@ -522,4 +523,177 @@ std::string parser_package_prefix(const std::string& package_name,
             .string();
     }
     return (context.settings.install_prefix / requested_name).string();
+}
+
+namespace {
+    /** @brief Return whether @p name is a single, safe path component. */
+    bool is_package_component(const std::string& name) {
+        const std::filesystem::path path(name);
+        return !name.empty() && name != "." && name != ".." && !path.has_parent_path() &&
+               path.filename().string() == name;
+    }
+
+    /**
+     * @brief Resolve the version a user configuration pins for a package.
+     *
+     * Mirrors the sources @ref parser_package_version consults for a regular
+     * package: the user configuration's @c version field (with any local-source
+     * suffix removed) and, failing that, the first source release in the
+     * recipe.  Returns @c std::nullopt when neither is available, so that the
+     * caller can leave the diagnosis to the parser proper instead of failing a
+     * warning-only check.
+     */
+    std::optional<std::string> configured_package_version(const ParsedUserPackage& package) {
+        if (yaml_has(package.user_config, "version")) {
+            std::string version = yaml_scalar(package.user_config["version"], "package version");
+            const std::size_t local_source = version.find('@');
+            if (local_source != std::string::npos) {
+                version.erase(local_source);
+            }
+            return version;
+        }
+        if (package.database_config->source.has_value() &&
+            !package.database_config->source->releases.empty()) {
+            return package.database_config->source->releases.front().version;
+        }
+        return std::nullopt;
+    }
+
+    /**
+     * @brief Return a package's recipe when the database knows it, else @c nullptr.
+     *
+     * Unlike @ref parser_package_config this does not fail on an unknown or
+     * malformed package *name*: such a specification is left for the parser
+     * proper to reject, so that a missing *installation* can be reported as a
+     * warning without turning an unknown *recipe* into a fatal error here.  A
+     * malformed database is still fatal, exactly as it is for every other
+     * @ref get_db_config caller.
+     */
+    PackageConfigPtr known_package_config(UserConfigParserContext& context, const std::string& name,
+                                          const std::string& version) {
+        if (!is_package_component(name)) {
+            return nullptr;
+        }
+        const auto parsed = context.package_indices.find(canonical_package_name(context, name));
+        if (parsed != context.package_indices.end()) {
+            return context.packages[parsed->second].database_config;
+        }
+        const std::string database = get_env_var_noerr("KEZ_DB");
+        if (database.empty() ||
+            !std::filesystem::is_directory(std::filesystem::path(database) / name)) {
+            return nullptr;
+        }
+        return get_db_config(name, version);
+    }
+
+    /**
+     * @brief Return whether @p prefix is @p root or lies inside it.
+     *
+     * Used to recognise a toolchain installation the plan itself produces: the
+     * toolchain prefix is nested under the install prefix of a package that
+     * emits build commands (a managed target, or a parent vendor such as
+     * @c nvhpc whose tree contains the @c nvhpc-compilers prefix).
+     */
+    bool prefix_within(const std::string& prefix, const std::filesystem::path& root) {
+        const std::filesystem::path relative =
+            std::filesystem::path(prefix).lexically_relative(root);
+        if (relative.empty()) {
+            return false;
+        }
+        const std::string text = relative.generic_string();
+        return text == "." || text.rfind("..", 0) != 0;
+    }
+
+    /** @brief Return whether the assembled plan installs the toolchain at @p prefix. */
+    bool plan_installs(const std::string& prefix,
+                       const std::vector<std::filesystem::path>& plan_prefixes) {
+        return std::any_of(
+            plan_prefixes.begin(), plan_prefixes.end(),
+            [&prefix](const std::filesystem::path& root) { return prefix_within(prefix, root); });
+    }
+
+    /**
+     * @brief Warn when the build compiler named by a specification is not installed.
+     *
+     * @ref resolve_parser_scalar is used to expand @c ${compiler.prefix} so that
+     * the reported path is exactly the one the generated commands will use,
+     * including vendor compilers whose prefix lives outside @c compilers_prefix.
+     * The caller must set @ref UserConfigParserContext::current_package to the
+     * package being built, because @c ${compiler} resolves per package.
+     *
+     * @param specification    The @c compiler field of the current package, in
+     *                         @c &lt;name&gt;@&lt;version&gt; form.
+     * @param context          Parser context positioned on the package to check.
+     * @param plan_prefixes    Prefixes the assembled plan installs.
+     */
+    void warn_missing_compiler(const std::string& specification, UserConfigParserContext& context,
+                               const std::vector<std::filesystem::path>& plan_prefixes) {
+        const std::size_t separator = specification.find('@');
+        if (separator == std::string::npos || separator == 0 ||
+            separator + 1 == specification.size()) {
+            return;  // Malformed specifications are reported by the parser proper.
+        }
+        const std::string name        = specification.substr(0, separator);
+        const std::string version     = specification.substr(separator + 1);
+        const PackageConfigPtr config = known_package_config(context, name, version);
+        if (config == nullptr ||
+            (config->type != PackageType::Compiler && config->type != PackageType::Vendor)) {
+            return;
+        }
+        const std::string prefix = resolve_parser_scalar("${compiler.prefix}", context);
+        if (plan_installs(prefix, plan_prefixes) || std::filesystem::is_directory(prefix)) {
+            return;  // The plan produces it, or it is already on disk.
+        }
+        WARNING("compiler '" + specification + "' is not installed at '" + prefix +
+                "'; install it before building packages that use it");
+    }
+
+    /**
+     * @brief Warn when an MPI implementation selected by the user config is not installed.
+     *
+     * Only packages of type @ref PackageType::MPI are considered; the prefix is
+     * derived by @ref parser_package_prefix so the check honours the MPI
+     * directory's @c name-version-compiler layout.
+     *
+     * @param package        The MPI-typed entry to check.
+     * @param context        Parser context positioned on @p package.
+     * @param plan_prefixes  Prefixes the assembled plan installs.
+     */
+    void warn_missing_mpi(const ParsedUserPackage& package, UserConfigParserContext& context,
+                          const std::vector<std::filesystem::path>& plan_prefixes) {
+        const std::optional<std::string> version = configured_package_version(package);
+        if (!version.has_value() || *version == "system") {
+            return;  // No pinned version: leave it to the parser proper; system needs no install.
+        }
+        const std::string prefix = parser_package_prefix(package.requested_name, context);
+        if (plan_installs(prefix, plan_prefixes) || std::filesystem::is_directory(prefix)) {
+            return;  // The plan produces it, or it is already on disk.
+        }
+        WARNING("MPI '" + package.requested_name + "@" + *version + "' is not installed at '" +
+                prefix + "'; install it before building packages that depend on it");
+    }
+}  // namespace
+
+void warn_missing_toolchains(UserConfigParserContext& context,
+                             const std::vector<std::filesystem::path>& plan_prefixes) {
+    const std::string previous_package = context.current_package;
+    std::unordered_set<std::string> reported;
+
+    for (const ParsedUserPackage& package : context.packages) {
+        context.current_package = package.requested_name;
+
+        std::string specification = "system";
+        if (yaml_has(package.user_config, "compiler")) {
+            specification = yaml_scalar(package.user_config["compiler"], "package compiler");
+        }
+        if (specification != "system" && reported.insert("compiler:" + specification).second) {
+            warn_missing_compiler(specification, context, plan_prefixes);
+        }
+
+        if (package.database_config->type == PackageType::MPI &&
+            reported.insert("mpi:" + package.requested_name).second) {
+            warn_missing_mpi(package, context, plan_prefixes);
+        }
+    }
+    context.current_package = previous_package;
 }

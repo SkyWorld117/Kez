@@ -695,6 +695,336 @@ recipe:
         EXPECT_EQ(command.find("LIBS="), std::string::npos);
     }
 
+    TEST_F(TemporaryUserConfigParserDatabase, WarnsWhenConfiguredCompilerIsNotInstalled) {
+        const std::string application = R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: echo ${application.prefix}
+)";
+        write_package("application", application);
+
+        // Point the compiler root inside the temp directory so the assertion
+        // cannot be satisfied or broken by the host's /opt layout.
+        UserConfigParserSettings parser_settings = settings();
+        parser_settings.compilers_prefix         = path_ / "compilers";
+        const YAML::Node user_config             = YAML::Load(R"(
+kez:
+  application:
+    version: 1.0
+    compiler: gcc@13.4.0
+recipe:
+  abstract_packages: {}
+  dependencies: [application]
+  targets: [application]
+)");
+
+        testing::internal::CaptureStdout();
+        parse_user_config(user_config, parser_settings);
+        const std::string output = testing::internal::GetCapturedStdout();
+
+        EXPECT_NE(output.find("[W]:"), std::string::npos);
+        EXPECT_NE(output.find("compiler 'gcc@13.4.0' is not installed"), std::string::npos);
+        EXPECT_NE(output.find((parser_settings.compilers_prefix / "gcc-13.4.0" / "gcc").string()),
+                  std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, KeepsQuietWhenConfiguredCompilerIsInstalled) {
+        const std::string application = R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: echo ${application.prefix}
+)";
+        write_package("application", application);
+        const std::filesystem::path compilers = path_ / "compilers";
+        std::filesystem::create_directories(compilers / "gcc-13.4.0" / "gcc");
+
+        UserConfigParserSettings parser_settings = settings();
+        parser_settings.compilers_prefix         = compilers;
+        const YAML::Node user_config             = YAML::Load(R"(
+kez:
+  application:
+    version: 1.0
+    compiler: gcc@13.4.0
+recipe:
+  abstract_packages: {}
+  dependencies: [application]
+  targets: [application]
+)");
+
+        testing::internal::CaptureStdout();
+        parse_user_config(user_config, parser_settings);
+        const std::string output = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(output.find("is not installed"), std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, KeepsQuietForSystemCompiler) {
+        const std::string application = R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: echo ${application.prefix}
+)";
+        write_package("application", application);
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  application:
+    version: 1.0
+    compiler: system
+recipe:
+  abstract_packages: {}
+  dependencies: [application]
+  targets: [application]
+)");
+
+        testing::internal::CaptureStdout();
+        parse_user_config(user_config, settings());
+        const std::string output = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(output.find("is not installed"), std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, WarnsWhenConfiguredMpiIsNotInstalled) {
+        const std::string application = R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: echo ${application.prefix}
+)";
+        write_package("application", application);
+        write_package("openmpi", R"(
+recipe:
+  name: openmpi
+  type: mpi
+  source:
+    type: tarball
+    releases:
+      - version: 5.0.10
+        url: https://example.invalid/openmpi.tar.gz
+)");
+        UserConfigParserSettings parser_settings = settings();
+        parser_settings.mpis_prefix              = path_ / "mpis";
+        const YAML::Node user_config             = YAML::Load(R"(
+kez:
+  application:
+    version: 1.0
+    compiler: system
+  openmpi:
+    version: 5.0.10
+    compiler: system
+recipe:
+  abstract_packages: {}
+  dependencies: [application, openmpi]
+  targets: [application]
+)");
+
+        testing::internal::CaptureStdout();
+        parse_user_config(user_config, parser_settings);
+        const std::string output = testing::internal::GetCapturedStdout();
+
+        EXPECT_NE(output.find("MPI 'openmpi@5.0.10' is not installed"), std::string::npos);
+        EXPECT_NE(output.find(
+                      (parser_settings.mpis_prefix / "openmpi-5.0.10-system" / "openmpi").string()),
+                  std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, KeepsQuietForToolchainsThePlanInstalls) {
+        write_package("gcc", R"(
+recipe:
+  name: gcc
+  type: compiler
+  source:
+    type: tarball
+    releases:
+      - version: 13.4.0
+        url: https://example.invalid/gcc.tar.gz
+  build:
+    configurations:
+      command: echo ${gcc.prefix}
+  properties:
+    c: ${gcc.prefix}/bin/gcc
+)");
+        write_package("openmpi", R"(
+recipe:
+  name: openmpi
+  type: mpi
+  source:
+    type: tarball
+    releases:
+      - version: 5.0.10
+        url: https://example.invalid/openmpi.tar.gz
+  build:
+    configurations:
+      command: echo ${openmpi.prefix}
+)");
+        clear_db_cache();
+
+        // Both toolchains are targets carrying a build section, so the plan
+        // installs them itself and their absence at parse time must not be
+        // reported.
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  gcc:
+    version: 13.4.0
+    compiler: system
+    build: {}
+  openmpi:
+    version: 5.0.10
+    compiler: gcc@13.4.0
+    build: {}
+recipe:
+  abstract_packages: {}
+  dependencies: [openmpi, gcc]
+  targets: [gcc, openmpi]
+)");
+
+        testing::internal::CaptureStdout();
+        parse_user_config(user_config, settings());
+        const std::string output = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(output.find("is not installed"), std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, KeepsQuietForToolchainBuiltByPlannedParentVendor) {
+        write_package("nvhpc", R"(
+recipe:
+  name: nvhpc
+  type: vendor
+  source:
+    type: tarball
+    releases:
+      - version: 1.0
+        url: https://example.invalid/nvhpc.tar.gz
+  build:
+    configurations:
+      command: echo ${nvhpc.prefix}
+)");
+        // A vendor toolchain whose prefix lives inside its parent's tree, as the
+        // real nvhpc-compilers recipe does.
+        write_package("nvhpc-compilers", R"(
+recipe:
+  name: nvhpc-compilers
+  type: vendor
+  dependencies: [nvhpc]
+  properties:
+    parent: nvhpc
+    prefix: ${nvhpc.prefix}/compilers
+    c: ${nvhpc-compilers.prefix}/bin/nvc
+)");
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: echo ${application.prefix}
+)");
+        clear_db_cache();
+
+        UserConfigParserSettings parser_settings = settings();
+        parser_settings.vendors_prefix           = path_ / "vendors";
+        const YAML::Node user_config             = YAML::Load(R"(
+kez:
+  application:
+    version: 1.0
+    compiler: nvhpc-compilers@1.0
+  nvhpc-compilers:
+    version: 1.0
+    compiler: system
+  nvhpc:
+    version: 1.0
+    compiler: system
+recipe:
+  abstract_packages: {}
+  dependencies: [application, nvhpc-compilers, nvhpc]
+  targets: [application]
+)");
+
+        testing::internal::CaptureStdout();
+        const BashCommandPlan plan = parse_user_config(user_config, parser_settings);
+        const std::string output   = testing::internal::GetCapturedStdout();
+
+        // nvhpc is a non-target dependency the plan builds, and its prefix
+        // contains the nvhpc-compilers prefix, so the toolchain must not be
+        // reported missing.
+        EXPECT_TRUE(std::any_of(plan.begin(), plan.end(), [](const PackageCommands& package) {
+            return package.package == "nvhpc";
+        }));
+        EXPECT_EQ(output.find("is not installed"), std::string::npos);
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, WarnsWhenBuildCompilerVersionDiffersFromTarget) {
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  build:
+    configurations:
+      command: echo ${application.prefix}
+)");
+        write_package("gcc", R"(
+recipe:
+  name: gcc
+  type: compiler
+  source:
+    type: tarball
+    releases:
+      - version: 16.0
+        url: https://example.invalid/gcc.tar.gz
+  build:
+    configurations:
+      command: echo ${gcc.prefix}
+  properties:
+    c: ${gcc.prefix}/bin/gcc
+)");
+        clear_db_cache();
+
+        // gcc is a target at 16.0 and carries a build section, so the plan
+        // installs compilers/gcc-16.0/gcc.  The build compiler asked for is
+        // gcc@15.0, a sibling under the same root: the plan does not produce it,
+        // so it must already exist.
+        const YAML::Node user_config = YAML::Load(R"(
+kez:
+  gcc:
+    version: 16.0
+    compiler: system
+    build: {}
+  application:
+    version: 1.0
+    compiler: gcc@15.0
+recipe:
+  abstract_packages: {}
+  dependencies: [application, gcc]
+  targets: [gcc]
+)");
+
+        UserConfigParserSettings parser_settings = settings();
+        parser_settings.compilers_prefix         = path_ / "compilers";
+
+        testing::internal::CaptureStdout();
+        const BashCommandPlan plan = parse_user_config(user_config, parser_settings);
+        const std::string output   = testing::internal::GetCapturedStdout();
+
+        // Positive control: gcc@16.0 really is a planned prefix, so the warning
+        // below must come from the sibling prefix not being contained in it.
+        EXPECT_TRUE(std::any_of(plan.begin(), plan.end(), [](const PackageCommands& package) {
+            return package.package == "gcc";
+        }));
+        EXPECT_NE(output.find("compiler 'gcc@15.0' is not installed"), std::string::npos);
+        EXPECT_NE(output.find((parser_settings.compilers_prefix / "gcc-15.0" / "gcc").string()),
+                  std::string::npos);
+    }
+
     TEST_F(TemporaryUserConfigParserDatabase,
            KeepsSystemBuildCompilerSeparateFromSameNamedCompilerTarget) {
         write_package("gcc", R"(

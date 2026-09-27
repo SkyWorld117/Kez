@@ -349,11 +349,16 @@ BashCommandPlan parse_user_config(const YAML::Node& user_config,
                                     generate_package_commands(package, context));
     }
     std::unordered_set<std::string> buildable_packages;
+    std::vector<std::filesystem::path> plan_prefixes;
     for (const auto& [package, commands] : commands_by_package) {
-        if (!commands.empty()) {
-            buildable_packages.insert(package);
+        if (commands.empty()) {
+            continue;
         }
+        buildable_packages.insert(package);
+        context.current_package = package;
+        plan_prefixes.push_back(parser_package_prefix(package, context));
     }
+    warn_missing_toolchains(context, plan_prefixes);
 
     BashCommandPlan result;
     const YAML::Node dependencies = user_config["recipe"]["dependencies"];

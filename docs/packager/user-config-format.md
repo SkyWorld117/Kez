@@ -143,6 +143,10 @@ The compiler spec uses `<vendor>@<version>` format (e.g. `gcc@13.4.0`,
 omitted — the compiler resolves to the platform's default system compiler
 (`gcc@latest`).
 
+If the selected compiler is not installed, the parser emits a warning before
+the plan is generated; see
+[Toolchain Availability](#toolchain-availability).
+
 ### `kez.<package>.patches`
 
 The generator reads `database/<package_name>/patches/_rules.yaml` from the directory beside the
@@ -314,6 +318,36 @@ Conditional configuration values are resolved iteratively (up to
 N+M+1 passes, where N and M are the number of options and environment
 variables). If values do not stabilise:
 `conditional configuration values did not converge`
+
+### Toolchain Availability
+
+Once the installation plan has been assembled — but before it is executed — the
+parser checks that the compiler and MPI implementation the configuration selects
+are actually installed:
+
+- For every package, the compiler named by its `compiler` field is resolved to
+  its installation prefix, and that directory is checked for existence.
+- Every entry whose recipe is of type `mpi` is checked the same way, through
+  its installation prefix — `<KEZ_WORKDIR>/env/mpis/<name>-<version>-<compiler>/<name>`
+  for the shipped `manifest.yaml` (see `paths.mpis`).
+
+A missing toolchain is reported as a **warning**, not an error, because it may
+be built later in the same plan or installed separately:
+
+```
+[W]: compiler 'gcc@13.4.0' is not installed at '/.../compilers/gcc-13.4.0/gcc'; install it before building packages that use it
+[W]: MPI 'openmpi@5.0.10' is not installed at '/.../mpis/openmpi-5.0.10-gcc-13.4.0/openmpi'; install it before building packages that depend on it
+```
+
+A toolchain the plan installs itself is skipped. Whether that is the case is
+decided by the installation prefix the toolchain resolves to: when that prefix
+equals, or lies inside, the install prefix of a package that emits build
+commands, the toolchain is not reported. This covers a compiler or MPI named in
+`recipe.targets`, one renamed with
+`--rename`, and a vendor toolchain produced by a parent vendor built as a
+dependency — for example `nvhpc-compilers`, whose prefix lives inside the
+`nvhpc` vendor tree. `system` compilers need no installation and are skipped
+too. Each distinct toolchain is reported at most once.
 
 ## Generated Toolchain Options
 
