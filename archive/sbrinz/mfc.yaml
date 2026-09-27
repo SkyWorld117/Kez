@@ -27,10 +27,14 @@ kez:
                       description: Build with OpenACC GPU offloading (NVHPC or Cray compilers)
                       enabled: true
                       enabled_value: ON
+                      requires:
+                          - cuda
                     - name: MFC_OpenMP
                       description: Build with OpenMP GPU offloading (NVHPC or Cray compilers)
                       enabled: false
                       enabled_value: ON
+                      requires:
+                          - cuda
                     - name: MFC_SINGLE_PRECISION
                       description: Use single precision (32-bit floats)
                       enabled: false
@@ -65,44 +69,46 @@ kez:
                     - name: CMAKE_C_FLAGS
                       enabled: true
                       enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} 
-                          ${blas.incflags} ${lapack.incflags} ${python.incflags}
+                          ${blas.incflags} ${lapack.incflags} ${python.incflags} ${cuda.incflags}
                     - name: CMAKE_CXX_FLAGS
                       enabled: true
                       enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} 
-                          ${blas.incflags} ${lapack.incflags} ${python.incflags}
+                          ${blas.incflags} ${lapack.incflags} ${python.incflags} ${cuda.incflags}
                     - name: CMAKE_Fortran_FLAGS
                       enabled: true
                       enabled_value: -O3 -march=native -mtune=native ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} 
-                          ${blas.incflags} ${lapack.incflags} ${python.incflags}
+                          ${blas.incflags} ${lapack.incflags} ${python.incflags} ${cuda.incflags}
                     - name: CMAKE_CUDA_FLAGS
                       enabled: true
                       enabled_value: -O3 -Xptxas -O3 ${mpi.incflags} ${fftw3.incflags} ${hdf5.incflags} ${silo.incflags} ${blas.incflags} 
-                          ${lapack.incflags} ${python.incflags}
+                          ${lapack.incflags} ${python.incflags} ${cuda.incflags}
                     - name: CMAKE_EXE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${hdf5.ldflags} ${silo.ldflags} ${blas.ldflags} 
-                          ${lapack.ldflags} ${python.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} ${lapack.libs} 
-                          ${python.libs}
+                          ${lapack.ldflags} ${python.ldflags} ${cuda.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} 
+                          ${lapack.libs} ${python.libs} ${cuda.libs}
                     - name: CMAKE_SHARED_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${hdf5.ldflags} ${silo.ldflags} ${blas.ldflags} 
-                          ${lapack.ldflags} ${python.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} ${lapack.libs} 
-                          ${python.libs}
+                          ${lapack.ldflags} ${python.ldflags} ${cuda.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} 
+                          ${lapack.libs} ${python.libs} ${cuda.libs}
                     - name: CMAKE_MODULE_LINKER_FLAGS
                       enabled: true
                       enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${fftw3.ldflags} ${hdf5.ldflags} ${silo.ldflags} ${blas.ldflags} 
-                          ${lapack.ldflags} ${python.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} ${lapack.libs} 
-                          ${python.libs}
+                          ${lapack.ldflags} ${python.ldflags} ${cuda.ldflags} ${mpi.libs} ${fftw3.libs} ${hdf5.libs} ${silo.libs} ${blas.libs} 
+                          ${lapack.libs} ${python.libs} ${cuda.libs}
                     - name: CMAKE_BUILD_RPATH
                       enabled: true
-                      enabled_value: ${compiler.lib};${mpi.lib};${fftw3.lib};${hdf5.lib};${silo.lib};${blas.lib};${lapack.lib};${python.lib}
+                      enabled_value: 
+                          ${compiler.lib};${mpi.lib};${fftw3.lib};${hdf5.lib};${silo.lib};${blas.lib};${lapack.lib};${python.lib};${cuda.lib}
                     - name: CMAKE_INSTALL_RPATH
                       enabled: true
-                      enabled_value: ${compiler.lib};${mpi.lib};${fftw3.lib};${hdf5.lib};${silo.lib};${blas.lib};${lapack.lib};${python.lib}
+                      enabled_value: 
+                          ${compiler.lib};${mpi.lib};${fftw3.lib};${hdf5.lib};${silo.lib};${blas.lib};${lapack.lib};${python.lib};${cuda.lib}
                     - name: CMAKE_PREFIX_PATH
                       enabled: true
                       enabled_value: 
-                          ${mpi.prefix};${fftw3.prefix};${hdf5.prefix};${silo.prefix};${blas.prefix};${lapack.prefix};${python.prefix};${cantera.prefix};${pyrometheus.prefix};${fypp.prefix}
+                          ${mpi.prefix};${fftw3.prefix};${hdf5.prefix};${silo.prefix};${blas.prefix};${lapack.prefix};${python.prefix};${cantera.prefix};${pyrometheus.prefix};${fypp.prefix};${cuda.prefix}
     pyrometheus:
         description: Code generator for chemical kinetics in Fortran and other languages
         version: 1.1.1
@@ -286,7 +292,7 @@ kez:
                       disabled_value:
                     - name: x86-512bit
                       description: Build x86 512-bit vectorized version
-                      enabled: true
+                      enabled: false
                       enabled_value:
                       disabled_value:
                     - name: arm
@@ -336,6 +342,9 @@ kez:
         description: Open Source Implementation of the Message Passing Interface
         version: 5.0.10
         compiler: nvhpc-compilers@25.7
+    cuda:
+        description: NVIDIA CUDA Toolkit
+        version: 12.9
     cantera:
         description: Chemical kinetics library for thermodynamics, kinetics, and transport
         version: 3.2.0
@@ -386,6 +395,7 @@ recipe:
         - fypp
         - fftw3
         - openmpi
+        - cuda
         - cantera
         - python
     targets:

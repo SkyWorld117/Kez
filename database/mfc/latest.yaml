@@ -131,6 +131,7 @@ recipe:
                       default: false
                   enabled_value:
                       default: ON
+                  requires: [cuda]
 
                 - name: MFC_OpenMP
                   description: Build with OpenMP GPU offloading (NVHPC or Cray compilers)
@@ -139,6 +140,7 @@ recipe:
                       default: false
                   enabled_value:
                       default: ON
+                  requires: [cuda]
 
                 # Match MFC's own toolchain (toolchain/mfc/run/input.py):
                 # the generated m_thermochem must carry GPU-offload routine
@@ -158,6 +160,20 @@ recipe:
                           - condition: ${mfc.config.MFC_OpenMP} true
                             value: mp
                   enabled_format: ''
+
+                # MFCTargets.cmake calls find_package(CUDAToolkit REQUIRED) for
+                # the offload builds, and without this hint CMake resolves it
+                # from the ambient /usr/local/cuda instead of the toolkit the
+                # rest of the environment was built against.
+                - name: CUDAToolkit_ROOT
+                  description: CUDA toolkit root used for the GPU offload builds
+                  enabled:
+                      default: false
+                      conditions:
+                          - condition: ${mfc.config.MFC_OpenACC} true || ${mfc.config.MFC_OpenMP} true
+                            value: true
+                  enabled_value:
+                      default: ${cuda.prefix}
 
                 # ── Precision ──────────────────────────────────────────────
                 - name: MFC_SINGLE_PRECISION
@@ -238,10 +254,28 @@ recipe:
             # targets in parallel causes them to overwrite each
             # other's .mod files, leading to spurious compilation
             # errors (unclassifiable statements, ambiguous references).
+            #
+            # nvfortran chooses its CUDA toolkit when it links, defaulting to
+            # the one bundled with the HPC SDK, so NVHPC_CUDA_HOME has to be
+            # in scope for the build stages and not just for the configure
+            # step (kez exports a declaration only around the command of the
+            # block it is declared in, and restores the previous value after).
             - target: simulation
+              configurations:
+                  environment: &nvhpc_cuda_home
+                      - name: NVHPC_CUDA_HOME
+                        description: NVHPC CUDA toolkit root for the offload build
+                        conditions:
+                            - condition: ${mfc.config.MFC_OpenACC} true || ${mfc.config.MFC_OpenMP} true
+                              value: ${cuda.prefix}
             - target: pre_process
+              configurations:
+                  environment: *nvhpc_cuda_home
             - target: post_process
+              configurations:
+                  environment: *nvhpc_cuda_home
             - target: install
+              # cmake --install does not compile.
 
     properties:
         bin: ${mfc.prefix}/bin
