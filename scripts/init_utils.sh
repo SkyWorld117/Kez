@@ -254,10 +254,16 @@ fetch_python() {
     if [[ -n "${version}" ]] && [[ "${version}" != "latest" ]]; then
         basename="Python-${version}"
     else
-        version=$(curl -sSL "https://www.python.org/downloads/source/" | \
-            grep -oE "Python [0-9]+\.[0-9]+\.[0-9]+ " | \
-            sort -Vu | \
-            tail -n1)
+        version=$(
+            curl -fsSL 'https://www.python.org/api/v2/downloads/release/?is_published=true' |
+            jq -r '.[] |
+                select(.pre_release == false) |
+                .name |
+                select(test("^Python 3\\.[0-9]+\\.[0-9]+$"))' |
+            sed 's/^Python //' |
+            sort -V |
+            tail -n1
+        )
         # Remove the "Python " prefix and trailing space
         version="${version#Python }"
         version="${version% }"
