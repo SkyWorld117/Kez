@@ -101,6 +101,7 @@ recipe:
                 # (e.g. two different CUDA majors).
                 - name: with-wrapper-ldflags
                   description: Link flags added to the wrapper compilers
+                  user_configurable: true
                   enabled_value:
                       default: -L${pmix.prefix}/lib
 
