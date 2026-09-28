@@ -164,19 +164,19 @@ kez:
                       enabled_value: ${compiler.fort}
                     - name: CPPFLAGS
                       enabled: true
-                      enabled_value: ${hwloc.incflags} ${libevent.incflags}
+                      enabled_value: ${hwloc.incflags} ${libevent.incflags} ${cuda.incflags} ${libpciaccess.incflags}
                     - name: CFLAGS
                       enabled: true
-                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${cuda.incflags} ${libpciaccess.incflags}
                     - name: CXXFLAGS
                       enabled: true
-                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${cuda.incflags} ${libpciaccess.incflags}
                     - name: FCFLAGS
                       enabled: true
-                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags}
+                      enabled_value: -O3 -march=native -mtune=native ${hwloc.incflags} ${libevent.incflags} ${cuda.incflags} ${libpciaccess.incflags}
                     - name: LDFLAGS
                       enabled: true
-                      enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${pmix.ldflags}
+                      enabled_value: ${compiler.ldflags} ${hwloc.ldflags} ${libevent.ldflags} ${cuda.ldflags} ${libpciaccess.ldflags} ${pmix.ldflags}
     numactl:
         description: NUMA support for Linux
         version: 2.0.19
