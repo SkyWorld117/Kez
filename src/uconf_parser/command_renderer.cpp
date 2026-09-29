@@ -213,5 +213,22 @@ std::vector<std::string> generate_package_commands(const ParsedUserPackage& pack
     if (build.postprocessing.has_value()) {
         commands.push_back(resolve_parser_scalar(*build.postprocessing, context));
     }
+
+    // Drop the libtool archives from the freshly installed prefix. libtool
+    // resolves -lfoo to foo.la in preference to foo.so and splices that
+    // archive's dependency_libs onto every downstream link line, which fills
+    // DT_NEEDED and RPATH with libraries the consumer never references. This
+    // runs for every package that builds anything, as Spack's autotools
+    // builder does by default, so that a dependency cannot contaminate
+    // whatever links it later. A package that contributes no commands is left
+    // alone, so that cleaning up can never add a package to the plan.
+    if (!commands.empty()) {
+        const std::filesystem::path archive_prefix =
+            parser_package_prefix(package.requested_name, context);
+        const std::filesystem::path archive_helper =
+            context.settings.kez_home / "tools" / "drop_libtool_archives.sh";
+        commands.push_back("bash " + shell_single_quote(archive_helper.string()) + " " +
+                           shell_single_quote(archive_prefix.string()));
+    }
     return commands;
 }

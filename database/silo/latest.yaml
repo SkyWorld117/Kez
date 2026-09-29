@@ -49,6 +49,20 @@ recipe:
                   description: Path to the Python executable
                   enabled_value:
                       default: ${python.executable}
+
+                # Silo ships C++ codecs (src/hzip, src/fpzip) as libtool
+                # convenience libraries, but links libsiloh5 itself from a C
+                # source with the C driver, so nothing on the link line names
+                # the C++ runtime and the shared library is left with undefined
+                # operator new / __cxa_* / __gxx_personality_v0 symbols.  This
+                # used to be masked: the libtool archive of any C++ library in
+                # the dependency closure spliced -lstdc++ in by accident.
+                # Upstream passes -lstdc++ the same way for non-GNU compilers
+                # (svn_bin/build-3rdparty-open, silo-release-open).
+                - name: LIBS
+                  description: Libraries to link against
+                  enabled_value:
+                      default: -lstdc++
         stages:
             - target:
             - target: install

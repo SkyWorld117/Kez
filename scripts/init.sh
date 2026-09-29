@@ -677,18 +677,25 @@ init_plan_package() {
     local package=$2
     local use_distro_compiler=$3
     shift 3
-    local dependency command
+    local dependency command cleanup
 
     printf -v command 'bash %q --build-package %q' "${KEZ_HOME}/scripts/init.sh" "${package}"
     if [[ $use_distro_compiler == 1 ]]; then
         command+=' --use-distro-compiler'
     fi
+    # Every system package installs into the one shared system prefix, so the
+    # libtool archives are dropped from there rather than from a per-package
+    # directory.  Left in place they splice their dependency_libs into every
+    # downstream link line, filling DT_NEEDED and RPATH with libraries nothing
+    # references.
+    printf -v cleanup 'bash %q %q' "${KEZ_HOME}/tools/drop_libtool_archives.sh" "${KEZ_SYSTEM:?}"
 
     printf 'kez_plan_begin %q\n' "${package}" >> "${plan_file}"
     for dependency in "$@"; do
         printf 'kez_plan_depends %q\n' "${dependency}" >> "${plan_file}"
     done
     printf 'kez_plan_command %q\n' "${command}" >> "${plan_file}"
+    printf 'kez_plan_command %q\n' "${cleanup}" >> "${plan_file}"
     printf 'kez_plan_end\n' >> "${plan_file}"
 }
 

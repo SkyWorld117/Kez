@@ -30,30 +30,6 @@ recipe:
                   enabled_value:
                       default: ${libevent.prefix}
 
-                - name: with-cuda
-                  description: Virtual option to include CUDA if used in hwloc
-                  enabled:
-                      default: false
-                      conditions:
-                          - condition: ${hwloc.config.use_cuda} true
-                            value: true
-                  enabled_format: ''
-                  disabled_format: ''
-                  requires:
-                      - cuda
-
-                - name: with-libpciaccess
-                  description: Virtual option to include libpciaccess if used in hwloc
-                  enabled:
-                      default: false
-                      conditions:
-                          - condition: ${hwloc.config.use_pciaccess} true
-                            value: true
-                  enabled_format: ''
-                  disabled_format: ''
-                  requires:
-                      - libpciaccess
-
         stages:
             - target:
             - target: install

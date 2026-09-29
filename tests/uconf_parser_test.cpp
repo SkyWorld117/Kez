@@ -146,6 +146,19 @@ recipe:
             return result;
         }
 
+        /// @brief The command every buildable plan ends with.
+        ///
+        /// Removing the libtool archives from the installed prefix keeps them
+        /// from splicing their dependency_libs into whatever links the package
+        /// later.
+        ///
+        /// @param package The package whose prefix is cleaned.
+        /// @return The rendered command appended to that package's plan.
+        std::string drop_libtool_archives(const std::string& package) const {
+            return "bash '" + (path_ / "tools" / "drop_libtool_archives.sh").string() +
+                   "' '/opt/env/" + package + "'";
+        }
+
         std::filesystem::path path_;
         std::optional<std::string> previous_database_;
         std::optional<std::string> previous_home_;
@@ -246,18 +259,19 @@ recipe:
         ASSERT_EQ(plan.size(), 2U);
         EXPECT_EQ(plan[0].package, "library");
         EXPECT_TRUE(plan[0].dependencies.empty());
-        EXPECT_EQ(plan[0].commands,
-                  std::vector<std::string>(
-                      {"bash '" + (path_ / "tools" / "shallow_clone.sh").string() +
-                           "' 'https://example.invalid/library.git' 'v1' source",
-                       "mkdir -p '/opt/.cache'",
-                       "tar -czf '/opt/.cache/library-v1.tar.gz' --format=posix -z source",
-                       "cd source", "make -j8", "make -j8 install"}));
+        EXPECT_EQ(
+            plan[0].commands,
+            std::vector<std::string>(
+                {"bash '" + (path_ / "tools" / "shallow_clone.sh").string() +
+                     "' 'https://example.invalid/library.git' 'v1' source",
+                 "mkdir -p '/opt/.cache'",
+                 "tar -czf '/opt/.cache/library-v1.tar.gz' --format=posix -z source", "cd source",
+                 "make -j8", "make -j8 install", drop_libtool_archives("library")}));
 
         EXPECT_EQ(plan[1].package, "application");
         EXPECT_EQ(plan[1].dependencies, std::vector<std::string>({"library"}));
         const std::vector<std::string>& commands = plan[1].commands;
-        ASSERT_EQ(commands.size(), 14U);
+        ASSERT_EQ(commands.size(), 15U);
         EXPECT_EQ(commands[0], "wget --quiet --show-progress --no-check-certificate "
                                "--output-document='source.tar.gz' "
                                "'https://example.invalid/application-x86_64.tar.gz'");
@@ -294,6 +308,7 @@ recipe:
         EXPECT_EQ(commands[11], "cmake --build build --parallel 8 --target build");
         EXPECT_EQ(commands[12], "cmake --install build");
         EXPECT_EQ(commands[13], "finish /opt/env/application");
+        EXPECT_EQ(commands[14], drop_libtool_archives("application"));
 
         const std::filesystem::path local_source = path_ / "local source";
         std::filesystem::create_directories(local_source);
@@ -500,7 +515,7 @@ recipe:
                        "top-configure TOP_A=\"user-a\" TOP_B=\"user-b\"", "unset KEZ_INDEX_TOP_A",
                        "unset KEZ_INDEX_TOP_B", "build-stage BUILD_VALUE=\"user-build\"",
                        "export KEZ_INDEX_STAGE_ENV=\"user-stage\"", "default-stage",
-                       "unset KEZ_INDEX_STAGE_ENV"}));
+                       "unset KEZ_INDEX_STAGE_ENV", drop_libtool_archives("application")}));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, ResolvesAbstractPropertiesAndSelectionConditions) {
@@ -551,8 +566,9 @@ recipe:
 
         ASSERT_EQ(plan.size(), 1U);
         EXPECT_EQ(plan[0].package, "application");
-        ASSERT_EQ(plan[0].commands.size(), 1U);
+        ASSERT_EQ(plan[0].commands.size(), 2U);
         EXPECT_EQ(plan[0].commands[0], "configure CC=\"/opt/mpi/bin/mpicc\" --with-mpi");
+        EXPECT_EQ(plan[0].commands[1], drop_libtool_archives("application"));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, ConvergesWhenBuildAndStageReuseAnEnvironmentName) {
@@ -584,7 +600,8 @@ recipe:
                   std::vector<std::string>({"export KEZ_DUPLICATE_SCOPE=\"build-value\"",
                                             "configure", "unset KEZ_DUPLICATE_SCOPE",
                                             "export KEZ_DUPLICATE_SCOPE=\"stage-value\"",
-                                            "build-stage", "unset KEZ_DUPLICATE_SCOPE"}));
+                                            "build-stage", "unset KEZ_DUPLICATE_SCOPE",
+                                            drop_libtool_archives("application")}));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase,
@@ -623,9 +640,10 @@ recipe:
         const BashCommandPlan plan = parse_user_config(user_config, settings());
 
         ASSERT_EQ(plan.size(), 1U);
-        ASSERT_EQ(plan[0].commands.size(), 2U);
+        ASSERT_EQ(plan[0].commands.size(), 3U);
         EXPECT_EQ(plan[0].commands[0], "echo -I/opt/env/library/include -L/opt/env/library/lib64 "
                                        "-Wl,-rpath,/opt/env/library/lib64");
+        EXPECT_EQ(plan[0].commands[2], drop_libtool_archives("application"));
         const std::string& command = plan[0].commands[1];
         EXPECT_NE(command.find("-DFEATURE=ON"), std::string::npos);
         EXPECT_NE(command.find("-DCMAKE_INSTALL_PREFIX=\"/opt/env/application\""),
@@ -679,7 +697,7 @@ recipe:
         const BashCommandPlan plan = parse_user_config(user_config, settings());
 
         ASSERT_EQ(plan.size(), 1U);
-        ASSERT_EQ(plan[0].commands.size(), 1U);
+        ASSERT_EQ(plan[0].commands.size(), 2U);
         const std::string& command = plan[0].commands[0];
         EXPECT_NE(command.find("./configure --enable-feature"), std::string::npos);
         EXPECT_NE(command.find("CC=\"/opt/compilers/nvhpc-compilers-1.0/nvhpc-compilers/bin/nvc\""),
@@ -693,6 +711,32 @@ recipe:
                          "-L/opt/env/library/lib -Xlinker -rpath,/opt/env/library/lib\""),
             std::string::npos);
         EXPECT_EQ(command.find("LIBS="), std::string::npos);
+        EXPECT_EQ(plan[0].commands[1], drop_libtool_archives("application"));
+    }
+
+    TEST_F(TemporaryUserConfigParserDatabase, DropsLibtoolArchivesAfterPostprocessing) {
+        write_package("application", R"(
+recipe:
+  name: application
+  type: package
+  toolchain: autotools
+  build:
+    postprocessing: echo post-install
+    stages:
+      - target: install
+)");
+
+        const YAML::Node user_config = gen_user_config({"application"}, false, "system");
+        const BashCommandPlan plan   = parse_user_config(user_config, settings());
+
+        ASSERT_EQ(plan.size(), 1U);
+        const std::vector<std::string>& commands = plan[0].commands;
+        ASSERT_GE(commands.size(), 2U);
+        // The recipe's own post-installation hook keeps its position, and the
+        // archive removal runs after it, so a package that installs files there
+        // still has them cleaned.
+        EXPECT_EQ(commands[commands.size() - 2], "echo post-install");
+        EXPECT_EQ(commands.back(), drop_libtool_archives("application"));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, WarnsWhenConfiguredCompilerIsNotInstalled) {
@@ -1127,7 +1171,8 @@ recipe:
 
         ASSERT_EQ(plan.size(), 1U);
         EXPECT_EQ(plan[0].package, "demo");
-        EXPECT_EQ(plan[0].commands, std::vector<std::string>({"echo /opt/env/demo"}));
+        EXPECT_EQ(plan[0].commands,
+                  std::vector<std::string>({"echo /opt/env/demo", drop_libtool_archives("demo")}));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase,
@@ -1223,8 +1268,9 @@ recipe:
 
         ASSERT_EQ(plan.size(), 1U);
         EXPECT_EQ(plan[0].package, "application");
-        ASSERT_EQ(plan[0].commands.size(), 1U);
+        ASSERT_EQ(plan[0].commands.size(), 2U);
         EXPECT_EQ(plan[0].commands[0], "configure FLAGS=\"base cuda\"");
+        EXPECT_EQ(plan[0].commands[1], drop_libtool_archives("application"));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase,
@@ -1301,7 +1347,7 @@ recipe:
                   std::vector<std::string>(
                       {"export KEZ_CONDITION_MARK=\"present\"",
                        "configure FLAGS=\"base environment version logical required\"",
-                       "unset KEZ_CONDITION_MARK"}));
+                       "unset KEZ_CONDITION_MARK", drop_libtool_archives("application")}));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase, RejectsInvalidConfigOptionConditionNames) {
