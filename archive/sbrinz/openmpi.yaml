@@ -3,7 +3,7 @@ kez:
     openmpi:
         description: Open Source Implementation of the Message Passing Interface
         version: 5.0.10
-        compiler: nvhpc-compilers@25.7
+        compiler: system
         build:
             configurations:
                 options:
@@ -385,7 +385,7 @@ kez:
         description: GDRCopy userspace library
     cuda:
         description: NVIDIA CUDA Toolkit
-        version: 12.9
+        version: 13.3
 recipe:
     abstract_packages: {}
     dependencies:
