@@ -266,7 +266,7 @@ build_gcc() {
         --with-zstd-include="${KEZ_SYSTEM}/include" \
         --with-zstd-lib="${KEZ_SYSTEM}/lib" \
         --with-stage1-ldflags="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64" \
-        --with-boot-ldflags="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64"
+        --with-boot-ldflags="-L${KEZ_SYSTEM}/lib -Wl,-rpath,${KEZ_SYSTEM}/lib -L${KEZ_SYSTEM}/lib64 -Wl,-rpath,${KEZ_SYSTEM}/lib64 -static-libstdc++ -static-libgcc"
     export LD_RUN_PATH="${KEZ_SYSTEM}/lib:${KEZ_SYSTEM}/lib64"
     make -j"${KEZ_NPROC}"
     make install -j"${KEZ_NPROC}"
