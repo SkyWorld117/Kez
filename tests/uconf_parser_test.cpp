@@ -1195,7 +1195,7 @@ recipe:
 
         ASSERT_EQ(plan.size(), 1U);
         const std::vector<std::string>& commands = plan[0].commands;
-        ASSERT_EQ(commands.size(), 7U);
+        ASSERT_EQ(commands.size(), 8U);
 
         EXPECT_EQ(commands[0], "wget --quiet --show-progress --no-check-certificate "
                                "--output-document=source.gz "
@@ -1212,6 +1212,7 @@ recipe:
         // so the recipe renames it on install. gzip restores no file mode, hence the
         // explicit 755 that a plain copy would not provide.
         EXPECT_EQ(commands[6], "install -m 755 source /opt/env/tool/bin/tool");
+        EXPECT_EQ(commands[7], drop_libtool_archives("tool"));
     }
 
     TEST_F(TemporaryUserConfigParserDatabase,
