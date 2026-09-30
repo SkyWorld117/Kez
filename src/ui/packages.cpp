@@ -235,7 +235,12 @@ void execute_info(const CommandArguments& arguments) {
         // --- Releases ---
         print_section_header("Releases");
         bool has_source = false;
+        int config_index = 0;
         for (const PackageConfigPtr& config : get_all_db_configs(name)) {
+            if (config_index == 1) {
+                print_text("");
+                print_text(strong_color("These are versions from a different recipe file than the latest.yaml, and as such may not be fully supported by Kez. Use with caution."), max_width);
+            }
             if (!config->source) {
                 continue;
             }
@@ -255,6 +260,7 @@ void execute_info(const CommandArguments& arguments) {
                     print_text(*release.url, 0, indent);
                 }
             }
+            ++config_index;
         }
         if (!has_source) {
             print_text("None");
