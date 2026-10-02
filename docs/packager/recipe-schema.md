@@ -419,6 +419,12 @@ properties:
         value: <libs_value>
 ```
 
+`parent` marks a submodule of a vendor package: a component whose install prefix
+lives inside the parent's tree and which carries no source of its own (for
+example `intel-oneapi-compilers`, whose prefix is `${intel-oneapi.prefix}/compiler/latest`).
+A submodule is never installed on its own: requesting it with `kez install`
+installs the parent package instead, at the parent's version.
+
 `include` and `lib` contain paths, not compiler flags. The parser derives
 `${package.incflags}` and `${package.ldflags}` from them. `${package.ldflags}`
 uses the linker-driver syntax required by the package's selected compiler.

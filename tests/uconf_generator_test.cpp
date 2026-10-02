@@ -550,6 +550,67 @@ recipe:
         EXPECT_EQ(result["kez"]["implementation"]["build"]["configurations"]["options"].size(), 1U);
     }
 
+    TEST_F(TemporaryGeneratorDatabase, RedirectsSubmoduleTargetToItsParentPackage) {
+        write_package("parent", R"(
+recipe:
+  name: parent
+  type: vendor
+  source:
+    type: tarball
+    releases:
+      - version: 3.1.4
+        url: https://example.invalid/parent-3.1.4.tar.gz
+      - version: 2.0.0
+        url: https://example.invalid/parent-2.0.0.tar.gz
+  build:
+    postprocessing: echo install
+)");
+        write_package("parent-compilers", R"(
+recipe:
+  name: parent-compilers
+  type: vendor
+  dependencies: [parent]
+  properties:
+    parent: parent
+    prefix: ${parent.prefix}/compilers
+)");
+        write_package("parent-libs", R"(
+recipe:
+  name: parent-libs
+  type: vendor
+  dependencies: [parent]
+  properties:
+    parent: parent
+    prefix: ${parent.prefix}/libs
+)");
+
+        const YAML::Node result = gen_user_config({"parent-compilers"}, false, "system");
+
+        // The submodule target is replaced by the parent, which becomes the
+        // only dependency carrying a version.
+        EXPECT_EQ(result["recipe"]["targets"].as<std::vector<std::string>>(),
+                  std::vector<std::string>({"parent"}));
+        EXPECT_EQ(result["recipe"]["dependencies"].as<std::vector<std::string>>(),
+                  std::vector<std::string>({"parent"}));
+        EXPECT_EQ(result["kez"]["parent"]["version"].as<std::string>(), "3.1.4");
+        EXPECT_FALSE(result["kez"]["parent-compilers"].IsDefined());
+
+        // A version override named after the submodule follows onto the parent.
+        const YAML::Node pinned =
+            gen_user_config({"parent-compilers"}, false, "system", {{"parent-compilers", "2.0.0"}});
+        EXPECT_EQ(pinned["recipe"]["targets"].as<std::vector<std::string>>(),
+                  std::vector<std::string>({"parent"}));
+        EXPECT_EQ(pinned["kez"]["parent"]["version"].as<std::string>(), "2.0.0");
+
+        // Several submodules of one parent collapse onto a single target.
+        const YAML::Node both =
+            gen_user_config({"parent-compilers", "parent-libs"}, false, "system");
+        EXPECT_EQ(both["recipe"]["targets"].as<std::vector<std::string>>(),
+                  std::vector<std::string>({"parent"}));
+        EXPECT_EQ(both["recipe"]["dependencies"].as<std::vector<std::string>>(),
+                  std::vector<std::string>({"parent"}));
+    }
+
     TEST_F(TemporaryGeneratorDatabase,
            InteractiveGenerationGroupsSharedOptionsAndAppliesTheirSelections) {
         write_file(path_ / "heuristics" / "advice.yaml", R"(

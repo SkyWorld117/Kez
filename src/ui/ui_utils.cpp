@@ -39,7 +39,8 @@ namespace {
 
     std::string package_version(const YAML::Node& user_config, const std::string& package) {
         const YAML::Node kez = user_config["kez"];
-        if (!kez.IsMap() || !kez[package].IsMap() || !yaml_has(kez[package], "version")) {
+        if (!yaml_has(kez, package) || !kez[package].IsMap() ||
+            !yaml_has(kez[package], "version")) {
             ERROR("Invalid user configuration: package '" + package + "' has no version");
             exit(EXIT_FAILURE);
         }
@@ -54,7 +55,8 @@ namespace {
 
     std::string package_compiler(const YAML::Node& user_config, const std::string& package) {
         const YAML::Node kez = user_config["kez"];
-        if (!kez.IsMap() || !kez[package].IsMap() || !yaml_has(kez[package], "compiler")) {
+        if (!yaml_has(kez, package) || !kez[package].IsMap() ||
+            !yaml_has(kez[package], "compiler")) {
             return "system";
         }
         std::string compiler = yaml_scalar(kez[package]["compiler"], package + ".compiler");
@@ -76,6 +78,26 @@ std::string package_type_name(PackageType type) {
         case PackageType::External: return "external";
     }
     return "unknown";
+}
+
+std::string install_target_package(const std::string& requested) {
+    const PackageConfigPtr config = get_db_config(requested);
+    const Property* parent        = find_property(*config, "parent");
+    if (parent == nullptr) {
+        return requested;
+    }
+    // The property may be a plain scalar or a map-valued ConfigurableValue;
+    // both forms mark a submodule, so read the default in either case.
+    std::string parent_name;
+    if (std::holds_alternative<std::string>(parent->data)) {
+        parent_name = std::get<std::string>(parent->data);
+    } else {
+        const auto& value = std::get<ConfigurableValue<std::string>>(parent->data);
+        if (value.default_value.has_value()) {
+            parent_name = *value.default_value;
+        }
+    }
+    return parent_name.empty() ? requested : parent_name;
 }
 
 std::filesystem::path configured_work_path(const std::string& name) {
