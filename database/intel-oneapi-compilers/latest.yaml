@@ -1,0 +1,17 @@
+---
+recipe:
+    name: intel-oneapi-compilers
+    description: Intel oneAPI compilers for C, C++, and Fortran
+    type: vendor
+
+    dependencies:
+        - intel-oneapi
+
+    properties:
+        parent: intel-oneapi
+        prefix: ${intel-oneapi.prefix}/compiler/latest
+        c: ${intel-oneapi-compilers.prefix}/bin/icx
+        cxx: ${intel-oneapi-compilers.prefix}/bin/icpx
+        fort: ${intel-oneapi-compilers.prefix}/bin/ifx
+        omp_flags: -qopenmp
+        lib: ${intel-oneapi-compilers.prefix}/lib
