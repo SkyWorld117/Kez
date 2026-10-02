@@ -15,6 +15,11 @@ recipe:
     source:
         type: tarball
         releases:
+            # 2.32.3 is the version the TCA-MPI coll/nccl component is
+            # developed and verified against (it adds ncclGather/ncclScatter
+            # and ncclAlltoAll).  2.30.7 is kept for existing consumers.
+            - version: 2.32.3
+              url: https://github.com/NVIDIA/nccl/archive/refs/tags/v2.32.3-1.tar.gz
             - version: 2.30.7
               url: https://github.com/NVIDIA/nccl/archive/refs/tags/v2.30.7-1.tar.gz
 
