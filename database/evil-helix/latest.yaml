@@ -1,0 +1,23 @@
+---
+recipe:
+    name: evil-helix
+    description: Evil Helix - a Helix fork with Vim-like keybindings and behavior
+    type: package
+
+    source:
+        type: git
+        url: https://github.com/usagi-flow/evil-helix.git
+        releases:
+            - version: 20250915
+              tag: release-20250915
+
+    build:
+        preprocessing: |-
+            sed -i 's|source = { git = "https://github.com/dannylongeuay/tree-sitter-go-template", rev = "395a33e08e69f4155156f0b90138a6c86764c979" }|source = { git = "https://github.com/ngalaiko/tree-sitter-go-template", rev = "ca26229bafcd3f37698a2496c2a5efa2f07e86bc" }|' languages.toml
+
+        postprocessing: |-
+            cargo build --profile release --locked
+            mkdir -p ${evil-helix.prefix}/bin ${evil-helix.prefix}/lib/helix
+            cp target/release/hx ${evil-helix.prefix}/lib/helix/
+            cp -r runtime ${evil-helix.prefix}/lib/helix/
+            ln -sf ../lib/helix/hx ${evil-helix.prefix}/bin/hx
