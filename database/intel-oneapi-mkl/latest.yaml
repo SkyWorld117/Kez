@@ -37,6 +37,7 @@ recipe:
                       default: openmpi
 
     properties:
+        parent: intel-oneapi
         prefix: ${intel-oneapi.prefix}/mkl/latest
         lib: ${intel-oneapi.prefix}/mkl/latest/lib
         libs:

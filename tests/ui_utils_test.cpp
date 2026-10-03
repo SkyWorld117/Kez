@@ -216,6 +216,36 @@ kez:
                     ::testing::ExitedWithCode(EXIT_FAILURE), "Invalid renamed version");
     }
 
+    TEST_F(TemporaryUiEnvironment, RedirectsSubmoduleTargetsToTheirParent) {
+        write(root_ / "database" / "toolkit" / "latest.yaml",
+              "recipe: {name: toolkit, type: vendor}\n");
+        write(root_ / "database" / "toolkit-compilers" / "latest.yaml",
+              "recipe:\n"
+              "  name: toolkit-compilers\n"
+              "  type: vendor\n"
+              "  properties: {parent: toolkit}\n");
+        write(root_ / "database" / "toolkit-libs" / "latest.yaml",
+              "recipe:\n"
+              "  name: toolkit-libs\n"
+              "  type: vendor\n"
+              "  properties:\n"
+              "    parent: {default: toolkit}\n");
+
+        // A submodule resolves to its parent, whether `parent` is a scalar or a
+        // map-valued configurable; a normal package is unchanged.
+        EXPECT_EQ(install_target_package("toolkit-compilers"), "toolkit");
+        EXPECT_EQ(install_target_package("toolkit-libs"), "toolkit");
+        EXPECT_EQ(install_target_package("toolkit"), "toolkit");
+
+        // The redirected target computes the parent's vendor prefix.
+        const YAML::Node parent = YAML::Load(R"(
+recipe: {targets: [toolkit]}
+kez:
+  toolkit: {version: '1.0'}
+)");
+        EXPECT_EQ(installation_prefix(parent, "", false), root_ / "work/env/vendors/toolkit-1.0");
+    }
+
     TEST_F(TemporaryUiEnvironment, ListsOnlyDirectoriesInSortedOrder) {
         const std::filesystem::path environments = root_ / "environments";
         std::filesystem::create_directories(environments / "zeta");
