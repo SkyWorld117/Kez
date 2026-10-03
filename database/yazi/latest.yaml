@@ -1,0 +1,16 @@
+---
+recipe:
+    name: yazi
+    description: Yazi - a blazing fast terminal file manager written in Rust
+    type: package
+
+    source:
+        type: zip
+        releases:
+            - version: 26.9.1
+              url: https://github.com/sxyazi/yazi/releases/download/v26.9.1/yazi-${kez.arch.yazi}.zip
+
+    build:
+        postprocessing: |-
+            mkdir -p ${yazi.prefix}/bin
+            cp yazi ya ${yazi.prefix}/bin/
