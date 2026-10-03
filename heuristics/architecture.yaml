@@ -3,6 +3,9 @@ architecture:
     default:
         x86_64: x86_64
         arm64: aarch64
+    bun:
+        x86_64: x64
+        arm64: aarch64
     cuda:
         x86_64: ''
         arm64: _sbsa

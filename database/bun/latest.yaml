@@ -1,0 +1,17 @@
+---
+recipe:
+    name: bun
+    description: Bun - an all-in-one JavaScript runtime, bundler, test runner and package manager
+    type: package
+
+    source:
+        type: zip
+        releases:
+            - version: 1.4.2
+              url: https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-linux-${kez.arch.bun}.zip
+
+    build:
+        postprocessing: |-
+            mkdir -p ${bun.prefix}/bin
+            cp bun ${bun.prefix}/bin/
+            ln -sf bun ${bun.prefix}/bin/bunx
