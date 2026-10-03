@@ -1,0 +1,30 @@
+---
+recipe:
+    name: rust
+    description: Rust programming language toolchain (rustup, cargo, rustc)
+    type: package
+
+    source:
+        type: script
+        releases:
+            - version: 1.29.1
+              url: https://static.rust-lang.org/rustup/archive/1.29.1/${kez.arch}-unknown-linux-gnu/rustup-init
+
+    build:
+        configurations:
+            options:
+                - name: toolchain
+                  description: Default rust toolchain installed by rustup [ stable | beta | nightly | <version> ]
+                  user_configurable: true
+                  enabled_value:
+                      default: stable
+
+        postprocessing: |-
+            export RUSTUP_HOME=${rust.prefix}/rustup
+            export CARGO_HOME=${rust.prefix}/cargo
+            cp ${source} rustup-init
+            chmod +x rustup-init
+            ./rustup-init -y --no-modify-path --profile minimal --default-toolchain ${rust.config.toolchain}
+            mkdir -p ${rust.prefix}/bin
+            ln -sf ${rust.prefix}/rustup/toolchains/*/bin/* ${rust.prefix}/bin/
+            cp ${rust.prefix}/cargo/bin/rustup ${rust.prefix}/bin/
