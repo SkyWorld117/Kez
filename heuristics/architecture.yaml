@@ -6,6 +6,9 @@ architecture:
     cuda:
         x86_64: ''
         arm64: _sbsa
+    fzf:
+        x86_64: amd64
+        arm64: arm64
     llvm:
         x86_64: X86
         arm64: AArch64

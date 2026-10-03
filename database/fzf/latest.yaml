@@ -1,0 +1,16 @@
+---
+recipe:
+    name: fzf
+    description: fzf - a general-purpose command-line fuzzy finder
+    type: package
+
+    source:
+        type: tarball
+        releases:
+            - version: 0.74.4
+              url: https://github.com/junegunn/fzf/releases/download/v0.74.4/fzf-0.74.4-linux_${kez.arch.fzf}.tar.gz
+
+    build:
+        postprocessing: |-
+            mkdir -p ${fzf.prefix}/bin
+            cp fzf ${fzf.prefix}/bin/
