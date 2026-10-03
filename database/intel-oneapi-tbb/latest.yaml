@@ -8,6 +8,7 @@ recipe:
         - intel-oneapi
 
     properties:
+        parent: intel-oneapi
         prefix: ${intel-oneapi.prefix}/tbb/latest
         lib: ${intel-oneapi.prefix}/tbb/latest/lib
         ldflags:

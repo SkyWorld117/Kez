@@ -224,16 +224,40 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
 YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool interactive,
                            const std::string& default_compiler,
                            const std::unordered_map<std::string, std::string>& version_overrides) {
+    // A requested submodule is replaced by its parent package, so that asking
+    // for e.g. `intel-oneapi-compilers` installs `intel-oneapi` at the parent's
+    // version.  Any version override named after the submodule follows the
+    // redirect onto the parent.
+    std::vector<std::string> roots;
+    roots.reserve(package_names.size());
+    std::unordered_map<std::string, std::string> overrides = version_overrides;
+    for (const std::string& requested : package_names) {
+        const std::string target = install_target_package(requested);
+        if (target != requested) {
+            const auto override = overrides.find(requested);
+            if (override != overrides.end()) {
+                const std::string value = override->second;
+                overrides.erase(override);
+                overrides.emplace(target, value);
+            }
+        }
+        // Several submodules may share one parent; collapse them onto a single
+        // root so the target list does not repeat the parent.
+        if (std::find(roots.begin(), roots.end(), target) == roots.end()) {
+            roots.push_back(target);
+        }
+    }
+
     InteractiveOptionSelections option_selections;
     DependencyResolution resolution =
-        resolve_dependencies(package_names, interactive, &option_selections, version_overrides);
+        resolve_dependencies(roots, interactive, &option_selections, overrides);
     const std::vector<std::string>& all_dependencies   = resolution.all_packages;
     const std::vector<std::string>& dependencies       = resolution.buildable_packages;
     const AbstractPackageSelections& abstract_packages = resolution.abstract_packages;
 
     if (dependencies.empty()) {
         std::string packages;
-        for (const std::string& package : package_names) {
+        for (const std::string& package : roots) {
             packages += (packages.empty() ? "" : " ") + package;
         }
         ERROR("No dependencies found for packages: " + packages);
@@ -257,10 +281,10 @@ YAML::Node gen_user_config(const std::vector<std::string>& package_names, bool i
     }
 
     output["recipe"]["dependencies"] = all_dependencies;
-    output["recipe"]["targets"]      = package_names;
+    output["recipe"]["targets"]      = roots;
 
     const std::unordered_set<std::string> target_packages =
-        resolved_targets(package_names, abstract_packages);
+        resolved_targets(roots, abstract_packages);
     const std::unordered_set<std::string> all_dependency_set(all_dependencies.begin(),
                                                              all_dependencies.end());
     for (const std::string& dependency : dependencies) {

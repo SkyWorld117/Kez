@@ -166,6 +166,25 @@ void print_command_plan(const BashCommandPlan& plan);
 std::string package_type_name(PackageType type);
 
 /**
+ * @brief Resolve a requested installation target to the package that provides it.
+ *
+ * A package that declares a `parent` property is a submodule of a parent
+ * (vendor) package: it has no source of its own, its install prefix lives
+ * inside the parent's tree, and it only advertises properties to its
+ * dependents (for example `intel-oneapi-compilers`, which lives under
+ * `${intel-oneapi.prefix}`).  Requesting such a package installs its parent
+ * instead, at the parent's own version.
+ *
+ * @param requested  The package name the user asked to install.
+ * @return The parent package name when @p requested is a submodule, otherwise
+ *         @p requested unchanged.
+ *
+ * @warning Terminates the program if @p requested has no recipe in the
+ *          database.
+ */
+std::string install_target_package(const std::string& requested);
+
+/**
  * @brief Extract the list of target package names from a user configuration.
  *
  * Reads the ``recipe.targets`` sequence from the user configuration YAML.
