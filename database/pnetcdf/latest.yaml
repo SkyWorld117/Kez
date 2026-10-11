@@ -8,8 +8,8 @@ recipe:
     source:
         type: tarball
         releases:
-            - version: 1.15.0
-              url: https://parallel-netcdf.github.io/Release/pnetcdf-1.15.0.tar.gz
+            - version: 1.15.1
+              url: https://parallel-netcdf.github.io/Release/pnetcdf-1.15.1.tar.gz
 
     dependencies:
         - mpi
