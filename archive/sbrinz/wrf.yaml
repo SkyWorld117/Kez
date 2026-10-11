@@ -211,7 +211,7 @@ kez:
                       enabled_value: ON
                     - name: HDF5_BUILD_FORTRAN
                       description: Build Fortran library
-                      enabled: false
+                      enabled: true
                       enabled_value: ON
                     - name: HDF5_BUILD_HL_LIB
                       description: Build High Level library
