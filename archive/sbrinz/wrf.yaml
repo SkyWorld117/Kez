@@ -8,7 +8,22 @@ kez:
             configurations:
                 options:
                     - name: WRF_CONFIG_SELECTION
-                      description: "Selection number from the ./configure menu.  Default 35 selects gfortran with dm+sm on Linux x86_64.\n"
+                      description: "Select the appropriate configuration for the build system.\n 1. (serial)   2. (smpar)   3. (dmpar)   4. (dm+sm)   PGI
+                          (pgf90/gcc)\n 5. (serial)   6. (smpar)   7. (dmpar)   8. (dm+sm)   PGI (pgf90/pgcc): SGI MPT\n 9. (serial)  10. (smpar)  11. (dmpar)\
+                          \  12. (dm+sm)   PGI (pgf90/gcc): PGI accelerator\n13. (serial)  14. (smpar)  15. (dmpar)  16. (dm+sm)   INTEL (ifort/icc)\n \
+                          \                                       17. (dm+sm)   INTEL (ifort/icc): Xeon Phi (MIC architecture)\n18. (serial)  19. (smpar)\
+                          \  20. (dmpar)  21. (dm+sm)   INTEL (ifort/icc): Xeon (SNB with AVX mods) 22. (serial)  23. (smpar)  24. (dmpar)  25. (dm+sm)\
+                          \   INTEL (ifort/icc): SGI MPT 26. (serial)  27. (smpar)  28. (dmpar)  29. (dm+sm)   INTEL (ifort/icc): IBM POE 30. (serial) \
+                          \              31. (dmpar)                PATHSCALE (pathf90/pathcc) 32. (serial)  33. (smpar)  34. (dmpar)  35. (dm+sm)   GNU
+                          (gfortran/gcc) 36. (serial)  37. (smpar)  38. (dmpar)  39. (dm+sm)   IBM (xlf90_r/cc_r) 40. (serial)  41. (smpar)  42. (dmpar)\
+                          \  43. (dm+sm)   PGI (ftn/gcc): Cray XC CLE 44. (serial)  45. (smpar)  46. (dmpar)  47. (dm+sm)   CRAY CCE (ftn $(NOOMP)/cc):
+                          Cray XE and XC 48. (serial)  49. (smpar)  50. (dmpar)  51. (dm+sm)   INTEL (ftn/icc): Cray XC 52. (serial)  53. (smpar)  54. (dmpar)\
+                          \  55. (dm+sm)   PGI (pgf90/pgcc) 56. (serial)  57. (smpar)  58. (dmpar)  59. (dm+sm)   PGI (pgf90/gcc): -f90=pgf90 60. (serial)\
+                          \  61. (smpar)  62. (dmpar)  63. (dm+sm)   PGI (pgf90/pgcc): -f90=pgf90 64. (serial)  65. (smpar)  66. (dmpar)  67. (dm+sm)  \
+                          \ INTEL (ifort/icc): HSW/BDW 68. (serial)  69. (smpar)  70. (dmpar)  71. (dm+sm)   INTEL (ifort/icc): KNL MIC 72. (serial)  73.
+                          (smpar)  74. (dmpar)  75. (dm+sm)   AMD (flang/clang) :  AMD ZEN1/ ZEN2/ ZEN3 Architectures 76. (serial)  77. (smpar)  78. (dmpar)\
+                          \  79. (dm+sm)   INTEL (ifx/icx) : oneAPI LLVM 80. (serial)  81. (smpar)  82. (dmpar)  83. (dm+sm)   FUJITSU (frtpx/fccpx): FX10/FX100
+                          SPARC64 IXfx/Xlfx\n"
                       enabled: true
                       enabled_value: 35
                       disabled_value:
@@ -25,27 +40,71 @@ kez:
                       enabled_value: em_real
                       disabled_value:
                     - name: WRF_FCOPTIM
-                      description: "Fortran optimization flags.  Overrides FCOPTIM in configure.wrf.  Empty leaves stanza defaults.\n"
-                      enabled: true
-                      enabled_value: -O3 -march=native -mtune=native -ffp-contract=off
-                      disabled_value:
-                    - name: WRF_FCNOOPT
-                      description: "Fortran no-optimization flags (used for files that don't optimize well).  Overrides FCNOOPT in configure.wrf.  Empty
-                          leaves stanza defaults.\n"
-                      enabled: true
-                      enabled_value: -O3 -march=native -mtune=native -ffp-contract=off
-                      disabled_value:
-                    - name: WRF_FCREDUCEDOPT
-                      description: "Fortran reduced optimization flags.  Overrides FCREDUCEDOPT in configure.wrf.  Empty leaves stanza defaults.\n"
-                      enabled: true
-                      enabled_value: -O3 -march=native -mtune=native -ffp-contract=off
-                      disabled_value:
-                    - name: WRF_CFLAGS_LOCAL
-                      description: "Extra C compiler flags.  Appended to CFLAGS_LOCAL in configure.wrf, preserving stanza flags like -c and -w that are
-                          required for correct compilation.  Empty leaves stanza defaults.\n"
+                      description: "Fortran optimization flags for the model.  Overrides FCOPTIM in configure.wrf.\n"
                       enabled: true
                       enabled_value: -O3 -march=native -mtune=native
                       disabled_value:
+                    - name: WRF_FCNOOPT
+                      description: "Fortran no-optimization flags.  WRF compiles a curated list of I/O, registry and restart routines (arch/noopt_exceptions)
+                          with these flags precisely because they do not optimize reliably; raising them miscompiles the model and has hung runs at the
+                          restart write.  Keep at the stanza default (-O0) unless you know what you are doing.\n"
+                      enabled: true
+                      enabled_value: -O0
+                      disabled_value:
+                    - name: WRF_FCREDUCEDOPT
+                      description: "Fortran reduced optimization flags (used for the RUC land surface, module_sf_ruclsm.F).  Overrides FCREDUCEDOPT in configure.wrf,
+                          whose stanza default tracks FCOPTIM.\n"
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                      disabled_value:
+                    - name: WRF_CFLAGS_LOCAL
+                      description: "Extra C compiler flags.  Appended to CFLAGS_LOCAL in configure.wrf, preserving stanza flags like -c and -w that are
+                          required for correct compilation.\n"
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native
+                      disabled_value:
+    pnetcdf:
+        description: Parallel netCDF is a parallel I/O library that provides a simple interface for writing and reading scientific data
+        version: 1.15.1
+        compiler: system
+        build:
+            configurations:
+                options:
+                    - name: enable-cxx
+                      description: Enable C++ interface
+                      enabled: true
+                      enabled_value:
+                    - name: enable-fortran
+                      description: Enable Fortran interface
+                      enabled: true
+                      enabled_value:
+                    - name: prefix
+                      enabled: true
+                      enabled_value: ${pnetcdf.prefix}
+                    - name: CC
+                      enabled: true
+                      enabled_value: ${mpi.c}
+                    - name: CXX
+                      enabled: true
+                      enabled_value: ${mpi.cxx}
+                    - name: FC
+                      enabled: true
+                      enabled_value: ${mpi.fort}
+                    - name: CPPFLAGS
+                      enabled: true
+                      enabled_value: ${mpi.incflags}
+                    - name: CFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: CXXFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: FCFLAGS
+                      enabled: true
+                      enabled_value: -O3 -march=native -mtune=native ${mpi.incflags}
+                    - name: LDFLAGS
+                      enabled: true
+                      enabled_value: ${compiler.ldflags} ${mpi.ldflags} ${pnetcdf.ldflags}
     netcdf:
         description: An abstract package for merging netcdf-c and netcdf-fortran into a single package.
         compiler: system
@@ -152,7 +211,7 @@ kez:
                       enabled_value: ON
                     - name: HDF5_BUILD_FORTRAN
                       description: Build Fortran library
-                      enabled: true
+                      enabled: false
                       enabled_value: ON
                     - name: HDF5_BUILD_HL_LIB
                       description: Build High Level library
@@ -248,6 +307,7 @@ recipe:
         mpi: openmpi
     dependencies:
         - wrf
+        - pnetcdf
         - netcdf
         - netcdf-fortran
         - netcdf-c

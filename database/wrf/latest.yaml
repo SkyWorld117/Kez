@@ -13,6 +13,7 @@ recipe:
     dependencies:
         - netcdf
         - mpi
+        - pnetcdf
         - hdf5
         - zlib
 
@@ -30,6 +31,13 @@ recipe:
                 - name: PHDF5
                   description: Path to parallel HDF5 installation
                   default: ${hdf5.prefix}
+
+                - name: PNETCDF
+                  description: >
+                      Path to the parallel netCDF (pnetcdf) installation.  When
+                      set, WRF builds its parallel NetCDF I/O layer and enables
+                      io_form=2 (pnetcdf) for history/restart output.
+                  default: ${pnetcdf.prefix}
 
                 - name: WRFIO_NCD_NO_LARGE_FILE_SUPPORT
                   description: Disable large file support for NetCDF I/O
@@ -109,8 +117,8 @@ recipe:
 
                 - name: WRF_FCOPTIM
                   description: >
-                      Fortran optimization flags.  Overrides FCOPTIM in
-                      configure.wrf.  Empty leaves stanza defaults.
+                      Fortran optimization flags for the model.  Overrides
+                      FCOPTIM in configure.wrf.
                   user_configurable: true
                   enabled_format: ''
                   disabled_format: ''
@@ -119,20 +127,24 @@ recipe:
 
                 - name: WRF_FCNOOPT
                   description: >
-                      Fortran no-optimization flags (used for files that
-                      don't optimize well).  Overrides FCNOOPT in
-                      configure.wrf.  Empty leaves stanza defaults.
+                      Fortran no-optimization flags.  WRF compiles a curated
+                      list of I/O, registry and restart routines
+                      (arch/noopt_exceptions) with these flags precisely
+                      because they do not optimize reliably; raising them
+                      miscompiles the model and has hung runs at the restart
+                      write.  Keep at the stanza default (-O0) unless you know
+                      what you are doing.
                   user_configurable: true
                   enabled_format: ''
                   disabled_format: ''
                   enabled_value:
-                      default: -O3 -march=native -mtune=native
+                      default: -O0
 
                 - name: WRF_FCREDUCEDOPT
                   description: >
-                      Fortran reduced optimization flags.  Overrides
-                      FCREDUCEDOPT in configure.wrf.  Empty leaves
-                      stanza defaults.
+                      Fortran reduced optimization flags (used for the RUC land
+                      surface, module_sf_ruclsm.F).  Overrides FCREDUCEDOPT in
+                      configure.wrf, whose stanza default tracks FCOPTIM.
                   user_configurable: true
                   enabled_format: ''
                   disabled_format: ''
@@ -143,8 +155,7 @@ recipe:
                   description: >
                       Extra C compiler flags.  Appended to CFLAGS_LOCAL in
                       configure.wrf, preserving stanza flags like -c and -w
-                      that are required for correct compilation.  Empty
-                      leaves stanza defaults.
+                      that are required for correct compilation.
                   user_configurable: true
                   enabled_format: ''
                   disabled_format: ''
@@ -154,7 +165,7 @@ recipe:
                 - name: WRF_LDFLAGS_LOCAL
                   description: >
                       Extra linker flags.  Appended to LDFLAGS_LOCAL in
-                      configure.wrf.  Empty leaves stanza defaults.
+                      configure.wrf.
                   enabled_format: ''
                   disabled_format: ''
                   enabled_value:
@@ -165,7 +176,7 @@ recipe:
                 sed -i "s|^\(FCOPTIM[[:space:]]*=[[:space:]]*\).*|\1${wrf.config.WRF_FCOPTIM}|" configure.wrf &&
                 sed -i "s|^\(FCNOOPT[[:space:]]*=[[:space:]]*\).*|\1${wrf.config.WRF_FCNOOPT}|" configure.wrf &&
                 sed -i "s|^\(FCREDUCEDOPT[[:space:]]*=[[:space:]]*\).*|\1${wrf.config.WRF_FCREDUCEDOPT}|" configure.wrf &&
-                sed -i "s|^\(CFLAGS_LOCAL[[:space:]]*=[[:space:]]*\)\(.*\)|\1\2 ${wrf.config.WRF_CFLAGS_LOCAL}|" configure.wrf &&
+                sed -i "s|^\(CFLAGS_LOCAL[[:space:]]*=[[:space:]]*\)\([^#]*\)|\1\2 ${wrf.config.WRF_CFLAGS_LOCAL} |" configure.wrf &&
                 sed -i "s|^\(LDFLAGS_LOCAL[[:space:]]*=[[:space:]]*\)\(.*\)|\1\2 ${wrf.config.WRF_LDFLAGS_LOCAL}|" configure.wrf &&
                 ./compile ${wrf.config.WRF_BUILD_TARGET}
 
