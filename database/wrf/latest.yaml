@@ -175,6 +175,18 @@ recipe:
                 [ -f "main/${f}.exe" ] && cp -v "main/${f}.exe" "${wrf.prefix}/bin/"
             done
             cp -rv run/* ${wrf.prefix}/run/ 2>/dev/null || true
+            # run/ ships symlinks that point outside it: *.exe -> ../main/*.exe and
+            # NoahmpTable.TBL / snicar_*.nc -> ../phys/noahmp/parameters/*.  cp -r copies
+            # them verbatim, but the installed prefix has no main/ or phys/, so they all
+            # dangle.  Materialise each dangling link into a real copy from the source tree,
+            # leaving valid same-directory links (e.g. CAMtr_volume_mixing_ratio) alone.
+            for link in "${wrf.prefix}"/run/*; do
+                if [ -L "$link" ] && [ ! -e "$link" ]; then
+                    name=$(basename "$link")
+                    rm -f "$link"
+                    if [ -e "run/$name" ]; then cp -pv "run/$name" "$link"; fi
+                fi
+            done
             for d in test/em_real test/em_ideal; do
                 [ -d "$d" ] && mkdir -p "${wrf.prefix}/${d}" && cp -v "$d/"*.exe "${wrf.prefix}/${d}/" 2>/dev/null || true
             done
