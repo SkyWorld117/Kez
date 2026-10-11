@@ -349,7 +349,8 @@ recipe:
         EXPECT_EQ(configs[2]->source->type, SourceType::GZip);
         ASSERT_EQ(configs[2]->source->releases.size(), 1U);
         ASSERT_TRUE(configs[2]->source->releases.front().url.has_value());
-        EXPECT_EQ(*configs[2]->source->releases.front().url, "https://example.invalid/demo-0.9.0.gz");
+        EXPECT_EQ(*configs[2]->source->releases.front().url,
+                  "https://example.invalid/demo-0.9.0.gz");
     }
 
     TEST_F(TemporaryDatabase, IgnoresUnexpectedKeysAtAnySchemaLevelAndEmitsWarning) {
