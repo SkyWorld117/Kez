@@ -1,0 +1,4 @@
+---
+patches:
+    - name: fix-physicsmmm-depend.patch
+      enabled: true

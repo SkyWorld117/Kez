@@ -4,6 +4,9 @@ kez:
         description: Weather Research and Forecasting Model, a next-generation mesoscale numerical weather prediction system
         version: 4.8.0
         compiler: system
+        patches:
+            - name: fix-physicsmmm-depend.patch
+              enabled: true
         build:
             configurations:
                 options:
@@ -196,7 +199,7 @@ kez:
                           ${netcdf-c.ldflags}
     hdf5:
         description: High-performance data management and storage suite
-        version: 2.1.1
+        version: 1.14.6
         compiler: system
         build:
             configurations:
@@ -227,7 +230,7 @@ kez:
                       enabled_value: ON
                       requires:
                           - mpi
-                    - name: HDF5_ENABLE_ZLIB_SUPPORT
+                    - name: HDF5_ENABLE_Z_LIB_SUPPORT
                       description: Enable Zlib (deflate) compression filters
                       enabled: true
                       enabled_value: ON

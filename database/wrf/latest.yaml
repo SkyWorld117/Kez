@@ -14,7 +14,9 @@ recipe:
         - netcdf
         - mpi
         - pnetcdf
-        - hdf5
+        # netcdf-c 4.10.x only targets HDF5 2.0.0; the 2.1.x pairing hangs WRF's
+        # netCDF-4 restart write, so pin the mature 1.14.x LTS here.
+        - hdf5@<2
         - zlib
 
     build:

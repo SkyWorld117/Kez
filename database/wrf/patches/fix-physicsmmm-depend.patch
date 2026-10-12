@@ -1,0 +1,16 @@
+--- a/main/depend.common
++++ b/main/depend.common
+@@ -3038,6 +3038,13 @@
+ 	ccpp_kind_types.o
+ 
+ 
++physics_mmm/mp_radar.o: \
++	ccpp_kind_types.o
++
++
++physics_mmm/bl_shinhong.o: \
++	ccpp_kind_types.o
++
+ # End of DEPENDENCIES for phys
+ 
+ 

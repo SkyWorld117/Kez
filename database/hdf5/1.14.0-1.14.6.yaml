@@ -1,0 +1,106 @@
+---
+recipe:
+    name: hdf5
+    description: High-performance data management and storage suite
+    type: package
+    toolchain: cmake
+
+    source:
+        type: tarball
+        releases:
+            - version: 1.14.6
+              url: https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz
+
+    build:
+        configurations:
+            options:
+                - name: BUILD_SHARED_LIBS
+                  description: Build shared libraries
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+
+                - name: ONLY_SHARED_LIBS
+                  description: Build only shared libraries
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: OFF
+
+                - name: HDF5_BUILD_CPP_LIB
+                  description: Build C++ library
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ON
+
+                # Unlike 2.x (where the CMake default is ON), HDF5 1.14 defaults
+                # HDF5_BUILD_FORTRAN to OFF, so it must be requested explicitly:
+                # netCDF-Fortran and WRF link libhdf5_fortran / libhdf5_hl_fortran.
+                - name: HDF5_BUILD_FORTRAN
+                  description: Build Fortran library
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+
+                - name: HDF5_BUILD_HL_LIB
+                  description: Build High Level library
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+
+                - name: HDF5_BUILD_TOOLS
+                  description: Build tools
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+
+                - name: HDF5_ENABLE_PARALLEL
+                  description: Enable parallel support
+                  user_configurable: true
+                  enabled:
+                      default: false
+                  enabled_value:
+                      default: ON
+                  requires:
+                      - mpi
+
+                # HDF5 1.14 spells this HDF5_ENABLE_Z_LIB_SUPPORT; 2.x renamed it
+                # to HDF5_ENABLE_ZLIB_SUPPORT.
+                - name: HDF5_ENABLE_Z_LIB_SUPPORT
+                  description: Enable Zlib (deflate) compression filters
+                  user_configurable: true
+                  enabled:
+                      default: true
+                  enabled_value:
+                      default: ON
+                  requires:
+                      - zlib
+
+                - name: ZLIB_ROOT
+                  description: Path to zlib installation
+                  enabled:
+                      conditions:
+                          - condition: ${hdf5.config.HDF5_ENABLE_Z_LIB_SUPPORT} true
+                            value: true
+                  enabled_value:
+                      default: ${zlib.prefix}
+
+        stages:
+            - target:
+            - target: install
+
+    properties:
+        lib: ${hdf5.prefix}/lib
+        libs:
+            default: -lhdf5
+        include: ${hdf5.prefix}/include
