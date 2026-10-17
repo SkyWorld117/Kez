@@ -171,7 +171,7 @@ recipe:
                   enabled_format: ''
                   disabled_format: ''
                   enabled_value:
-                      default: ${hdf5.ldflags} ${zlib.ldflags}
+                      default: ${hdf5.ldflags} ${zlib.ldflags} ${netcdf.ldflags} ${pnetcdf.ldflags}
 
             command: >-
                 printf "${wrf.config.WRF_CONFIG_SELECTION}\n${wrf.config.WRF_NESTING}\n" | ./configure &&
